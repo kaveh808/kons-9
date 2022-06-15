@@ -6,17 +6,17 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (objc:load-framework "OpenGL" :gl))
 
-(load "~/Development/3D DCC Project/src/utils.lisp")
-(load "~/Development/3D DCC Project/src/opengl.lisp")
-(load "~/Development/3D DCC Project/src/transform.lisp")
-(load "~/Development/3D DCC Project/src/shape.lisp")
-(load "~/Development/3D DCC Project/src/procedural.lisp")
-(load "~/Development/3D DCC Project/src/uv-mesh.lisp")
-(load "~/Development/3D DCC Project/src/animator.lisp")
-(load "~/Development/3D DCC Project/src/particle.lisp")
-(load "~/Development/3D DCC Project/src/scene.lisp")
-(load "~/Development/3D DCC Project/src/usd.lisp")
-(load "~/Development/3D DCC Project/src/obj.lisp")
+(load "~/Development/kons-9/utils.lisp")
+(load "~/Development/kons-9/opengl.lisp")
+(load "~/Development/kons-9/transform.lisp")
+(load "~/Development/kons-9/shape.lisp")
+(load "~/Development/kons-9/procedural.lisp")
+(load "~/Development/kons-9/uv-mesh.lisp")
+(load "~/Development/kons-9/animator.lisp")
+(load "~/Development/kons-9/particle.lisp")
+(load "~/Development/kons-9/scene.lisp")
+(load "~/Development/kons-9/usd.lisp")
+(load "~/Development/kons-9/obj.lisp")
 
 
 ;;; execute code on main thread -- necessary for interacting with UI elements

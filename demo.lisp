@@ -439,7 +439,6 @@
 (with-clear-and-redraw
   (add-shape *scene* (translate-by (make-cube 4.0 'he-mesh) (p! 0 2 0))))
 
-;;; xxx not working
 (with-redraw
   (select-face (first (shapes *scene*)) 0)
   (select-face (first (shapes *scene*)) 1))
