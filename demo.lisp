@@ -437,7 +437,7 @@
 
 ;;; half-edge-mesh
 (with-clear-and-redraw
-  (add-shape *scene* (make-cube 2.0 'he-mesh)))
+  (add-shape *scene* (translate-by (make-cube 4.0 'he-mesh) (p! 0 2 0))))
 
 ;;; xxx not working
 (with-redraw

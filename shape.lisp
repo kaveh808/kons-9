@@ -775,23 +775,42 @@
 (defmethod select-edge ((mesh he-mesh) i)
   (setf (selected? (aref (h-edges mesh) i)) t))
 
-(defmethod draw :after ((mesh he-mesh))
-  (draw-selected-faces mesh)
+(defmethod draw ((mesh he-mesh))
+  (call-next-method)
+  
+  (if *do-lighting?*
+      (#_glEnable #$GL_LIGHTING)
+      (#_glDisable #$GL_LIGHTING))
+
+  (when *display-filled?*
+    (if *do-smooth-shading?*
+        (#_glShadeModel #$GL_SMOOTH)
+        (#_glShadeModel #$GL_FLAT))
+    (#_glPolygonMode #$GL_FRONT_AND_BACK #$GL_FILL)
+    (draw-selected-faces mesh))
+
   (draw-selected-edges mesh)
   (draw-selected-points mesh))
 
-;;; xxx not working
 (defmethod draw-selected-faces ((mesh he-mesh))
-  (gl-set-material (c! 1.0 0.0 0.0))
-  (dotimes (f (length (faces mesh)))
-    (when (selected? (aref (h-faces mesh) f))
-      (#_glBegin #$GL_POLYGON)
-      (let ((n (aref (face-normals mesh) f)))
-        (#_glNormal3f (x n) (y n) (z n)))
-      (dolist (pref (aref (faces mesh) f))
-        (let ((p (aref (points mesh) pref)))
-          (#_glVertex3f (x p) (y p) (z p))))
-      (#_glEnd))))
+  (with-gl-enable #$GL_COLOR_MATERIAL
+    (#_glColorMaterial #$GL_FRONT_AND_BACK #$GL_DIFFUSE)
+
+    (dotimes (f (length (faces mesh)))
+      (when (selected? (aref (h-faces mesh) f))
+        (#_glBegin #$GL_POLYGON)
+        (when (not *do-smooth-shading?*)
+          (let ((n (aref (face-normals mesh) f)))
+            (#_glNormal3f (x n) (y n) (z n))))
+
+        (dolist (pref (aref (faces mesh) f))
+          (#_glColor3f (c-red *sel-color*) (c-green *sel-color*) (c-blue *sel-color*))
+          (when *do-smooth-shading?*
+            (let ((n (aref (point-normals mesh) pref)))
+              (#_glNormal3f (x n) (y n) (z n))))
+          (let ((p (aref (points mesh) pref)))
+            (#_glVertex3f (x p) (y p) (z p))))
+        (#_glEnd)))))
 
 (defmethod draw-selected-edges ((mesh he-mesh))
   (with-gl-disable #$GL_LIGHTING
