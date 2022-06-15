@@ -1,7 +1,7 @@
 # kons-9
 Common Lisp 3D graphics code
 
-This code is definitely not rady for primetime. It is very much a work in progress and a playground for my ideas.
+This code is definitely not ready for primetime. It is very much a work in progress and a playground for my ideas.
 
 More info about the thoughts behind this project at my blog:
 
