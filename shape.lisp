@@ -272,6 +272,12 @@
                                                   :adjustable t
                                                   :fill-pointer t)))
 
+(defun make-point-cloud-in-bounds (num bounds-lo bounds-hi)
+  (let ((points '()))
+    (dotimes (i num)
+      (push (p-rand2 bounds-lo bounds-hi) points))
+    (apply #'make-point-cloud points)))
+
 ;;;; polyhedron =========================================================
 
 (defclass polyhedron (point-cloud curve-generator-mixin)

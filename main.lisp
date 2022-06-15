@@ -18,7 +18,6 @@
 (load "~/Development/kons-9/usd.lisp")
 (load "~/Development/kons-9/obj.lisp")
 
-
 ;;; execute code on main thread -- necessary for interacting with UI elements
 (defmacro on-main-thread (&rest actions)
   `(ccl::call-in-event-process
