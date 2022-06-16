@@ -25,8 +25,9 @@
     (let ((circle (translate-to (make-circle-shape 3.0  7) (p! 0 0 -4.0)))
           (cube (translate-by (make-cut-cube-polyhedron 2.0) (p! 0 0 4.0)))
           (icos (make-icosahedron 2.0)))
+      (setf (show-axis circle) 1.0)
       (setf (show-normals cube) 1.0)
-      (setf (show-normals icos) 1.0)
+      (setf (show-bounds? icos) t)
       (add-shapes *scene* (list circle cube icos))))
 
 ;;; uv-mesh --------------------------------------------------------------------
@@ -494,28 +495,7 @@
 (export-usd-frame *scene* "foo")
 
 ;;; l-system ------------------------------------------------------------------
-(with-clear-and-redraw
-  (let ((l-sys (make-koch-curve-l-system)))
-    (add-shape *scene* l-sys)
-    (add-animator *scene* l-sys)))
-;;; press space key in 3D view to generate new l-system levels
-;;; resize shape to convenient size and center shape at origin
-(with-redraw
-  (scale-to-size (first (shapes *scene*)) 10.0)
-  (center-at-origin (first (shapes *scene*))))
-
-;;; l-system ------------------------------------------------------------------
-(with-clear-and-redraw
-  (let ((l-sys (make-koch-curve-l-system)))
-    (add-shape *scene* l-sys)
-    (add-animator *scene* l-sys)))
-;;; press space key in 3D view to generate new l-system levels
-;;; resize shape to convenient size and center shape at origin
-(with-redraw
-  (scale-to-size (first (shapes *scene*)) 10.0)
-  (center-at-origin (first (shapes *scene*))))
-
-;;; l-system ------------------------------------------------------------------
+;;; uncomment an l-system to test
 (with-clear-and-redraw
   (let ((l-sys
           ;; (make-koch-curve-l-system)
@@ -526,6 +506,28 @@
            (make-fractal-plant-l-system)
           ))
     (add-shape *scene* l-sys)
+    (add-animator *scene* l-sys)))
+;;; press space key in 3D view to generate new l-system levels
+;;; resize shape to convenient size and center shape at origin
+(with-redraw
+  (scale-to-size (first (shapes *scene*)) 10.0)
+  (center-at-origin (first (shapes *scene*))))
+
+;;; l-system sweep-mesh-group --------------------------------------------------
+(with-clear-and-redraw
+  (let* ((l-sys
+          ;; (make-koch-curve-l-system)
+          ;; (make-binary-tree-l-system)
+          ;; (make-serpinski-triangle-l-system)
+          ;; (make-serpinski-arrowhead-l-system)
+          ;; (make-dragon-curve-l-system)
+           (make-fractal-plant-l-system)
+          )
+         (sweep-mesh-group (make-sweep-mesh-group (make-circle-shape 1.0 6) l-sys
+                                                  :taper 0.0 :twist 0.0)))
+;    (add-shape *scene* l-sys)
+    (setf (show-bounds? sweep-mesh-group) t)
+    (add-shape *scene* sweep-mesh-group)
     (add-animator *scene* l-sys)))
 ;;; press space key in 3D view to generate new l-system levels
 ;;; resize shape to convenient size and center shape at origin

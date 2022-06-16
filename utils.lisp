@@ -263,6 +263,16 @@
   (labels ((cubic (x) (+ (* -2.0 (* x x x)) (* 3.0 (* x x)))))
     (p-lerp (cubic f) p1 p2)))
 
+(defmethod p-min ((p1 point) (p2 point))
+  (p! (min (x p1) (x p2))
+      (min (y p1) (y p2))
+      (min (z p1) (z p2))))
+
+(defmethod p-max ((p1 point) (p2 point))
+  (p! (max (x p1) (x p2))
+      (max (y p1) (y p2))
+      (max (z p1) (z p2))))
+
 (defmethod p-rand2 ((p1 point) (p2 point))
   (p! (rand2 (x p1) (x p2))
       (rand2 (y p1) (y p2))

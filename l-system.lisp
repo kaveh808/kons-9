@@ -84,7 +84,7 @@
         (turtle-init (make-instance 'turtle) (initial-location l-sys) (initial-heading l-sys)))
 ;  (empty-polyhedron l-sys)
   (turtle-move (turtle l-sys) (apply-graphics-rules (genome l-sys) (graphics-rules l-sys)))
-  (set-face-point-lists l-sys (paths (turtle l-sys))))
+  (set-face-point-lists l-sys (mapcar #'reverse (paths (turtle l-sys)))))
 
 (defmethod draw ((l-sys l-system))
   (when *display-wireframe?*

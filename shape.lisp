@@ -36,12 +36,14 @@
 (defclass shape ()
   ((name :accessor name :initarg :name :initform nil)
    (transform :accessor transform :initarg :transform :initform (make-instance 'transform))
-   (show-axis? :accessor show-axis? :initarg :show-axis? :initform nil)))
+   (show-axis :accessor show-axis :initarg :show-axis :initform nil) ;nil or length
+   (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
 
 (defmethod copy-instance-data ((dst shape) (src shape))
   ;; TODO - name not copied - always generate new name?
   (copy-instance-data (transform dst) (transform src))
-  (setf (show-axis? dst) (show-axis? src)))
+  (setf (show-axis dst) (show-axis src))
+  (setf (show-bounds? dst) (show-bounds? src)))
 
 ;;; utility methods for transforming shapes
 (defmethod translate-by ((self shape) (p point))
@@ -72,6 +74,30 @@
   (reset-transform (transform self))
   self)
 
+(defmethod bounds-and-center ((self shape))
+  (warn "Object ~a does not have BOUNDS-AND-CENTER defined. Using default values." self)
+  (values nil nil nil))
+
+(defmethod center-at-origin ((self shape))
+  (multiple-value-bind (bounds-lo bounds-hi center)
+      (bounds-and-center self)
+    (declare (ignore bounds-lo bounds-hi))
+    (when center
+      (translate-to self (p-negate (p* center (scale (transform self))))))))
+
+(defmethod scale-to-size ((self shape) max-size)
+  (multiple-value-bind (bounds-lo bounds-hi center)
+      (bounds-and-center self)
+    (declare (ignore center))
+    (when (and bounds-lo bounds-hi)
+      (let* ((size (max (abs (- (x bounds-hi) (x bounds-lo)))
+                        (abs (- (y bounds-hi) (y bounds-lo)))
+                        (abs (- (z bounds-hi) (z bounds-lo)))))
+             (scale (if (= size 0)
+                        1.0
+                        (/ max-size size))))
+        (scale-to self (p! scale scale scale))))))
+
 ;;; xxx store angles as radians and convert to degrees here?
 ;;; push matrix and do transform operations before drawing
 (defmethod draw :before ((self shape))
@@ -97,20 +123,62 @@
     (#_glVertex3f  0.0  0.0 (- s)))
   (#_glEnd))
 
-;;; draw axis and pop matrix after drawing
-(defmethod draw :after ((self shape))
-  (when (show-axis? self)
+(defmethod draw-axis ((self shape))
+  (with-gl-disable #$GL_LIGHTING
     (#_glLineWidth 3.0)
     (#_glBegin #$GL_LINES)
     ;; x axis (red)
-    (#_glColor3f 0.8 0.2 0.2)
+    (#_glColor3f 1.0 0.0 0.0)
     (#_glVertex3f 0.0 0.0 0.0)
-    (#_glVertex3f 0.25 0.0 0.0)
+    (#_glVertex3f (show-axis self) 0.0 0.0)
     ;; y axis (green)
-    (#_glColor3f 0.2 0.8 0.2)
+    (#_glColor3f 0.0 1.0 0.0)
     (#_glVertex3f 0.0 0.0 0.0)
-    (#_glVertex3f 0.0 0.25 0.0)
-    (#_glEnd))
+    (#_glVertex3f 0.0 (show-axis self) 0.0)
+    ;; z axis (blue)
+    (#_glColor3f 0.0 0.0 1.0)
+    (#_glVertex3f 0.0 0.0 0.0)
+    (#_glVertex3f 0.0 0.0 (show-axis self))
+    (#_glEnd)))
+
+(defmethod draw-bounds ((self shape))
+  (with-gl-disable #$GL_LIGHTING
+    (#_glLineWidth 3.0)
+    (#_glColor3f 0.0 1.0 1.0)
+    (#_glBegin #$GL_LINES)
+    (multiple-value-bind (lo hi center)
+        (bounds-and-center self)
+      (declare (ignore center))
+      (when (and lo hi)
+        (let ((x0 (x lo))
+              (y0 (y lo))
+              (z0 (z lo))
+              (x1 (x hi))
+              (y1 (y hi))
+              (z1 (z hi)))
+          (#_glVertex3f x0 y0 z0) (#_glVertex3f x1 y0 z0)
+          (#_glVertex3f x1 y0 z0) (#_glVertex3f x1 y0 z1)
+          (#_glVertex3f x1 y0 z1) (#_glVertex3f x0 y0 z1)
+          (#_glVertex3f x0 y0 z1) (#_glVertex3f x0 y0 z0)
+
+          (#_glVertex3f x0 y1 z0) (#_glVertex3f x1 y1 z0)
+          (#_glVertex3f x1 y1 z0) (#_glVertex3f x1 y1 z1)
+          (#_glVertex3f x1 y1 z1) (#_glVertex3f x0 y1 z1)
+          (#_glVertex3f x0 y1 z1) (#_glVertex3f x0 y1 z0)
+
+          (#_glVertex3f x0 y0 z0) (#_glVertex3f x0 y1 z0)
+          (#_glVertex3f x1 y0 z0) (#_glVertex3f x1 y1 z0)
+          (#_glVertex3f x1 y0 z1) (#_glVertex3f x1 y1 z1)
+          (#_glVertex3f x0 y0 z1) (#_glVertex3f x0 y1 z1)
+
+          (#_glEnd))))))
+
+;;; draw axis and pop matrix after drawing
+(defmethod draw :after ((self shape))
+  (when (show-axis self)
+    (draw-axis self))
+  (when (show-bounds? self)
+    (draw-bounds self))
   (#_glPopMatrix))
 
 ;;; curve-shape class ====================================================
@@ -125,6 +193,17 @@
 
 (defmethod add-point ((self curve-shape) (p point))
   (push p (points self)))
+
+(defmethod bounds-and-center ((self curve-shape))
+  (when (= 0 (length (points self)))
+    (return-from bounds-and-center (values nil nil nil)))
+  (let* ((points (points self))
+         (bounds-lo (p-copy (first points)))
+         (bounds-hi (p-copy (first points))))
+    (dolist (p points)
+       (setf bounds-lo (p-min bounds-lo p))
+       (setf bounds-hi (p-max bounds-hi p)))
+    (values bounds-lo bounds-hi (p-average bounds-lo bounds-hi))))
 
 (defmethod draw ((curve curve-shape))
   (when *display-wireframe?*
@@ -235,6 +314,25 @@
   (dolist (child (children self))
     (print-hierarchy child (+ indent 2))))
 
+(defmethod bounds-and-center ((self group))
+  (let ((bounds-lo nil)
+        (bounds-hi nil))
+    (dolist (child (children self))
+      (multiple-value-bind (lo hi center)
+          (bounds-and-center child)
+        (declare (ignore center))
+        (when lo
+          (setf bounds-lo (if bounds-lo
+                              (p-min bounds-lo lo)
+                              lo)))
+        (when hi
+          (setf bounds-hi (if bounds-hi
+                              (p-max bounds-hi hi)
+                              hi)))))
+    (values bounds-lo bounds-hi (if (and bounds-lo bounds-hi)
+                                    (p-average bounds-lo bounds-hi)
+                                    nil))))
+
 ;;;; point-cloud ========================================================
 
 (defclass point-cloud (shape point-generator-mixin)
@@ -268,42 +366,14 @@
 
 (defmethod bounds-and-center ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
-    (return-from bounds-and-center (values (p! 0 0 0) (p! 0 0 0) (p! 0 0 0))))
+    (return-from bounds-and-center (values nil nil nil)))
   (let* ((points (points p-cloud))
          (bounds-lo (p-copy (aref points 0)))
          (bounds-hi (p-copy (aref points 0))))
     (doarray (i p points)
-      (when (< (x p) (x bounds-lo))
-        (setf (x bounds-lo) (x p)))
-      (when (< (y p) (y bounds-lo))
-        (setf (y bounds-lo) (y p)))
-      (when (< (z p) (z bounds-lo))
-        (setf (z bounds-lo) (z p)))
-      (when (> (x p) (x bounds-hi))
-        (setf (x bounds-hi) (x p)))
-      (when (> (y p) (y bounds-hi))
-        (setf (y bounds-hi) (y p)))
-      (when (> (z p) (z bounds-hi))
-        (setf (z bounds-hi) (z p))))
+       (setf bounds-lo (p-min bounds-lo p))
+       (setf bounds-hi (p-max bounds-hi p)))
     (values bounds-lo bounds-hi (p-average bounds-lo bounds-hi))))
-
-(defmethod center-at-origin ((p-cloud point-cloud))
-  (multiple-value-bind (bounds-lo bounds-hi center)
-      (bounds-and-center p-cloud)
-    (declare (ignore bounds-lo bounds-hi))
-    (translate-to p-cloud (p-negate (p* center (scale (transform p-cloud)))))))
-
-(defmethod scale-to-size ((p-cloud point-cloud) max-size)
-  (multiple-value-bind (bounds-lo bounds-hi center)
-      (bounds-and-center p-cloud)
-    (declare (ignore center))
-    (let* ((size (max (abs (- (x bounds-hi) (x bounds-lo)))
-                      (abs (- (y bounds-hi) (y bounds-lo)))
-                      (abs (- (z bounds-hi) (z bounds-lo)))))
-           (scale (if (= size 0)
-                      1.0
-                      (/ max-size size))))
-      (scale-to p-cloud (p! scale scale scale)))))
 
 (defun make-point-cloud (&rest points)
   (make-instance 'point-cloud :points (make-array (length points)
@@ -471,7 +541,7 @@
 (defmethod draw-normals ((polyh polyhedron))
   (with-gl-disable #$GL_LIGHTING
     (gl-set-fg-color)
-    (#_glLineWidth 1.0)
+    (#_glLineWidth 3.0)
     (#_glBegin #$GL_LINES)
     (dotimes (f (length (faces polyh)))
       (let* ((points (face-points polyh f))
