@@ -344,14 +344,14 @@
 
 ;;; particle-system point-generator-mixin sweep-mesh-group ---------------------
 (with-clear-and-redraw
-  (let* ((p-gen (make-grid-uv-mesh 5 5 (p! -4 0 -4) (p! 4 0 4) 0.0))
+  (let* ((p-gen (make-grid-uv-mesh 25 25 (p! -4 0 -4) (p! 4 0 4) 0.0))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle-shape 0.2 6)
                                                   p-sys
                                                   :taper 0.0 :twist 2pi)))
 ;;    (add-shape *scene* p-gen)
-    (add-shape *scene* p-sys)
+;;    (add-shape *scene* p-sys)
     (add-shape *scene* sweep-mesh-group)
     (add-animator *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
@@ -489,9 +489,49 @@
     (translate-by mesh (p! 0 -2 0))
     (add-shape *scene* mesh)))
 
-;;;; USD scene export (not recently tested) ------------------------------------
+;;; USD scene export (not recently tested) ------------------------------------
 (export-usd *scene* "foo.usda")
 (export-usd-frame *scene* "foo")
+
+;;; l-system ------------------------------------------------------------------
+(with-clear-and-redraw
+  (let ((l-sys (make-koch-curve-l-system)))
+    (add-shape *scene* l-sys)
+    (add-animator *scene* l-sys)))
+;;; press space key in 3D view to generate new l-system levels
+;;; resize shape to convenient size and center shape at origin
+(with-redraw
+  (scale-to-size (first (shapes *scene*)) 10.0)
+  (center-at-origin (first (shapes *scene*))))
+
+;;; l-system ------------------------------------------------------------------
+(with-clear-and-redraw
+  (let ((l-sys (make-koch-curve-l-system)))
+    (add-shape *scene* l-sys)
+    (add-animator *scene* l-sys)))
+;;; press space key in 3D view to generate new l-system levels
+;;; resize shape to convenient size and center shape at origin
+(with-redraw
+  (scale-to-size (first (shapes *scene*)) 10.0)
+  (center-at-origin (first (shapes *scene*))))
+
+;;; l-system ------------------------------------------------------------------
+(with-clear-and-redraw
+  (let ((l-sys
+          ;; (make-koch-curve-l-system)
+          ;; (make-binary-tree-l-system)
+          ;; (make-serpinski-triangle-l-system)
+          ;; (make-serpinski-arrowhead-l-system)
+          ;; (make-dragon-curve-l-system)
+           (make-fractal-plant-l-system)
+          ))
+    (add-shape *scene* l-sys)
+    (add-animator *scene* l-sys)))
+;;; press space key in 3D view to generate new l-system levels
+;;; resize shape to convenient size and center shape at origin
+(with-redraw
+  (scale-to-size (first (shapes *scene*)) 10.0)
+  (center-at-origin (first (shapes *scene*))))
 
 
 ;;; ============================================================================

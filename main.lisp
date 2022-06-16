@@ -14,6 +14,7 @@
 (load "~/Development/kons-9/uv-mesh.lisp")
 (load "~/Development/kons-9/animator.lisp")
 (load "~/Development/kons-9/particle.lisp")
+(load "~/Development/kons-9/l-system.lisp")
 (load "~/Development/kons-9/scene.lisp")
 (load "~/Development/kons-9/usd.lisp")
 (load "~/Development/kons-9/obj.lisp")
