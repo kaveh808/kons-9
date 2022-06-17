@@ -370,6 +370,22 @@
     (add-animator *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
+;;; particle-system point-generator-mixin use polyh face centers ---------------
+(with-clear-and-redraw
+  (let ((p-gen (make-icosahedron 2.0)))
+    (setf (point-generator-use-face-centers? p-gen) t)
+    (let* ((p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
+                                        :life-span 10
+                                        :update-angle (range-float (/ pi 16) (/ pi 32))
+                                        :spawn-angle (range-float (/ pi 8) (/ pi 16))))
+           (sweep-mesh-group (make-sweep-mesh-group (make-circle-shape 0.2 6) p-sys
+                                                    :taper 0.0 :twist 0.0)))
+      (add-shape *scene* p-gen)
+      (add-shape *scene* p-sys)
+      (add-shape *scene* sweep-mesh-group)
+      (add-animator *scene* p-sys))))
+;;; hold down space key in 3D view to run animation
+
 ;;; particle-system point-generator-mixin polyhedron ---------------------------
 (with-clear-and-redraw
   (let* ((p-gen (polyhedron-bake (import-obj "~/Development/3D DCC Project/data/teapot.obj")))

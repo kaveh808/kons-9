@@ -394,7 +394,8 @@
    (face-normals :accessor face-normals :initarg :face-normals :initform (make-array 0 :adjustable t :fill-pointer t))
    (point-normals :accessor point-normals :initarg :point-normals :initform (make-array 0 :adjustable t :fill-pointer t))
    (point-colors :accessor point-colors :initarg :point-colors :initform nil)
-   (show-normals :accessor show-normals :initarg :show-normals :initform nil)))  ; length or nil
+   (show-normals :accessor show-normals :initarg :show-normals :initform nil)  ; length or nil
+   (point-generator-use-face-centers? :accessor point-generator-use-face-centers? :initarg :point-generator-use-face-centers? :initform nil)))
 
 (defmethod copy-instance-data :after ((dst polyhedron) (src polyhedron))
   (setf (faces dst) (faces src)) ;;; TODO - deep copy arrays
@@ -435,6 +436,9 @@
 
 (defmethod face-center ((polyh polyhedron) face)
   (p-center (face-points polyh face)))
+
+(defmethod face-centers ((polyh polyhedron))
+  (map 'array #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
 (defun triangle-normal (p0 p1 p2)
   (p-normalize (p-cross (p-from-to p0 p1) (p-from-to p1 p2))))
@@ -480,6 +484,10 @@
   (mapcar #'(lambda (pref) (aref (points polyh) pref))
           (aref (faces polyh) i)))
 
+(defmethod face-points ((polyh polyhedron) (face list))
+  (mapcar #'(lambda (pref) (aref (points polyh) pref))
+          face))
+
 (defmethod reverse-face-normals ((polyh polyhedron))
   (dotimes (i (length (face-normals polyh)))
     (setf (aref (face-normals polyh) i) (p-negate (aref (face-normals polyh) i))))
@@ -512,9 +520,17 @@
   (dolist (child (children group))
     (set-point-colors-by-point-and-normal child color-fn)))
 
+(defmethod point-generator-points ((polyh polyhedron))
+  (if (point-generator-use-face-centers? polyh)
+      (face-centers polyh)
+      (call-next-method)))
+
 (defmethod point-generator-directions ((polyh polyhedron))
-  (compute-point-normals polyh)
-  (point-normals polyh))
+  (if (point-generator-use-face-centers? polyh)
+      (face-normals polyh)
+      (progn
+        (compute-point-normals polyh)
+        (point-normals polyh))))
 
 (defmethod curve-generator-curves ((polyh polyhedron))
   (let ((curves '()))
