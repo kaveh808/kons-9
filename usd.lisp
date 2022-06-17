@@ -1,3 +1,5 @@
+(in-package #:kons-9)
+
 ;;;; USD format support ======================================================
 
 ;;; TMP until we have unique shape names
