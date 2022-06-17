@@ -1,3 +1,5 @@
+(in-package #:kons-9)
+
 ;;;; obj format support ======================================================
 
 (defun import-obj (filename)

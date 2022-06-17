@@ -1,3 +1,5 @@
+(in-package #:kons-9)
+
 ;;; class hierarchy
 #|
 (print-class-hierarchy (class-of (make-instance 'shape)))

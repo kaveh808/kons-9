@@ -1,3 +1,5 @@
+(in-package #:kons-9)
+
 ;;;; point-generator-mixin ==============================================
 
 (defclass point-generator-mixin ()

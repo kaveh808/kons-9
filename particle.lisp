@@ -1,3 +1,5 @@
+(in-package #:kons-9)
+
 ;;;; range attributes ====================================================
 
 (defgeneric range-value (range)

@@ -1,3 +1,5 @@
+(in-package #:kons-9)
+
 ;;;; procedural-mixin ======================================================
 
 (defgeneric compute-procedural-node (obj)
