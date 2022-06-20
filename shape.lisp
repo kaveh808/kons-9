@@ -545,9 +545,9 @@
 
 (defun make-polyhedron (points faces &optional (mesh-type 'polyhedron))
   (let ((polyh (make-instance mesh-type :points (make-array (length points)
-                                                                 :initial-contents points
-                                                                 :adjustable t
-                                                                 :fill-pointer t)
+                                                            :initial-contents points
+                                                            :adjustable t
+                                                            :fill-pointer t)
                                              :faces (make-array (length faces)
                                                                 :initial-contents faces
                                                                 :adjustable t
