@@ -36,21 +36,6 @@
 
 ;;;; graphics ===========================================================
 
-(defclass scene-view (ns:ns-opengl-view)
-  ((scene :accessor scene :initarg :scene :initform nil))
-  (:metaclass ns:+ns-object))
-
-;;; draw a square outline in OpenGL
-(defun draw-square ()
-  (#_glColor3f 1.0 1.0 1.0)
-  (#_glLineWidth 3.0)
-  (#_glBegin #$GL_LINE_LOOP)
-  (#_glVertex3f  0.5  0.5 -0.0)
-  (#_glVertex3f  0.5 -0.5 -0.0)
-  (#_glVertex3f -0.5 -0.5 -0.0)
-  (#_glVertex3f -0.5  0.5 -0.0)
-  (#_glEnd))
-
 (defun draw-axes (size)
   (#_glLineWidth 3.0)
   (#_glBegin #$GL_LINES)
@@ -166,20 +151,6 @@
                                 (:* #>NSOpenGLPixelFormatAttribute) nattributes) 0))
       (make-instance ns:ns-opengl-pixel-format :with-attributes objc-attributes))))
 
-(defmethod initialize-instance :after ((self scene-view) &rest initargs)
-  (declare (ignore initargs))
-  (#/setPixelFormat: self (new-pixel-format ;#$NSOpenGLPFAOpenGLProfile 
-                                            ;#$NSOpenGLProfileVersion3_2Core
-                                            ;#$NSOpenGLPFADoubleBuffer
-                                            #$NSOpenGLPFAColorSize 32
-                                            #$NSOpenGLPFADepthSize 24))
-
-  (#/setWantsLayer: self t)
-  (#/setBorderWidth: (#/layer self) 1)
-;  (#/setCornerRadius: (#/layer self) 10)
-
-  (init-view-camera))
-
 (defun update-light-settings ()
   (if *do-backface-cull?*
       (progn
@@ -207,6 +178,129 @@
   ;;                               (make-y-rotation-matrix (- (radians *cam-y-rot*))))))
   ;;     (gl-enable-light #$GL_LIGHT0 (transform-point (p! 0 0 1) mtx))))
 ;;  )
+
+
+;;;; ui-view ===================================================================
+
+(defclass ui-view (ns:ns-view)
+  ((bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1 1)))
+  (:metaclass ns:+ns-object))
+
+(defmethod initialize-instance :after ((self ui-view) &rest initargs)
+  (declare (ignore initargs))
+  (#/setWantsLayer: self t)
+  (#/setBorderWidth: (#/layer self) 1)
+  (#/setCornerRadius: (#/layer self) 0))
+
+(objc:defmethod (#/drawRect: :void) ((self ui-view) (rect :<NSR>ect))
+  (with-accessors ((bg bg-color))
+      self
+    (#/setFill (#/colorWithCalibratedRed:green:blue:alpha:
+                ns:ns-color (c-red bg) (c-green bg) (c-blue bg) (c-alpha bg))))
+                                        ;  (#/setFill (#/whiteColor ns:ns-color))
+  (#_NSRectFill (#/bounds self)))
+
+
+;;;; ui-menu-item ==============================================================
+
+(defclass ui-menu-item (ui-view)
+  ((title :accessor title :initarg :title :initform "Menu Item")
+   (action-fn :accessor action-fn :initarg :action-fn :initform nil))
+  (:metaclass ns:+ns-object))
+
+(objc:defmethod (#/drawRect: :void) ((self ui-menu-item) (rect :<NSR>ect))
+  (call-next-method rect)
+  (let* ((str-width (ns:ns-size-width (#/sizeWithAttributes: (objc:make-nsstring (title self)) nil)))
+         (rect-width (ns:ns-rect-width (#/frame self)))
+         (x (/ (- rect-width str-width) 2)))
+    (#/drawAtPoint:withAttributes: (objc:make-nsstring (title self))
+                                   (ns:make-ns-point x 3)
+                                   nil)))
+
+;; (objc:defmethod (#/mouseEntered: :void) ((self ui-menu-item) event)
+;;   (declare (ignore event))
+;;   (print (title self)); xxx do highlight here
+;;   (#/setNeedsDisplay: self t))
+
+
+;;;; ui-popup-menu =============================================================
+
+(defclass ui-popup-menu (ui-view)
+  ((menu-items :accessor menu-items :initarg :menu-items :initform '())
+   (menu-is-visible? :accessor menu-is-visible? :initarg :menu-is-visible? :initform nil))
+  (:metaclass ns:+ns-object))
+
+(defmethod initialize-instance :after ((self ui-popup-menu) &rest initargs)
+  (declare (ignore initargs))
+  )
+
+(defmethod update-layout ((self ui-popup-menu))
+  (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
+  (let ((y 0))
+    (dolist (menu-item (menu-items self))
+      (#/setFrame: menu-item (ns:make-ns-rect 0 y 300 20))
+      (incf y 20)
+      (#/addSubview: self menu-item)
+      (#/release menu-item))
+    (let ((rect (ns:make-ns-rect 50 50 300 y)))
+      (#/setFrame: self rect))))
+
+(defmethod popup ((self ui-popup-menu) view)
+  (let* ((menu-rect (#/frame self))
+         (menu-width (ns:ns-rect-width menu-rect))
+         (menu-height (ns:ns-rect-height menu-rect))
+         (view-rect (#/frame view))
+         (view-width (ns:ns-rect-width view-rect))
+         (view-height (ns:ns-rect-height view-rect))
+         (x (/ (- view-width menu-width) 2))
+         (y (/ (- view-height menu-height) 2)))
+    (#/setFrameOrigin: self (ns:make-ns-point x y))
+    (#/addSubview: view self))
+  (setf (menu-is-visible? self) t))
+
+(defmethod popdown ((self ui-popup-menu))
+  (#/removeFromSuperview self)
+  (setf (menu-is-visible? self) nil)
+  (unhighlight-items self))
+
+(defmethod unhighlight-items ((self ui-popup-menu))
+  (let ((items (#/subviews self)))
+    (dotimes (i (#/count items))
+      (#/setBorderWidth: (#/layer (#/objectAtIndex: items i)) 1))))
+
+
+;;;; scene-view ================================================================
+
+(defclass scene-view (ns:ns-opengl-view)
+  ((scene :accessor scene :initarg :scene :initform nil)
+   (popup-menu :accessor popup-menu :initarg :popup-menu :initarg nil))
+  (:metaclass ns:+ns-object))
+
+(defun default-popup-menu ()
+  (let ((menu (make-instance 'ui-popup-menu)))
+    (dotimes (i 5)
+      (push (make-instance 'ui-menu-item
+                           :title (format nil "Menu Item ~a" i)
+                           :action-fn #'(lambda (item)
+                                          (format t "Menu item \"~a\" selected.~%" (title item))))
+            (menu-items menu)))
+    (update-layout menu)
+    menu))
+
+(defmethod initialize-instance :after ((self scene-view) &rest initargs)
+  (declare (ignore initargs))
+
+  (setf (popup-menu self) (default-popup-menu))
+  
+  (#/setPixelFormat: self (new-pixel-format ;#$NSOpenGLPFAOpenGLProfile 
+                                            ;#$NSOpenGLProfileVersion3_2Core
+                                            ;#$NSOpenGLPFADoubleBuffer
+                                            #$NSOpenGLPFAColorSize 32
+                                            #$NSOpenGLPFADepthSize 24))
+  (#/setWantsLayer: self t)
+  (#/setBorderWidth: (#/layer self) 1)
+;  (#/setCornerRadius: (#/layer self) 10)
+  (init-view-camera))
 
 ;;; display the view
 (objc:defmethod (#/drawRect: :void) ((self scene-view) (rect :<NSR>ect))
@@ -246,9 +340,30 @@
   (declare (ignore event))
   t)
 
-;;; request a view refresh when mouse click
+(objc:defmethod (#/mouseMoved: :void) ((self scene-view) event)
+  (let ( ;(flags (#/modifierFlags event))
+        (p (#/locationInWindow event)))
+    (when (and (popup-menu self)
+               (menu-is-visible? (popup-menu self)))
+      (unhighlight-items (popup-menu self))
+      ;; highlight menu item under mouse
+      (let ((widget (#/hitTest: self p)))
+        (when (typep widget 'ui-menu-item)
+          (#/setBorderWidth: (#/layer widget) 3)))
+      (#/setNeedsDisplay: self t))))
+
 (objc:defmethod (#/mouseDown: :void) ((self scene-view) event)
-  (declare (ignore event))
+  (let ((flags (#/modifierFlags event))
+        (p (#/locationInWindow event)))
+;    (format t "~a, ~a, ~a~%" p flags #$NSControlKeyMask)
+    (when (and (= flags 262145) ;NSControlKeyMask
+               (popup-menu self)
+               (not (menu-is-visible? (popup-menu self))))
+      (popup (popup-menu self) self))
+    (let ((widget (#/hitTest: self p)))
+      (when (typep widget 'ui-menu-item)
+        (when (action-fn widget)
+          (funcall (action-fn widget) widget)))))
   (#/setNeedsDisplay: self t))
 
 ;;; accept key events
@@ -268,6 +383,7 @@
 z: reset camera~%~
 a: init scene~%~
 space: update scene (hold down for animation) ~%~
+tab: show/hide contextual menu ~%~
 h or ?: print this help message~%"))
 
 ;; x: call GENERATE-SCENE function ~%~
@@ -301,7 +417,15 @@ h or ?: print this help message~%"))
       ;;        (generate-scene (scene self))
       ;;        (dotimes (i 100) (update-scene (scene self)))))
 ;      (#\space (when (scene self) (update-scene (scene self))))))
-      (#\space (dolist (v *scene-views*) (update-scene (scene v))))))
+      (#\space (dolist (v *scene-views*) (update-scene (scene v))))
+
+      (#\tab (when (popup-menu self)
+               (if (not (menu-is-visible? (popup-menu self)))
+                   (popup (popup-menu self) self)
+                   (popdown (popup-menu self)))))
+      (#\escape (when (and (popup-menu self)
+                           (menu-is-visible? (popup-menu self)))
+                  (popdown (popup-menu self))))))
   (redraw))
 
 (objc:defmethod (#/mouseDragged: :void) ((self scene-view) event)
@@ -342,6 +466,8 @@ h or ?: print this help message~%"))
            (v (make-instance 'scene-view :scene scene)))
       (#/setContentView: w v)
 
+      (#/setAcceptsMouseMovedEvents: w t) ;for mouseMoved events
+      
       (push v *scene-views*)
 
       (redraw)
