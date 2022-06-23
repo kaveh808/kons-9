@@ -39,7 +39,8 @@
   ((name :accessor name :initarg :name :initform nil)
    (transform :accessor transform :initarg :transform :initform (make-instance 'transform))
    (show-axis :accessor show-axis :initarg :show-axis :initform nil) ;nil or length
-   (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
+   (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)
+   (is-selected? :accessor is-selected? :initarg :is-selected? :initform nil)))
 
 (defmethod copy-instance-data ((dst shape) (src shape))
   ;; TODO - name not copied - always generate new name?
@@ -143,10 +144,10 @@
     (#_glVertex3f 0.0 0.0 (show-axis self))
     (#_glEnd)))
 
-(defmethod draw-bounds ((self shape))
+(defmethod draw-bounds ((self shape) &optional (color (c! 0 1 1)))
   (with-gl-disable #$GL_LIGHTING
     (#_glLineWidth 3.0)
-    (#_glColor3f 0.0 1.0 1.0)
+    (#_glColor3f (c-red color) (c-green color) (c-blue color))
     (#_glBegin #$GL_LINES)
     (multiple-value-bind (lo hi center)
         (bounds-and-center self)
@@ -175,12 +176,17 @@
 
           (#_glEnd))))))
 
+(defmethod draw-selected ((self shape))
+  (draw-bounds self (c! 1 0 0)))
+
 ;;; draw axis and pop matrix after drawing
 (defmethod draw :after ((self shape))
   (when (show-axis self)
     (draw-axis self))
-  (when (show-bounds? self)
-    (draw-bounds self))
+  (if (is-selected? self)
+      (draw-selected self)
+      (when (show-bounds? self)
+        (draw-bounds self)))
   (#_glPopMatrix))
 
 ;;; curve-shape class ====================================================
