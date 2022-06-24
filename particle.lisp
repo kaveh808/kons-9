@@ -299,7 +299,7 @@
     (nreverse curves)))
 
 (defmethod curve-generator-curves-closed ((p-sys particle-system))
-  (make-list (length (faces p-sys)) :initial-element nil))
+  (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
 (defmethod make-particle-system ((p-gen point-generator-mixin) vel num max-gen particle-class &rest initargs)
   (let ((p-sys (make-instance 'particle-system :max-generations max-gen)))

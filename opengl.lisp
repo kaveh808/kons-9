@@ -183,7 +183,7 @@
 ;;;; ui-view ===================================================================
 
 (defclass ui-view (ns:ns-view)
-  ((bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1 1)))
+  ((bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1 0)))
   (:metaclass ns:+ns-object))
 
 (defmethod initialize-instance :after ((self ui-view) &rest initargs)
@@ -226,12 +226,12 @@
 ;;;; ui-popup-menu =============================================================
 
 (defclass ui-popup-menu (ui-view)
-  ((menu-items :accessor menu-items :initarg :menu-items :initform '())
-   (menu-is-visible? :accessor menu-is-visible? :initarg :menu-is-visible? :initform nil))
+  ((menu-items :accessor menu-items :initarg :menu-items :initform '()))
   (:metaclass ns:+ns-object))
 
 (defmethod initialize-instance :after ((self ui-popup-menu) &rest initargs)
   (declare (ignore initargs))
+  (setf (bg-color self) (c! 1 1 1 0.5))
   )
 
 (defmethod update-layout ((self ui-popup-menu))
@@ -255,13 +255,12 @@
          (x (/ (- view-width menu-width) 2))
          (y (/ (- view-height menu-height) 2)))
     (#/setFrameOrigin: self (ns:make-ns-point x y))
-    (#/addSubview: view self))
-  (setf (menu-is-visible? self) t))
+    (#/addSubview: view self)))
 
 (defmethod popdown ((self ui-popup-menu))
-  (#/removeFromSuperview self)
-  (setf (menu-is-visible? self) nil)
-  (unhighlight-items self))
+  (#/removeFromSuperview self))
+;  (setf (menu-is-visible? self) nil)
+;  (unhighlight-items self))
 
 (defmethod unhighlight-items ((self ui-popup-menu))
   (let ((items (#/subviews self)))
@@ -273,7 +272,7 @@
 
 (defclass scene-view (ns:ns-opengl-view)
   ((scene :accessor scene :initarg :scene :initform nil)
-   (popup-menu :accessor popup-menu :initarg :popup-menu :initarg nil))
+   (popup-menu :accessor popup-menu :initarg :popup-menu :initform nil))
   (:metaclass ns:+ns-object))
 
 (defun default-popup-menu ()
@@ -289,9 +288,6 @@
 
 (defmethod initialize-instance :after ((self scene-view) &rest initargs)
   (declare (ignore initargs))
-
-  (setf (popup-menu self) (default-popup-menu))
-  
   (#/setPixelFormat: self (new-pixel-format ;#$NSOpenGLPFAOpenGLProfile 
                                             ;#$NSOpenGLProfileVersion3_2Core
                                             ;#$NSOpenGLPFADoubleBuffer
@@ -343,8 +339,7 @@
 (objc:defmethod (#/mouseMoved: :void) ((self scene-view) event)
   (let ( ;(flags (#/modifierFlags event))
         (p (#/locationInWindow event)))
-    (when (and (popup-menu self)
-               (menu-is-visible? (popup-menu self)))
+    (when (popup-menu self)
       (unhighlight-items (popup-menu self))
       ;; highlight menu item under mouse
       (let ((widget (#/hitTest: self p)))
@@ -356,10 +351,10 @@
   (let ((flags (#/modifierFlags event))
         (p (#/locationInWindow event)))
 ;    (format t "~a, ~a, ~a~%" p flags #$NSControlKeyMask)
-    (when (and (= flags 262145) ;NSControlKeyMask
-               (popup-menu self)
-               (not (menu-is-visible? (popup-menu self))))
-      (popup (popup-menu self) self))
+    ;; (when (and (= flags 262145) ;NSControlKeyMask
+    ;;            (popup-menu self)
+    ;;            (not (menu-is-visible? (popup-menu self))))
+    ;;   (popup (popup-menu self) self))
     (let ((widget (#/hitTest: self p)))
       (when (typep widget 'ui-menu-item)
         (when (action-fn widget)
@@ -419,13 +414,9 @@ h or ?: print this help message~%"))
 ;      (#\space (when (scene self) (update-scene (scene self))))))
       (#\space (dolist (v *scene-views*) (update-scene (scene v))))
 
-      (#\tab (when (popup-menu self)
-               (if (not (menu-is-visible? (popup-menu self)))
-                   (popup (popup-menu self) self)
-                   (popdown (popup-menu self)))))
-      (#\escape (when (and (popup-menu self)
-                           (menu-is-visible? (popup-menu self)))
-                  (popdown (popup-menu self))))))
+      (#\tab (if (null (popup-menu self))
+                 (menu-popup self)
+                 (menu-popdown self)))))
   (redraw))
 
 (objc:defmethod (#/mouseDragged: :void) ((self scene-view) event)
@@ -444,7 +435,15 @@ h or ?: print this help message~%"))
            (incf *cam-y-rot* dx))))
   (redraw))
 
+(defmethod menu-popup ((self scene-view))
+  (setf (popup-menu self) (default-popup-menu))
+  (popup (popup-menu self) self))
 
+(defmethod menu-popdown ((self scene-view))
+  (popdown (popup-menu self))
+  (setf (popup-menu self) nil))
+
+;;;; app-window ================================================================
 
 (defclass app-window (ns:ns-window)
   ()

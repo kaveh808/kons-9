@@ -547,7 +547,7 @@
     (nreverse curves)))
 
 (defmethod curve-generator-curves-closed ((polyh polyhedron))
-  (make-list (length (faces polyh)) :initial-element t))
+  (make-list (length (faces polyh)) :initial-element t)) ;always closed
 
 (defun make-polyhedron (points faces &optional (mesh-type 'polyhedron))
   (let ((polyh (make-instance mesh-type :points (make-array (length points)
