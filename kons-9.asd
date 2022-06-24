@@ -19,4 +19,5 @@
    (:file "scene")
    (:file "usd")
    (:file "obj")
-   (:file "main")))
+   (:file "main"))
+  :serial t)
