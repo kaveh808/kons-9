@@ -267,11 +267,33 @@
     (dotimes (i (#/count items))
       (#/setBorderWidth: (#/layer (#/objectAtIndex: items i)) 1))))
 
+;;;; ui-status-bar =============================================================
+
+(defclass ui-status-bar (ui-view)
+  ((info-1 :accessor info-1 :initarg :info-1 :initform "Mouse: orbit, [option] left/right up/down, [command] in/out")
+   (info-2 :accessor info-2 :initarg :info-2 :initform "Information 2")
+   (info-3 :accessor info-3 :initarg :info-3 :initform "Information 3")
+   (info-4 :accessor info-4 :initarg :info-4 :initform "Information 4")
+   (info-5 :accessor info-5 :initarg :info-5 :initform "Information 5"))
+  (:metaclass ns:+ns-object))
+
+(objc:defmethod (#/drawRect: :void) ((self ui-status-bar) (rect :<NSR>ect))
+  (call-next-method rect)
+  ;; (let* ((str-width (ns:ns-size-width (#/sizeWithAttributes: (objc:make-nsstring (title self)) nil)))
+  ;;        (rect-width (ns:ns-rect-width (#/frame self)))
+  ;;        (x (/ (- rect-width str-width) 2)))
+  (#/drawAtPoint:withAttributes: (objc:make-nsstring (info-1 self)) (ns:make-ns-point 20 3) nil)
+  (#/drawAtPoint:withAttributes: (objc:make-nsstring (info-2 self)) (ns:make-ns-point 400 3) nil)
+  (#/drawAtPoint:withAttributes: (objc:make-nsstring (info-3 self)) (ns:make-ns-point 600 3) nil)
+  (#/drawAtPoint:withAttributes: (objc:make-nsstring (info-4 self)) (ns:make-ns-point 900 3) nil)
+  (#/drawAtPoint:withAttributes: (objc:make-nsstring (info-5 self)) (ns:make-ns-point 1200 3) nil)
+  )
 
 ;;;; scene-view ================================================================
 
 (defclass scene-view (ns:ns-opengl-view)
   ((scene :accessor scene :initarg :scene :initform nil)
+   (status-bar :accessor status-bar :initarg :status-bar :initform nil)
    (popup-menu :accessor popup-menu :initarg :popup-menu :initform nil))
   (:metaclass ns:+ns-object))
 
@@ -336,9 +358,15 @@
   (declare (ignore event))
   t)
 
+(defmethod update-status-bar-mouse-loc ((self ui-status-bar) p)
+  (setf (info-2 self)
+        (format nil "Cursor: (~a, ~a)" (round (ns:ns-point-x p)) (round (ns:ns-point-y p))))
+  (#/setNeedsDisplay: self t))
+
 (objc:defmethod (#/mouseMoved: :void) ((self scene-view) event)
   (let ( ;(flags (#/modifierFlags event))
         (p (#/locationInWindow event)))
+    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
     (when (popup-menu self)
       (unhighlight-items (popup-menu self))
       ;; highlight menu item under mouse
@@ -364,6 +392,24 @@
 ;;; accept key events
 (objc:defmethod (#/acceptsFirstResponder :<BOOL>) ((self scene-view))
    t)
+
+(objc:defmethod (#/mouseDragged: :void) ((self scene-view) event)
+  (let ((flags (#/modifierFlags event))
+        (p (#/locationInWindow event))
+        (dx (coerce (#/deltaX event) 'single-float))
+        (dy (coerce (#/deltaY event) 'single-float)))
+    ;;    (format t "~a, ~a~%" flags #$NSAlternateKeyMask)
+    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
+    (cond ((or (= flags 524320) (= flags 524352)) ; #$NSAlternateKeyMask -- this has been deprecated
+           (if (>= (abs dx) (abs dy))
+               (incf *cam-side-dist* (* 0.1 dx))
+               (incf *cam-up-dist* (* -0.1 dy))))
+          ((or (= flags 1048584) (= flags 1048592)) ; command
+           (incf *cam-fwd-dist* (* 0.1 dx)))
+          (t
+           (incf *cam-x-rot* dy)
+           (incf *cam-y-rot* dx))))
+  (redraw))
 
 (defun print-viewport-help ()
   (format t "Mouse drag: orbit, [option] track left/right and up/down, [command] track in/out~%~
@@ -419,22 +465,6 @@ h or ?: print this help message~%"))
                  (menu-popdown self)))))
   (redraw))
 
-(objc:defmethod (#/mouseDragged: :void) ((self scene-view) event)
-  (let ((flags (#/modifierFlags event))
-        (dx (coerce (#/deltaX event) 'single-float))
-        (dy (coerce (#/deltaY event) 'single-float)))
-    ;;    (format t "~a, ~a~%" flags #$NSAlternateKeyMask)
-    (cond ((or (= flags 524320) (= flags 524352)) ; #$NSAlternateKeyMask -- this has been deprecated
-           (if (>= (abs dx) (abs dy))
-               (incf *cam-side-dist* (* 0.1 dx))
-               (incf *cam-up-dist* (* -0.1 dy))))
-          ((or (= flags 1048584) (= flags 1048592)) ; command
-           (incf *cam-fwd-dist* (* 0.1 dx)))
-          (t
-           (incf *cam-x-rot* dy)
-           (incf *cam-y-rot* dx))))
-  (redraw))
-
 (defmethod menu-popup ((self scene-view))
   (setf (popup-menu self) (default-popup-menu))
   (popup (popup-menu self) self))
@@ -449,11 +479,14 @@ h or ?: print this help message~%"))
   ()
   (:metaclass ns:+ns-object))
 
+(defparameter *window-x-size* 960)
+(defparameter *window-y-size* 540)
+
 ;;; create and display a window containing an OpeGL view
 (defun show-window (scene)
   (setf *scene-views* '())
   (ns:with-ns-rect ;(frame 0 0 640 360)
-    (frame 0 0 960 540)
+    (frame 0 0 1400 (+ *window-y-size* 20)) ;960 540)
     (let* ((w (make-instance 'app-window
                              :title "foo"
                              :with-content-rect frame
@@ -462,22 +495,28 @@ h or ?: print this help message~%"))
                                                  #$NSMiniaturizableWindowMask)
                              :backing #$NSBackingStoreBuffered
                              :defer t))
-           (v (make-instance 'scene-view :scene scene)))
-      (#/setContentView: w v)
+           (s (make-instance 'ui-status-bar :scene scene))
+           (v (make-instance 'scene-view :scene scene :status-bar s)))
+;      (#/setContentView: w v)
+
+      (#/addSubview: (#/contentView w) v)
+      (#/setFrameOrigin: v (ns:make-ns-point 0 20))
+      (#/setFrameSize: v (ns:make-ns-point *window-x-size* *window-y-size*))
+      (push v *scene-views*)
+
+      (#/addSubview: (#/contentView w) s)
+      (#/setFrameOrigin: s (ns:make-ns-point 0 0))
+      (#/setFrameSize: s (ns:make-ns-point 1400 20))
 
       (#/setAcceptsMouseMovedEvents: w t) ;for mouseMoved events
       
-      (push v *scene-views*)
-
       (redraw)
       (#/release v)
       (#/center w)
       (#/orderFront: w nil)
       w)))
 
-;;; create and display a window containing an OpeGL view
-(defparameter *window-x-size* 960)
-(defparameter *window-y-size* 540)
+;;; create and display a window containing a grid of OpeGL views
 (defun show-grid-window (grid-size)
   (setf *scene-views* '())
   (ns:with-ns-rect
