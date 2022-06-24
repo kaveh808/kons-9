@@ -200,7 +200,6 @@
                                         ;  (#/setFill (#/whiteColor ns:ns-color))
   (#_NSRectFill (#/bounds self)))
 
-
 ;;;; ui-menu-item ==============================================================
 
 (defclass ui-menu-item (ui-view)
@@ -289,6 +288,49 @@
   (#/drawAtPoint:withAttributes: (objc:make-nsstring (info-5 self)) (ns:make-ns-point 1200 3) nil)
   )
 
+(defmethod update-status-bar-mouse-loc ((self ui-status-bar) p)
+  (setf (info-2 self)
+        (format nil "Cursor: (~a, ~a)" (round (ns:ns-point-x p)) (round (ns:ns-point-y p))))
+  (#/setNeedsDisplay: self t))
+
+;;;; ui-schematic-item =========================================================
+
+(defclass ui-schematic-item (ui-menu-item)
+  ((shape :accessor shape :initarg :shape :initform nil))
+  (:metaclass ns:+ns-object))
+
+(objc:defmethod (#/mouseDown: :void) ((self ui-schematic-item) event)
+  (declare (ignore event))
+  (when (action-fn self)
+    (funcall (action-fn self) self)))
+
+;;;; ui-schematic-view =========================================================
+
+(defclass ui-schematic-view (ui-view)
+  ((scene :accessor scene :initarg :scene :initform nil)
+   (schematic-items :accessor schematic-items :initarg :schematic-items :initform '()))
+  (:metaclass ns:+ns-object))
+
+(defmethod initialize-instance :after ((self ui-schematic-view) &rest initargs)
+  (declare (ignore initargs))
+  (dolist (shape (shapes (scene self)))
+    (push (make-instance 'ui-schematic-item :shape shape
+                                            :title (format nil "~a" shape)
+                                            :action-fn #'(lambda (item)
+                                                           (setf (is-selected? (shape item)) t)))
+          (schematic-items self)))
+  (update-layout self)
+  )
+
+(defmethod update-layout ((self ui-schematic-view))
+  (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
+  (let ((y 10))
+    (dolist (item (schematic-items self))
+      (#/setFrame: item (ns:make-ns-rect 10 y 300 20))
+      (incf y 30)
+      (#/addSubview: self item)
+      (#/release item))))
+
 ;;;; scene-view ================================================================
 
 (defclass scene-view (ns:ns-opengl-view)
@@ -357,11 +399,6 @@
 (objc:defmethod (#/acceptsFirstMouse: :<BOOL>) ((self scene-view) event)
   (declare (ignore event))
   t)
-
-(defmethod update-status-bar-mouse-loc ((self ui-status-bar) p)
-  (setf (info-2 self)
-        (format nil "Cursor: (~a, ~a)" (round (ns:ns-point-x p)) (round (ns:ns-point-y p))))
-  (#/setNeedsDisplay: self t))
 
 (objc:defmethod (#/mouseMoved: :void) ((self scene-view) event)
   (let ( ;(flags (#/modifierFlags event))
@@ -495,8 +532,9 @@ h or ?: print this help message~%"))
                                                  #$NSMiniaturizableWindowMask)
                              :backing #$NSBackingStoreBuffered
                              :defer t))
-           (s (make-instance 'ui-status-bar :scene scene))
-           (v (make-instance 'scene-view :scene scene :status-bar s)))
+           (sb (make-instance 'ui-status-bar))
+           (sv (make-instance 'ui-schematic-view :scene scene))
+           (v (make-instance 'scene-view :scene scene :status-bar sb)))
 ;      (#/setContentView: w v)
 
       (#/addSubview: (#/contentView w) v)
@@ -504,9 +542,13 @@ h or ?: print this help message~%"))
       (#/setFrameSize: v (ns:make-ns-point *window-x-size* *window-y-size*))
       (push v *scene-views*)
 
-      (#/addSubview: (#/contentView w) s)
-      (#/setFrameOrigin: s (ns:make-ns-point 0 0))
-      (#/setFrameSize: s (ns:make-ns-point 1400 20))
+      (#/addSubview: (#/contentView w) sb)
+      (#/setFrameOrigin: sb (ns:make-ns-point 0 0))
+      (#/setFrameSize: sb (ns:make-ns-point 1400 20))
+
+      (#/addSubview: (#/contentView w) sv)
+      (#/setFrameOrigin: sv (ns:make-ns-point *window-x-size* 20))
+      (#/setFrameSize: sv (ns:make-ns-point (- 1400 *window-x-size*) *window-y-size*))
 
       (#/setAcceptsMouseMovedEvents: w t) ;for mouseMoved events
       
