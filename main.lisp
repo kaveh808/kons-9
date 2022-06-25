@@ -20,4 +20,6 @@
 
 (defun redraw ()
   (dolist (v *scene-views*)
-    (#/setNeedsDisplay: v t)))
+    (#/setNeedsDisplay: v t)
+    (when (schematic-view v)
+      (update-view (schematic-view v)))))

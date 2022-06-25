@@ -25,12 +25,12 @@
 ;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
     (let ((circle (translate-to (make-circle-shape 3.0  7) (p! 0 0 -4.0)))
-          (cube (translate-by (make-cut-cube-polyhedron 2.0) (p! 0 0 4.0)))
+          (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
           (icos (make-icosahedron 2.0)))
       (setf (show-axis circle) 1.0)
-      (setf (show-normals cube) 1.0)
-      (setf (show-bounds? icos) t)
-      (add-shapes *scene* (list circle cube icos))))
+      (setf (show-normals icos) 1.0)
+      (setf (show-bounds? superq) t)
+      (add-shapes *scene* (list circle superq icos))))
 
 ;;; uv-mesh --------------------------------------------------------------------
 (with-clear-and-redraw

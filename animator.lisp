@@ -51,6 +51,7 @@
    (update-fn :accessor update-fn :initarg :update-fn :initform nil)
    (init-args :accessor init-args :initarg :init-args :initform '())
    (is-initialized? :accessor is-initialized? :initarg :is-initialized? :initform nil)
+   (is-selected? :accessor is-selected? :initarg :is-selected? :initform nil)
    (shape :accessor shape :initarg :shape :initform nil)
    (data :accessor data :initarg :data :initform '())))
 

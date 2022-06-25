@@ -179,6 +179,28 @@
   ;;     (gl-enable-light #$GL_LIGHT0 (transform-point (p! 0 0 1) mtx))))
 ;;  )
 
+;;;; ui utils ==================================================================
+
+(defparameter *ui-inactive-border-width* 1)
+(defparameter *ui-inactive-border-color* (#/CGColor (#/blackColor ns:ns-color)))
+(defparameter *ui-active-border-width* 3)
+(defparameter *ui-active-border-color* (#/CGColor (#/blueColor ns:ns-color)))
+
+(defun ui-set-border-color (view cg-color)
+  (#/setBorderColor: (#/layer view) cg-color))
+
+(defun ui-switch-active-view (new-view old-view)
+  (setf (is-active-view? new-view) t)
+  (setf (is-active-view? old-view) nil)
+  ;; highlight new-view
+  (#/setBorderWidth: (#/layer new-view) *ui-active-border-width*)
+  (#/setBorderColor: (#/layer new-view) *ui-active-border-color*)
+  ;; unhighlight old-view
+  (#/setBorderWidth: (#/layer old-view) *ui-inactive-border-width*)
+  (#/setBorderColor: (#/layer old-view) *ui-inactive-border-color*)
+  ;; redraw
+  (#/setNeedsDisplay: new-view t)
+  (#/setNeedsDisplay: old-view t))
 
 ;;;; ui-view ===================================================================
 
@@ -190,15 +212,16 @@
   (declare (ignore initargs))
   (#/setWantsLayer: self t)
   (#/setBorderWidth: (#/layer self) 1)
+  (#/setBorderColor: (#/layer self) (#/CGColor (#/blackColor ns:ns-color)))
   (#/setCornerRadius: (#/layer self) 0))
 
 (objc:defmethod (#/drawRect: :void) ((self ui-view) (rect :<NSR>ect))
   (with-accessors ((bg bg-color))
       self
     (#/setFill (#/colorWithCalibratedRed:green:blue:alpha:
-                ns:ns-color (c-red bg) (c-green bg) (c-blue bg) (c-alpha bg))))
+                ns:ns-color (c-red bg) (c-green bg) (c-blue bg) (c-alpha bg)))
                                         ;  (#/setFill (#/whiteColor ns:ns-color))
-  (#_NSRectFill (#/bounds self)))
+    (#_NSRectFill (#/bounds self))))
 
 ;;;; ui-menu-item ==============================================================
 
@@ -215,12 +238,6 @@
     (#/drawAtPoint:withAttributes: (objc:make-nsstring (title self))
                                    (ns:make-ns-point x 3)
                                    nil)))
-
-;; (objc:defmethod (#/mouseEntered: :void) ((self ui-menu-item) event)
-;;   (declare (ignore event))
-;;   (print (title self)); xxx do highlight here
-;;   (#/setNeedsDisplay: self t))
-
 
 ;;;; ui-popup-menu =============================================================
 
@@ -261,7 +278,7 @@
 ;  (setf (menu-is-visible? self) nil)
 ;  (unhighlight-items self))
 
-(defmethod unhighlight-items ((self ui-popup-menu))
+(defmethod unhighlight-items ((self ui-view))
   (let ((items (#/subviews self)))
     (dotimes (i (#/count items))
       (#/setBorderWidth: (#/layer (#/objectAtIndex: items i)) 1))))
@@ -299,6 +316,28 @@
   ((shape :accessor shape :initarg :shape :initform nil))
   (:metaclass ns:+ns-object))
 
+(defmethod set-item-color ((self ui-menu-item))
+  (cond ((is-selected? (shape self))
+         (setf (bg-color self) (c! 1 0 0 0.5)))
+        ((typep (shape self) 'group)
+         (setf (bg-color self) (c! 1 1 0 0.5)))
+        ((typep (shape self) 'curve-shape)
+         (setf (bg-color self) (c! 1 0 1 0.5)))
+        ((typep (shape self) 'uv-mesh)
+         (setf (bg-color self) (c! 0.5 1 0.5 0.5)))
+        ((typep (shape self) 'particle-system)
+         (setf (bg-color self) (c! 1 0.5 1 0.5)))
+        ((typep (shape self) 'polyhedron)
+         (setf (bg-color self) (c! 0 1 0 0.5)))
+        ((typep (shape self) 'animator)
+         (setf (bg-color self) (c! 0 0 1 0.5)))
+        (t
+         (setf (bg-color self) (c! 1 1 1 0.5)))))
+
+(objc:defmethod (#/drawRect: :void) ((self ui-schematic-item) (rect :<NSR>ect))
+  (call-next-method rect)
+  )
+
 (objc:defmethod (#/mouseDown: :void) ((self ui-schematic-item) event)
   (declare (ignore event))
   (when (action-fn self)
@@ -306,47 +345,164 @@
 
 ;;;; ui-schematic-view =========================================================
 
+(defparameter *ui-schematic-offset-x* 0.0)
+(defparameter *ui-schematic-offset-y* 0.0)
+(defparameter *ui-schematic-zoom-factor* 1.0)
+
+(defun reset-schematic-view ()
+  (setf *ui-schematic-offset-x* 0.0)
+  (setf *ui-schematic-offset-y* 0.0)
+  (setf *ui-schematic-zoom-factor* 1.0))
+
 (defclass ui-schematic-view (ui-view)
   ((scene :accessor scene :initarg :scene :initform nil)
-   (schematic-items :accessor schematic-items :initarg :schematic-items :initform '()))
+   (is-active-view? :accessor is-active-view? :initarg :is-active-view? :initform nil)
+   (schematic-items :accessor schematic-items :initarg :schematic-items :initform '())
+   (scene-view :accessor scene-view :initarg :scene-view :initform nil)
+   (status-bar :accessor status-bar :initarg :status-bar :initform nil))
   (:metaclass ns:+ns-object))
 
 (defmethod initialize-instance :after ((self ui-schematic-view) &rest initargs)
   (declare (ignore initargs))
+  (update-view self)
+  )
+
+(defmethod update-view ((self ui-schematic-view))
+  (setf (schematic-items self) '())
   (dolist (shape (shapes (scene self)))
+    ;; (append (shapes (scene self)) (animators (scene self))))
     (push (make-instance 'ui-schematic-item :shape shape
                                             :title (format nil "~a" shape)
                                             :action-fn #'(lambda (item)
-                                                           (setf (is-selected? (shape item)) t)))
+                                                           (setf (is-selected? (shape item))
+                                                                 (not (is-selected? (shape item))))
+                                                           (set-item-color item)
+                                                           (#/setNeedsDisplay: item t)
+                                                           (#/setNeedsDisplay: (scene-view self) t)))
           (schematic-items self)))
-  (update-layout self)
-  )
+    (update-layout self))
 
 (defmethod update-layout ((self ui-schematic-view))
   (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
   (let ((y 10))
     (dolist (item (schematic-items self))
-      (#/setFrame: item (ns:make-ns-rect 10 y 300 20))
-      (incf y 30)
+      (#/setFrame: item (ns:make-ns-rect (* (+ 10 *ui-schematic-offset-x*) *ui-schematic-zoom-factor*)
+                                         (* (+  y *ui-schematic-offset-y*) *ui-schematic-zoom-factor*)
+                                         (* 300 *ui-schematic-zoom-factor*)
+                                         (* 20 *ui-schematic-zoom-factor*)))
+      (set-item-color item)
+      (incf y (* 30 *ui-schematic-zoom-factor*))
       (#/addSubview: self item)
-      (#/release item))))
+;;      (#/release item)   ; memory leak?
+      )))
+
+(defmethod update-status-bar ((self ui-schematic-view) &optional (p nil))
+  (let ((sb (status-bar self))
+        (scene (scene self)))
+    (setf (info-1 sb) "Mouse drag: [option] pan, [command] zoom")
+    (setf (info-2 sb) (if p
+                          (format nil "Cursor: (~a, ~a)"
+                                  (round (ns:ns-point-x p)) (round (ns:ns-point-y p)))
+                          ""))
+    (setf (info-3 sb) (format nil "Current Frame: ~a" (current-frame scene)))
+    (setf (info-4 sb) (format nil "Num Shapes: ~a" (length (shapes scene))))
+    (setf (info-5 sb) (format nil "Num Animators: ~a" (length (animators scene))))
+    (#/setNeedsDisplay: sb t)))
+    
+;;; accept key events
+(objc:defmethod (#/acceptsFirstResponder :<BOOL>) ((self ui-schematic-view))
+   t)
+
+(objc:defmethod (#/mouseMoved: :void) ((self ui-schematic-view) event)
+  (let ( ;(flags (#/modifierFlags event))
+        (p (#/locationInWindow event)))
+;    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
+    (update-status-bar self (#/convertPoint:fromView: self p nil))
+    (unhighlight-items self)
+    ;; highlight menu item under mouse
+    (let ((widget (#/hitTest: self p)))
+      (when (typep widget 'ui-schematic-item)
+        (#/setBorderWidth: (#/layer widget) 3)))
+    (#/setNeedsDisplay: self t)))
+
+(objc:defmethod (#/mouseDown: :void) ((self ui-schematic-view) event)
+  (declare (ignore event))
+  (if (not (is-active-view? self))
+      (ui-switch-active-view self (scene-view self)))
+  (update-view self))                   ;need automatic way of updating
+
+(objc:defmethod (#/mouseDragged: :void) ((self ui-schematic-view) event)
+  (let ((flags (#/modifierFlags event))
+        (p (#/locationInWindow event))
+        (dx (coerce (#/deltaX event) 'single-float))
+        (dy (coerce (#/deltaY event) 'single-float)))
+    (update-status-bar self (#/convertPoint:fromView: self p nil))
+;    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
+    (cond ((or (= flags 524320) (= flags 524352)) ; #$NSAlternateKeyMask -- this has been deprecated
+           (incf *ui-schematic-offset-x* (* 1.0 dx))
+           (incf *ui-schematic-offset-y* (* -1.0 dy)))
+          ((or (= flags 1048584) (= flags 1048592)) ; command
+           (incf *ui-schematic-zoom-factor* (* 0.1 dx)))
+          ;; (t
+          ;;  drag without modifier ... xxx
+          ))
+  (update-layout self)
+  (redraw))
+
+(defun print-schematic-view-help ()
+  (format t "Mouse Drag: [option] pan, [command] zoom~%~
+z: reset view pan and zoom~%~
+a: init scene~%~
+space: update scene (hold down for animation) ~%~
+tab: show/hide contextual menu ~%~
+h or ?: print this help message~%"))
+
+(objc:defmethod (#/keyDown: :void) ((self ui-schematic-view) event)
+  (let* ((str (objc:lisp-string-from-nsstring (#/charactersIgnoringModifiers event)))
+         (char (char str 0)))
+    (case char
+      (#\h (print-schematic-view-help))
+      (#\? (print-schematic-view-help))
+      (#\z (reset-schematic-view))
+      (#\a (dolist (v *scene-views*) (init-scene (scene v))))
+      (#\space (dolist (v *scene-views*) (update-scene (scene v))))
+
+      (#\tab (if (null (popup-menu self))
+                 (menu-popup self)
+                 (menu-popdown self)))))
+  (update-layout self)
+  (redraw))
 
 ;;;; scene-view ================================================================
 
 (defclass scene-view (ns:ns-opengl-view)
   ((scene :accessor scene :initarg :scene :initform nil)
+   (is-active-view? :accessor is-active-view? :initarg :is-active-view? :initform nil)
+   (schematic-view :accessor schematic-view :initarg :schematic-view :initform nil)
    (status-bar :accessor status-bar :initarg :status-bar :initform nil)
    (popup-menu :accessor popup-menu :initarg :popup-menu :initform nil))
   (:metaclass ns:+ns-object))
 
 (defun default-popup-menu ()
   (let ((menu (make-instance 'ui-popup-menu)))
-    (dotimes (i 5)
       (push (make-instance 'ui-menu-item
-                           :title (format nil "Menu Item ~a" i)
+                           :title "Bright Theme"
                            :action-fn #'(lambda (item)
-                                          (format t "Menu item \"~a\" selected.~%" (title item))))
-            (menu-items menu)))
+                                          (declare (ignore item))
+                                          (set-theme-bright)))
+            (menu-items menu))
+      (push (make-instance 'ui-menu-item
+                           :title "Dark Theme"
+                           :action-fn #'(lambda (item)
+                                          (declare (ignore item))
+                                          (set-theme-dark)))
+            (menu-items menu))
+    ;; (dotimes (i 5)
+    ;;   (push (make-instance 'ui-menu-item
+    ;;                        :title (format nil "Menu Item ~a" i)
+    ;;                        :action-fn #'(lambda (item)
+    ;;                                       (format t "Menu item \"~a\" selected.~%" (title item))))
+    ;;         (menu-items menu)))
     (update-layout menu)
     menu))
 
@@ -364,6 +520,8 @@
 
 ;;; display the view
 (objc:defmethod (#/drawRect: :void) ((self scene-view) (rect :<NSR>ect))
+  (update-status-bar self)
+
   (#_glClearColor (c-red *bg-color*) (c-green *bg-color*) (c-blue *bg-color*) 0.0)
 
   (#_glClear (logior #$GL_COLOR_BUFFER_BIT #$GL_DEPTH_BUFFER_BIT))
@@ -395,6 +553,19 @@
   (gl-set-fg-color)
   (#_glFlush))
 
+(defmethod update-status-bar ((self scene-view) &optional (p nil))
+  (let ((sb (status-bar self))
+        (scene (scene self)))
+    (setf (info-1 sb) "Mouse Drag: orbit, [option] left/right/up/down, [command] in/out")
+    (setf (info-2 sb) (if p
+                          (format nil "Cursor: (~a, ~a)"
+                                  (round (ns:ns-point-x p)) (round (ns:ns-point-y p)))
+                          ""))
+    (setf (info-3 sb) (format nil "Current Frame: ~a" (current-frame scene)))
+    (setf (info-4 sb) (format nil "Num Shapes: ~a" (length (shapes scene))))
+    (setf (info-5 sb) (format nil "Num Animators: ~a" (length (animators scene))))
+    (#/setNeedsDisplay: sb t)))
+
 ;;; respond to first click in window
 (objc:defmethod (#/acceptsFirstMouse: :<BOOL>) ((self scene-view) event)
   (declare (ignore event))
@@ -403,7 +574,7 @@
 (objc:defmethod (#/mouseMoved: :void) ((self scene-view) event)
   (let ( ;(flags (#/modifierFlags event))
         (p (#/locationInWindow event)))
-    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
+    (update-status-bar self (#/convertPoint:fromView: self p nil))
     (when (popup-menu self)
       (unhighlight-items (popup-menu self))
       ;; highlight menu item under mouse
@@ -413,17 +584,19 @@
       (#/setNeedsDisplay: self t))))
 
 (objc:defmethod (#/mouseDown: :void) ((self scene-view) event)
-  (let ((flags (#/modifierFlags event))
-        (p (#/locationInWindow event)))
+  (if (not (is-active-view? self))
+      (ui-switch-active-view self (schematic-view self))
+      (let ( ;(flags (#/modifierFlags event))
+            (p (#/locationInWindow event)))
 ;    (format t "~a, ~a, ~a~%" p flags #$NSControlKeyMask)
     ;; (when (and (= flags 262145) ;NSControlKeyMask
     ;;            (popup-menu self)
     ;;            (not (menu-is-visible? (popup-menu self))))
     ;;   (popup (popup-menu self) self))
-    (let ((widget (#/hitTest: self p)))
-      (when (typep widget 'ui-menu-item)
-        (when (action-fn widget)
-          (funcall (action-fn widget) widget)))))
+        (let ((widget (#/hitTest: self p)))
+          (when (typep widget 'ui-menu-item)
+            (when (action-fn widget)
+              (funcall (action-fn widget) widget))))))
   (#/setNeedsDisplay: self t))
 
 ;;; accept key events
@@ -436,7 +609,7 @@
         (dx (coerce (#/deltaX event) 'single-float))
         (dy (coerce (#/deltaY event) 'single-float)))
     ;;    (format t "~a, ~a~%" flags #$NSAlternateKeyMask)
-    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
+    (update-status-bar self (#/convertPoint:fromView: self p nil))
     (cond ((or (= flags 524320) (= flags 524352)) ; #$NSAlternateKeyMask -- this has been deprecated
            (if (>= (abs dx) (abs dy))
                (incf *cam-side-dist* (* 0.1 dx))
@@ -448,7 +621,7 @@
            (incf *cam-y-rot* dx))))
   (redraw))
 
-(defun print-viewport-help ()
+(defun print-scene-view-help ()
   (format t "Mouse drag: orbit, [option] track left/right and up/down, [command] track in/out~%~
 `: toggle lighting~%~
 1: toggle filled display~%~
@@ -475,8 +648,8 @@ h or ?: print this help message~%"))
          (scene (scene self)))
     (case char
           ;;; #\tab #\^Y 
-      (#\h (print-viewport-help))
-      (#\? (print-viewport-help))
+      (#\h (print-scene-view-help))
+      (#\? (print-scene-view-help))
       (#\a (when scene (init-scene scene)))
       (#\` (setf *do-lighting?* (not *do-lighting?*)))
       ;; (#\1 (setf *light-0-on?* (not *light-0-on?*)))
@@ -533,14 +706,9 @@ h or ?: print this help message~%"))
                              :backing #$NSBackingStoreBuffered
                              :defer t))
            (sb (make-instance 'ui-status-bar))
-           (sv (make-instance 'ui-schematic-view :scene scene))
+           (sv (make-instance 'ui-schematic-view :scene scene :status-bar sb))
            (v (make-instance 'scene-view :scene scene :status-bar sb)))
 ;      (#/setContentView: w v)
-
-      (#/addSubview: (#/contentView w) v)
-      (#/setFrameOrigin: v (ns:make-ns-point 0 20))
-      (#/setFrameSize: v (ns:make-ns-point *window-x-size* *window-y-size*))
-      (push v *scene-views*)
 
       (#/addSubview: (#/contentView w) sb)
       (#/setFrameOrigin: sb (ns:make-ns-point 0 0))
@@ -550,6 +718,14 @@ h or ?: print this help message~%"))
       (#/setFrameOrigin: sv (ns:make-ns-point *window-x-size* 20))
       (#/setFrameSize: sv (ns:make-ns-point (- 1400 *window-x-size*) *window-y-size*))
 
+      (#/addSubview: (#/contentView w) v)
+      (#/setFrameOrigin: v (ns:make-ns-point 0 20))
+      (#/setFrameSize: v (ns:make-ns-point *window-x-size* *window-y-size*))
+      (push v *scene-views*)
+
+      (setf (schematic-view v) sv)
+      (setf (scene-view sv) v)
+      
       (#/setAcceptsMouseMovedEvents: w t) ;for mouseMoved events
       
       (redraw)
