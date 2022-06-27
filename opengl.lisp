@@ -102,7 +102,7 @@
   (setf *cam-y-rot* -35.0)
   (setf *cam-fwd-dist* -10.0)
   (setf *cam-side-dist* 0.0)
-  (setf *cam-up-dist* -2.0))
+  (setf *cam-up-dist* 0.0)) ;-2.0))
 
 (defun gl-set-fg-color ()
   (#_glColor3f (c-red *fg-color*) (c-green *fg-color*) (c-blue *fg-color*)))
@@ -205,7 +205,8 @@
 ;;;; ui-view ===================================================================
 
 (defclass ui-view (ns:ns-view)
-  ((bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1 0)))
+  ((bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1 0))
+   (fg-color :accessor fg-color :initarg :fg-color :initform (c! 0 0 0 1)))
   (:metaclass ns:+ns-object))
 
 (defmethod initialize-instance :after ((self ui-view) &rest initargs)
@@ -216,21 +217,30 @@
   (#/setCornerRadius: (#/layer self) 0))
 
 (objc:defmethod (#/drawRect: :void) ((self ui-view) (rect :<NSR>ect))
-  (with-accessors ((bg bg-color))
-      self
+  (with-accessors ((bg bg-color) (fg fg-color)) self
     (#/setFill (#/colorWithCalibratedRed:green:blue:alpha:
                 ns:ns-color (c-red bg) (c-green bg) (c-blue bg) (c-alpha bg)))
-                                        ;  (#/setFill (#/whiteColor ns:ns-color))
-    (#_NSRectFill (#/bounds self))))
+    (#_NSRectFill (#/bounds self))
+    ;; (#/setStroke (#/colorWithCalibratedRed:green:blue:alpha:
+    ;;             ns:ns-color (c-red fg) (c-green fg) (c-blue fg) (c-alpha fg)))
+    ;; (#_NSFrameRectWithWidth: (#/bounds self) 3.0)))
+    ))
 
-;;;; ui-menu-item ==============================================================
+;;;  (#/setFill (#/whiteColor ns:ns-color))
 
-(defclass ui-menu-item (ui-view)
+(defmethod unhighlight-items ((self ui-view))
+  (let ((items (#/subviews self)))
+    (dotimes (i (#/count items))
+      (#/setBorderWidth: (#/layer (#/objectAtIndex: items i)) 1))))
+
+;;;; ui-button-item ============================================================
+
+(defclass ui-button-item (ui-view)
   ((title :accessor title :initarg :title :initform "Menu Item")
    (action-fn :accessor action-fn :initarg :action-fn :initform nil))
   (:metaclass ns:+ns-object))
 
-(objc:defmethod (#/drawRect: :void) ((self ui-menu-item) (rect :<NSR>ect))
+(objc:defmethod (#/drawRect: :void) ((self ui-button-item) (rect :<NSR>ect))
   (call-next-method rect)
   (let* ((str-width (ns:ns-size-width (#/sizeWithAttributes: (objc:make-nsstring (title self)) nil)))
          (rect-width (ns:ns-rect-width (#/frame self)))
@@ -238,6 +248,12 @@
     (#/drawAtPoint:withAttributes: (objc:make-nsstring (title self))
                                    (ns:make-ns-point x 3)
                                    nil)))
+
+;;;; ui-menu-item ==============================================================
+
+(defclass ui-menu-item (ui-button-item)
+  ()
+  (:metaclass ns:+ns-object))
 
 ;;;; ui-popup-menu =============================================================
 
@@ -275,13 +291,6 @@
 
 (defmethod popdown ((self ui-popup-menu))
   (#/removeFromSuperview self))
-;  (setf (menu-is-visible? self) nil)
-;  (unhighlight-items self))
-
-(defmethod unhighlight-items ((self ui-view))
-  (let ((items (#/subviews self)))
-    (dotimes (i (#/count items))
-      (#/setBorderWidth: (#/layer (#/objectAtIndex: items i)) 1))))
 
 ;;;; ui-status-bar =============================================================
 
@@ -310,13 +319,30 @@
         (format nil "Cursor: (~a, ~a)" (round (ns:ns-point-x p)) (round (ns:ns-point-y p))))
   (#/setNeedsDisplay: self t))
 
+;;;; ui-view-popup-mixin =======================================================
+
+(defclass ui-view-popup-mixin ()
+  ((popup-menu :accessor popup-menu :initarg :popup-menu :initform nil)))
+
+(defmethod menu-popup ((self ui-view-popup-mixin) (menu ui-popup-menu))
+  (setf (popup-menu self) menu)
+  (popup (popup-menu self) self))
+
+(defmethod menu-popdown ((self ui-view-popup-mixin))
+  (popdown (popup-menu self))
+  (setf (popup-menu self) nil))
+
 ;;;; ui-schematic-item =========================================================
 
-(defclass ui-schematic-item (ui-menu-item)
+(defclass ui-schematic-item (ui-button-item)
   ((shape :accessor shape :initarg :shape :initform nil))
   (:metaclass ns:+ns-object))
 
-(defmethod set-item-color ((self ui-menu-item))
+(objc:defmethod (#/drawRect: :void) ((self ui-schematic-item) (rect :<NSR>ect))
+  (call-next-method rect)
+  )
+
+(defmethod set-item-color ((self ui-schematic-item))
   (cond ((is-selected? (shape self))
          (setf (bg-color self) (c! 1 0 0 0.5)))
         ((typep (shape self) 'group)
@@ -334,10 +360,6 @@
         (t
          (setf (bg-color self) (c! 1 1 1 0.5)))))
 
-(objc:defmethod (#/drawRect: :void) ((self ui-schematic-item) (rect :<NSR>ect))
-  (call-next-method rect)
-  )
-
 (objc:defmethod (#/mouseDown: :void) ((self ui-schematic-item) event)
   (declare (ignore event))
   (when (action-fn self)
@@ -354,7 +376,7 @@
   (setf *ui-schematic-offset-y* 0.0)
   (setf *ui-schematic-zoom-factor* 1.0))
 
-(defclass ui-schematic-view (ui-view)
+(defclass ui-schematic-view (ui-view ui-view-popup-mixin)
   ((scene :accessor scene :initarg :scene :initform nil)
    (is-active-view? :accessor is-active-view? :initarg :is-active-view? :initform nil)
    (schematic-items :accessor schematic-items :initarg :schematic-items :initform '())
@@ -366,6 +388,25 @@
   (declare (ignore initargs))
   (update-view self)
   )
+
+(defmethod make-popup-menu ((self ui-schematic-view))
+  (let ((menu (make-instance 'ui-popup-menu))
+        (items (list (make-instance 'ui-menu-item
+                                    :title "Bright Theme"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (set-theme-bright)
+                                                   (menu-popdown self)))
+                     (make-instance 'ui-menu-item
+                                    :title "Dark Theme"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (set-theme-dark)
+                                                   (menu-popdown self)))
+                     )))
+    (setf (menu-items menu) items)
+    (update-layout menu)
+    menu))
 
 (defmethod update-view ((self ui-schematic-view))
   (setf (schematic-items self) '())
@@ -384,6 +425,8 @@
 
 (defmethod update-layout ((self ui-schematic-view))
   (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
+  (when (popup-menu self)
+    (#/addSubview: self (popup-menu self)))
   (let ((y 10))
     (dolist (item (schematic-items self))
       (#/setFrame: item (ns:make-ns-rect (* (+ 10 *ui-schematic-offset-x*) *ui-schematic-zoom-factor*)
@@ -414,22 +457,30 @@
    t)
 
 (objc:defmethod (#/mouseMoved: :void) ((self ui-schematic-view) event)
-  (let ( ;(flags (#/modifierFlags event))
-        (p (#/locationInWindow event)))
-;    (update-status-bar-mouse-loc (status-bar self) (#/convertPoint:fromView: self p nil))
+  (let ((p (#/locationInWindow event)))
     (update-status-bar self (#/convertPoint:fromView: self p nil))
     (unhighlight-items self)
-    ;; highlight menu item under mouse
-    (let ((widget (#/hitTest: self p)))
-      (when (typep widget 'ui-schematic-item)
-        (#/setBorderWidth: (#/layer widget) 3)))
+    (if (popup-menu self)
+        (let ((widget (#/hitTest: self p)))
+          (unhighlight-items (popup-menu self))
+          (when (typep widget 'ui-menu-item)
+            (#/setBorderWidth: (#/layer widget) 3)))   ;highlight menu item under mouse
+        (let ((widget (#/hitTest: self p)))
+          (when (typep widget 'ui-schematic-item)
+            (#/setBorderWidth: (#/layer widget) 3)))) ;highlight schematic item under mouse
     (#/setNeedsDisplay: self t)))
 
 (objc:defmethod (#/mouseDown: :void) ((self ui-schematic-view) event)
-  (declare (ignore event))
-  (if (not (is-active-view? self))
-      (ui-switch-active-view self (scene-view self)))
-  (update-view self))                   ;need automatic way of updating
+  (let ((p (#/locationInWindow event)))
+    (if (not (is-active-view? self))
+        (ui-switch-active-view self (scene-view self)))
+    (when (popup-menu self)
+      (let ((widget (#/hitTest: self p)))
+        (when (typep widget 'ui-menu-item)
+          (when (action-fn widget)
+            (funcall (action-fn widget) widget)))))
+    (#/setNeedsDisplay: (scene-view self) t)
+    (update-view self)))                   ;need automatic way of updating
 
 (objc:defmethod (#/mouseDragged: :void) ((self ui-schematic-view) event)
   (let ((flags (#/modifierFlags event))
@@ -468,43 +519,70 @@ h or ?: print this help message~%"))
       (#\space (dolist (v *scene-views*) (update-scene (scene v))))
 
       (#\tab (if (null (popup-menu self))
-                 (menu-popup self)
+                 (menu-popup self (make-popup-menu self))
                  (menu-popdown self)))))
   (update-layout self)
   (redraw))
 
 ;;;; scene-view ================================================================
 
-(defclass scene-view (ns:ns-opengl-view)
+(defclass scene-view (ns:ns-opengl-view ui-view-popup-mixin)
   ((scene :accessor scene :initarg :scene :initform nil)
    (is-active-view? :accessor is-active-view? :initarg :is-active-view? :initform nil)
    (schematic-view :accessor schematic-view :initarg :schematic-view :initform nil)
-   (status-bar :accessor status-bar :initarg :status-bar :initform nil)
-   (popup-menu :accessor popup-menu :initarg :popup-menu :initform nil))
+   (status-bar :accessor status-bar :initarg :status-bar :initform nil))
   (:metaclass ns:+ns-object))
 
 (defmethod make-popup-menu ((self scene-view))
-  (let ((menu (make-instance 'ui-popup-menu)))
-      (push (make-instance 'ui-menu-item
-                           :title "Bright Theme"
-                           :action-fn #'(lambda (item)
-                                          (declare (ignore item))
-                                          (set-theme-bright)
-                                          (menu-popdown self)))
-            (menu-items menu))
-      (push (make-instance 'ui-menu-item
-                           :title "Dark Theme"
-                           :action-fn #'(lambda (item)
-                                          (declare (ignore item))
-                                          (set-theme-dark)
-                                          (menu-popdown self)))
-            (menu-items menu))
-    ;; (dotimes (i 5)
-    ;;   (push (make-instance 'ui-menu-item
-    ;;                        :title (format nil "Menu Item ~a" i)
-    ;;                        :action-fn #'(lambda (item)
-    ;;                                       (format t "Menu item \"~a\" selected.~%" (title item))))
-    ;;         (menu-items menu)))
+  (let ((menu (make-instance 'ui-popup-menu))
+        (items (list (make-instance 'ui-menu-item
+                                    :title "Bright Theme"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (set-theme-bright)
+                                                   (menu-popdown self)))
+                     (make-instance 'ui-menu-item
+                                    :title "Dark Theme"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (set-theme-dark)
+                                                   (menu-popdown self)))
+                     (make-instance 'ui-menu-item
+                                    :title "Create Shape..."
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (menu-popdown self)
+                                                   (menu-popup self (make-create-shape-popup-menu self))))
+                     )))
+    (setf (menu-items menu) items)
+    (update-layout menu)
+    menu))
+
+(defmethod make-create-shape-popup-menu ((self scene-view))
+  (let ((menu (make-instance 'ui-popup-menu))
+        (items (list (make-instance 'ui-menu-item
+                                    :title "Icosahedron"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (add-shape (scene self)
+                                                              (make-icosahedron 1.0))
+                                                   (menu-popdown self)))
+                     (make-instance 'ui-menu-item
+                                    :title "Octahedron"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (add-shape (scene self)
+                                                              (make-octahedron 1.0))
+                                                   (menu-popdown self)))
+                     (make-instance 'ui-menu-item
+                                    :title "Circle"
+                                    :action-fn #'(lambda (item)
+                                                   (declare (ignore item))
+                                                   (add-shape (scene self)
+                                                              (make-circle-shape 3.0 32))
+                                                   (menu-popdown self)))
+                     )))
+    (setf (menu-items menu) items)
     (update-layout menu)
     menu))
 
@@ -574,8 +652,7 @@ h or ?: print this help message~%"))
   t)
 
 (objc:defmethod (#/mouseMoved: :void) ((self scene-view) event)
-  (let ( ;(flags (#/modifierFlags event))
-        (p (#/locationInWindow event)))
+  (let ((p (#/locationInWindow event)))
     (update-status-bar self (#/convertPoint:fromView: self p nil))
     (when (popup-menu self)
       (unhighlight-items (popup-menu self))
@@ -599,7 +676,7 @@ h or ?: print this help message~%"))
           (when (typep widget 'ui-menu-item)
             (when (action-fn widget)
               (funcall (action-fn widget) widget))))))
-  (#/setNeedsDisplay: self t))
+  (redraw))
 
 ;;; accept key events
 (objc:defmethod (#/acceptsFirstResponder :<BOOL>) ((self scene-view))
@@ -673,17 +750,17 @@ h or ?: print this help message~%"))
       (#\space (dolist (v *scene-views*) (update-scene (scene v))))
 
       (#\tab (if (null (popup-menu self))
-                 (menu-popup self)
+                 (menu-popup self (make-popup-menu self))
                  (menu-popdown self)))))
   (redraw))
 
-(defmethod menu-popup ((self scene-view))
-  (setf (popup-menu self) (make-popup-menu self))
-  (popup (popup-menu self) self))
+;; (defmethod menu-popup ((self scene-view) (menu ui-popup-menu))
+;;   (setf (popup-menu self) menu)
+;;   (popup (popup-menu self) self))
 
-(defmethod menu-popdown ((self scene-view))
-  (popdown (popup-menu self))
-  (setf (popup-menu self) nil))
+;; (defmethod menu-popdown ((self scene-view))
+;;   (popdown (popup-menu self))
+;;   (setf (popup-menu self) nil))
 
 ;;;; app-window ================================================================
 
