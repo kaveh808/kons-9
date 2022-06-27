@@ -483,19 +483,21 @@ h or ?: print this help message~%"))
    (popup-menu :accessor popup-menu :initarg :popup-menu :initform nil))
   (:metaclass ns:+ns-object))
 
-(defun default-popup-menu ()
+(defmethod make-popup-menu ((self scene-view))
   (let ((menu (make-instance 'ui-popup-menu)))
       (push (make-instance 'ui-menu-item
                            :title "Bright Theme"
                            :action-fn #'(lambda (item)
                                           (declare (ignore item))
-                                          (set-theme-bright)))
+                                          (set-theme-bright)
+                                          (menu-popdown self)))
             (menu-items menu))
       (push (make-instance 'ui-menu-item
                            :title "Dark Theme"
                            :action-fn #'(lambda (item)
                                           (declare (ignore item))
-                                          (set-theme-dark)))
+                                          (set-theme-dark)
+                                          (menu-popdown self)))
             (menu-items menu))
     ;; (dotimes (i 5)
     ;;   (push (make-instance 'ui-menu-item
@@ -676,7 +678,7 @@ h or ?: print this help message~%"))
   (redraw))
 
 (defmethod menu-popup ((self scene-view))
-  (setf (popup-menu self) (default-popup-menu))
+  (setf (popup-menu self) (make-popup-menu self))
   (popup (popup-menu self) self))
 
 (defmethod menu-popdown ((self scene-view))
