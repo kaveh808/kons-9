@@ -66,6 +66,7 @@
             (test-for-compute? node) (is-dirty? node) (has-dirty-input? node)
             (and (test-for-compute? node)
                  (or (is-dirty? node)
+                     (has-dirty-input? node)
                      (= 0 (time-stamp node))
                      (> (inputs-time-stamp node) (time-stamp node))))))
   (and (test-for-compute? node)
@@ -82,6 +83,7 @@
 (defmethod has-dirty-input? ((node dependency-node-mixin))
   (dolist (input (input-slots node))
     (when (is-dirty? (slot-value node input))
+;;      (format t "  >> dirty input: ~a, value: ~%" input (slot-value node input))    
       (return-from has-dirty-input? t)))
   nil)
 
