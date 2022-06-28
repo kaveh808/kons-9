@@ -55,6 +55,10 @@
    (shape :accessor shape :initarg :shape :initform nil)
    (data :accessor data :initarg :data :initform '())))
 
+(defmethod initialize-instance :after ((anim animator) &rest initargs)
+  (declare (ignore initargs))
+  (setf (is-dirty? anim) nil))          ;nil by default as called explicitly each frame
+
 (defmethod copy-instance-data ((dst animator) (src animator))
   (setf (init-fn dst) (init-fn src))
   (setf (update-fn dst) (update-fn src))
