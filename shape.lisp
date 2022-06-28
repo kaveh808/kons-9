@@ -479,6 +479,21 @@
                                                :initial-element (p! 0 0 0)
                                                :adjustable t
                                                :fill-pointer t))
+  (let ((p-normals (point-normals polyh)))
+    (dotimes (f (length (faces polyh)))
+      (dolist (pref (aref (faces polyh) f))
+        (setf (aref p-normals pref)
+              (p+ (aref p-normals pref)
+                  (aref (face-normals polyh) f)))))
+    (dotimes (n (length p-normals))
+      (setf (aref p-normals n)
+            (p-normalize (aref p-normals n))))))
+
+(defmethod compute-point-normals-SAV ((polyh polyhedron))
+  (setf (point-normals polyh) (make-array (length (points polyh))
+                                               :initial-element (p! 0 0 0)
+                                               :adjustable t
+                                               :fill-pointer t))
   (dotimes (f (length (faces polyh)))
     (dolist (pref (aref (faces polyh) f))
       (setf (aref (point-normals polyh) pref)
