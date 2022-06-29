@@ -551,9 +551,7 @@
 (defmethod point-generator-directions ((polyh polyhedron))
   (if (point-generator-use-face-centers? polyh)
       (face-normals polyh)
-      (progn
-        (compute-point-normals polyh)
-        (point-normals polyh))))
+      (point-normals polyh)))
 
 (defmethod curve-generator-curves ((polyh polyhedron))
   (let ((curves '()))
