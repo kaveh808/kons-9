@@ -22,7 +22,7 @@
           (setf closest-index i))))
     (aref points closest-index)))
 
-;;;; curve-generator-mixin ==============================================
+;;;; curve-generator-mixin =====================================================
 
 (defclass curve-generator-mixin ()
   ())
@@ -33,16 +33,40 @@
 (defmethod curve-generator-curves-closed ((gen curve-generator-mixin))
   (error "Method CURVE-GENERATOR-CLOSED not implemented for object ~a" gen))
 
-;;;; shape ==============================================================
+;;;; scene-item ================================================================
 
-(defclass shape ()
+(defclass scene-item ()
   ((name :accessor name :initarg :name :initform nil)
-   (transform :accessor transform :initarg :transform :initform (make-instance 'transform))
-   (show-axis :accessor show-axis :initarg :show-axis :initform nil) ;nil or length
-   (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)
+   (scene :accessor scene :initarg :scene :initform nil)
    (is-selected? :accessor is-selected? :initarg :is-selected? :initform nil)))
 
-(defmethod copy-instance-data ((dst shape) (src shape))
+(defmethod copy-instance-data ((dst scene-item) (src scene-item))
+  ;; TODO - name not copied - always generate new name?
+  )
+
+(defmethod select ((item scene-item))
+  (setf (is-selected? item) t)
+  (when (scene item)
+    (add-selection (scene item) item)))
+
+(defmethod unselect ((item scene-item))
+  (setf (is-selected? item) nil)
+  (when (scene item)
+    (remove-selection (scene item) item)))
+
+(defmethod toggle-select ((item scene-item))
+  (if (is-selected? item)
+      (unselect item)
+      (select item)))
+
+;;;; shape =====================================================================
+
+(defclass shape (scene-item)
+  ((transform :accessor transform :initarg :transform :initform (make-instance 'transform))
+   (show-axis :accessor show-axis :initarg :show-axis :initform nil) ;nil or length
+   (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
+
+(defmethod copy-instance-data :after ((dst shape) (src shape))
   ;; TODO - name not copied - always generate new name?
   (copy-instance-data (transform dst) (transform src))
   (setf (show-axis dst) (show-axis src))

@@ -415,8 +415,7 @@
     (push (make-instance 'ui-schematic-item :shape shape
                                             :title (format nil "~a" shape)
                                             :action-fn #'(lambda (item)
-                                                           (setf (is-selected? (shape item))
-                                                                 (not (is-selected? (shape item))))
+                                                           (toggle-select (shape item))
                                                            (set-item-color item)
                                                            (#/setNeedsDisplay: item t)
                                                            (#/setNeedsDisplay: (scene-view self) t)))
@@ -504,6 +503,7 @@
   (format t "Mouse Drag: [option] pan, [command] zoom~%~
 z: reset view pan and zoom~%~
 a: init scene~%~
+n: clear scene~%~
 space: update scene (hold down for animation) ~%~
 tab: show/hide contextual menu ~%~
 h or ?: print this help message~%"))
@@ -516,6 +516,7 @@ h or ?: print this help message~%"))
       (#\? (print-schematic-view-help))
       (#\z (reset-schematic-view))
       (#\a (dolist (v *scene-views*) (init-scene (scene v))))
+      (#\n (dolist (v *scene-views*) (clear-scene (scene v))))
       (#\space (dolist (v *scene-views*) (update-scene (scene v))))
 
       (#\tab (if (null (popup-menu self))
@@ -712,6 +713,7 @@ h or ?: print this help message~%"))
 7: toggle axes display~%~
 z: reset camera~%~
 a: init scene~%~
+n: clear scene~%~
 space: update scene (hold down for animation) ~%~
 tab: show/hide contextual menu ~%~
 h or ?: print this help message~%"))
@@ -730,6 +732,7 @@ h or ?: print this help message~%"))
       (#\h (print-scene-view-help))
       (#\? (print-scene-view-help))
       (#\a (when scene (init-scene scene)))
+      (#\n (dolist (v *scene-views*) (clear-scene (scene v))))
       (#\` (setf *do-lighting?* (not *do-lighting?*)))
       ;; (#\1 (setf *light-0-on?* (not *light-0-on?*)))
       ;; (#\2 (setf *light-1-on?* (not *light-1-on?*)))

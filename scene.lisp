@@ -5,6 +5,7 @@
 (defclass scene ()
   ((shapes :accessor shapes :initarg :shapes :initform '())
    (animators :accessor animators :initarg :animators :initform '())
+   (selection :accessor selection :initarg :selection :initform '())
    (init-done? :accessor init-done? :initarg :init-done? :initform nil)
    (current-frame :accessor current-frame :initarg :current-frame :initform 0)
    (fps :accessor fps :initarg :fps :initform 24)
@@ -24,36 +25,51 @@
 (defmethod current-time ((scene scene))
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
 
-(defmethod add-shape ((scene scene) (obj shape))
-  (push obj (shapes scene))
-  obj)
+(defmethod add-selection ((scene scene) (item scene-item))
+  (pushnew item (selection scene))
+  item)
+
+(defmethod remove-selection ((scene scene) (item scene-item))
+  (setf (selection scene) (remove item (selection scene)))
+  item)
+
+(defmethod add-shape ((scene scene) (shape shape))
+  (push shape (shapes scene))
+  (setf (scene shape) scene)
+  shape)
 
 (defmethod add-shapes ((scene scene) shapes)
   (mapcar #'(lambda (s) (add-shape scene s)) shapes))
 
 ;;; only works for top-level shapes, not children of groups
-(defmethod remove-shape ((scene scene) (obj shape))
-  (setf (shapes scene) (remove obj (shapes scene)))
-  obj)
+(defmethod remove-shape ((scene scene) (shape shape))
+  (setf (shapes scene) (remove shape (shapes scene)))
+  (setf (scene shape) nil)
+  shape)
 
-(defmethod add-animator ((scene scene) (obj animator))
-  (push obj (animators scene))
-  obj)
+(defmethod add-animator ((scene scene) (anim animator))
+  (push anim (animators scene))
+  (setf (scene anim) scene)
+  anim)
 
-(defmethod add-animator-at-end ((scene scene) (obj animator))
-  (setf (animators scene) (append (animators scene) (list obj)))
-  obj)
+(defmethod add-animator-at-end ((scene scene) (anim animator))
+  (setf (animators scene) (append (animators scene) (list anim)))
+  (setf (scene anim) scene)
+  anim)
 
 (defmethod add-animators ((scene scene) animators)
   (mapcar #'(lambda (a) (add-animator scene a)) (reverse animators)))
 
+;;; TODO -- set shape scene to nil, remove shapes from scene selection
 (defmethod clear-shapes ((scene scene))
   (setf (shapes scene) '()))
 
+;;; TODO -- set anim scene to nil, remove shapes from scene selection
 (defmethod clear-animators ((scene scene))
   (setf (animators scene) '()))
 
 (defmethod clear-scene ((scene scene))
+  (setf (selection scene) '())
   (clear-shapes scene)
   (clear-animators scene))
 
