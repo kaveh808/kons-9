@@ -592,20 +592,20 @@ h or ?: print this help message~%"))
                                                 (add-animator scene p-sys))
                                               (menu-popdown self)))
                 items))))
-    ;;; sweep-mesh-group from curve-generator-mixin
-    (when (= 1 (length (selection scene)))
-      (let ((shape (first (selection scene))))
-        (when (typep shape 'curve-generator-mixin)
-          (push (make-instance 'ui-menu-item
-                               :title (format nil "Create SWEEP-MESH-GROUP System from ~a" shape)
-                               :action-fn #'(lambda (item)
-                                              (declare (ignore item))
-                                              (add-shape scene (make-sweep-mesh-group
-                                                                (make-circle-shape 0.2 6)
-                                                                shape
-                                                                :taper 0.0 :twist 2pi)))
-                                              (menu-popdown self))
-                items))))
+    ;; ;;; sweep-mesh-group from curve-generator-mixin
+    ;; (when (= 1 (length (selection scene)))
+    ;;   (let ((shape (first (selection scene))))
+    ;;     (when (typep shape 'curve-generator-mixin)
+    ;;       (push (make-instance 'ui-menu-item
+    ;;                            :title (format nil "Create SWEEP-MESH-GROUP System from ~a" shape)
+    ;;                            :action-fn #'(lambda (item)
+    ;;                                           (declare (ignore item))
+    ;;                                           (add-shape scene (make-sweep-mesh-group
+    ;;                                                             (make-circle-shape 0.2 6)
+    ;;                                                             shape
+    ;;                                                             :taper 0.0 :twist 2pi)))
+    ;;                                           (menu-popdown self))
+    ;;             items))))
     (setf (menu-items menu) items)
     (update-layout menu)
     menu))
@@ -619,7 +619,9 @@ h or ?: print this help message~%"))
                                                    (let ((shape (add-shape (scene self)
                                                                            (make-icosahedron 1.0))))
                                                      (menu-popdown self)
-                                                     (menu-popup self (make-scale-shape-popup-menu self shape)))))
+                                                     (menu-popup self
+                                                                 (make-scale-shape-popup-menu self
+                                                                                              shape)))))
                      (make-instance 'ui-menu-item
                                     :title "Octahedron"
                                     :action-fn #'(lambda (item)
@@ -639,7 +641,7 @@ h or ?: print this help message~%"))
     (update-layout menu)
     menu))
 
-(defmethod make-scale-shape-popup-menu ((self scene-view) (shape shape))
+(defmethod make-scale-shape-popup-menu ((self scene-view) shape) ; (shape shape)) XXX BUG!
   (let ((menu (make-instance 'ui-popup-menu))
         (items (list (make-instance 'ui-menu-item
                                     :title "Scale <>"
