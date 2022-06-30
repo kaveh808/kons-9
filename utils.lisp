@@ -9,6 +9,22 @@
     (dolist (subclass subclasses)
       (print-class-hierarchy subclass (+ indent 2)))))
 
+;;;; macros ==============================================================
+
+(defmacro with-gl-enable (flag &body body)
+  `(progn
+     (#_glEnable ,flag)
+     (let ((result (progn ,@body)))
+       (#_glDisable ,flag)
+       result)))
+
+(defmacro with-gl-disable (flag &body body)
+  `(progn
+     (#_glDisable ,flag)
+     (let ((result (progn ,@body)))
+       (#_glEnable ,flag)
+       result)))
+
 ;;;; utils ==============================================================
 
 (defun debug (x &optional (str ""))

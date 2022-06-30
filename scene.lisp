@@ -26,12 +26,24 @@
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
 
 (defmethod add-selection ((scene scene) (item scene-item))
+  (select item)
   (pushnew item (selection scene))
   item)
 
 (defmethod remove-selection ((scene scene) (item scene-item))
+  (unselect item)
   (setf (selection scene) (remove item (selection scene)))
   item)
+
+(defmethod toggle-selection ((scene scene) (item scene-item))
+  (if (member item (selection scene))
+      (remove-selection scene item)
+      (add-selection scene item)))
+
+(defmethod clear-selection ((scene scene))
+  (dolist (item (selection scene))
+    (unselect item))
+  (setf (selection scene) '()))
 
 (defmethod add-shape ((scene scene) (shape shape))
   (push shape (shapes scene))
