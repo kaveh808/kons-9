@@ -1,5 +1,19 @@
 (in-package #:kons-9)
 
+;;;; user input ========================================================
+
+(defun get-input (prompt)
+  (format t "~&~a: " prompt)
+;  (finish-output)
+  (force-output t)
+  (read-line nil))
+
+(defun get-float-input (prompt default-value)
+  (let ((str (get-input (format nil "~a (~a)" prompt default-value))))
+    (if (= 0 (length str))
+        default-value
+        (coerce (read-from-string str) 'float))))
+
 ;;;; C interface ========================================================
 
 (defmacro with-c-array-1 (vec &body forms)
@@ -181,6 +195,20 @@
 
 ;;;; ui utils ==================================================================
 
+(defun draw-centered-text (str rect-width y)
+  (let* ((dict (make-instance 'ns:ns-mutable-dictionary :with-capacity 2)))
+    (#/setObject:forKey: dict (#/fontWithName:size:
+                               ns:ns-font
+                               #@"Monaco" 12.0) #&NSFontAttributeName)
+    (let* ((str-width (ns:ns-size-width (#/sizeWithAttributes: (objc:make-nsstring str) dict)))
+           (x (/ (- rect-width str-width) 2)))
+      (#/drawAtPoint:withAttributes: (objc:make-nsstring str)
+                                     (ns:make-ns-point x y)
+                                     dict))))
+
+(defparameter *popup-menu-width* 300)
+(defparameter *ui-button-item-height* 25)
+
 (defparameter *ui-inactive-border-width* 1)
 (defparameter *ui-inactive-border-color* (#/CGColor (#/blackColor ns:ns-color)))
 (defparameter *ui-active-border-width* 3)
@@ -239,15 +267,10 @@
   ((title :accessor title :initarg :title :initform "Menu Item")
    (action-fn :accessor action-fn :initarg :action-fn :initform nil))
   (:metaclass ns:+ns-object))
-
+  
 (objc:defmethod (#/drawRect: :void) ((self ui-button-item) (rect :<NSR>ect))
   (call-next-method rect)
-  (let* ((str-width (ns:ns-size-width (#/sizeWithAttributes: (objc:make-nsstring (title self)) nil)))
-         (rect-width (ns:ns-rect-width (#/frame self)))
-         (x (/ (- rect-width str-width) 2)))
-    (#/drawAtPoint:withAttributes: (objc:make-nsstring (title self))
-                                   (ns:make-ns-point x 3)
-                                   nil)))
+  (draw-centered-text (title self) (ns:ns-rect-width (#/frame self)) 5))
 
 ;;;; ui-menu-item ==============================================================
 
@@ -263,18 +286,18 @@
 
 (defmethod initialize-instance :after ((self ui-popup-menu) &rest initargs)
   (declare (ignore initargs))
-  (setf (bg-color self) (c! 1 1 1 0.5))
+  (setf (bg-color self) (c! 1 1 1 0.9))
   )
 
 (defmethod update-layout ((self ui-popup-menu))
   (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
   (let ((y 0))
     (dolist (menu-item (menu-items self))
-      (#/setFrame: menu-item (ns:make-ns-rect 0 y 300 20))
-      (incf y 20)
+      (#/setFrame: menu-item (ns:make-ns-rect 0 y *popup-menu-width* *ui-button-item-height*))
+      (incf y *popup-menu-item-height*)
       (#/addSubview: self menu-item)
       (#/release menu-item))
-    (let ((rect (ns:make-ns-rect 50 50 300 y)))
+    (let ((rect (ns:make-ns-rect 50 50 *popup-menu-width* y)))
       (#/setFrame: self rect))))
 
 (defmethod popup ((self ui-popup-menu) view)
@@ -444,9 +467,9 @@
       (#/setFrame: item (ns:make-ns-rect (* (+ 10 *ui-schematic-offset-x*) *ui-schematic-zoom-factor*)
                                          (* (+  y *ui-schematic-offset-y*) *ui-schematic-zoom-factor*)
                                          (* 300 *ui-schematic-zoom-factor*)
-                                         (* 20 *ui-schematic-zoom-factor*)))
+                                         (* *ui-button-item-height* *ui-schematic-zoom-factor*)))
       (set-item-color item)
-      (incf y (* 30 *ui-schematic-zoom-factor*))
+      (incf y (* (+ 10 *ui-button-item-height*) *ui-schematic-zoom-factor*))
       (#/addSubview: self item)
 ;;      (#/release item)   ; memory leak?
       )))
@@ -619,9 +642,13 @@ h or ?: print this help message~%"))
                                                    (let ((shape (add-shape (scene self)
                                                                            (make-icosahedron 1.0))))
                                                      (menu-popdown self)
-                                                     (menu-popup self
-                                                                 (make-scale-shape-popup-menu self
-                                                                                              shape)))))
+                                                     ;; (menu-popup self
+                                                     ;;             (make-scale-shape-popup-menu self
+                                                     ;;                                          shape)))))
+                                                     (let ((s (get-float-input "Enter Scale" 1.0))) ;xxx
+                                                       (format t "s = ~a~%" s)
+                                                       (scale-to shape (p! s s s)))
+                                                     )))
                      (make-instance 'ui-menu-item
                                     :title "Octahedron"
                                     :action-fn #'(lambda (item)
