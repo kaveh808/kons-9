@@ -45,8 +45,7 @@
 (defmethod initialize-instance :after ((item scene-item) &rest initargs)
   (declare (ignore initargs))
   (when (null (name item))
-    (setf (name item) (mashup-symbol (class-name (class-of item)) '- (incf *scene-item-counter*))))
-  (format t "Name: ~a~%" (name item)))
+    (setf (name item) (mashup-symbol (class-name (class-of item)) '- (incf *scene-item-counter*)))))
 
 (defmethod copy-instance-data ((dst scene-item) (src scene-item))
   ;; TODO - name not copied - always generate new name?
