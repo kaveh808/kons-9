@@ -426,7 +426,7 @@
   (dolist (shape (shapes (scene self)))
     ;; (append (shapes (scene self)) (animators (scene self))))
     (push (make-instance 'ui-schematic-item :shape shape
-                                            :title (format nil "~a" shape)
+                                            :title (string-name shape)
                                             :action-fn #'(lambda (item)
                                                            (toggle-selection (scene self) (shape item))
                                                            (set-item-color item)
@@ -582,7 +582,7 @@ h or ?: print this help message~%"))
       (let ((shape (first (selection scene))))
         (when (typep shape 'point-generator-mixin)
           (push (make-instance 'ui-menu-item
-                               :title (format nil "Create Particle System from ~a" shape)
+                               :title (format nil "Create PARTICLE-SYSTEM from ~a" (name shape))
                                :action-fn #'(lambda (item)
                                               (declare (ignore item))
                                               (let ((p-sys (make-particle-system shape
@@ -592,20 +592,20 @@ h or ?: print this help message~%"))
                                                 (add-animator scene p-sys))
                                               (menu-popdown self)))
                 items))))
-    ;; ;;; sweep-mesh-group from curve-generator-mixin
-    ;; (when (= 1 (length (selection scene)))
-    ;;   (let ((shape (first (selection scene))))
-    ;;     (when (typep shape 'curve-generator-mixin)
-    ;;       (push (make-instance 'ui-menu-item
-    ;;                            :title (format nil "Create SWEEP-MESH-GROUP System from ~a" shape)
-    ;;                            :action-fn #'(lambda (item)
-    ;;                                           (declare (ignore item))
-    ;;                                           (add-shape scene (make-sweep-mesh-group
-    ;;                                                             (make-circle-shape 0.2 6)
-    ;;                                                             shape
-    ;;                                                             :taper 0.0 :twist 2pi)))
-    ;;                                           (menu-popdown self))
-    ;;             items))))
+    ;;; sweep-mesh-group from curve-generator-mixin
+    (when (= 1 (length (selection scene)))
+      (let ((shape (first (selection scene))))
+        (when (typep shape 'curve-generator-mixin)
+          (push (make-instance 'ui-menu-item
+                               :title (format nil "Create SWEEP-MESH-GROUP from ~a" (name shape))
+                               :action-fn #'(lambda (item)
+                                              (declare (ignore item))
+                                              (add-shape scene (make-sweep-mesh-group
+                                                                (make-circle-shape 0.2 6)
+                                                                shape
+                                                                :taper 0.0 :twist 2pi))
+                                              (menu-popdown self)))
+                items))))
     (setf (menu-items menu) items)
     (update-layout menu)
     menu))

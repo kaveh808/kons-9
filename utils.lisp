@@ -39,6 +39,9 @@
 (defun concat-syms (&rest syms)
   (intern (apply #'concatenate 'string (mapcar #'symbol-name syms))))
 
+(defun mashup-symbol (&rest objects)
+  (intern (format nil "~{~a~}" objects)))
+
 (defun print-spaces (num)
   (dotimes (i num)
     (princ " ")))
