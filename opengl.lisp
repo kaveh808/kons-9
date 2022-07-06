@@ -206,7 +206,7 @@
                                      (ns:make-ns-point x y)
                                      dict))))
 
-(defparameter *popup-menu-width* 300)
+(defparameter *popup-menu-width* 500)
 (defparameter *ui-button-item-height* 25)
 
 (defparameter *ui-inactive-border-width* 1)
@@ -570,114 +570,109 @@ h or ?: print this help message~%"))
    (status-bar :accessor status-bar :initarg :status-bar :initform nil))
   (:metaclass ns:+ns-object))
 
+(defmacro menu-item-if-selection-type (required-selection-type menu-item)
+  `(when (= 1 (length (selection scene)))
+     (let ((shape (first (selection scene))))
+       (when (typep shape ,required-selection-type)
+         (push ,menu-item items)))))
+
+(defmacro menu-item-action-entry (title-expr action-expr)
+  `(make-instance 'ui-menu-item
+                  :title ,title-expr
+                  :action-fn #'(lambda (item)
+                                 (declare (ignore item))
+                                 ,action-expr
+                                 (menu-popdown self))))
+
+(defmacro menu-item-submenu-entry (title-expr submenu-expr)
+  `(make-instance 'ui-menu-item
+                  :title ,title-expr
+                  :action-fn #'(lambda (item)
+                                 (declare (ignore item))
+                                 (menu-popdown self)
+                                 (menu-popup self ,submenu-expr))))
+
+(defmacro menu-item-misc-entry (title-expr post-popdown-expr)
+  `(make-instance 'ui-menu-item
+                  :title ,title-expr
+                  :action-fn #'(lambda (item)
+                                 (declare (ignore item))
+                                 (menu-popdown self)
+                                 ,post-popdown-expr)))
+
 (defmethod make-popup-menu ((self scene-view))
   (let* ((menu (make-instance 'ui-popup-menu))
          (scene (scene self))
-         (items (list (make-instance 'ui-menu-item
-                                     :title "Bright Theme"
-                                     :action-fn #'(lambda (item)
-                                                    (declare (ignore item))
-                                                    (set-theme-bright)
-                                                    (menu-popdown self)))
-                      (make-instance 'ui-menu-item
-                                     :title "Dark Theme"
-                                     :action-fn #'(lambda (item)
-                                                    (declare (ignore item))
-                                                    (set-theme-dark)
-                                                    (menu-popdown self)))
-                      (make-instance 'ui-menu-item
-                                     :title "Create Shape..."
-                                     :action-fn #'(lambda (item)
-                                                    (declare (ignore item))
-                                                    (menu-popdown self)
-                                                    (menu-popup self (make-create-shape-popup-menu self))))
-                      )))
+         (items (list (menu-item-action-entry "Bright Theme" (set-theme-bright))
+                      (menu-item-action-entry "Dark Theme" (set-theme-dark))
+                      (menu-item-submenu-entry "Create Shape..." (make-create-shape-popup-menu self)))))
     (when (selection scene)
-      (push (make-instance 'ui-menu-item
-                           :title (format nil "Inspect Selection")
-                           :action-fn #'(lambda (item)
-                                          (declare (ignore item))
-                                          (menu-popdown self)
-                                          (inspect (selection scene))))
+      (push (menu-item-misc-entry "Inspect Selection" (inspect (selection scene)))
             items))
     ;;; particle system from point-generator-mixin
-    (when (= 1 (length (selection scene)))
-      (let ((shape (first (selection scene))))
-        (when (typep shape 'point-generator-mixin)
-          (push (make-instance 'ui-menu-item
-                               :title (format nil "Create PARTICLE-SYSTEM from ~a" (name shape))
-                               :action-fn #'(lambda (item)
-                                              (declare (ignore item))
-                                              (let ((p-sys (make-particle-system shape
-                                                                                 (p! .2 .2 .2) 1 4 'particle
-                                                                                 :update-angle (range-float (/ pi 16) (/ pi 32)))))
-                                                (add-shape scene p-sys)
-                                                (add-animator scene p-sys))
-                                              (menu-popdown self)))
-                items))))
+    (menu-item-if-selection-type
+     'point-generator-mixin
+     (menu-item-action-entry
+      (format nil "Create/1 PARTICLE-SYSTEM from ~a" (name shape))
+      (let ((p-sys (make-particle-system shape
+                                         (p! .2 .2 .2) 1 4 'particle
+                                         :update-angle (range-float (/ pi 16) (/ pi 32)))))
+        (add-shape scene p-sys)
+        (add-animator scene p-sys))))
+    ;;; particle system from point-generator-mixin
+    (menu-item-if-selection-type
+     'point-generator-mixin
+     (menu-item-action-entry
+      (format nil "Create/2 PARTICLE-SYSTEM from ~a" (name shape))
+      (let* ((points (point-generator-points shape))
+             (dirs (point-generator-radial-directions shape))
+             (p-sys (make-particle-system-aux points dirs
+                                              (p! .2 .2 .2) 1 4 'particle
+                                              :update-angle (range-float (/ pi 16) (/ pi 32))
+                                              :spawn-angle (range-float 0 (/ pi 16))
+                                              :life-span (get-float-input "Enter Lifespan" -1))))
+        (add-shape scene p-sys)
+        (add-animator scene p-sys))))
     ;;; sweep-mesh-group from curve-generator-mixin
-    (when (= 1 (length (selection scene)))
-      (let ((shape (first (selection scene))))
-        (when (typep shape 'curve-generator-mixin)
-          (push (make-instance 'ui-menu-item
-                               :title (format nil "Create SWEEP-MESH-GROUP from ~a" (name shape))
-                               :action-fn #'(lambda (item)
-                                              (declare (ignore item))
-                                              (add-shape scene (make-sweep-mesh-group
-                                                                (make-circle-shape 0.2 6)
-                                                                shape
-                                                                :taper 0.0 :twist 2pi))
-                                              (menu-popdown self)))
-                items))))
+    (menu-item-if-selection-type
+     'curve-generator-mixin
+     (menu-item-action-entry
+      (format nil "Create SWEEP-MESH-GROUP from ~a" (name shape))
+      (add-shape scene (make-sweep-mesh-group
+                        (make-circle-shape (get-float-input "Enter Profile Radius" 0.2) 6)
+                        shape
+                        :taper 0.0 :twist (get-float-input "Enter Twist" 0.0)))))
+    ;;; set sweep-mesh-group point colors
+    (menu-item-if-selection-type
+     'sweep-mesh-group
+     (menu-item-action-entry
+      (format nil "Set UV point colors for ~a" (name shape))
+      (set-point-colors-by-uv shape #'(lambda (u v) (declare (ignore u)) (c-rainbow v)))))
+    ;;; menu setup
     (setf (menu-items menu) items)
     (update-layout menu)
     menu))
-
+                
 (defmethod make-create-shape-popup-menu ((self scene-view))
   (let ((menu (make-instance 'ui-popup-menu))
-        (items (list (make-instance 'ui-menu-item
-                                    :title "Icosahedron"
-                                    :action-fn #'(lambda (item)
-                                                   (declare (ignore item))
-                                                   (let ((shape (add-shape (scene self)
-                                                                           (make-icosahedron 1.0))))
-                                                     (menu-popdown self)
-                                                     ;; (menu-popup self
-                                                     ;;             (make-scale-shape-popup-menu self
-                                                     ;;                                          shape)))))
-                                                     (let ((s (get-float-input "Enter Scale" 1.0))) ;xxx
-                                                       (format t "s = ~a~%" s)
-                                                       (scale-to shape (p! s s s)))
-                                                     )))
-                     (make-instance 'ui-menu-item
-                                    :title "Octahedron"
-                                    :action-fn #'(lambda (item)
-                                                   (declare (ignore item))
-                                                   (add-shape (scene self)
-                                                              (make-octahedron 1.0))
-                                                   (menu-popdown self)))
-                     (make-instance 'ui-menu-item
-                                    :title "Circle"
-                                    :action-fn #'(lambda (item)
-                                                   (declare (ignore item))
-                                                   (add-shape (scene self)
-                                                              (make-circle-shape 3.0 32))
-                                                   (menu-popdown self)))
-                     )))
-    (setf (menu-items menu) items)
-    (update-layout menu)
-    menu))
-
-(defmethod make-scale-shape-popup-menu ((self scene-view) shape) ; (shape shape)) XXX BUG!
-  (let ((menu (make-instance 'ui-popup-menu))
-        (items (list (make-instance 'ui-menu-item
-                                    :title "Scale <>"
-                                    :action-fn #'(lambda (item)
-                                                   (declare (ignore item))
-                                                   ;; TODO xxx
-                                                   ;; add-tmp-key-binding
-                                                   ;; esc - undo, enter - confirm
-                                                   (menu-popdown self))))))
+        (items (list
+                (menu-item-action-entry
+                 "Grid (n x n)"
+                 (add-shape (scene self)
+                            (let ((n (round (get-float-input "Enter Grid Num Samples" 25))))
+                              (make-grid-uv-mesh n n (p! -4 0 -4) (p! 4 0 4)))))
+               (menu-item-action-entry
+                      "Icosahedron"
+                      (let* ((shape (add-shape (scene self) (make-icosahedron 1.0)))
+                             (s (get-float-input "Enter Scale" 1.0)))
+                        (scale-to shape (p! s s s))))
+                     (menu-item-action-entry
+                      "Octahedron"
+                      (add-shape (scene self) (make-octahedron 1.0)))
+                     (menu-item-action-entry
+                      "Circle"
+                      (add-shape (scene self) (make-circle-shape 3.0 32))))))
+    ;;; menu setup
     (setf (menu-items menu) items)
     (update-layout menu)
     menu))

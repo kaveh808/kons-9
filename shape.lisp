@@ -11,6 +11,9 @@
 (defmethod point-generator-directions ((gen point-generator-mixin))
   (error "Method POINT-GENERATOR-DIRECTIONS not implemented for object ~a" gen))
 
+(defmethod point-generator-radial-directions ((gen point-generator-mixin))
+  (map 'array #'p-normalize (point-generator-points gen)))
+
 (defmethod point-generator-closest-point ((gen point-generator-mixin) point)
   (let* ((points (point-generator-points gen))
          (min-dist (p-dist point (aref points 0)))

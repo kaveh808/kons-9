@@ -301,16 +301,33 @@
 (defmethod curve-generator-curves-closed ((p-sys particle-system))
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
-(defmethod make-particle-system ((p-gen point-generator-mixin) vel num max-gen particle-class &rest initargs)
+(defmethod make-particle-system ((p-gen point-generator-mixin) (vel point) num max-gen particle-class &rest initargs)
+  (apply #'make-particle-system-aux
+         (point-generator-points p-gen)
+         (point-generator-directions p-gen)
+         vel num max-gen particle-class initargs))
+
+;; (defmethod make-particle-system ((p-gen point-generator-mixin) (vel point) num max-gen particle-class &rest initargs)
+;;   (let ((p-sys (make-instance 'particle-system :max-generations max-gen)))
+;;     (let ((points (point-generator-points p-gen))
+;;           (normals (point-generator-directions p-gen)))
+;;       (loop for p across points
+;;             for n across normals
+;;             do (dotimes (i num)
+;;                  (add-particle p-sys (apply #'make-instance particle-class
+;;                                             :pos p
+;;                                             :vel (p* n vel)
+;;                                             initargs)))))
+;;     p-sys))
+
+(defmethod make-particle-system-aux (points directions vel num max-gen particle-class &rest initargs)
   (let ((p-sys (make-instance 'particle-system :max-generations max-gen)))
-    (let ((points (point-generator-points p-gen))
-          (normals (point-generator-directions p-gen)))
-      (loop for p across points
-            for n across normals
-            do (dotimes (i num)
-                 (add-particle p-sys (apply #'make-instance particle-class
-                                            :pos p
-                                            :vel (p* n vel)
-                                            initargs)))))
+    (loop for p across points
+          for v across directions
+          do (dotimes (i num)
+               (add-particle p-sys (apply #'make-instance particle-class
+                                          :pos p
+                                          :vel (p* v vel)
+                                          initargs))))
     p-sys))
 
