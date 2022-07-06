@@ -208,8 +208,13 @@
    (draw-live-points-only? :accessor draw-live-points-only? :initarg :draw-live-points-only? :initform t)
    (draw-trails :accessor draw-trails :initarg :draw-trails :initform -1))) ;length, -1 = draw entire trail
 
+(defmethod add-force-field ((p-sys particle-system) (field force-field))
+  (doarray (i ptcl (particles p-sys))
+    (push field (force-fields ptcl)))
+  p-sys)
+
 (defmethod mutate-particle-system ((p-sys particle-system) factor)
-  (dolist (ptcl (particles p-sys))
+  (doarray (i ptcl (particles p-sys))
     (mutate-particle ptcl factor))
   p-sys)
 

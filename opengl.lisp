@@ -403,6 +403,7 @@
 
 ;;;; ui-schematic-view =========================================================
 
+(defparameter *ui-schematic-item-width* 200)
 (defparameter *ui-schematic-offset-x* 0.0)
 (defparameter *ui-schematic-offset-y* 0.0)
 (defparameter *ui-schematic-zoom-factor* 1.0)
@@ -466,7 +467,7 @@
     (dolist (item (schematic-items self))
       (#/setFrame: item (ns:make-ns-rect (* (+ 10 *ui-schematic-offset-x*) *ui-schematic-zoom-factor*)
                                          (* (+  y *ui-schematic-offset-y*) *ui-schematic-zoom-factor*)
-                                         (* 300 *ui-schematic-zoom-factor*)
+                                         (* *ui-schematic-item-width* *ui-schematic-zoom-factor*)
                                          (* *ui-button-item-height* *ui-schematic-zoom-factor*)))
       (set-item-color item)
       (incf y (* (+ 10 *ui-button-item-height*) *ui-schematic-zoom-factor*))
@@ -627,12 +628,20 @@ h or ?: print this help message~%"))
       (let* ((points (point-generator-points shape))
              (dirs (point-generator-radial-directions shape))
              (p-sys (make-particle-system-aux points dirs
-                                              (p! .2 .2 .2) 1 4 'particle
-                                              :update-angle (range-float (/ pi 16) (/ pi 32))
+                                              (p! .2 .2 .2) 1 4 'dynamic-particle
+                                              :do-collisions? nil
+                                              :update-angle (range-float 0 0)
                                               :spawn-angle (range-float 0 (/ pi 16))
                                               :life-span (get-float-input "Enter Lifespan" -1))))
         (add-shape scene p-sys)
         (add-animator scene p-sys))))
+    ;;; add field to particle system
+    (menu-item-if-selection-type
+     'particle-system
+     (menu-item-submenu-entry
+      (format nil "Add Field to PARTICLE-SYSTEM ~a" (name shape))
+      (make-add-field-popup-menu self)))
+
     ;;; sweep-mesh-group from curve-generator-mixin
     (menu-item-if-selection-type
      'curve-generator-mixin
@@ -662,16 +671,37 @@ h or ?: print this help message~%"))
                             (let ((n (round (get-float-input "Enter Grid Num Samples" 25))))
                               (make-grid-uv-mesh n n (p! -4 0 -4) (p! 4 0 4)))))
                (menu-item-action-entry
-                      "Icosahedron"
-                      (let* ((shape (add-shape (scene self) (make-icosahedron 1.0)))
-                             (s (get-float-input "Enter Scale" 1.0)))
-                        (scale-to shape (p! s s s))))
-                     (menu-item-action-entry
-                      "Octahedron"
-                      (add-shape (scene self) (make-octahedron 1.0)))
-                     (menu-item-action-entry
-                      "Circle"
-                      (add-shape (scene self) (make-circle-shape 3.0 32))))))
+                "Icosahedron"
+                (let* ((shape (add-shape (scene self) (make-icosahedron 1.0)))
+                       (s (get-float-input "Enter Scale" 1.0)))
+                  (scale-to shape (p! s s s))))
+               (menu-item-action-entry
+                "Octahedron"
+                (add-shape (scene self) (make-octahedron 1.0)))
+               (menu-item-action-entry
+                "Circle"
+                (add-shape (scene self) (make-circle-shape 3.0 32))))))
+    ;;; menu setup
+    (setf (menu-items menu) items)
+    (update-layout menu)
+    menu))
+
+(defmethod make-add-field-popup-menu ((self scene-view))
+  (let ((menu (make-instance 'ui-popup-menu))
+        (items (list
+                (menu-item-action-entry
+                 "Gravity Force Field"
+                 (add-force-field (first (selection (scene self)))
+                                  (make-instance 'constant-force-field
+                                                 :force-vector (p! 0 -.05 0))))
+               (menu-item-action-entry
+                "Attractor Force Field"
+                 (add-force-field (first (selection (scene self)))
+                                  (make-instance 'attractor-force-field)))
+               (menu-item-action-entry
+                "Noise Force Field"
+                 (add-force-field (first (selection (scene self)))
+                                  (make-instance 'noise-force-field))))))
     ;;; menu setup
     (setf (menu-items menu) items)
     (update-layout menu)
