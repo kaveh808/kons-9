@@ -270,6 +270,9 @@
   
 (objc:defmethod (#/drawRect: :void) ((self ui-button-item) (rect :<NSR>ect))
   (call-next-method rect)
+  (draw-ui-text self))
+
+(defmethod draw-ui-text ((self ui-button-item))
   (draw-centered-text (title self) (ns:ns-rect-width (#/frame self)) 5))
 
 ;;;; ui-menu-item ==============================================================
@@ -289,12 +292,13 @@
   (setf (bg-color self) (c! 1 1 1 0.9))
   )
 
-(defmethod update-layout ((self ui-popup-menu))
+(defmethod update-layout ((self ui-popup-menu) &optional (view nil))
+  (declare (ignore view))
   (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
   (let ((y 0))
     (dolist (menu-item (menu-items self))
       (#/setFrame: menu-item (ns:make-ns-rect 0 y *popup-menu-width* *ui-button-item-height*))
-      (incf y *popup-menu-item-height*)
+      (incf y *ui-button-item-height*)
       (#/addSubview: self menu-item)
       (#/release menu-item))
     (let ((rect (ns:make-ns-rect 50 50 *popup-menu-width* y)))
@@ -314,6 +318,60 @@
 
 (defmethod popdown ((self ui-popup-menu))
   (#/removeFromSuperview self))
+
+;;;; ui-text-item ==============================================================
+
+(defclass ui-text-item (ui-button-item)
+  ((ui-value :accessor ui-value :initarg :ui-value :initform nil))
+  (:metaclass ns:+ns-object))
+  
+(defmethod draw-ui-text ((self ui-text-item))
+  (draw-centered-text (format nil "~a: ~a" (title self) (ui-value self))
+                      (ns:ns-rect-width (#/frame self)) 5))
+
+;;;; ui-dialog-box =============================================================
+
+(defclass ui-dialog-box (ui-popup-menu)
+  ((action-fn :accessor action-fn :initarg :action-fn :initform nil))
+  (:metaclass ns:+ns-object))
+
+;; (defmethod initialize-instance :after ((self ui-dialog-box) &rest initargs)
+;;   (declare (ignore initargs))
+;;   )
+
+(defmethod update-layout ((self ui-dialog-box) &optional (view nil))
+  (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
+  (let ((y 5))
+    (dolist (menu-item (menu-items self))
+      (#/setFrame: menu-item (ns:make-ns-rect 10 y (- *popup-menu-width* 20) *ui-button-item-height*))
+      (incf y *ui-button-item-height*)
+      (#/addSubview: self menu-item)
+      (#/release menu-item))
+    (let ((ok-button (make-instance
+                      'ui-button-item
+                      :title "OK"
+                      :action-fn #'(lambda (item)
+                                     (declare (ignore item))
+                                     (when (action-fn self)
+                                       (funcall (action-fn self)))
+                                     (menu-popdown view)))))
+      (#/setFrame: ok-button (ns:make-ns-rect 5 (+ y 5)
+                                              (- (/ *popup-menu-width* 2) 10) *ui-button-item-height*))
+      (#/addSubview: self ok-button)
+      (#/release ok-button))
+    (let ((cancel-button (make-instance
+                          'ui-button-item
+                          :title "Cancel"
+                          :action-fn #'(lambda (item)
+                                         (declare (ignore item))
+                                         (menu-popdown view)))))
+      (#/setFrame: cancel-button (ns:make-ns-rect (+ (/ *popup-menu-width* 2) 5) (+ y 5)
+                                                  (- (/ *popup-menu-width* 2) 10) *ui-button-item-height*))
+      (#/addSubview: self cancel-button)
+      (#/release cancel-button))
+    (incf y *ui-button-item-height*)
+    (let ((rect (ns:make-ns-rect 50 50 *popup-menu-width* (+ y 10))))
+      (#/setFrame: self rect))))
 
 ;;;; ui-status-bar =============================================================
 
@@ -459,7 +517,8 @@
           (schematic-items self)))
     (update-layout self))
 
-(defmethod update-layout ((self ui-schematic-view))
+(defmethod update-layout ((self ui-schematic-view)  &optional (view nil))
+  (declare (ignore view))
   (#/setSubviews: self (#/array ns:ns-array)) ;remove all subviews
   (when (popup-menu self)
     (#/addSubview: self (popup-menu self)))
@@ -499,7 +558,8 @@
     (if (popup-menu self)
         (let ((widget (#/hitTest: self p)))
           (unhighlight-items (popup-menu self))
-          (when (typep widget 'ui-menu-item)
+;;;          (when (typep widget 'ui-menu-item)
+          (when (subtypep (type-of widget) 'ui-button-item)
             (#/setBorderWidth: (#/layer widget) 3)))   ;highlight menu item under mouse
         (let ((widget (#/hitTest: self p)))
           (when (typep widget 'ui-schematic-item)
@@ -512,7 +572,8 @@
         (ui-switch-active-view self (scene-view self)))
     (when (popup-menu self)
       (let ((widget (#/hitTest: self p)))
-        (when (typep widget 'ui-menu-item)
+        ;; (when (typep widget 'ui-menu-item)
+        (when (subtypep (type-of widget) 'ui-button-item)
           (when (action-fn widget)
             (funcall (action-fn widget) widget)))))
     (#/setNeedsDisplay: (scene-view self) t)
@@ -661,7 +722,7 @@ h or ?: print this help message~%"))
     (setf (menu-items menu) items)
     (update-layout menu)
     menu))
-                
+
 (defmethod make-create-shape-popup-menu ((self scene-view))
   (let ((menu (make-instance 'ui-popup-menu))
         (items (list
@@ -675,9 +736,12 @@ h or ?: print this help message~%"))
                 (let* ((shape (add-shape (scene self) (make-icosahedron 1.0)))
                        (s (get-float-input "Enter Scale" 1.0)))
                   (scale-to shape (p! s s s))))
-               (menu-item-action-entry
-                "Octahedron"
-                (add-shape (scene self) (make-octahedron 1.0)))
+               (menu-item-submenu-entry
+                "Octahedron..."
+                (make-octahedron-dialog self))
+               ;; (menu-item-action-entry
+               ;;  "Octahedron"
+               ;;  (add-shape (scene self) (make-octahedron 1.0)))
                (menu-item-action-entry
                 "Circle"
                 (add-shape (scene self) (make-circle-shape 3.0 32))))))
@@ -685,6 +749,22 @@ h or ?: print this help message~%"))
     (setf (menu-items menu) items)
     (update-layout menu)
     menu))
+
+(defmethod make-octahedron-dialog ((self scene-view))
+  (let* ((radius-item (make-instance 'ui-text-item
+                                     :title "Radius"
+                                     :ui-value 1.0
+                                     :action-fn #'(lambda (item)
+                                                    (setf (ui-value item)
+                                                          (get-float-input "Enter Radius" (ui-value item))))))
+         (dialog (make-instance 'ui-dialog-box
+                                :action-fn #'(lambda ()
+                                               (add-shape (scene self)
+                                                          (make-octahedron (ui-value radius-item)))))))
+    ;;; menu setup
+    (setf (menu-items dialog) (list radius-item))
+    (update-layout dialog self)
+    dialog))
 
 (defmethod make-add-field-popup-menu ((self scene-view))
   (let ((menu (make-instance 'ui-popup-menu))
@@ -779,7 +859,8 @@ h or ?: print this help message~%"))
       (unhighlight-items (popup-menu self))
       ;; highlight menu item under mouse
       (let ((widget (#/hitTest: self p)))
-        (when (typep widget 'ui-menu-item)
+;;;        (when (typep widget 'ui-menu-item)
+        (when (subtypep (type-of widget) 'ui-button-item)
           (#/setBorderWidth: (#/layer widget) 3)))
       (#/setNeedsDisplay: self t))))
 
@@ -794,7 +875,8 @@ h or ?: print this help message~%"))
     ;;            (not (menu-is-visible? (popup-menu self))))
     ;;   (popup (popup-menu self) self))
         (let ((widget (#/hitTest: self p)))
-          (when (typep widget 'ui-menu-item)
+          ;; (when (typep widget 'ui-menu-item)
+          (when (subtypep (type-of widget) 'ui-button-item)
             (when (action-fn widget)
               (funcall (action-fn widget) widget))))))
   (redraw))
