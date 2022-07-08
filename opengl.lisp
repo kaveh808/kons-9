@@ -662,56 +662,33 @@ h or ?: print this help message~%"))
       (push (menu-item-misc-entry "Inspect Selection" (inspect (selection scene)))
             items))
     ;;; particle system from point-generator-mixin
-    (menu-item-if-selection-type
-     'point-generator-mixin
-     (menu-item-action-entry
-      (format nil "Create PARTICLE-SYSTEM from ~a" (name shape))
-      (let ((p-sys (make-particle-system shape
-                                         (p! .2 .2 .2) 1 4 'particle
-                                         :update-angle (range-float (/ pi 16) (/ pi 32)))))
-        (add-shape scene p-sys)
-        (add-animator scene p-sys))))
-    ;;; particle system from point-generator-mixin
-    (menu-item-if-selection-type
-     'point-generator-mixin
-     (menu-item-action-entry
-      (format nil "Create Dynamic PARTICLE-SYSTEM from ~a" (name shape))
-      (let* ((points (point-generator-points shape))
-             (dirs (point-generator-directions shape)) ;(point-generator-radial-directions shape))
-             (p-sys (make-particle-system-aux points dirs
-                                              (p! .2 .2 .2) 1 4 'dynamic-particle
-                                              :do-collisions? nil
-                                              :update-angle (range-float 0 0)
-                                              :spawn-angle (range-float 0 (/ pi 16))
-                                              :life-span (get-float-input "Enter Lifespan" -1))))
-        (add-shape scene p-sys)
-        (add-animator scene p-sys))))
+    (menu-item-if-selection-type 'point-generator-mixin
+                                 (menu-item-submenu-entry
+                                  (format nil "Create PARTICLE-SYSTEM from ~a..." (name shape))
+                                  (make-particle-system-dialog view)))
+    ;;; dynamic particle system from point-generator-mixin
+    (menu-item-if-selection-type 'point-generator-mixin
+                                 (menu-item-submenu-entry
+                                  (format nil "Create Dynamic PARTICLE-SYSTEM from ~a..." (name shape))
+                                  (make-dynamic-particle-system-dialog view)))
     ;;; add field to particle system
-    (menu-item-if-selection-type
-     'particle-system
-     (menu-item-submenu-entry
-      (format nil "Add Field to PARTICLE-SYSTEM ~a" (name shape))
-      (make-add-field-popup-menu view)))
-
+    (menu-item-if-selection-type 'particle-system
+                                 (menu-item-submenu-entry
+                                  (format nil "Add Force Field to PARTICLE-SYSTEM ~a..." (name shape))
+                                  (make-add-field-popup-menu view)))
     ;;; sweep-mesh-group from curve-generator-mixin
-    (menu-item-if-selection-type
-     'curve-generator-mixin
-     (menu-item-action-entry
-      (format nil "Create SWEEP-MESH-GROUP from ~a" (name shape))
-      (add-shape scene (make-sweep-mesh-group
-                        (make-circle-shape (get-float-input "Enter Profile Radius" 0.2) 6)
-                        shape
-                        :taper 0.0 :twist (get-float-input "Enter Twist" 0.0)))))
+    (menu-item-if-selection-type 'curve-generator-mixin
+                                 (menu-item-submenu-entry
+                                  (format nil "Create SWEEP-MESH-GROUP from ~a..." (name shape))
+                                  (make-sweep-mesh-group-dialog view)))
     ;;; set sweep-mesh-group point colors
-    (menu-item-if-selection-type
-     'sweep-mesh-group
-     (menu-item-action-entry
-      (format nil "Set UV point colors for ~a" (name shape))
-      (set-point-colors-by-uv shape #'(lambda (u v) (declare (ignore u)) (c-rainbow v)))))
+    (menu-item-if-selection-type 'sweep-mesh-group
+                                 (menu-item-submenu-entry
+                                  (format nil "Set UV Point Colors for ~a..." (name shape))
+                                  (make-uv-point-colors-dialog view)))
     ;;; menu setup
     (setf (ui-items menu) items)
-    (update-layout menu)
-    menu))
+    (update-layout menu)))
 
 (defun make-create-shape-popup-menu (view)
   (let* ((items (list (menu-item-submenu-entry "Grid (n x n)..." (make-grid-dialog view))
@@ -760,6 +737,60 @@ h or ?: print this help message~%"))
                                        (make-grid-uv-mesh n n (p! (- s) 0 (- s)) (p! s 0 s))))
              (size-item "Size" 4.0)
              (num-points-item "Num Points" 16 #'get-integer-input))
+
+(make-dialog make-particle-system-dialog
+             (let* ((scene (scene view))
+                    (n (ui-value number-item))
+                    (s (ui-value speed-item))
+                    (p-sys (make-particle-system (first (selection scene))
+                                                 (p! s s s) n 4 'particle
+                                                 :update-angle (range-float (/ pi 16) (/ pi 32)))))
+               (add-shape scene p-sys)
+               (add-animator scene p-sys))
+             (number-item "Number" 1 #'get-integer-input)
+             (speed-item "Speed" 0.2))
+
+(make-dialog make-dynamic-particle-system-dialog
+             (let* ((scene (scene view))
+                    (n (ui-value number-item))
+                    (s (ui-value speed-item))
+                    (points (point-generator-points (first (selection scene))))
+                    (dirs (point-generator-directions (first (selection scene)))) ;(point-generator-radial-directions shape))
+                    (p-sys (make-particle-system-aux points dirs
+                                                     (p! s s s) n 4 'dynamic-particle
+                                                     :do-collisions? nil
+                                                     :update-angle (range-float 0 0)
+                                                     :spawn-angle (range-float 0 (/ pi 16))
+                                                     :life-span (ui-value lifespan-item))))
+               (add-shape scene p-sys)
+               (add-animator scene p-sys))
+             (number-item "Number" 2 #'get-integer-input)
+             (speed-item "Speed" 0.2)
+             (lifespan-item "Lifespan" 10 #'get-integer-input))
+
+(make-dialog make-sweep-mesh-group-dialog
+             (let* ((scene (scene view))
+                    (r (ui-value radius-item))
+                    (n (ui-value num-points-item))
+                    (taper (ui-value taper-item))
+                    (twist (ui-value twist-item)))
+               (add-shape scene (make-sweep-mesh-group (make-circle-shape r n)
+                                                       (first (selection scene))
+                                                       :taper taper :twist twist)))
+             (radius-item "Radius" 0.2)
+             (num-points-item "Num Points" 6 #'get-integer-input)
+             (taper-item "Taper" 0.0)
+             (twist-item "Twist" 0.0))
+
+(make-dialog make-uv-point-colors-dialog
+             (let* ((scene (scene view))
+                    (vf (ui-value v-factor-item)))
+               (set-point-colors-by-uv (first (selection scene))
+                                       #'(lambda (u v)
+                                           (declare (ignore u))
+                                           (c-rainbow (mod (* v vf) 1)))))
+             (v-factor-item "V Factor" 1.0))
+
 
 (defun make-add-field-popup-menu (view)
   (let* ((items (list (menu-item-submenu-entry "Gravity Force Field..."
