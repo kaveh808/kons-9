@@ -661,6 +661,11 @@ h or ?: print this help message~%"))
     (when (selection scene)
       (push (menu-item-misc-entry "Inspect Selection" (inspect (selection scene)))
             items))
+    ;;; edit circle shape
+    (menu-item-if-selection-type 'circle-shape
+                                 (menu-item-submenu-entry
+                                  (format nil "Edit ~a..." (name shape))
+                                  (edit-circle-dialog view)))
     ;;; particle system from point-generator-mixin
     (menu-item-if-selection-type 'point-generator-mixin
                                  (menu-item-submenu-entry
@@ -709,7 +714,8 @@ h or ?: print this help message~%"))
 
 (defmacro make-dialog (name action-expr &rest item-decls)
   `(defun ,name (view)
-     (let* (,@(mapcar #'(lambda (decl)
+     (let* ((curr-selection (first (selection (scene view))))
+            ,@(mapcar #'(lambda (decl)
                           (list (first decl) `(make-dialog-item ,(second decl) ,@(cddr decl))))
                       item-decls)
             (dialog (make-instance 'ui-dialog-box
@@ -726,10 +732,39 @@ h or ?: print this help message~%"))
              (radius-item "Radius" 1.0))
 
 (make-dialog make-circle-dialog
-             (add-shape (scene view) (make-circle-shape (ui-value radius-item)
+             (add-shape (scene view) (make-circle-shape (ui-value diam-item)
                                                         (ui-value num-points-item)))
-             (radius-item "Radius" 3.0)
+             (diam-item "Diameter" 3.0)
              (num-points-item "Num Points" 32 #'get-integer-input))
+
+(defmacro make-edit-shape-dialog (dialog-name slot-decls)
+  `(make-dialog ,dialog-name
+                (let* ((scene (scene view))
+                       (shape (first (selection scene))))
+                  ,@(mapcar #'(lambda (slot-name)
+                                `(setf (,slot-name shape) (ui-value ,(mashup-symbol slot-name '-item))))
+                            (mapcar #'first slot-decls)))
+                ,@(mapcar #'(lambda (slot-decl)
+                              `(,(mashup-symbol (first slot-decl) '-item)
+                                ,(format nil "~a" (first slot-decl))
+                                (slot-value curr-selection ',(first slot-decl))
+                                ,(cond ((eql 'float (second slot-decl)) '#'get-float-input)
+                                       ((eql 'integer (second slot-decl)) '#'get-integer-input))))
+                    slot-decls)))
+
+(make-edit-shape-dialog edit-circle-dialog ((diameter float) (num-points integer)))
+
+#|
+(mapcar #'slot-definition-initform (class-slots (find-class 'circle-shape)))
+|#
+
+;; (make-dialog edit-circle-dialog
+;;              (let* ((scene (scene view))
+;;                     (shape (first (selection scene))))
+;;                (setf (diameter shape) (ui-value diam-item))
+;;                (setf (num-points shape) (ui-value num-points-item)))
+;;              (diam-item "Diameter" 3.0)
+;;              (num-points-item "Num Points" 32 #'get-integer-input))
 
 (make-dialog make-grid-dialog
              (add-shape (scene view) (let ((n (ui-value num-points-item))
@@ -740,9 +775,10 @@ h or ?: print this help message~%"))
 
 (make-dialog make-particle-system-dialog
              (let* ((scene (scene view))
+                    (shape (first (selection scene)))
                     (n (ui-value number-item))
                     (s (ui-value speed-item))
-                    (p-sys (make-particle-system (first (selection scene))
+                    (p-sys (make-particle-system shape
                                                  (p! s s s) n 4 'particle
                                                  :update-angle (range-float (/ pi 16) (/ pi 32)))))
                (add-shape scene p-sys)
