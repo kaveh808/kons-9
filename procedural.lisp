@@ -122,7 +122,7 @@
 ;;;; sine-curve-shape =====================================================
 
 (defclass sine-curve-shape (procedural-curve-shape)
-  ((period :accessor period :initarg :period :initform 2pi)
+  ((period :accessor period :initarg :period :initform 360.0)
    (frequency :accessor frequency :initarg :frequency :initform 1.0)
    (x-scale :accessor x-scale :initarg :x-scale :initform 1.0)
    (y-scale :accessor y-scale :initarg :y-scale :initform 1.0))
@@ -137,11 +137,12 @@
 (defmethod compute-procedural-node ((shape sine-curve-shape))
   (with-accessors ((period period) (frequency frequency) (x-scale x-scale) (y-scale y-scale) (n num-points))
       shape
-    (let ((points '())
-          (angle-delta (/ period n)))
+    (let* ((points '())
+           (rad-period (radians period))
+           (angle-delta (/ rad-period n)))
       (dotimes (i (1+ n))
         (let ((angle (* i angle-delta frequency)))
-          (push (p! (* x-scale (/ angle (* frequency period))) (* y-scale (sin angle)) 0)
+          (push (p! (* x-scale (/ angle (* frequency rad-period))) (* y-scale (sin angle)) 0)
                 points)))
       (setf (points shape) (nreverse points))
       shape)))

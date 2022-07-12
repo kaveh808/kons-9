@@ -665,7 +665,12 @@ h or ?: print this help message~%"))
     (menu-item-if-selection-type 'circle-shape
                                  (menu-item-submenu-entry
                                   (format nil "Edit ~a..." (name shape))
-                                  (edit-circle-dialog view)))
+                                  (edit-circle-shape-dialog view)))
+    ;;; edit sine-curve shape
+    (menu-item-if-selection-type 'sine-curve-shape
+                                 (menu-item-submenu-entry
+                                  (format nil "Edit ~a..." (name shape))
+                                  (edit-sine-curve-shape-dialog view)))
     ;;; particle system from point-generator-mixin
     (menu-item-if-selection-type 'point-generator-mixin
                                  (menu-item-submenu-entry
@@ -699,7 +704,8 @@ h or ?: print this help message~%"))
   (let* ((items (list (menu-item-submenu-entry "Grid (n x n)..." (make-grid-dialog view))
                       (menu-item-submenu-entry "Icosahedron..." (make-icosahedron-dialog view))
                       (menu-item-submenu-entry "Octahedron..." (make-octahedron-dialog view))
-                      (menu-item-submenu-entry "Circle..." (make-circle-dialog view))))
+                      (menu-item-submenu-entry "Sine Curve..." (create-sine-curve-shape-dialog view))
+                      (menu-item-submenu-entry "Circle..." (create-circle-shape-dialog view))))
          (menu (make-instance 'ui-popup-menu :ui-items items)))
     (update-layout menu)))
 
@@ -731,14 +737,35 @@ h or ?: print this help message~%"))
              (add-shape (scene view) (make-octahedron (ui-value radius-item)))
              (radius-item "Radius" 1.0))
 
-(make-dialog make-circle-dialog
-             (add-shape (scene view) (make-circle-shape (ui-value diam-item)
-                                                        (ui-value num-points-item)))
-             (diam-item "Diameter" 3.0)
-             (num-points-item "Num Points" 32 #'get-integer-input))
+;; (make-dialog create-circle-dialog
+;;              (add-shape (scene view) (make-circle-shape (ui-value diam-item)
+;;                                                         (ui-value num-points-item)))
+;;              (diam-item "Diameter" 3.0)
+;;              (num-points-item "Num Points" 32 #'get-integer-input))
 
-(defmacro make-edit-shape-dialog (dialog-name slot-decls)
-  `(make-dialog ,dialog-name
+(defun find-class-slot (class-name slot-name)
+  (find-if #'(lambda (slot) (eq slot-name (slot-definition-name slot)))
+           (class-slots (find-class class-name))))
+
+(defmacro make-create-shape-dialog (class-name slot-decls)
+  `(make-dialog ,(mashup-symbol 'create- class-name '-dialog)
+                (add-shape (scene view)
+                           (make-instance ',class-name
+                                          ,@(flatten-list-1 (mapcar #'(lambda (slot-name)
+                                                                        `(,(make-keyword slot-name) (ui-value ,(mashup-symbol slot-name '-item))))
+                                                                    (mapcar #'first slot-decls)))))
+                ,@(mapcar #'(lambda (slot-decl)
+                              `(,(mashup-symbol (first slot-decl) '-item)
+                                ,(format nil "~a" (first slot-decl))
+                                (slot-definition-initform (find-class-slot ',class-name ',(first slot-decl)))
+                                ,(cond ((eql 'float (second slot-decl)) '#'get-float-input)
+                                       ((eql 'integer (second slot-decl)) '#'get-integer-input))))
+                          slot-decls)))
+
+;(make-create-shape-dialog circle-shape ((diameter float) (num-points integer)))
+
+(defmacro make-edit-shape-dialog (class-name slot-decls)
+  `(make-dialog ,(mashup-symbol 'edit- class-name '-dialog)
                 (let* ((scene (scene view))
                        (shape (first (selection scene))))
                   ,@(mapcar #'(lambda (slot-name)
@@ -750,9 +777,21 @@ h or ?: print this help message~%"))
                                 (slot-value curr-selection ',(first slot-decl))
                                 ,(cond ((eql 'float (second slot-decl)) '#'get-float-input)
                                        ((eql 'integer (second slot-decl)) '#'get-integer-input))))
-                    slot-decls)))
+                          slot-decls)))
 
-(make-edit-shape-dialog edit-circle-dialog ((diameter float) (num-points integer)))
+;(make-edit-shape-dialog circle-shape ((diameter float) (num-points integer)))
+
+(defmacro make-create-and-edit-shape-dialogs (class-name slot-decls)
+  `(progn
+     (make-create-shape-dialog ,class-name ,slot-decls)
+     (make-edit-shape-dialog ,class-name ,slot-decls)))
+
+(make-create-and-edit-shape-dialogs circle-shape ((diameter float) (num-points integer)))
+(make-create-and-edit-shape-dialogs sine-curve-shape ((y-scale float)
+                                                      (x-scale float)
+                                                      (frequency float)
+                                                      (period float)
+                                                      (num-points integer)))
 
 #|
 (mapcar #'slot-definition-initform (class-slots (find-class 'circle-shape)))
