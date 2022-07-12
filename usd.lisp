@@ -72,10 +72,10 @@
 	(v-dim (v-dim mesh)))
     (dotimes (u (1- (wrapped-u-dim mesh)))
       (dotimes (v (1- (wrapped-v-dim mesh)))
-	(push (array-row-major-index (point-array mesh)          u                  v)         indices)
-	(push (array-row-major-index (point-array mesh) (mod (1+ u) u-dim)          v)         indices)
-	(push (array-row-major-index (point-array mesh) (mod (1+ u) u-dim) (mod (1+ v) v-dim)) indices)
-	(push (array-row-major-index (point-array mesh)          u         (mod (1+ v) v-dim)) indices)))
+	(push (array-row-major-index (uv-point-array mesh)          u                  v)         indices)
+	(push (array-row-major-index (uv-point-array mesh) (mod (1+ u) u-dim)          v)         indices)
+	(push (array-row-major-index (uv-point-array mesh) (mod (1+ u) u-dim) (mod (1+ v) v-dim)) indices)
+	(push (array-row-major-index (uv-point-array mesh)          u         (mod (1+ v) v-dim)) indices)))
     (reverse indices)))
 
 (defun point->usd-string (p)
@@ -85,7 +85,7 @@
   (let ((points '()))
     (dotimes (u (u-dim mesh))
       (dotimes (v (v-dim mesh))
-	(push (point->usd-string (aref (point-array mesh) u v)) points)))
+	(push (point->usd-string (aref (uv-point-array mesh) u v)) points)))
     (reverse points)))
 
 ;;;; export-animator ==================================================
