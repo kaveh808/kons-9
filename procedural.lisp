@@ -13,6 +13,7 @@
 
 (defclass procedural-mixin ()
   ((is-dirty? :accessor is-dirty? :initarg :is-dirty? :initform t)
+   (time-stamp :accessor time-stamp :initarg :time-stamp :initform 0)
    (test-for-compute? :accessor test-for-compute? :initarg :test-for-compute? :initform t)
    (compute-fn :accessor compute-fn :initarg :compute-fn :initform #'compute-procedural-node)))
 
@@ -53,8 +54,7 @@
 (defmethod time-stamp ((obj t)) 0)
 
 (defclass dependency-node-mixin (procedural-mixin)
-  ((input-slots :accessor input-slots :initarg :input-slots :initform '()) ;must be of type dependency-node-mixin
-   (time-stamp :accessor time-stamp :initarg :time-stamp :initform 0)))
+  ((input-slots :accessor input-slots :initarg :input-slots :initform '()))) ;must be of type dependency-node-mixin
 
 (defmethod needs-compute? ((node dependency-node-mixin) &optional (verbose nil))
   (when verbose

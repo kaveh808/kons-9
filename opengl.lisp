@@ -671,6 +671,11 @@ h or ?: print this help message~%"))
                                  (menu-item-submenu-entry
                                   (format nil "Edit ~a..." (name shape))
                                   (edit-sine-curve-shape-dialog view)))
+    ;;; edit height-field shape
+    (menu-item-if-selection-type 'superquadric
+                                 (menu-item-submenu-entry
+                                  (format nil "Edit ~a..." (name shape))
+                                  (edit-superquadric-dialog view)))
     ;;; particle system from point-generator-mixin
     (menu-item-if-selection-type 'point-generator-mixin
                                  (menu-item-submenu-entry
@@ -702,6 +707,7 @@ h or ?: print this help message~%"))
 
 (defun make-create-shape-popup-menu (view)
   (let* ((items (list (menu-item-submenu-entry "Grid (n x n)..." (make-grid-dialog view))
+                      (menu-item-submenu-entry "Superquadric..." (create-superquadric-dialog view))
                       (menu-item-submenu-entry "Icosahedron..." (make-icosahedron-dialog view))
                       (menu-item-submenu-entry "Octahedron..." (make-octahedron-dialog view))
                       (menu-item-submenu-entry "Sine Curve..." (create-sine-curve-shape-dialog view))
@@ -744,8 +750,7 @@ h or ?: print this help message~%"))
 ;;              (num-points-item "Num Points" 32 #'get-integer-input))
 
 (defun find-class-slot (class-name slot-name)
-  (find-if #'(lambda (slot) (eq slot-name (slot-definition-name slot)))
-           (class-slots (find-class class-name))))
+  (find slot-name (class-slots (find-class class-name)) :key #'slot-definition-name))
 
 (defmacro make-create-shape-dialog (class-name slot-decls)
   `(make-dialog ,(mashup-symbol 'create- class-name '-dialog)
@@ -792,6 +797,11 @@ h or ?: print this help message~%"))
                                                       (frequency float)
                                                       (period float)
                                                       (num-points integer)))
+(make-create-and-edit-shape-dialogs superquadric ((e2 float)
+                                                  (e1 float)
+                                                  (radius float)
+                                                  (v-dim integer)
+                                                  (u-dim integer)))
 
 #|
 (mapcar #'slot-definition-initform (class-slots (find-class 'circle-shape)))

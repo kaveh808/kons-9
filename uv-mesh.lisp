@@ -4,8 +4,8 @@
 
 ;;; class for parametrized quad meshes
 (defclass uv-mesh (polyhedron)
-  ((u-dim :accessor u-dim :initarg :u-dim :initform 0)
-   (v-dim :accessor v-dim :initarg :v-dim :initform 0)
+  ((u-dim :accessor u-dim :initarg :u-dim :initform 16)
+   (v-dim :accessor v-dim :initarg :v-dim :initform 16)
    (u-wrap :accessor u-wrap :initarg :u-wrap :initform nil)
    (v-wrap :accessor v-wrap :initarg :v-wrap :initform nil)
    (u-cap :accessor u-cap :initarg :u-cap :initform nil)
