@@ -43,7 +43,8 @@
      (when (needs-compute? obj)
        (without-testing-for-compute obj
 ;       (compute-procedural-node obj)
-         (funcall (compute-fn obj) obj))
+         (funcall (compute-fn obj) obj)
+         (setf (time-stamp obj) (get-internal-real-time)))
        (setf (is-dirty? obj) nil))))
 
 ;;;; dependency-node-mixin ===============================================
@@ -55,20 +56,18 @@
   ((input-slots :accessor input-slots :initarg :input-slots :initform '()) ;must be of type dependency-node-mixin
    (time-stamp :accessor time-stamp :initarg :time-stamp :initform 0)))
 
-(defmacro def-dependency-output (class slot)
-  `(defmethod ,slot :after ((obj ,class))
-     (setf (time-stamp obj) (get-internal-real-time))))
-
 (defmethod needs-compute? ((node dependency-node-mixin) &optional (verbose nil))
   (when verbose
-    (format t  "NEEDS-COMPUTE? ~a dt: ~a, test: ~a, dirty: ~a, dirty inputs: ~a -- ~a~%"
-            node (- (time-stamp node) (inputs-time-stamp node))
-            (test-for-compute? node) (is-dirty? node) (has-dirty-input? node)
+    (format t  "NEEDS-COMPUTE? ~a (~a) dt: ~a (~a - ~a), test: ~a, dirty: ~a, dirty inputs: ~a~%"
+            node
             (and (test-for-compute? node)
                  (or (is-dirty? node)
                      (has-dirty-input? node)
                      (= 0 (time-stamp node))
-                     (> (inputs-time-stamp node) (time-stamp node))))))
+                     (> (inputs-time-stamp node) (time-stamp node))))
+            (- (time-stamp node) (inputs-time-stamp node))
+            (time-stamp node) (inputs-time-stamp node)
+            (test-for-compute? node) (is-dirty? node) (has-dirty-input? node)))
   (and (test-for-compute? node)
        (or (is-dirty? node)             ;procedural-mixin input changed
            (has-dirty-input? node)
@@ -93,8 +92,7 @@
   ((num-points :accessor num-points :initarg :num-points :initform 64)))
 
 (def-procedural-input procedural-curve-shape num-points)
-(def-procedural-output procedural-curve-shape points) ;can we unify this...
-(def-dependency-output procedural-curve-shape points) ; ...and this?
+(def-procedural-output procedural-curve-shape points)
 
 ;;;; circle-shape ==========================================================
 
@@ -166,9 +164,7 @@
 (defclass manager-group (group dependency-node-mixin)
   ())
 
-;;; these must always be together?
 (def-procedural-output manager-group children)
-(def-dependency-output manager-group children)
 
 ;;;; instancer-group ====================================================
 

@@ -382,9 +382,6 @@
 (def-procedural-output sweep-mesh uv-point-array)
 (def-procedural-output sweep-mesh points)
 (def-procedural-output sweep-mesh faces)
-(def-dependency-output sweep-mesh uv-point-array)
-(def-dependency-output sweep-mesh points)
-(def-dependency-output sweep-mesh faces)
 
 ;;; assumes profile curve has z-axis as normal
 (defmethod compute-procedural-node ((mesh sweep-mesh))
