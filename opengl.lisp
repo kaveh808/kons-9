@@ -593,6 +593,7 @@ z: reset view pan and zoom~%~
 a: init scene~%~
 n: clear scene~%~
 space: update scene (hold down for animation) ~%~
+delete: delete selected items ~%~
 tab: show/hide contextual menu ~%~
 h or ?: print this help message~%"))
 
@@ -606,7 +607,7 @@ h or ?: print this help message~%"))
       (#\a (dolist (v *scene-views*) (init-scene (scene v))))
       (#\n (dolist (v *scene-views*) (clear-scene (scene v))))
       (#\space (dolist (v *scene-views*) (update-scene (scene v))))
-
+      (#\rubout (dolist (v *scene-views*) (remove-current-selection (scene v))))
       (#\tab (if (null (popup-menu view))
                  (menu-popup view (make-popup-menu view))
                  (menu-popdown view)))))
@@ -625,7 +626,7 @@ h or ?: print this help message~%"))
 (defmacro menu-item-if-selection-type (required-selection-type menu-item)
   `(when (= 1 (length (selection scene)))
      (let ((shape (first (selection scene))))
-       (when (typep shape ,required-selection-type)
+       (when (subtypep (type-of shape) ,required-selection-type)
          (push ,menu-item items)))))
 
 (defmacro menu-item-action-entry (title-expr action-expr)
@@ -696,6 +697,11 @@ h or ?: print this help message~%"))
                                  (menu-item-submenu-entry
                                   (format nil "Create SWEEP-MESH-GROUP from ~a..." (name shape))
                                   (make-sweep-mesh-group-dialog view)))
+    ;;; set uv-mesh point colors
+    (menu-item-if-selection-type 'uv-mesh
+                                 (menu-item-submenu-entry
+                                  (format nil "Set UV Point Colors for ~a..." (name shape))
+                                  (make-uv-point-colors-dialog view)))
     ;;; set sweep-mesh-group point colors
     (menu-item-if-selection-type 'sweep-mesh-group
                                  (menu-item-submenu-entry
@@ -1069,6 +1075,7 @@ z: reset camera~%~
 a: init scene~%~
 n: clear scene~%~
 space: update scene (hold down for animation) ~%~
+delete: delete selected items ~%~
 tab: show/hide contextual menu ~%~
 h or ?: print this help message~%"))
 
@@ -1105,7 +1112,7 @@ h or ?: print this help message~%"))
       ;;        (dotimes (i 100) (update-scene (scene self)))))
 ;      (#\space (when (scene self) (update-scene (scene self))))))
       (#\space (dolist (v *scene-views*) (update-scene (scene v))))
-
+      (#\rubout (dolist (v *scene-views*) (remove-current-selection (scene v))))
       (#\tab (if (null (popup-menu self))
                  (menu-popup self (make-popup-menu self))
                  (menu-popdown self)))))

@@ -56,6 +56,7 @@
 ;;; only works for top-level shapes, not children of groups
 (defmethod remove-shape ((scene scene) (shape shape))
   (setf (shapes scene) (remove shape (shapes scene)))
+  (setf (selection scene) (remove shape (selection scene)))
   (setf (scene shape) nil)
   shape)
 
@@ -79,6 +80,10 @@
 ;;; TODO -- set anim scene to nil, remove shapes from scene selection
 (defmethod clear-animators ((scene scene))
   (setf (animators scene) '()))
+
+(defmethod remove-current-selection ((scene scene))
+  (dolist (shape (selection scene))
+    (remove-shape scene shape)))
 
 (defmethod clear-scene ((scene scene))
   (setf (selection scene) '())
