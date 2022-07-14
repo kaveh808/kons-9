@@ -5,11 +5,11 @@
 (defgeneric compute-procedural-node (obj)
   )
 
-(defgeneric is-dirty? (obj)
-  )
+(defgeneric is-dirty? (obj))
+(defmethod is-dirty? ((obj t)) nil)
 
-(defmethod is-dirty? ((obj t))
-  nil)
+(defgeneric time-stamp (obj))
+(defmethod time-stamp ((obj t)) 0)
 
 (defclass procedural-mixin ()
   ((is-dirty? :accessor is-dirty? :initarg :is-dirty? :initform t)
@@ -43,15 +43,11 @@
      ;; (format t "GET ~a ~a~%" ',slot obj)
      (when (needs-compute? obj)
        (without-testing-for-compute obj
-;       (compute-procedural-node obj)
          (funcall (compute-fn obj) obj)
          (setf (time-stamp obj) (get-internal-real-time)))
        (setf (is-dirty? obj) nil))))
 
 ;;;; dependency-node-mixin ===============================================
-
-(defgeneric time-stamp (obj))
-(defmethod time-stamp ((obj t)) 0)
 
 (defclass dependency-node-mixin (procedural-mixin)
   ((input-slots :accessor input-slots :initarg :input-slots :initform '()))) ;must be of type dependency-node-mixin
@@ -88,7 +84,7 @@
 
 ;;;; procedural-curve-shape ================================================
 
-(defclass procedural-curve-shape (curve-shape dependency-node-mixin) ;procedural-mixin)
+(defclass procedural-curve-shape (curve-shape procedural-mixin)
   ((num-points :accessor num-points :initarg :num-points :initform 64)))
 
 (def-procedural-input procedural-curve-shape num-points)
