@@ -17,16 +17,16 @@ This code currently only runs in CCL on MacOS.
 
 Download the code and point your asdf to it:
 
-(push #p"<your directory>/kons-9/" asdf:*central-registry*)
+    (push #p"<your directory>/kons-9/" asdf:*central-registry*)
 
 Load the system:
 
-(ql:quickload "kons-9")
+    (ql:quickload "kons-9")
 
 Run the code:
 
-(in-package :kons-9)
-(run)
+    (in-package :kons-9)
+    (run)
 
 You should see a graphics window appear.
 
