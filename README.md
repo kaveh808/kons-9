@@ -32,7 +32,7 @@ You should see a graphics window appear.
 
 Type 'h' in the window to see the available key bindings.
 
-Open demo.lisp and start evaluating the blocks of code. Things should appear in the graphics window.
+Open `demo.lisp` and start evaluating the blocks of code. Things should appear in the graphics window.
 
 Have fun.
 
