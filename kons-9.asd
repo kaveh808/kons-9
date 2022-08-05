@@ -15,6 +15,7 @@
    (:file "kernel/opengl")
    (:file "kernel/transform")
    (:file "kernel/shape")
+   (:file "kernel/group")
    (:file "kernel/procedural")
    (:file "kernel/animator")
    (:file "kernel/scene")
