@@ -12,6 +12,8 @@
 
 |#
 
+;;; kernel tests
+
 ;;; shapes and transforms ------------------------------------------------------
 ;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
@@ -31,6 +33,12 @@
       (setf (show-normals icos) 1.0)
       (setf (show-bounds? superq) t)
       (add-shapes *scene* (list circle superq icos))))
+
+;;; transforms and hierarchies
+
+;;; animators
+
+
 
 ;;; uv-mesh --------------------------------------------------------------------
 (with-clear-and-redraw
@@ -461,7 +469,7 @@
   (select-face (first (shapes *scene*)) 2)
   (select-face (first (shapes *scene*)) 5))
 
-;;; height-field ---------------------------------------------------------------
+;;; heightfield ---------------------------------------------------------------
 ;;; try using various height functions and color functions
 (defun height-fn-1 (x z)
   (* 4 (noise (p! x 0 z))))
@@ -478,14 +486,14 @@
          (mag (max 0.001 (p-mag (p-scale p 4)))))
     (* 3 (/ (sin mag) mag))))
 (with-clear-and-redraw
-  (let ((mesh (make-height-field 41 41 (p! -5 0 -5) (p! 5 0 5) #'height-fn-4)))
+  (let ((mesh (make-heightfield 41 41 (p! -5 0 -5) (p! 5 0 5) #'height-fn-4)))
     (add-shape *scene* mesh)
 ;    (set-point-colors-by-xyz mesh #'(lambda (p) (c-rainbow (clamp (tween (y p) 0 .25) 0.0 1.0))))
 ;    (set-point-colors-by-xyz mesh #'(lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 5) 0.0 1.0))))
     (set-point-colors-by-xyz mesh #'(lambda (p) (color-noise p)))
     (translate-by mesh (p! 0 1 0))))      ;adjust to height values
 
-;;; height-field ---------------------------------------------------------------
+;;; heightfield ---------------------------------------------------------------
 ;;; adjust color function as desired
 (defun terrain-color (p n)
   (cond ;((< (y n) 0.5)
@@ -501,7 +509,7 @@
          (ampl 8.0)
          (res 81)
          (octaves 6)
-         (mesh (make-height-field res res (p! -5 0 -5) (p! 5 0 5)
+         (mesh (make-heightfield res res (p! -5 0 -5) (p! 5 0 5)
                                  #'(lambda (x z)
                                      (* ampl (turbulence (p-scale (p! x 0 z) freq) octaves))))))
     (set-point-colors-by-point-and-normal mesh #'terrain-color)

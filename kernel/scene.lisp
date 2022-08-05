@@ -1,6 +1,6 @@
 (in-package #:kons-9)
 
-;;;; scene ==============================================================
+;;;; scene =====================================================================
 
 (defclass scene ()
   ((shapes :accessor shapes :initarg :shapes :initform '())
@@ -90,7 +90,7 @@
   (clear-shapes scene)
   (clear-animators scene))
 
-(defmethod draw ((scene scene))
+;; (defmethod draw ((scene scene))
   ;; (ccl:with-metering
   ;;     (update-scene init-scene update-animator update-particle
   ;;      add-point add-particle update-position update-velocity
@@ -110,9 +110,12 @@
   ;;      quad-normal triangle-normal x y z c-red c-green c-blue faces points
   ;;      draw draw-faces draw-wireframe draw-points draw-normals)
       ;; (:exclusive 0.0)
-    (mapc #'draw (shapes scene)))
+    ;; (mapc #'draw (shapes scene)))
   ;; )
 
+(defmethod draw ((scene scene))
+  (mapc #'draw (shapes scene)))
+  
 (defmethod init-scene ((scene scene))
   (setf (current-frame scene) 0)
   (mapc #'(lambda (anim)
