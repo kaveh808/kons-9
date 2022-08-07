@@ -351,7 +351,6 @@
       (when (not *do-smooth-shading?*)
         (let ((n (aref face-normals f)))
           (#_glNormal3f (x n) (y n) (z n))))
-
       (dolist (pref (aref faces f))
         (if point-colors
             (let ((c (aref point-colors pref)))

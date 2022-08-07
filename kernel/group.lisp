@@ -51,3 +51,11 @@
                                     (p-average bounds-lo bounds-hi)
                                     nil))))
 
+(defmethod set-point-colors-by-xyz ((group group) color-fn)
+  (dolist (child (children group))
+    (set-point-colors-by-xyz child color-fn)))
+
+(defmethod set-point-colors-by-point-and-normal ((group group) color-fn)
+  (dolist (child (children group))
+    (set-point-colors-by-point-and-normal child color-fn)))
+

@@ -38,7 +38,7 @@
 
 ;;;; l-system ==================================================================
 
-;;; override curve-generator-curves-closed to return nil
+;;; override source-curves-closed to return nil
 
 ;;; close to particle-system ... implement as subclass? -- turtle as particle type?
 
@@ -68,7 +68,7 @@
             (push (cadr rule) moves))))
     (nreverse moves)))
 
-(defmethod curve-generator-curves-closed ((l-sys l-system))
+(defmethod source-curves-closed ((l-sys l-system))
   (make-list (length (faces l-sys)) :initial-element nil))
 
 (defmethod init-animator ((l-sys l-system))

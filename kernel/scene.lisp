@@ -99,7 +99,7 @@
   ;;      p-scale rand1 rand2
   ;;      make-sweep-mesh-group
   ;;      compute-procedural-node profile-curve-generator path-curve-generator
-  ;;      sweep-extrude curve-generator-curves curve-generator-curves-closed
+  ;;      sweep-extrude curve-source-curves curve-source-curves-closed
   ;;      sweep-extrude-aux curve-remove-consecutive-duplicates
   ;;      copy-points allocate-mesh-arrays curve-tangent make-axis-rotation-matrix
   ;;      p-angle make-translation-matrix matrix-multiply-n transform-points!

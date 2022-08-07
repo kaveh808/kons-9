@@ -228,12 +228,12 @@
       (compute-polyhedron-data mesh))))
 
 ;;; for now sweep 0-th profile along all paths
-(defmethod sweep-extrude ((profiles curve-generator-mixin) (paths curve-generator-mixin) &key (twist 0.0) (taper 1.0) (from-end? nil))
+(defmethod sweep-extrude (profiles paths &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((meshes '())
-        (profile-curve (coerce (elt (curve-generator-curves profiles) 0) 'list)) ;fix this...
-        (profile-closed (elt (curve-generator-curves-closed profiles) 0))
-        (path-curves (curve-generator-curves paths))
-        (path-closed (curve-generator-curves-closed paths)))
+        (profile-curve (coerce (elt (source-curves profiles) 0) 'list)) ;fix this...
+        (profile-closed (elt (source-curves-closed profiles) 0))
+        (path-curves (source-curves paths))
+        (path-closed (source-curves-closed paths)))
     (loop for curve in path-curves
           for is-closed? in path-closed
           do (push (sweep-extrude-aux (make-instance 'uv-mesh)

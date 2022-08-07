@@ -149,7 +149,7 @@
 
 (defmethod update-position ((ptcl climbing-particle))
   (call-next-method)
-  (let* ((pos (point-generator-closest-point (support-point-cloud ptcl) (pos ptcl))))
+  (let* ((pos (source-closest-point (support-point-cloud ptcl) (pos ptcl))))
     (when (not (p= pos (pos ptcl))) ; avoid duplicate points
       (setf (pos ptcl) pos))))
 
@@ -280,7 +280,7 @@
       (dolist (child (do-spawn ptcl))
         (add-particle p-sys child)))))
 
-(defmethod point-generator-points ((p-sys particle-system))
+(defmethod source-points ((p-sys particle-system))
   (let ((points '()))
     (if (point-generator-use-live-positions-only p-sys)
         (doarray-if (i ptcl #'is-alive? (particles p-sys))
@@ -290,32 +290,32 @@
             (setf points (append curve points))))) ;use all points of face
     (coerce points 'array)))
 
-(defmethod point-generator-directions ((p-sys particle-system))
+(defmethod source-directions ((p-sys particle-system))
   (let ((tangents '()))
     (dotimes (i (length (faces p-sys)))
       (let ((curve (reverse (face-points p-sys i))))
         (setf tangents (append (curve-tangents-aux curve nil) tangents))))
     (coerce tangents 'array)))
 
-(defmethod curve-generator-curves ((p-sys particle-system))
+(defmethod source-curves ((p-sys particle-system))
   (let ((curves '()))
     (dotimes (f (length (faces p-sys)))
       (push (reverse (face-points p-sys f)) curves)) ;reverse face points
     (nreverse curves)))
 
-(defmethod curve-generator-curves-closed ((p-sys particle-system))
+(defmethod source-curves-closed ((p-sys particle-system))
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
-(defmethod make-particle-system ((p-gen point-generator-mixin) (vel point) num max-gen particle-class &rest initargs)
+(defmethod make-particle-system (p-gen (vel point) num max-gen particle-class &rest initargs)
   (apply #'make-particle-system-aux
-         (point-generator-points p-gen)
-         (point-generator-directions p-gen)
+         (source-points p-gen)
+         (source-directions p-gen)
          vel num max-gen particle-class initargs))
 
-;; (defmethod make-particle-system ((p-gen point-generator-mixin) (vel point) num max-gen particle-class &rest initargs)
+;; (defmethod make-particle-system ((p-gen point-source-mixin) (vel point) num max-gen particle-class &rest initargs)
 ;;   (let ((p-sys (make-instance 'particle-system :max-generations max-gen)))
-;;     (let ((points (point-generator-points p-gen))
-;;           (normals (point-generator-directions p-gen)))
+;;     (let ((points (point-source-points p-gen))
+;;           (normals (point-source-directions p-gen)))
 ;;       (loop for p across points
 ;;             for n across normals
 ;;             do (dotimes (i num)
