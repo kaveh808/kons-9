@@ -10,6 +10,11 @@
    (show-normals :accessor show-normals :initarg :show-normals :initform nil)  ; length or nil
    (point-source-use-face-centers? :accessor point-source-use-face-centers? :initarg :point-source-use-face-centers? :initform nil)))
 
+(defmethod initialize-instance :after ((polyh polyhedron) &rest initargs)
+  (declare (ignore initargs))
+  (compute-face-normals polyh)
+  (compute-point-normals polyh))
+
 (defmethod copy-instance-data :after ((dst polyhedron) (src polyhedron))
   (setf (faces dst) (faces src)) ;;; TODO - deep copy arrays
   (setf (face-normals dst) (face-normals src))
@@ -77,22 +82,18 @@
 
 (defmethod compute-face-normals ((polyh polyhedron))
   (setf (face-normals polyh)
-        (map 'array #'(lambda (f) (face-normal polyh f)) (faces polyh))))
+        (map 'vector #'(lambda (f) (face-normal polyh f)) (faces polyh))))
 
 (defmethod compute-point-normals ((polyh polyhedron))
-  (setf (point-normals polyh) (make-array (length (points polyh))
-                                               :initial-element (p! 0 0 0)
-                                               :adjustable t
-                                               :fill-pointer t))
-  (let ((p-normals (point-normals polyh)))
-    (dotimes (f (length (faces polyh)))
-      (dolist (pref (aref (faces polyh) f))
+(print 'compute-point-normals)
+  (let ((p-normals (make-array (length (points polyh)) :initial-element (p! 0 0 0))))
+    (doarray (f face (faces polyh))
+      (dolist (pref face)
         (setf (aref p-normals pref)
               (p+ (aref p-normals pref)
                   (aref (face-normals polyh) f)))))
-    (dotimes (n (length p-normals))
-      (setf (aref p-normals n)
-            (p-normalize (aref p-normals n))))))
+    (setf (point-normals polyh)
+          (map 'vector #'p-normalize p-normals))))
 
 (defmethod compute-point-normals-SAV ((polyh polyhedron))
   (setf (point-normals polyh) (make-array (length (points polyh))
@@ -141,17 +142,8 @@
       (setf (aref (point-colors polyh) i) (funcall color-fn p n)))))
 
 (defun make-polyhedron (points faces &optional (mesh-type 'polyhedron))
-  (let ((polyh (make-instance mesh-type :points (make-array (length points)
-                                                            :initial-contents points
-                                                            :adjustable t
-                                                            :fill-pointer t)
-                                             :faces (make-array (length faces)
-                                                                :initial-contents faces
-                                                                :adjustable t
-                                                                :fill-pointer t))))
-    (compute-face-normals polyh)
-    (compute-point-normals polyh)
-    polyh))
+  (make-instance mesh-type :points (make-array (length points) :initial-contents points)
+                           :faces (make-array (length faces) :initial-contents faces)))
 
 (defmethod draw-normals ((polyh polyhedron))
   (let ((lines ()))

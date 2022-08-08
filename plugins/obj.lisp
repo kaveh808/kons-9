@@ -11,9 +11,7 @@
         (faces  (make-array 0 :adjustable t :fill-pointer t)))
     (loop for line = (read-line stream nil)
           while line do (parse-obj-line line vertices faces))
-    (let ((polyh (make-instance 'polyhedron :points vertices :faces faces)))
-      (compute-face-normals polyh)
-      polyh)))
+    (make-instance 'polyhedron :points vertices :faces faces)))
 
 ;;; discard texture and normal refs
 (defun obj-decode-vref (str vertices)

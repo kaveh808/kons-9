@@ -17,7 +17,7 @@
    (:file "kernel/scene-item")
    (:file "kernel/shape")
    (:file "kernel/point-cloud")
-   (:file "kernel/curve-shape")
+   (:file "kernel/polygon")
    (:file "kernel/polyhedron")
    (:file "kernel/group")
    (:file "kernel/procedural")

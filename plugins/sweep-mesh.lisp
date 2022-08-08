@@ -12,18 +12,18 @@
    (from-end? :accessor from-end? :initarg :from-end? :initform nil)))
 
 (defmethod profile-points ((mesh sweep-mesh))
-  (coerce (elt (curve-generator-curves (profile-curve-generator mesh)) (profile-curve-index mesh))
+  (coerce (elt (source-curves (profile-curve-generator mesh)) (profile-curve-index mesh))
           'list))
 
 (defmethod is-profile-closed? ((mesh sweep-mesh))
-  (elt (curve-generator-curves-closed (profile-curve-generator mesh)) (profile-curve-index mesh)))
+  (elt (source-curves-closed (profile-curve-generator mesh)) (profile-curve-index mesh)))
 
 (defmethod path-points ((mesh sweep-mesh))
-  (coerce (elt (curve-generator-curves (path-curve-generator mesh)) (path-curve-index mesh))
+  (coerce (elt (source-curves (path-curve-generator mesh)) (path-curve-index mesh))
           'list))
 
 (defmethod is-path-closed? ((mesh sweep-mesh))
-  (elt (curve-generator-curves-closed (path-curve-generator mesh)) (path-curve-index mesh)))
+  (elt (source-curves-closed (path-curve-generator mesh)) (path-curve-index mesh)))
 
 (defmethod initialize-instance :after ((mesh sweep-mesh) &rest initargs)
   (declare (ignore initargs))

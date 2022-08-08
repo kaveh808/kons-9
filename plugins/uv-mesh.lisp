@@ -142,7 +142,7 @@
 (defun transform-extrude (profile transform steps)
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
 				      :v-dim (+ steps 1)
-				      :u-wrap (is-closed-shape? profile)
+				      :u-wrap (is-closed-polygon? profile)
 				      :v-wrap nil
                                       :v-cap t)))
     (allocate-mesh-arrays mesh)
@@ -150,7 +150,7 @@
       (let* ((factor (tween v 0.0 (- (v-dim mesh) 1)))
 	     (mtx (transform-matrix transform factor))
 	     (points (transform-points (points profile) mtx)))
-	(loop :for p :in points
+	(loop :for p :across points
 	      :for u :from 0
 	      :do (setf (aref (uv-point-array mesh) u v) p))))
     (compute-polyhedron-data mesh)))
@@ -245,8 +245,8 @@
 
 ;;; make-torus
 (defun make-torus (inner-radius inner-segments outer-radius outer-segments)
-  (first (sweep-extrude (make-circle-shape inner-radius inner-segments)
-                        (make-circle-shape outer-radius outer-segments))))
+  (first (sweep-extrude (make-circle-polygon inner-radius inner-segments)
+                        (make-circle-polygon outer-radius outer-segments))))
 
 #|
 (defun every-nth (step list)

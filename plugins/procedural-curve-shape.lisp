@@ -1,63 +1,45 @@
 (in-package #:kons-9)
 
-;;;; procedural-curve-shape ====================================================
+;;;; procedural-polygon ====================================================
 
-(defclass procedural-curve-shape (curve-shape procedural-mixin)
+(defclass procedural-polygon (polygon procedural-mixin)
   ((num-points :accessor num-points :initarg :num-points :initform 64)))
 
-(def-procedural-input procedural-curve-shape num-points)
-(def-procedural-output procedural-curve-shape points)
+(def-procedural-input procedural-polygon num-points)
+(def-procedural-output procedural-polygon points)
 
-;;;; circle-shape ==============================================================
+;;;; procedural-circle-polygon ==============================================================
 
-(defclass circle-shape (procedural-curve-shape)
+(defclass procedural-circle-polygon (procedural-polygon)
   ((diameter :accessor diameter :initarg :diameter :initform 2.0)))
 
-(def-procedural-input circle-shape diameter)
+(def-procedural-input procedural-circle-polygon diameter)
 
-(defmethod compute-procedural-node ((shape circle-shape))
-  (with-accessors ((d diameter) (n num-points))
-    shape
-    (let ((points '())
-          (radius (/ d 2.0))
-          (angle-delta (/ 2pi n)))
-      (dotimes (i n)
-        (let ((angle (* i angle-delta)))
-          (push (p! (* (sin angle) radius) (* (cos angle) radius) 0)
-                points)))
-      (setf (points shape) points)
-      shape)))
+(defmethod compute-procedural-node ((poly procedural-circle-polygon))
+  (setf (points poly) (make-circle-points (diameter poly) (num-points poly))))
 
-(defun make-circle-shape (diameter &optional (num-points 64))
-  (make-instance 'circle-shape :diameter diameter :num-points num-points))
+(defun make-procedural-circle-polygon (diameter &optional (num-points 64))
+  (make-instance 'procedural-circle-polygon :diameter diameter :num-points num-points))
 
-;;;; sine-curve-shape ==========================================================
+;;;; procedural-sine-curve-polygon ==========================================================
 
-(defclass sine-curve-shape (procedural-curve-shape)
+(defclass procedural-sine-curve-polygon (procedural-polygon)
   ((period :accessor period :initarg :period :initform 360.0)
    (frequency :accessor frequency :initarg :frequency :initform 1.0)
    (x-scale :accessor x-scale :initarg :x-scale :initform 1.0)
    (y-scale :accessor y-scale :initarg :y-scale :initform 1.0))
   (:default-initargs
-   :is-closed-shape? nil))
+   :is-closed-polygon? nil))
 
-(def-procedural-input sine-curve-shape period)
-(def-procedural-input sine-curve-shape frequency)
-(def-procedural-input sine-curve-shape x-scale)
-(def-procedural-input sine-curve-shape y-scale)
+(def-procedural-input procedural-sine-curve-polygon period)
+(def-procedural-input procedural-sine-curve-polygon frequency)
+(def-procedural-input procedural-sine-curve-polygon x-scale)
+(def-procedural-input procedural-sine-curve-polygon y-scale)
 
-(defmethod compute-procedural-node ((shape sine-curve-shape))
-  (with-accessors ((period period) (frequency frequency) (x-scale x-scale) (y-scale y-scale) (n num-points))
-      shape
-    (let* ((points '())
-           (rad-period (radians period))
-           (angle-delta (/ rad-period n)))
-      (dotimes (i (1+ n))
-        (let ((angle (* i angle-delta frequency)))
-          (push (p! (* x-scale (/ angle (* frequency rad-period))) (* y-scale (sin angle)) 0)
-                points)))
-      (setf (points shape) (nreverse points))
-      shape)))
+(defmethod compute-procedural-node ((poly procedural-sine-curve-polygon))
+  (setf (points poly) (make-sine-curve-points (period poly) (frequency poly)
+                                               (x-scale poly) (y-scale poly) (num-points poly))))
 
-(defun make-sine-curve-shape (x-scale y-scale &optional (num-points 64))
-  (make-instance 'sine-curve-shape :x-scale x-scale :y-scale y-scale :num-points num-points))
+(defun make-procedural-sine-curve-polygon (period frequency x-scale y-scale &optional (num-points 64))
+  (make-instance 'procedural-sine-curve-polygon :period period :frequency frequency
+                                                :x-scale x-scale :y-scale y-scale :num-points num-points))

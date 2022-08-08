@@ -258,7 +258,7 @@
       (p! tx ty tz))))
 
 (defun transform-points (points matrix)
-  (mapcar #'(lambda (p) (transform-point p matrix)) points))
+  (map 'vector #'(lambda (p) (transform-point p matrix)) points))
 
 ;;; destructive version
 (defun transform-point! (point matrix)

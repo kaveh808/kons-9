@@ -224,30 +224,40 @@
   (when *display-points?*
     (draw-points p-sys)))
 
+;;; TODO -- trail not implemented
 (defmethod draw-wireframe ((p-sys particle-system))
-  (with-accessors ((trail draw-trails))
-      p-sys
-    (with-gl-disable #$GL_LIGHTING
-      (gl-set-fg-color)
-      (dotimes (f (length (faces p-sys)))
-        (#_glBegin #$GL_LINE_STRIP)
-        (let ((count 0))
-          (dolist (pref (aref (faces p-sys) f))
-            (when (or (< trail 0) (< count trail))
-              (let ((p (aref (points p-sys) pref)))
-                (#_glVertex3f (x p) (y p) (z p)))
-              (incf count))))
-        (#_glEnd)))))
+  (3d-draw-wireframe-polygons (points p-sys) (faces p-sys) :closed? nil))
 
 (defmethod draw-live-points ((p-sys particle-system))
-  (with-gl-disable #$GL_LIGHTING
-    (gl-set-fg-color)
-    (#_glPointSize 9.0)
-    (#_glBegin #$GL_POINTS)
+  (let ((visible-points '()))
     (doarray-if (i ptcl #'is-alive? (particles p-sys))
-      (let ((p (pos ptcl)))
-        (#_glVertex3f (x p) (y p) (z p))))
-    (#_glEnd)))
+                (push (pos ptcl) visible-points))
+    (3d-draw-points (coerce visible-points 'array))))
+
+;; (defmethod draw-wireframe-SAV ((p-sys particle-system))
+;;   (with-accessors ((trail draw-trails))
+;;       p-sys
+;;     (with-gl-disable #$GL_LIGHTING
+;;       (gl-set-fg-color)
+;;       (dotimes (f (length (faces p-sys)))
+;;         (#_glBegin #$GL_LINE_STRIP)
+;;         (let ((count 0))
+;;           (dolist (pref (aref (faces p-sys) f))
+;;             (when (or (< trail 0) (< count trail))
+;;               (let ((p (aref (points p-sys) pref)))
+;;                 (#_glVertex3f (x p) (y p) (z p)))
+;;               (incf count))))
+;;         (#_glEnd)))))
+
+;; (defmethod draw-live-points-SAV ((p-sys particle-system))
+;;   (with-gl-disable #$GL_LIGHTING
+;;     (gl-set-fg-color)
+;;     (#_glPointSize 9.0)
+;;     (#_glBegin #$GL_POINTS)
+;;     (doarray-if (i ptcl #'is-alive? (particles p-sys))
+;;       (let ((p (pos ptcl)))
+;;         (#_glVertex3f (x p) (y p) (z p))))
+;;     (#_glEnd)))
 
 (defmethod draw-points ((p-sys particle-system))
   (if (draw-live-points-only? p-sys)
@@ -291,11 +301,12 @@
     (coerce points 'array)))
 
 (defmethod source-directions ((p-sys particle-system))
-  (let ((tangents '()))
+  (let ((tangents #()))
     (dotimes (i (length (faces p-sys)))
-      (let ((curve (reverse (face-points p-sys i))))
-        (setf tangents (append (curve-tangents-aux curve nil) tangents))))
-    (coerce tangents 'array)))
+      (let ((curve (coerce (reverse (face-points p-sys i)) 'array)))
+        (setf tangents (concatenate 'vector (curve-tangents-aux curve nil) tangents))))
+        ;; (setf tangents (append (curve-tangents-aux curve nil) tangents))))
+    tangents))
 
 (defmethod source-curves ((p-sys particle-system))
   (let ((curves '()))
@@ -307,6 +318,8 @@
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
 (defmethod make-particle-system (p-gen (vel point) num max-gen particle-class &rest initargs)
+  (print (length (source-points p-gen)))
+  (print (length (source-directions p-gen)))
   (apply #'make-particle-system-aux
          (source-points p-gen)
          (source-directions p-gen)

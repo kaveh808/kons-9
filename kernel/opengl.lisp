@@ -297,20 +297,11 @@
     (if is-closed?
         (#_glBegin #$GL_LINE_LOOP)
         (#_glBegin #$GL_LINE_STRIP))
-    (dolist (p points)
+    (doarray (i p points)
       (#_glVertex3f (x p) (y p) (z p)))
     (#_glEnd)))
 
 (defun 3d-draw-points (points)
-  (with-gl-disable #$GL_LIGHTING
-    (gl-set-fg-color)
-    (#_glPointSize 9.0)
-    (#_glBegin #$GL_POINTS)
-    (dolist (p points)
-      (#_glVertex3f (x p) (y p) (z p)))
-    (#_glEnd)))
-
-(defun 3d-draw-points-array (points)
   (with-gl-disable #$GL_LIGHTING
     (gl-set-fg-color)
     (#_glPointSize 9.0)
@@ -363,13 +354,15 @@
           (#_glVertex3f (x p) (y p) (z p))))
       (#_glEnd))))
 
-(defun 3d-draw-wireframe-polygons (points faces)
+(defun 3d-draw-wireframe-polygons (points faces &key (closed? t))
   (#_glPolygonMode #$GL_FRONT_AND_BACK #$GL_LINE)
   (with-gl-disable #$GL_LIGHTING
     (gl-set-fg-color)
     (#_glLineWidth 1.0)
     (dotimes (f (length faces))
-      (#_glBegin #$GL_POLYGON)
+      (if closed?
+          (#_glBegin #$GL_POLYGON)
+          (#_glBegin #$GL_LINE_STRIP))
       (dolist (pref (aref faces f))
         (let ((p (aref points pref)))
           (#_glVertex3f (x p) (y p) (z p))))

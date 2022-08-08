@@ -44,8 +44,8 @@
 (defmethod write-usd :after ((shape shape) &optional (stream t) (indent 0))
   (format-pad indent stream "}~%"))
 
-(defmethod write-usd ((shape curve-shape) &optional (stream t) (indent 0))
-  (declare (ignore stream))
+(defmethod write-usd ((poly polygon) &optional (stream t) (indent 0))
+  (declare (ignore stream indent))
   ;; do nothing for now
   )
 

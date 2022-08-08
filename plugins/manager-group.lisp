@@ -32,7 +32,7 @@
 ;;; todo -- align with normals/directions (shape axis option)
 (defmethod compute-procedural-node ((self point-instancer))
   (remove-all-children self)
-  (let ((points (point-generator-points (point-generator self))))
+  (let ((points (source-points (point-generator self))))
     (dotimes (i (length points))
       (add-child self (translate-to (make-group (instance-shape self)) (aref points i))))))
 

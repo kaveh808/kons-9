@@ -13,7 +13,7 @@
     (draw-points p-cloud)))
 
 (defmethod draw-points ((p-cloud point-cloud))
-  (3d-draw-points-array (points p-cloud)))
+  (3d-draw-points (points p-cloud)))
 
 (defmethod bounds-and-center ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
@@ -38,3 +38,28 @@
       (push (p-rand2 bounds-lo bounds-hi) points))
     (apply #'make-point-cloud points)))
 
+;;; randomize shape points
+(defmethod randomize-points ((p-cloud point-cloud) (delta point))
+  (setf (points p-cloud)
+	(map 'vector #'(lambda (p)
+                         (let ((offset (p! (rand1 (x delta)) (rand1 (y delta)) (rand1 (z delta)))))
+                           (p+ p offset)))
+             (points p-cloud))))
+
+(defun make-circle-points (diameter num-points)
+  (let ((points (make-array num-points))
+        (radius (/ diameter 2.0))
+        (angle-delta (/ 2pi num-points)))
+    (dotimes (i num-points)
+      (let ((angle (* i angle-delta)))
+        (setf (aref points i) (p! (* (sin angle) radius) (* (cos angle) radius) 0))))
+    (nreverse points)))                 ;return ccw points
+
+(defun make-sine-curve-points (period frequency x-scale y-scale num-points)
+  (let* ((points (make-array (1+ num-points)))
+         (rad-period (radians period))
+         (angle-delta (/ rad-period num-points)))
+    (dotimes (i (1+ num-points))
+      (let ((angle (* i angle-delta frequency)))
+        (setf (aref points i) (p! (* x-scale (/ angle (* frequency rad-period))) (* y-scale (sin angle)) 0))))
+    points))

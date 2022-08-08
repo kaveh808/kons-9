@@ -270,7 +270,7 @@
          (setf (bg-color view) (c! 1 0 0 0.5)))
         ((typep (shape view) 'group)
          (setf (bg-color view) (c! 1 1 0 0.5)))
-        ((typep (shape view) 'curve-shape)
+        ((typep (shape view) 'polygon)
          (setf (bg-color view) (c! 1 0 1 0.5)))
         ((typep (shape view) 'uv-mesh)
          (setf (bg-color view) (c! 0.5 1 0.5 0.5)))
@@ -484,40 +484,40 @@ h or ?: print this help message~%"))
       (push (menu-item-misc-entry "Inspect Selection" (inspect (selection scene)))
             items))
     ;;; edit circle shape
-    (menu-item-if-selection-type 'circle-shape
-                                 (menu-item-submenu-entry
-                                  (format nil "Edit ~a..." (name shape))
-                                  (edit-circle-shape-dialog view)))
+    ;; (menu-item-if-selection-type 'circle-shape
+    ;;                              (menu-item-submenu-entry
+    ;;                               (format nil "Edit ~a..." (name shape))
+    ;;                               (edit-circle-shape-dialog view)))
     ;;; edit sine-curve shape
-    (menu-item-if-selection-type 'sine-curve-shape
-                                 (menu-item-submenu-entry
-                                  (format nil "Edit ~a..." (name shape))
-                                  (edit-sine-curve-shape-dialog view)))
+    ;; (menu-item-if-selection-type 'sine-curve-polygon
+    ;;                              (menu-item-submenu-entry
+    ;;                               (format nil "Edit ~a..." (name shape))
+    ;;                               (edit-sine-curve-polygon-dialog view)))
     ;;; edit height-field shape
     (menu-item-if-selection-type 'superquadric
                                  (menu-item-submenu-entry
                                   (format nil "Edit ~a..." (name shape))
                                   (edit-superquadric-dialog view)))
     ;;; particle system from point-generator-mixin
-    (menu-item-if-selection-type 'point-generator-mixin
-                                 (menu-item-submenu-entry
-                                  (format nil "Create PARTICLE-SYSTEM from ~a..." (name shape))
-                                  (make-particle-system-dialog view)))
+    ;; (menu-item-if-selection-type 'point-generator-mixin
+    ;;                              (menu-item-submenu-entry
+    ;;                               (format nil "Create PARTICLE-SYSTEM from ~a..." (name shape))
+    ;;                               (make-particle-system-dialog view)))
     ;;; dynamic particle system from point-generator-mixin
-    (menu-item-if-selection-type 'point-generator-mixin
-                                 (menu-item-submenu-entry
-                                  (format nil "Create Dynamic PARTICLE-SYSTEM from ~a..." (name shape))
-                                  (make-dynamic-particle-system-dialog view)))
+    ;; (menu-item-if-selection-type 'point-generator-mixin
+    ;;                              (menu-item-submenu-entry
+    ;;                               (format nil "Create Dynamic PARTICLE-SYSTEM from ~a..." (name shape))
+    ;;                               (make-dynamic-particle-system-dialog view)))
     ;;; add field to particle system
     (menu-item-if-selection-type 'particle-system
                                  (menu-item-submenu-entry
                                   (format nil "Add Force Field to PARTICLE-SYSTEM ~a..." (name shape))
                                   (make-add-field-popup-menu view)))
     ;;; sweep-mesh-group from curve-generator-mixin
-    (menu-item-if-selection-type 'curve-generator-mixin
-                                 (menu-item-submenu-entry
-                                  (format nil "Create SWEEP-MESH-GROUP from ~a..." (name shape))
-                                  (make-sweep-mesh-group-dialog view)))
+    ;; (menu-item-if-selection-type 'curve-generator-mixin
+    ;;                              (menu-item-submenu-entry
+    ;;                               (format nil "Create SWEEP-MESH-GROUP from ~a..." (name shape))
+    ;;                               (make-sweep-mesh-group-dialog view)))
     ;;; set uv-mesh point colors
     (menu-item-if-selection-type 'uv-mesh
                                  (menu-item-submenu-entry
@@ -538,7 +538,7 @@ h or ?: print this help message~%"))
                       (menu-item-submenu-entry "Superquadric..." (create-superquadric-dialog view))
                       (menu-item-submenu-entry "Icosahedron..." (make-icosahedron-dialog view))
                       (menu-item-submenu-entry "Octahedron..." (make-octahedron-dialog view))
-                      (menu-item-submenu-entry "Sine Curve..." (create-sine-curve-shape-dialog view))
+                      (menu-item-submenu-entry "Sine Curve..." (create-sine-curve-polygon-dialog view))
                       (menu-item-submenu-entry "Circle..." (create-circle-shape-dialog view))))
          (menu (make-instance 'ui-popup-menu :ui-items items)))
     (update-layout menu)))
@@ -620,7 +620,7 @@ h or ?: print this help message~%"))
      (make-edit-shape-dialog ,class-name ,slot-decls)))
 
 (make-create-and-edit-shape-dialogs circle-shape ((diameter float) (num-points integer)))
-(make-create-and-edit-shape-dialogs sine-curve-shape ((y-scale float)
+(make-create-and-edit-shape-dialogs sine-curve-polygon ((y-scale float)
                                                       (x-scale float)
                                                       (frequency float)
                                                       (period float)
@@ -669,13 +669,13 @@ h or ?: print this help message~%"))
              (add-shape (scene view) (let ((n (ui-value num-points-item))
                                            (s (ui-value size-item))
                                            (f (ui-value func-item)))
-                                       (make-height-field n n (p! (- s) 0 (- s)) (p! s 0 s)
-                                                          (case f
-                                                            (1 #'height-fn-1)
-                                                            (2 #'height-fn-2)
-                                                            (3 #'height-fn-3)
-                                                            (4 #'height-fn-4)
-                                                            (otherwise #'height-fn-4)))))
+                                       (make-heightfield n n (p! (- s) 0 (- s)) (p! s 0 s)
+                                                         (case f
+                                                           (1 #'height-fn-1)
+                                                           (2 #'height-fn-2)
+                                                           (3 #'height-fn-3)
+                                                           (4 #'height-fn-4)
+                                                           (otherwise #'height-fn-4)))))
              (func-item "Function (1-4)" 4 #'get-integer-input)
              (size-item "Size" 4.0)
              (num-points-item "Num Points" 16 #'get-integer-input))
@@ -697,8 +697,8 @@ h or ?: print this help message~%"))
              (let* ((scene (scene view))
                     (n (ui-value number-item))
                     (s (ui-value speed-item))
-                    (points (point-generator-points (first (selection scene))))
-                    (dirs (point-generator-directions (first (selection scene)))) ;(point-generator-radial-directions shape))
+                    (points (source-points (first (selection scene))))
+                    (dirs (source-directions (first (selection scene)))) ;(point-generator-radial-directions shape))
                     (p-sys (make-particle-system-aux points dirs
                                                      (p! s s s) n 4 'dynamic-particle
                                                      :do-collisions? nil
@@ -717,7 +717,7 @@ h or ?: print this help message~%"))
                     (n (ui-value num-points-item))
                     (taper (ui-value taper-item))
                     (twist (ui-value twist-item)))
-               (add-shape scene (make-sweep-mesh-group (make-circle-shape r n)
+               (add-shape scene (make-sweep-mesh-group (make-procedural-circle-polygon r n)
                                                        (first (selection scene))
                                                        :taper taper :twist twist)))
              (radius-item "Radius" 0.2)
