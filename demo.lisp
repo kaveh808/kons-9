@@ -14,6 +14,14 @@
 
 ;;; kernel tests
 
+;;; point-cloud ----------------------------------------------------------------
+;;; press 'h' in 3d view to see key bindings and navigation
+(with-clear-and-redraw
+  (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -1 -1 -1) (p! 1 1 1)))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (make-point-cloud (make-grid-points 10 2 5 (p! -2.0 -0.4 -1.0) (p! 2.0 0.4 1.0)))))
+
 ;;; shapes and transforms ------------------------------------------------------
 ;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
@@ -25,6 +33,9 @@
 
 ;; polyhedrons -----------------------------------------------------------------
 ;;; press 'h' in 3d view to see key bindings and navigation
+(with-clear-and-redraw
+  (add-shape *scene* (make-tetrahedron 4.0)))
+
 (with-clear-and-redraw
     (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
           (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
@@ -46,7 +57,7 @@
 
 ;;; uv-mesh transform-extrude --------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (transform-extrude (make-circle-polygon 1.0 3)
+  (add-shape *scene* (transform-extrude (make-rectangle-polygon 2 1)
 					(make-transform (p! 0 0 4) (p! 0 0 0) (p! 1 1 1))
 					4)))
 

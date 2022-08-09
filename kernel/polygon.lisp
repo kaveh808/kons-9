@@ -54,6 +54,9 @@
 (defmethod curve-tangents ((poly polygon))
   (curve-tangents-aux (points poly) (is-closed-polygon? poly)))
 
+(defun make-rectangle-polygon (width height)
+  (make-polygon (make-rectangle-points width height)))
+
 (defun make-circle-polygon (diameter num-points)
   (make-polygon (make-circle-points diameter num-points)))
 

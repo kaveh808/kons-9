@@ -318,8 +318,6 @@
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
 (defmethod make-particle-system (p-gen (vel point) num max-gen particle-class &rest initargs)
-  (print (length (source-points p-gen)))
-  (print (length (source-directions p-gen)))
   (apply #'make-particle-system-aux
          (source-points p-gen)
          (source-directions p-gen)

@@ -26,25 +26,13 @@
        (setf bounds-hi (p-max bounds-hi p)))
     (values bounds-lo bounds-hi (p-average bounds-lo bounds-hi))))
 
-(defun make-point-cloud (&rest points)
-  (make-instance 'point-cloud :points (make-array (length points)
-                                                  :initial-contents points
-                                                  :adjustable t
-                                                  :fill-pointer t)))
+(defun make-point-cloud (points)
+  (make-instance 'point-cloud :points points))
 
-(defun make-point-cloud-in-bounds (num bounds-lo bounds-hi)
-  (let ((points '()))
-    (dotimes (i num)
-      (push (p-rand2 bounds-lo bounds-hi) points))
-    (apply #'make-point-cloud points)))
-
-;;; randomize shape points
-(defmethod randomize-points ((p-cloud point-cloud) (delta point))
-  (setf (points p-cloud)
-	(map 'vector #'(lambda (p)
-                         (let ((offset (p! (rand1 (x delta)) (rand1 (y delta)) (rand1 (z delta)))))
-                           (p+ p offset)))
-             (points p-cloud))))
+(defun make-rectangle-points (width height)
+  (let ((x (/ width 2))
+        (y (/ height 2)))
+    (vector (p! x y 0) (p! (- x) y 0) (p! (- x) (- y) 0) (p! x (- y) 0))))
 
 (defun make-circle-points (diameter num-points)
   (let ((points (make-array num-points))
@@ -63,3 +51,34 @@
       (let ((angle (* i angle-delta frequency)))
         (setf (aref points i) (p! (* x-scale (/ angle (* frequency rad-period))) (* y-scale (sin angle)) 0))))
     points))
+
+(defun make-random-points (num bounds-lo bounds-hi)
+  (let ((points (make-array num)))
+    (dotimes (i num)
+      (setf (aref points i) (p-rand2 bounds-lo bounds-hi)))
+    points))
+
+(defun make-grid-points (nx ny nz bounds-lo bounds-hi)
+  (let ((points (make-array (* nx ny nz)))
+        (i -1))
+    (dotimes (ix nx)
+      (let* ((fx (tween ix 0 (- nx 1.0)))
+	     (x (lerp fx (x bounds-lo) (x bounds-hi))))
+        (dotimes (iy ny)
+          (let* ((fy (tween iy 0 (- ny 1.0)))
+                 (y (lerp fy (y bounds-lo) (y bounds-hi))))
+            (dotimes (iz nz)
+              (let* ((fz (tween iz 0 (- nz 1.0)))
+                     (z (lerp fz (z bounds-lo) (z bounds-hi))))
+                (setf (aref points (incf i)) (p! x y z))))))))
+    points))
+
+;;; TODO - in-place array modification?
+;;; randomize points
+(defmethod randomize-points ((p-cloud point-cloud) (delta point))
+  (setf (points p-cloud)
+	(map 'vector #'(lambda (p)
+                         (let ((offset (p! (rand1 (x delta)) (rand1 (y delta)) (rand1 (z delta)))))
+                           (p+ p offset)))
+             (points p-cloud))))
+
