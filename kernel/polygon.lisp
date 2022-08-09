@@ -57,6 +57,9 @@
 (defun make-rectangle-polygon (width height)
   (make-polygon (make-rectangle-points width height)))
 
+(defun make-square-polygon (side)
+  (make-polygon (make-rectangle-points side side)))
+
 (defun make-circle-polygon (diameter num-points)
   (make-polygon (make-circle-points diameter num-points)))
 

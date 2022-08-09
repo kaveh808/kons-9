@@ -118,11 +118,7 @@
   
 (defmethod init-scene ((scene scene))
   (setf (current-frame scene) 0)
-  (mapc #'(lambda (anim)
-            (let ((shape (init-animator anim)))
-              (when shape
-                (add-shape scene shape))))
-        (animators scene)))
+  (mapc #'init-animator (animators scene)))
 
 (defmethod update-scene ((scene scene))
   (when (not (init-done? scene))

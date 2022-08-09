@@ -17,10 +17,10 @@
 ;;; point-cloud ----------------------------------------------------------------
 ;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
-  (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -1 -1 -1) (p! 1 1 1)))))
+  (add-shape *scene* (make-point-cloud (make-grid-points 10 2 5 (p! -2.0 -0.4 -1.0) (p! 2.0 0.4 1.0)))))
 
 (with-clear-and-redraw
-  (add-shape *scene* (make-point-cloud (make-grid-points 10 2 5 (p! -2.0 -0.4 -1.0) (p! 2.0 0.4 1.0)))))
+  (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -1 -1 -1) (p! 1 1 1)))))
 
 ;;; shapes and transforms ------------------------------------------------------
 ;;; press 'h' in 3d view to see key bindings and navigation
@@ -34,7 +34,12 @@
 ;; polyhedrons -----------------------------------------------------------------
 ;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
-  (add-shape *scene* (make-tetrahedron 4.0)))
+  (add-shapes *scene* (list
+                       (translate-to (make-tetrahedron  2.0) (p! -5 0 0))
+                       (translate-to (make-cube         2.0) (p! -2.5 0 0))
+                       (translate-to (make-octahedron   2.0) (p! 0 0  0))
+                       (translate-to (make-dodecahedron 2.0) (p!  2.5 0 0))
+                       (translate-to (make-icosahedron  2.0) (p! 5 0 0)))))
 
 (with-clear-and-redraw
     (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
@@ -54,20 +59,15 @@
   (defparameter *group-1* (make-group *cube* *tetrahedron*))
   (defparameter *group-2* (make-group *group-1* *icosahedron*))
   (add-shape *scene* *group-2*)
-  (do-hierarchy *group-2* (lambda (s) (setf (show-axis s) 1.0))))
+  (do-hierarchy *group-2* (lambda (s) (setf (show-axis s) 1.0)))
 
-(with-redraw
-  (translate-by *tetrahedron* (p! 0.0 0.5 0.0))
-  (rotate-by *tetrahedron* (p! 0 0 10)))
+  (translate-by *tetrahedron* (p! 0.0 1.5 0.0))
+  (translate-by *cube* (p! 0.0 -1.5 0.0))
+  (translate-by *group-1* (p! 1.5 0.0 0.0))
+  (translate-by *icosahedron* (p! -2.0 0.0 0.0))
 
-(with-redraw
-  (translate-by *cube* (p! 0.0 -0.5 0.0)))
-
-(with-redraw
-  (translate-by *icosahedron* (p! 0.0 0.0 2.0)))
-
-(with-redraw
-  (translate-by *group-1* (p! 0.5 0.0 0.0)))
+  ;; show hierarchy
+  (print-hierarchy *group-2*))
 
 (with-redraw
   (rotate-by *group-1* (p! 0.0 0.0 10.0)))
@@ -75,46 +75,184 @@
 (with-redraw
   (rotate-by *group-2* (p! 10.0 0.0 0.0)))
 
-(with-redraw
-  (scale-by *group-2* 0.9))
-
-(with-redraw
-  (translate-by *group-1* (p! 0.5 0.0 0.0)))
-
-(with-redraw
-  (translate-by *group-2* (p! -0.5 0.0 0.0)))
-
 ;;; parent shape to transformed group - inherits transformation
-(progn
+;;; placed at two spots in hierarchy (instancing)
+(with-redraw
   (defparameter *octahedron* (make-octahedron 1.0))
   (setf (show-axis *octahedron*) 1.0)
-  (with-redraw
-    (add-child *group-1* *octahedron*)
-    (add-child *group-2* *octahedron*)))
+  (add-child *group-1* *octahedron*)
+  (add-child *group-2* *octahedron*))
 
 (with-redraw
-  (translate-by *octahedron* (p! 0.0 0.2 0.0)))
+  (translate-by *octahedron* (p! 0.0 0.0 -.5)))
 
-(with-redraw
-  (rotate-by *octahedron* (p! 0.0 0.0 20)))
-
-
-
+;;; make group of shapes placed at points
 (with-clear-and-redraw
-  (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 1))
+  (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
                                               (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2)))))
 
+;;; make group of shapes placed at points
 (with-clear-and-redraw
-  (add-shape *scene* (scatter-shapes-in-group (lambda () (make-octahedron 1))
+  (add-shape *scene* (scatter-shapes-in-group (lambda () (make-octahedron 0.5))
                                               (make-circle-points 4.0 32))))
 
+;;; randomly scale (uniformly) leaf nodes
 (with-redraw
   (do-hierarchy (first (shapes *scene*))
     (lambda (shape) (scale-to shape (rand2 0.5 1.5)))
     :test #'is-leaf?))
-                                                
-;;; animators
 
+;;; make robot arm
+(with-clear-and-redraw
+  (defparameter *waist-shape* (make-icosahedron 0.5))
+  (defparameter *torso-shape* (make-box 0.6 0.8 0.2))
+  (defparameter *shoulder-shape* (make-icosahedron 1.0))
+  (defparameter *upper-arm-shape* (make-box 1.05 0.5 0.2))
+  (defparameter *elbow-shape* (make-icosahedron 1.0))
+  (defparameter *lower-arm-shape* (make-box 2.1 0.5 0.2))
+  (defparameter *wrist-shape* (make-icosahedron 1.0))
+  (defparameter *hand-shape* (make-box 1.5 1.2 0.4))
+
+  (defparameter *wrist* (make-group *wrist-shape* *hand-shape*))
+  (defparameter *elbow* (make-group *elbow-shape* *lower-arm-shape* *wrist*))
+  (defparameter *shoulder* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
+  (defparameter *torso* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
+  (defparameter *waist* (make-group *waist-shape* *torso-shape* *shoulder*))
+
+  (print-hierarchy *waist*)
+
+  (add-shape *scene* *waist*)
+
+  (translate-to *waist* (p! -0.6 -0.4 0.0))
+  (scale-to *waist* 2.0)
+  (translate-to *shoulder* (p! 0.4 0.8 0.0))
+  (scale-to *shoulder* 0.3)
+  (translate-to *elbow* (p! 1.8 0.0 0.0))
+  (scale-to *elbow* 0.5)
+  (translate-to *wrist* (p! 3.0 0.0 0.0))
+  (scale-to *wrist* 0.6)
+
+  (translate-to *torso-shape* (p! 0.0 0.4 0.0))
+  (translate-to *upper-arm-shape* (p! 1.0 0.0 0.0))
+  (translate-to *lower-arm-shape* (p! 1.6 0.0 0.0))
+  (translate-to *hand-shape* (p! 1.2 0.0 0.0))
+)
+
+;;; turn off shading to see axes better (press 1 key)
+(with-redraw
+  (do-hierarchy *waist* (lambda (s) (setf (show-axis s) 1.0))))
+
+(progn
+  (defun reset-pose ()
+    (rotate-to *waist* (p! 0 0 0))
+    (rotate-to *shoulder* (p! 0 0 0))
+    (rotate-to *elbow* (p! 0 0 0))
+    (rotate-to *wrist* (p! 0 0 0)))
+
+  (defun flex ()
+    (rotate-by *waist* (p! 0 0 -1))
+    (rotate-by *shoulder* (p! 0 0 -5))
+    (rotate-by *elbow* (p! 0 0 15))
+    (rotate-by *wrist* (p! 0 0 10))))
+
+(with-redraw
+  (flex))
+
+(with-redraw
+  (reset-pose))
+
+;;; animators --  hold down space key to update scene, press 'a' key to reset animation
+
+;;; animate shape translation
+(with-clear-and-redraw
+  (let ((shape (add-shape *scene* (make-cut-cube-polyhedron 2.0))))
+    (add-animator *scene*
+                  (make-instance 'animator
+                                 :init-fn   (lambda () (translate-to shape (p! 0.0 0 0)))
+                                 :update-fn (lambda () (translate-by shape (p! 0.1 0 0)))))))
+
+;;; animate a group
+(with-clear-and-redraw
+  (let ((group (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
+                                                           (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
+    (add-animator *scene*
+                  (make-instance 'animator
+                                 :init-fn (lambda ()
+                                            (do-hierarchy group
+                                              (lambda (shape) (rotate-to shape (p! 0 0 0)))
+                                              :test #'is-leaf?))
+                                 :update-fn (lambda ()
+                                              (do-hierarchy group
+                                                (lambda (shape) (rotate-by shape (p! 0 5 0)))
+                                                :test #'is-leaf?))))))
+
+;;; shape animator -- store rotation data for each shape
+(with-clear-and-redraw
+  (let ((group (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
+                                                           (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
+    (do-hierarchy group
+      (lambda (shape)
+        (add-animator *scene*
+                      (make-instance 'shape-animator
+                                     :shape shape
+                                     :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                                     :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
+                                     :data `((:rotate . ,(p! 0 (rand1 10) 0))))))
+      :test #'is-leaf?)))
+
+;;; evaluate robot arm and functions above
+(with-clear-and-redraw
+  (add-shape *scene* *waist*)
+  (reset-pose)
+  (add-animator *scene*
+                (make-instance 'shape-animator
+                               :shape *waist*
+                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
+                               :data `((:rotate . ,(p! 0 0 -2)))))
+  (add-animator *scene*
+                (make-instance 'shape-animator
+                               :shape *shoulder*
+                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
+                               :data `((:rotate . ,(p! 0 0 -6)))))
+  (add-animator *scene*
+                (make-instance 'shape-animator
+                               :shape *elbow*
+                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
+                               :data `((:rotate . ,(p! 0 0 12)))))
+  (add-animator *scene*
+                (make-instance 'shape-animator
+                               :shape *wrist*
+                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
+                               :data `((:rotate . ,(p! 0 0 9)))))
+)
+
+;;; use animator to use scene time and to set relationship
+(with-clear-and-redraw
+  (let ((tetrahedron (translate-to (make-tetrahedron 2.0) (p! -1.5 0 0)))
+        (dodecahedron (translate-to (make-dodecahedron 2.0) (p! 1.5 0 0))))
+    (add-shapes *scene* (list tetrahedron dodecahedron))
+    (add-animator *scene*
+                  (make-instance 'shape-animator
+                                 :shape tetrahedron
+                                 :init-fn (lambda (anim) (translate-to (shape anim) (p! -1.5 0 0)))
+                                 :update-fn (lambda (anim)
+                                              (translate-to (shape anim)
+                                                            (p! -1.5 (sin (current-time (scene anim))) 0)))))
+    (add-animator *scene*
+                  (make-instance 'shape-animator
+                                 :shape dodecahedron
+                                 :init-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
+                                 :update-fn (lambda (anim)
+                                              (let ((target-y (y (translate (transform (anim-data anim :target))))))
+                                                (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
+                                 :data `((:target . ,tetrahedron))))))
+    
+                       
+                       
 
 
 ;;; uv-mesh --------------------------------------------------------------------

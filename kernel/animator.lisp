@@ -5,7 +5,6 @@
 (defclass animator (scene-item dependency-node-mixin)
   ((init-fn :accessor init-fn :initarg :init-fn :initform nil)
    (update-fn :accessor update-fn :initarg :update-fn :initform nil)
-   (init-args :accessor init-args :initarg :init-args :initform '())
    (is-initialized? :accessor is-initialized? :initarg :is-initialized? :initform nil)
    (shape :accessor shape :initarg :shape :initform nil)
    (data :accessor data :initarg :data :initform '())))
@@ -30,7 +29,7 @@
 
 (defmethod init-animator ((anim animator))
   (when (init-fn anim)
-    (funcall (init-fn anim) anim)))
+    (funcall (init-fn anim))))
 
 (defmethod init-animator :after ((anim animator))
   (setf (is-initialized? anim) t))
@@ -41,8 +40,38 @@
 
 (defmethod update-animator ((anim animator))
   (when (update-fn anim)
-    (funcall (update-fn anim) anim)))
+    (funcall (update-fn anim))))
 
 (defmethod update-animator :after ((anim animator))
   (setf (time-stamp anim) (get-internal-real-time)))
+
+;;;; shape-animator ============================================================
+
+(defun get-alist-value (key alist)
+  (cdr (assoc key alist)))
+
+(defun add-alist-value (key value alist)
+  (acons key value alist))
+
+(defun set-alist-value (key value alist)
+  (let ((pair (assoc key alist)))
+    (if pair
+	(rplacd pair value)
+	(error "Key ~a not found in alist ~a~%" key alist)))
+  alist)
+
+(defclass shape-animator (animator)
+  ((shape :accessor shape :initarg :shape :initform nil)
+   (data :accessor data :initarg :data :initform '())))
+
+(defmethod anim-data ((anim shape-animator) key)
+  (get-alist-value key (data anim)))
+
+(defmethod init-animator ((anim shape-animator))
+  (when (init-fn anim)
+    (funcall (init-fn anim) anim)))
+
+(defmethod update-animator ((anim shape-animator))
+  (when (update-fn anim)
+    (funcall (update-fn anim) anim)))
 
