@@ -230,7 +230,7 @@
                                :data `((:rotate . ,(p! 0 0 9)))))
 )
 
-;;; use animator to use scene time and to set relationship
+;;; animator using scene time and establishing constraint -- use of add-animator-at-end
 (with-clear-and-redraw
   (let ((tetrahedron (translate-to (make-tetrahedron 2.0) (p! -1.5 0 0)))
         (dodecahedron (translate-to (make-dodecahedron 2.0) (p! 1.5 0 0))))
@@ -242,17 +242,17 @@
                                  :update-fn (lambda (anim)
                                               (translate-to (shape anim)
                                                             (p! -1.5 (sin (current-time (scene anim))) 0)))))
-    (add-animator *scene*
-                  (make-instance 'shape-animator
-                                 :shape dodecahedron
-                                 :init-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
-                                 :update-fn (lambda (anim)
-                                              (let ((target-y (y (translate (transform (anim-data anim :target))))))
-                                                (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
-                                 :data `((:target . ,tetrahedron))))))
+    (add-animator-at-end *scene*
+                         (make-instance 'shape-animator
+                                        :shape dodecahedron
+                                        :init-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
+                                        :update-fn (lambda (anim)
+                                                     (let ((target-y (y (translate (transform (anim-data anim :target))))))
+                                                       (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
+                                        :data `((:target . ,tetrahedron))))))
     
-                       
-                       
+;;;; end kernel demos ==========================================================
+
 
 
 ;;; uv-mesh --------------------------------------------------------------------
