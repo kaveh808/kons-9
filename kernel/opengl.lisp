@@ -329,9 +329,10 @@
       (#_glShadeModel #$GL_SMOOTH)
       (#_glShadeModel #$GL_FLAT))
   (#_glPolygonMode #$GL_FRONT_AND_BACK #$GL_FILL)
-  (with-gl-enable #$GL_POLYGON_OFFSET_FILL
-    (#_glPolygonOffset 1.0 1.0)
-    (3d-draw-filled-polygons-aux points faces face-normals point-normals point-colors)))
+  (with-gl-enable #$GL_RESCALE_NORMAL
+    (with-gl-enable #$GL_POLYGON_OFFSET_FILL
+      (#_glPolygonOffset 1.0 1.0)
+      (3d-draw-filled-polygons-aux points faces face-normals point-normals point-colors))))
 
 (defmethod 3d-draw-filled-polygons-aux (points faces face-normals point-normals point-colors)
   (gl-set-material *shading-color*)

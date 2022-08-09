@@ -47,6 +47,72 @@
 
 ;;; transforms and hierarchies
 
+(with-clear-and-redraw
+  (defparameter *icosahedron* (make-icosahedron 1.0))
+  (defparameter *cube* (make-cube 1.0))
+  (defparameter *tetrahedron* (make-tetrahedron 1.0))
+  (defparameter *group-1* (make-group *cube* *tetrahedron*))
+  (defparameter *group-2* (make-group *group-1* *icosahedron*))
+  (add-shape *scene* *group-2*)
+  (do-hierarchy *group-2* (lambda (s) (setf (show-axis s) 1.0))))
+
+(with-redraw
+  (translate-by *tetrahedron* (p! 0.0 0.5 0.0))
+  (rotate-by *tetrahedron* (p! 0 0 10)))
+
+(with-redraw
+  (translate-by *cube* (p! 0.0 -0.5 0.0)))
+
+(with-redraw
+  (translate-by *icosahedron* (p! 0.0 0.0 2.0)))
+
+(with-redraw
+  (translate-by *group-1* (p! 0.5 0.0 0.0)))
+
+(with-redraw
+  (rotate-by *group-1* (p! 0.0 0.0 10.0)))
+
+(with-redraw
+  (rotate-by *group-2* (p! 10.0 0.0 0.0)))
+
+(with-redraw
+  (scale-by *group-2* 0.9))
+
+(with-redraw
+  (translate-by *group-1* (p! 0.5 0.0 0.0)))
+
+(with-redraw
+  (translate-by *group-2* (p! -0.5 0.0 0.0)))
+
+;;; parent shape to transformed group - inherits transformation
+(progn
+  (defparameter *octahedron* (make-octahedron 1.0))
+  (setf (show-axis *octahedron*) 1.0)
+  (with-redraw
+    (add-child *group-1* *octahedron*)
+    (add-child *group-2* *octahedron*)))
+
+(with-redraw
+  (translate-by *octahedron* (p! 0.0 0.2 0.0)))
+
+(with-redraw
+  (rotate-by *octahedron* (p! 0.0 0.0 20)))
+
+
+
+(with-clear-and-redraw
+  (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 1))
+                                              (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2)))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (scatter-shapes-in-group (lambda () (make-octahedron 1))
+                                              (make-circle-points 4.0 32))))
+
+(with-redraw
+  (do-hierarchy (first (shapes *scene*))
+    (lambda (shape) (scale-to shape (rand2 0.5 1.5)))
+    :test #'is-leaf?))
+                                                
 ;;; animators
 
 

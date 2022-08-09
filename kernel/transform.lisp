@@ -29,6 +29,9 @@
 (defmethod scale-by ((self transform) (p point))
   (setf (scale self) (p* (scale self) p)))
 
+(defmethod scale-by ((self transform) (s number))
+  (setf (scale self) (p* (scale self) (p! s s s))))
+
 (defmethod translate-to ((self transform) (p point))
   (setf (translate self) p))
 
@@ -37,6 +40,9 @@
 
 (defmethod scale-to ((self transform) (p point))
   (setf (scale self) p))
+
+(defmethod scale-to ((self transform) (s number))
+  (setf (scale self) (p! s s s)))
 
 (defmethod reset-transform ((self transform))
   (setf (translate self) (p! 0.0 0.0 0.0))

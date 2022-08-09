@@ -126,6 +126,11 @@
       (rand2 (y p1) (y p2))
       (rand2 (z p1) (z p2))))
 
+(defmethod p-rand2 ((n1 number) (n2 number))
+  (p! (rand2 n1 n2)
+      (rand2 n1 n2)
+      (rand2 n1 n2)))
+
 (defmethod p-rand (&optional (mag 1.0))
   (p-scale (p-normalize (p! (rand1 1.0) (rand1 1.0) (rand1 1.0))) mag))
 
