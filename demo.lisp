@@ -386,13 +386,22 @@
 ;;; hold down space key in 3D view to run animation
 
 ;;; obj import -----------------------------------------------------------------
-;;; you can find obj files at https://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
-;;; in this and demos below, update the obj file pathname for your setup
+
+
+(defparameter *example-object-filename* 
+  (first '("~/Development/3D DCC Project/data/cow.obj"
+	   "~/Development/3D DCC Project/data/teapot.obj"))
+  "An example object filename used in demonstrations for the OBJ-IMPORT facility.
+
+You can find obj files at
+
+  https://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
+
+in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
+
 (with-clear-and-redraw
   (add-shape *scene*
-             (import-obj "~/Development/3D DCC Project/data/cow.obj")
-;  (import-obj "~/Development/3D DCC Project/data/teapot.obj")
-  ))
+             (import-obj *example-object-filename*)))
 
 ;;; polyhedron triangulation ---------------------------------------------------
 (with-clear-and-redraw
@@ -407,7 +416,7 @@
 (with-clear-and-redraw
   (let* ((shape (generate-point-cloud (triangulate-polyhedron
 ;;;                                       (make-cut-cube-polyhedron 2.0) ; can use instead of obj file
-                                       (import-obj "~/Development/3D DCC Project/data/cow.obj")
+                                       (import-obj *example-object-filename*)
                                        )
                                       100))
          (p-sys (make-particle-system (make-point-cloud (p! 0 0 0)) (p! .2 .2 .2) 10 -1 'climbing-particle
@@ -448,7 +457,7 @@
 (with-redraw
   (setf (instance-shape (first (shapes *scene*))) (make-icosahedron .1)))
 (with-redraw
-  (setf (point-generator (first (shapes *scene*))) (import-obj "~/Development/3D DCC Project/data/cow.obj")))
+  (setf (point-generator (first (shapes *scene*))) (import-obj *example-object-filename*)))
 (with-redraw
   (setf (point-generator (first (shapes *scene*))) (make-procedural-sine-curve-polygon 360.0 1.0 4.0 4.0)))
 
