@@ -13,17 +13,24 @@
 |#
 
 ;;; kernel tests
+;;; press 'h' in 3d view to see key bindings and navigation
 
 ;;; point-cloud ----------------------------------------------------------------
-;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
   (add-shape *scene* (make-point-cloud (make-grid-points 10 2 5 (p! -2.0 -0.4 -1.0) (p! 2.0 0.4 1.0)))))
 
 (with-clear-and-redraw
   (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -1 -1 -1) (p! 1 1 1)))))
 
-;;; shapes and transforms ------------------------------------------------------
-;;; press 'h' in 3d view to see key bindings and navigation
+;;; polygons -------------------------------------------------------------------
+(with-clear-and-redraw
+  (add-shape *scene* (translate-to (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0  0.0)))
+  (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0  2.0)))
+  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0  4.0)))
+  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0  6.0))))
+
 (with-clear-and-redraw
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  6) (p! 0 0 -2.0)))
@@ -32,7 +39,6 @@
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  3) (p! 0 0  4.0))))
 
 ;; polyhedrons -----------------------------------------------------------------
-;;; press 'h' in 3d view to see key bindings and navigation
 (with-clear-and-redraw
   (add-shapes *scene* (list
                        (translate-to (make-tetrahedron  2.0) (p! -5 0 0))
@@ -257,7 +263,13 @@
 
 ;;; uv-mesh --------------------------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (make-grid-uv-mesh 5 5 (p! -2 0 -2) (p! 2 0 2) 0.0)))
+  (add-shape *scene* (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0)))
+  (add-shape *scene* (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0)))
+  (add-shape *scene* (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-torus 1.0 2.0 8 32) (p! 0 0 4.0)))
+  )
 
 ;;; uv-mesh transform-extrude --------------------------------------------------
 (with-clear-and-redraw
@@ -554,7 +566,7 @@
 
 ;;; particle-system point-generator-mixin uv-mesh ------------------------------
 (with-clear-and-redraw
-  (let* ((p-gen (make-grid-uv-mesh 25 25 (p! -4 0 -4) (p! 4 0 4) 0.0))
+  (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
@@ -570,7 +582,7 @@
 
 ;;; particle-system point-generator-mixin sweep-mesh-group ---------------------
 (with-clear-and-redraw
-  (let* ((p-gen (make-grid-uv-mesh 25 25 (p! -4 0 -4) (p! 4 0 4) 0.0))
+  (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))
          (sweep-mesh-group (make-sweep-mesh-group (make-procedural-circle-polygon 0.2 6)
@@ -584,7 +596,7 @@
 
 ;;; particle-system point-generator-mixin sweep-mesh-group spawning ------------
 (with-clear-and-redraw
-  (let* ((p-gen (make-grid-uv-mesh 2 2 (p! -2 0 -2) (p! 2 0 2) 0.0))
+  (let* ((p-gen (make-grid-uv-mesh 4 4 1 1))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 8 'particle
                                       :life-span (round (rand2 5 10))
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))

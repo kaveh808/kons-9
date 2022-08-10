@@ -56,19 +56,19 @@
 (defmethod v+1 ((mesh uv-mesh) index)
   (index+1 index (v-dim mesh) (v-wrap mesh)))
 
-(defun grid-point-array (u-dim v-dim &optional (bounds-lo (p! -1 0 -1)) (bounds-hi (p! 1 0 1)) (jitter nil))
-  (let ((uv-point-array (make-array (list u-dim v-dim))))
-    (dotimes (u u-dim)
-      (let* ((fx (/ u (- u-dim 1.0)))
-	     (x (lerp fx (x bounds-lo) (x bounds-hi))))
-	(dotimes (v v-dim)
-	  (let* ((fz (/ v (- v-dim 1.0)))
-		 (z (lerp fz (z bounds-lo) (z bounds-hi))))
-	    (setf (aref uv-point-array u v)
-		  (if jitter
-		      (p-jitter (p! z 0.0 x) jitter)
-		      (p! z 0.0 x)))))))
-    uv-point-array))
+;; (defun grid-point-array (u-dim v-dim &optional (bounds-lo (p! -1 0 -1)) (bounds-hi (p! 1 0 1)) (jitter nil))
+;;   (let ((uv-point-array (make-array (list u-dim v-dim))))
+;;     (dotimes (u u-dim)
+;;       (let* ((fx (/ u (- u-dim 1.0)))
+;; 	     (x (lerp fx (x bounds-lo) (x bounds-hi))))
+;; 	(dotimes (v v-dim)
+;; 	  (let* ((fz (/ v (- v-dim 1.0)))
+;; 		 (z (lerp fz (z bounds-lo) (z bounds-hi))))
+;; 	    (setf (aref uv-point-array u v)
+;; 		  (if jitter
+;; 		      (p-jitter (p! z 0.0 x) jitter)
+;; 		      (p! z 0.0 x)))))))
+;;     uv-point-array))
 
 (defmethod compute-polyhedron-data ((mesh uv-mesh))
   (compute-polyhedron-mesh mesh)
@@ -77,24 +77,28 @@
   (allocate-point-colors mesh)
   mesh)
 
-(defun 2d-array-to-list (array)
-  (let ((new-list '()))
-    (loop for i below (array-dimension array 0)
-          do (loop for j below (array-dimension array 1)
-                   do (push (aref array i j) new-list)))
-    (nreverse new-list)))
+;; (defun 2d-array-to-list (array)
+;;   (let ((new-list '()))
+;;     (loop for i below (array-dimension array 0)
+;;           do (loop for j below (array-dimension array 1)
+;;                    do (push (aref array i j) new-list)))
+;;     (nreverse new-list)))
+
+(defun flatten-array (array)
+  "Return an n-dimensional array as a 1-dimensional vector."
+  (let ((vector (make-array (array-total-size array))))
+    (dotimes (i (array-total-size array))
+      (setf (aref vector i) (row-major-aref array i)))
+    vector))
 
 (defmethod compute-polyhedron-mesh ((mesh uv-mesh))
-  (setf (points mesh) (make-array (* (u-dim mesh) (v-dim mesh))
-                                  :initial-contents (2d-array-to-list (uv-point-array mesh))
-                                  :adjustable t
-                                  :fill-pointer t))
+  (setf (points mesh) (flatten-array (uv-point-array mesh)))
+  ;; (setf (points mesh) (make-array (* (u-dim mesh) (v-dim mesh))
+  ;;                                 :initial-contents (2d-array-to-list (uv-point-array mesh))))
   (setf (faces mesh) (make-array (+ (* (1- (wrapped-u-dim mesh)) (1- (wrapped-v-dim mesh)))
                                     (if (u-cap mesh) 2 0)
                                     (if (v-cap mesh) 2 0))
-                                  :initial-contents (compute-face-list mesh)
-                                  :adjustable t
-                                  :fill-pointer t)))
+                                  :initial-contents (compute-face-list mesh))))
 
 (defmethod uv-mesh-1d-ref ((mesh uv-mesh) i j)
   (+ j (* i (v-dim mesh))))
@@ -132,12 +136,12 @@
           (push (nreverse end-cap-2) faces)))
       (nreverse faces))))
 
-(defun make-grid-uv-mesh (u-dim v-dim bounds-lo bounds-hi &optional (jitter nil))
-  (let ((mesh (make-instance 'uv-mesh :u-dim u-dim :v-dim v-dim)))
-    (allocate-mesh-arrays mesh)
-    (setf (uv-point-array mesh) (grid-point-array u-dim v-dim bounds-lo bounds-hi jitter))
-    (compute-polyhedron-data mesh)
-    mesh))
+;; (defun make-grid-uv-mesh (u-dim v-dim bounds-lo bounds-hi &optional (jitter nil))
+;;   (let ((mesh (make-instance 'uv-mesh :u-dim u-dim :v-dim v-dim)))
+;;     (allocate-mesh-arrays mesh)
+;;     (setf (uv-point-array mesh) (grid-point-array u-dim v-dim bounds-lo bounds-hi jitter))
+;;     (compute-polyhedron-data mesh)
+;;     mesh))
 
 (defun transform-extrude (profile transform steps)
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
@@ -187,7 +191,7 @@
 (defmethod sweep-extrude-aux ((mesh uv-mesh) profile-points is-closed-profile? path-points is-closed-path?
                               &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))); fix this
-    (when (or (< (length profile-points) 3)
+    (when (or (< (length profile-points) 2)
               (< (length unique-path-points) 2))
       (return-from sweep-extrude-aux (make-instance 'uv-mesh))) ;return empty mesh
     (setf (u-dim mesh) (length profile-points))
@@ -241,12 +245,34 @@
                                       curve is-closed?
                                       :twist twist :taper taper :from-end? from-end?)
                    meshes))
-    (reverse meshes)))
+    (nreverse meshes)))
 
-;;; make-torus
-(defun make-torus (inner-radius inner-segments outer-radius outer-segments)
-  (first (sweep-extrude (make-circle-polygon inner-radius inner-segments)
-                        (make-circle-polygon outer-radius outer-segments))))
+;;; uv-mesh shape functions ----------------------------------------------------
+
+(defun make-grid-uv-mesh (x-size z-size x-segments z-segments)
+  (first (sweep-extrude (make-line-polygon (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
+                        (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments))))
+
+(defun make-cylinder-uv-mesh (diameter height radial-segments height-segments &key (taper 1.0))
+  (first (sweep-extrude (make-circle-polygon diameter radial-segments)
+                        (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+                        :taper taper)))
+
+(defun make-cone-uv-mesh (diameter height radial-segments height-segments)
+  (make-cylinder-uv-mesh diameter height radial-segments height-segments :taper 0.0))
+
+(defun make-rect-prism-uv-mesh (base-side height base-segments height-segments &key (taper 1.0))
+  (first (sweep-extrude (make-square-polygon base-side base-segments)
+                        (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+                        :taper taper)))
+
+(defun make-pyramid-uv-mesh (base-side height base-segments height-segments &key (taper 1.0))
+  (make-rect-prism-uv-mesh base-side height base-segments height-segments :taper 0.0))
+
+(defun make-torus (inner-diameter outer-diameter inner-segments outer-segments)
+  (first (sweep-extrude (make-circle-polygon inner-diameter inner-segments)
+                        (make-circle-polygon outer-diameter outer-segments))))
+
 
 #|
 (defun every-nth (step list)

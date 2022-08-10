@@ -54,15 +54,35 @@
 (defmethod curve-tangents ((poly polygon))
   (curve-tangents-aux (points poly) (is-closed-polygon? poly)))
 
-(defun make-rectangle-polygon (width height)
-  (make-polygon (make-rectangle-points width height)))
+;;; polygon shape functions ----------------------------------------------------
 
-(defun make-square-polygon (side)
-  (make-polygon (make-rectangle-points side side)))
-
-(defun make-circle-polygon (diameter num-points)
-  (make-polygon (make-circle-points diameter num-points)))
-
-(defun make-sine-curve-polygon (period frequency x-scale y-scale num-points)
-  (make-polygon (make-sine-curve-points period frequency x-scale y-scale num-points)
+(defun make-line-polygon (p1 p2 num-segments)
+  (make-polygon (make-line-points p1 p2 num-segments)
                 nil))
+
+(defun make-rectangle-polygon (width height &optional (num-segments 1))
+  (make-polygon (make-rectangle-points width height num-segments)))
+
+(defun make-square-polygon (side &optional (num-segments 1))
+  (make-polygon (make-rectangle-points side side num-segments)))
+
+(defun make-circle-polygon (diameter num-segments)
+  (make-polygon (make-circle-points diameter num-segments)))
+
+(defun make-spiral-polygon (start-diameter end-diameter length loops num-segments)
+  (make-polygon (make-spiral-points start-diameter end-diameter length loops num-segments)
+                nil))
+
+(defun make-sine-curve-polygon (period frequency x-scale y-scale num-segments)
+  (make-polygon (make-sine-curve-points period frequency x-scale y-scale num-segments)
+                nil))
+
+#|
+(defun make-arc-polygon (diameter num-segments start-angle end-angle)
+  ...)
+
+(defun make-3-point-arc (p0 p1 p2 num-segments)
+  ...)
+
+
+|#

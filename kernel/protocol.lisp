@@ -3,9 +3,7 @@
 ;;;; point-source-protocol =====================================================
 
 (defgeneric provides-point-source-protocol? (obj)
-
   (:method ((obj t)) nil)
-
   (:method ((p-cloud point-cloud)) t)
   )
 
@@ -63,11 +61,8 @@
 ;;;; curve-source-protocol =====================================================
 
 (defgeneric provides-curve-source-protocol? (obj)
-
   (:method ((obj t)) nil)
-
   (:method ((poly polygon)) t)
-
   (:method ((polyh polyhedron)) t)
   )
 
