@@ -15,8 +15,8 @@
 (defun run ()
   (setf *window* (on-main-thread (show-window *scene*))))
 
-(defun run-grid (n)
-  (setf *window* (on-main-thread (show-grid-window n))))
+;;(defun run-grid (n)
+;;  (setf *window* (on-main-thread (show-grid-window n))))
 
 (defun redraw ()
   (dolist (v *scene-views*)

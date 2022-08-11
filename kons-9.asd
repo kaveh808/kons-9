@@ -38,6 +38,7 @@
    (:file "plugins/he-mesh")
    (:file "plugins/usd")
    (:file "plugins/obj")
-   (:file "ui")
+;   (:file "ui")
+   (:file "minimal-ui")
    )
   :serial t)
