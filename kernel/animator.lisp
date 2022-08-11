@@ -16,7 +16,6 @@
 (defmethod copy-instance-data ((dst animator) (src animator))
   (setf (init-fn dst) (init-fn src))
   (setf (update-fn dst) (update-fn src))
-  (setf (init-args dst) (init-args src))
   (setf (is-initialized? dst) (is-initialized? src))
 ;;   (setf (shape dst) (shape src)) -- do not copy shape
   (setf (data dst) (copy-list (data src)))

@@ -56,20 +56,6 @@
 (defmethod v+1 ((mesh uv-mesh) index)
   (index+1 index (v-dim mesh) (v-wrap mesh)))
 
-;; (defun grid-point-array (u-dim v-dim &optional (bounds-lo (p! -1 0 -1)) (bounds-hi (p! 1 0 1)) (jitter nil))
-;;   (let ((uv-point-array (make-array (list u-dim v-dim))))
-;;     (dotimes (u u-dim)
-;;       (let* ((fx (/ u (- u-dim 1.0)))
-;; 	     (x (lerp fx (x bounds-lo) (x bounds-hi))))
-;; 	(dotimes (v v-dim)
-;; 	  (let* ((fz (/ v (- v-dim 1.0)))
-;; 		 (z (lerp fz (z bounds-lo) (z bounds-hi))))
-;; 	    (setf (aref uv-point-array u v)
-;; 		  (if jitter
-;; 		      (p-jitter (p! z 0.0 x) jitter)
-;; 		      (p! z 0.0 x)))))))
-;;     uv-point-array))
-
 (defmethod compute-polyhedron-data ((mesh uv-mesh))
   (compute-polyhedron-mesh mesh)
   (compute-face-normals mesh)
@@ -84,6 +70,7 @@
 ;;                    do (push (aref array i j) new-list)))
 ;;     (nreverse new-list)))
 
+;;; TODO -- this does not copy the points, they will be shared between uv-point-array and polyhedron points
 (defun flatten-array (array)
   "Return an n-dimensional array as a 1-dimensional vector."
   (let ((vector (make-array (array-total-size array))))
