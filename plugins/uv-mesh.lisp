@@ -237,14 +237,15 @@
   (sweep-extrude-aux (make-instance 'uv-mesh)
                      (coerce (points profile) 'list) (is-closed-polygon? profile)
                      (points path) (is-closed-polygon? path)
-                     :twist twist :taper taper :from-end? from-end?)))
+                     :twist twist :taper taper :from-end? from-end?))
 
-(defun transform-extrude-uv-mesh (profile transform num-steps)
+(defun transform-extrude-uv-mesh (profile transform num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
-				      :v-dim (1+ num-steps)
+				      :v-dim (if v-wrap num-steps (1+ num-steps))
 				      :u-wrap (is-closed-polygon? profile)
-				      :v-wrap nil
-                                      :v-cap t)))
+				      :v-wrap v-wrap
+                                      :u-cap u-cap
+                                      :v-cap v-cap)))
     (allocate-mesh-arrays mesh)
     (dotimes (v (v-dim mesh))
       (let* ((factor (tween v 0.0 (1- (v-dim mesh))))
@@ -253,7 +254,7 @@
           (setf (aref (uv-point-array mesh) u v) (aref points u)))))
     (compute-polyhedron-data mesh)))
 
-(defun function-extrude-uv-mesh (profile function num-steps &key (v-wrap nil) (u-cap nil)) (v-cap t))
+(defun function-extrude-uv-mesh (profile function num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
 				      :v-dim (if v-wrap num-steps (1+ num-steps))
 				      :u-wrap (is-closed-polygon? profile)
@@ -275,9 +276,9 @@
                          (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
 
 (defun make-cylinder-uv-mesh (diameter height radial-segments height-segments &key (taper 1.0))
-   (sweep-extrude-uv-mesh (make-circle-polygon diameter radial-segments)
-                        (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
-                        :taper taper)))
+  (sweep-extrude-uv-mesh (make-circle-polygon diameter radial-segments)
+                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+                         :taper taper))
 
 (defun make-cone-uv-mesh (diameter height radial-segments height-segments)
   (make-cylinder-uv-mesh diameter height radial-segments height-segments :taper 0.0))
@@ -296,9 +297,18 @@
 
 (defun make-sphere-uv-mesh (diameter latitude-segments longitude-segments)
   (let ((xform (make-instance 'transform :rotate (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0))))
+    (transform-extrude-uv-mesh (make-arc-polygon diameter latitude-segments 0 (- pi))
+                               xform
+                               longitude-segments
+                               :v-wrap t
+                               :v-cap nil)))
+
+;;; version using function-extrude-uv-mesh
+(defun make-sphere-uv-mesh-2 (diameter latitude-segments longitude-segments)
+  (let ((xform (make-instance 'transform :rotate (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0))))
     (function-extrude-uv-mesh (make-arc-polygon diameter latitude-segments 0 (- pi))
                               (lambda (points f) (transform-points points (transform-matrix xform f)))
-                              (1- longitude-segments)
+                              longitude-segments
                               :v-wrap t
                               :v-cap nil)))
 

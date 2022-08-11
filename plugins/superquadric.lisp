@@ -19,7 +19,7 @@
 
 (defmethod compute-procedural-node ((mesh superquadric))
   (allocate-mesh-arrays mesh)
-  (setf (uv-point-array mesh) (grid-point-array (u-dim mesh) (v-dim mesh)))
+  (setf (uv-point-array mesh) (make-array (list (u-dim mesh) (v-dim mesh))))
   (compute-superquadric-mesh mesh)
   (compute-polyhedron-data mesh)
   mesh)
