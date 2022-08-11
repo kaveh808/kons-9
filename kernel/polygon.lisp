@@ -69,6 +69,10 @@
 (defun make-circle-polygon (diameter num-segments)
   (make-polygon (make-circle-points diameter num-segments)))
 
+(defun make-arc-polygon (diameter num-segments start-angle end-angle)
+  (make-polygon (make-arc-points diameter num-segments start-angle end-angle)
+                nil))
+
 (defun make-spiral-polygon (start-diameter end-diameter length loops num-segments)
   (make-polygon (make-spiral-points start-diameter end-diameter length loops num-segments)
                 nil))

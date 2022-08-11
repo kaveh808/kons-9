@@ -205,6 +205,9 @@
 	  do (setf dtheta (+ dtheta (* 2 pi))))
     dtheta))
 
+(defun p-radians (p)
+  (p! (radians (x p)) (radians (y p)) (radians (z p))))
+
 (defun point-in-polygon? (p points)
   (let ((angle 0.0))
     (loop :for (p1 p2) :on (append points (list (first points))) :by #'cdr :while p2
@@ -224,3 +227,6 @@
       (when (< (y p) (y bounds-lo)) (setf (y bounds-lo) (y p)))
       (when (< (z p) (z bounds-lo)) (setf (z bounds-lo) (z p))))
     (values bounds-lo bounds-hi)))
+
+(defun p-sphericize (p radius &optional (factor 1.0) (center +origin+))
+  (p-lerp factor p (p* (p-normalize (p-from-to center p)) radius)))

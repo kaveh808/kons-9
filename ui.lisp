@@ -905,7 +905,7 @@ h or ?: print this help message~%"))
       (#\5 (setf *do-smooth-shading?* (not *do-smooth-shading?*)))
       (#\6 (setf *display-ground-plane?* (not *display-ground-plane?*)))
       (#\7 (setf *display-axes?* (not *display-axes?*)))
-      (#\z (init-view-camera))
+      (#\z (init-view-camera) (3d-update-light-settings)) ;TODO -- lights don't update when camera reset
       ;; (#\x (when (scene self) (generate-scene (scene self))))
       ;; (#\c (when (scene self) (dotimes (i 100) (update-scene (scene self)))))
       ;; (#\v (when (scene self)

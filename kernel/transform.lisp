@@ -4,7 +4,7 @@
 
 (defclass transform ()
   ((translate :accessor translate :initarg :translate :initform (p! 0.0 0.0 0.0))
-   (rotate :accessor rotate :initarg :rotate :initform (p! 0.0 0.0 0.0))
+   (rotate :accessor rotate :initarg :rotate :initform (p! 0.0 0.0 0.0)) ;degrees
    (scale :accessor scale :initarg :scale :initform (p! 1.0 1.0 1.0))))
 
 (defmethod copy-instance-data ((dst transform) (src transform))
@@ -71,7 +71,7 @@
 ;;; fixed scale/rotate/translate order for now - add options later
 (defmethod transform-matrix ((self transform) &optional (factor 1.0))
   (let ((t-mtx (make-translation-matrix (partial-translate self factor)))
-	(r-mtx (make-rotation-matrix (partial-rotate self factor)))
+	(r-mtx (make-rotation-matrix (p-radians (partial-rotate self factor)))) ;convert to radians
 	(s-mtx (make-scale-matrix (partial-scale self factor))))
     (matrix-multiply-n s-mtx r-mtx t-mtx)))
 

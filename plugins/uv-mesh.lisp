@@ -143,22 +143,6 @@
 ;;     (compute-polyhedron-data mesh)
 ;;     mesh))
 
-(defun transform-extrude (profile transform steps)
-  (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
-				      :v-dim (+ steps 1)
-				      :u-wrap (is-closed-polygon? profile)
-				      :v-wrap nil
-                                      :v-cap t)))
-    (allocate-mesh-arrays mesh)
-    (dotimes (v (v-dim mesh))
-      (let* ((factor (tween v 0.0 (- (v-dim mesh) 1)))
-	     (mtx (transform-matrix transform factor))
-	     (points (transform-points (points profile) mtx)))
-	(loop :for p :across points
-	      :for u :from 0
-	      :do (setf (aref (uv-point-array mesh) u v) p))))
-    (compute-polyhedron-data mesh)))
-
 (defun curve-tangent (i points &optional (is-closed? nil))
   (let ((len (length points))
 	i1
@@ -193,11 +177,11 @@
   (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))); fix this
     (when (or (< (length profile-points) 2)
               (< (length unique-path-points) 2))
-      (return-from sweep-extrude-aux (make-instance 'uv-mesh))) ;return empty mesh
+      (return-from sweep-extrude-aux (make-instance 'uv-mesh))) ;return empty mesh -- throw error?
     (setf (u-dim mesh) (length profile-points))
     (setf (v-dim mesh) (length unique-path-points))
     (setf (u-wrap mesh) is-closed-profile?)
-    (setf (v-wrap mesh)is-closed-path?)
+    (setf (v-wrap mesh) is-closed-path?)
     (setf (v-cap mesh) t)
     (let* ((delta (/ 1.0 (1- (v-dim mesh))))
            (prev-tangent +z-axis+)
@@ -231,10 +215,11 @@
                             :do (setf (aref (uv-point-array mesh) u v) (p-copy p2)))))))
       (compute-polyhedron-data mesh))))
 
+;;; TODO -- cleanup
 ;;; for now sweep 0-th profile along all paths
 (defmethod sweep-extrude (profiles paths &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((meshes '())
-        (profile-curve (coerce (elt (source-curves profiles) 0) 'list)) ;fix this...
+        (profile-curve (coerce (elt (source-curves profiles) 0) 'list)) ;TODO -- fix this...
         (profile-closed (elt (source-curves-closed profiles) 0))
         (path-curves (source-curves paths))
         (path-closed (source-curves-closed paths)))
@@ -247,14 +232,50 @@
                    meshes))
     (nreverse meshes)))
 
+;;; TODO -- fix coerce to list
+(defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil))
+  (sweep-extrude-aux (make-instance 'uv-mesh)
+                     (coerce (points profile) 'list) (is-closed-polygon? profile)
+                     (points path) (is-closed-polygon? path)
+                     :twist twist :taper taper :from-end? from-end?)))
+
+(defun transform-extrude-uv-mesh (profile transform num-steps)
+  (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
+				      :v-dim (1+ num-steps)
+				      :u-wrap (is-closed-polygon? profile)
+				      :v-wrap nil
+                                      :v-cap t)))
+    (allocate-mesh-arrays mesh)
+    (dotimes (v (v-dim mesh))
+      (let* ((factor (tween v 0.0 (1- (v-dim mesh))))
+	     (points (transform-points (points profile) (transform-matrix transform factor))))
+        (dotimes (u (u-dim mesh))
+          (setf (aref (uv-point-array mesh) u v) (aref points u)))))
+    (compute-polyhedron-data mesh)))
+
+(defun function-extrude-uv-mesh (profile function num-steps &key (v-wrap nil) (u-cap nil)) (v-cap t))
+  (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
+				      :v-dim (if v-wrap num-steps (1+ num-steps))
+				      :u-wrap (is-closed-polygon? profile)
+				      :v-wrap v-wrap
+                                      :u-cap u-cap
+                                      :v-cap v-cap)))
+    (allocate-mesh-arrays mesh)
+    (dotimes (v (v-dim mesh))
+      (let* ((factor (tween v 0.0 (1- (v-dim mesh))))
+	     (points (funcall function (points profile) factor)))
+        (dotimes (u (u-dim mesh))
+          (setf (aref (uv-point-array mesh) u v) (aref points u)))))
+    (compute-polyhedron-data mesh)))
+
 ;;; uv-mesh shape functions ----------------------------------------------------
 
 (defun make-grid-uv-mesh (x-size z-size x-segments z-segments)
-  (first (sweep-extrude (make-line-polygon (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
-                        (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments))))
+  (sweep-extrude-uv-mesh (make-line-polygon (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
+                         (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
 
 (defun make-cylinder-uv-mesh (diameter height radial-segments height-segments &key (taper 1.0))
-  (first (sweep-extrude (make-circle-polygon diameter radial-segments)
+   (sweep-extrude-uv-mesh (make-circle-polygon diameter radial-segments)
                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
                         :taper taper)))
 
@@ -262,16 +283,40 @@
   (make-cylinder-uv-mesh diameter height radial-segments height-segments :taper 0.0))
 
 (defun make-rect-prism-uv-mesh (base-side height base-segments height-segments &key (taper 1.0))
-  (first (sweep-extrude (make-square-polygon base-side base-segments)
-                        (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
-                        :taper taper)))
+  (sweep-extrude-uv-mesh (make-square-polygon base-side base-segments)
+                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+                         :taper taper))
 
-(defun make-pyramid-uv-mesh (base-side height base-segments height-segments &key (taper 1.0))
+(defun make-pyramid-uv-mesh (base-side height base-segments height-segments)
   (make-rect-prism-uv-mesh base-side height base-segments height-segments :taper 0.0))
 
-(defun make-torus (inner-diameter outer-diameter inner-segments outer-segments)
-  (first (sweep-extrude (make-circle-polygon inner-diameter inner-segments)
-                        (make-circle-polygon outer-diameter outer-segments))))
+(defun make-torus-uv-mesh (inner-diameter outer-diameter inner-segments outer-segments)
+  (sweep-extrude-uv-mesh (make-circle-polygon inner-diameter inner-segments)
+                         (make-circle-polygon outer-diameter outer-segments)))
+
+(defun make-sphere-uv-mesh (diameter latitude-segments longitude-segments)
+  (let ((xform (make-instance 'transform :rotate (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0))))
+    (function-extrude-uv-mesh (make-arc-polygon diameter latitude-segments 0 (- pi))
+                              (lambda (points f) (transform-points points (transform-matrix xform f)))
+                              (1- longitude-segments)
+                              :v-wrap t
+                              :v-cap nil)))
+
+#| TODO -- need to tesselate top and bottom faces, compute normals after sphericize
+-- may be simpler to implement a general refine-polyhedron method?
+(defun make-cube-sphere-uv-mesh (diameter segments)
+  (let* ((mesh (make-rect-prism-uv-mesh diameter diameter segments segments))
+         (uv-array (uv-point-array mesh))
+         (radius (/ diameter 2))
+         (center (p! 0 radius 0)))
+    (dotimes (u (u-dim mesh))
+      (dotimes (v (v-dim mesh))
+        (setf (aref uv-array u v) (p-sphericize (aref uv-array u v) radius 1.0 center))))
+    (setf (points mesh) (flatten-array (uv-point-array mesh)))
+    mesh))
+;;; test
+(add-shape *scene* (translate-to (make-cube-sphere-uv-mesh 1.0 8) (p! 0 0 6.0)))
+|#
 
 
 #|

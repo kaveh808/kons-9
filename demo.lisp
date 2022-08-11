@@ -28,8 +28,9 @@
   (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -2.0)))
   (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0  0.0)))
   (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0  2.0)))
-  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0  4.0)))
-  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0  6.0))))
+  (add-shape *scene* (translate-to (make-arc-polygon 2.0 16 0 pi) (p! 0 0  4.0)))
+  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0  6.0)))
+  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0  8.0))))
 
 (with-clear-and-redraw
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
@@ -268,44 +269,59 @@
   (add-shape *scene* (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0)))
   (add-shape *scene* (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0)))
   (add-shape *scene* (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0)))
-  (add-shape *scene* (translate-to (make-torus 1.0 2.0 8 32) (p! 0 0 4.0)))
+  (add-shape *scene* (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0)))
+  (add-shape *scene* (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))
   )
 
-;;; uv-mesh transform-extrude --------------------------------------------------
+;;; transform-extrude-uv-mesh --------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (transform-extrude (make-rectangle-polygon 2 1)
-					(make-transform (p! 0 0 4) (p! 0 0 0) (p! 1 1 1))
-					4)))
+  (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-polygon 2 2 2)
+                                                (make-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
+                                                16)))
 
-;;; uv-mesh transform-extrude --------------------------------------------------
+;;; transform-extrude-uv-mesh --------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (transform-extrude (make-circle-polygon 1.0 3)
-					(make-transform (p! 0 0 4) (p! 0 0 (* 2 pi)) (p! 0 0 1))
-					40)))
+  (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+                                                (make-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
+                                                40)))
 
-;;; curve-shape sine curve -----------------------------------------------------
+;;; sweep-extrude-uv-mesh ------------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (make-sine-curve-polygon 360 1 4 1 16)))
-
-;;; uv-mesh sweep-extrude ------------------------------------------------------
-(with-clear-and-redraw
-  (let* ((path (make-sine-curve-polygon 360 1 4 1 64))
-         (prof (make-circle-polygon 0.8 4))
-         (meshes (sweep-extrude prof path :twist (* 2 pi) :taper 0.0)))
-    (add-shapes *scene* meshes)))
-;;; assign point colors
+  (let* ((path (make-sine-curve-polygon 360 1 4 2 64))
+         (prof (make-circle-polygon 1.0 4))
+         (mesh (sweep-extrude-uv-mesh prof path :twist (* 2 pi) :taper 0.0)))
+    (add-shape *scene* mesh)))
+;;; assign point colors by uv
 (with-redraw
   (set-point-colors-by-uv (first (shapes *scene*)) (lambda (u v) (c-rainbow v))))
+;;; assign point colors by xyz
+(with-redraw
+  (set-point-colors-by-xyz (first (shapes *scene*)) (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0)))))
 
-;;; uv-mesh sweep-extrude u-wrap v-wrap ----------------------------------------
+;;; function-extrude-uv-mesh --------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (make-torus 1.5 8 4.0 16)))
-;;; assign point colors
+  (add-shape *scene* (function-extrude-uv-mesh
+                      (make-circle-polygon 2.0 16)
+                      (lambda (points f)
+                       (map 'vector (lambda (p)
+                                      (p+ (p-jitter p (* .1 f)) (p! 0 0 (* 4 f))))
+                            points))
+                      20)))
+
+;;; function-extrude-uv-mesh --------------------------------------------------
 (with-clear-and-redraw
-  (let ((mesh (make-torus 1.5 32 4.0 64)))
-    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (y p) -3 3) 0.0 1.0))))
-;    (set-point-colors-by-uv mesh (lambda (u v) (c-rainbow v)))
-    (add-shape *scene* mesh)))
+  (add-shape *scene* (function-extrude-uv-mesh
+                      (make-circle-polygon 2.0 16)
+                      (lambda (points f)
+                       (map 'vector (lambda (p)
+                                      (p+ (p* p (sin (* pi f)))
+                                          (p! 0 0 (* 4 f))))
+                            points))
+                      20)))
+
+
+
+
 
 ;;; procedural-mixin circle ----------------------------------------------------
 (with-clear-and-redraw

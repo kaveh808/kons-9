@@ -62,6 +62,15 @@
       (setf (aref points (incf index)) (aref side-3 i)))
     points))
 
+(defun make-arc-points (diameter num-segments start-angle end-angle)
+  (let* ((points (make-array (1+ num-segments)))
+         (radius (/ diameter 2.0))
+         (angle-delta (/ (- end-angle start-angle) num-segments)))
+    (dotimes (i (1+ num-segments))
+      (let ((angle (* i angle-delta)))
+        (setf (aref points i) (p! (* (sin angle) radius) (* (cos angle) radius) 0))))
+    points))
+
 (defun make-circle-points (diameter num-segments)
   (let ((points (make-array num-segments))
         (radius (/ diameter 2.0))
