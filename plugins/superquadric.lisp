@@ -3,7 +3,7 @@
 ;;;; superquadric =======================================================
 
 (defclass superquadric (uv-mesh procedural-mixin)
-  ((radius :accessor radius :initarg :radius :initform 1.0)
+  ((diameter :accessor diameter :initarg :diameter :initform 1.0)
    (e1 :accessor e1 :initarg :e1 :initform 0.2)
    (e2 :accessor e2 :initarg :e2 :initform 0.2))
   (:default-initargs
@@ -11,7 +11,7 @@
 
 (def-procedural-input superquadric u-dim)
 (def-procedural-input superquadric v-dim)
-(def-procedural-input superquadric radius)
+(def-procedural-input superquadric diameter)
 (def-procedural-input superquadric e1)
 (def-procedural-input superquadric e2)
 (def-procedural-output superquadric points)
@@ -25,9 +25,10 @@
   mesh)
   
 (defmethod compute-superquadric-mesh ((mesh superquadric))
-  (with-accessors ((u-dim u-dim) (v-dim v-dim) (r radius) (e1 e1) (e2 e2))
+  (with-accessors ((u-dim u-dim) (v-dim v-dim) (d diameter) (e1 e1) (e2 e2))
       mesh
-    (let* ((u-pi (- (/ 2pi u-dim)))     ;negative so backface cull is correct
+    (let* ((r (/ d 2))
+           (u-pi (- (/ 2pi u-dim)))     ;negative so backface cull is correct
            (v-pi (/ pi (1- v-dim))))
       (dotimes (i u-dim)
         (let* ((u (* i u-pi))
@@ -50,11 +51,11 @@
                             (* sv r)
                             (* cv su r)))))))))))
 
-(defmethod make-superquadric (u-dim v-dim radius e1 e2)
+(defmethod make-superquadric (u-dim v-dim diameter e1 e2)
   (make-instance 'superquadric :u-dim u-dim
                                :v-dim v-dim
                                :u-wrap t
                                :v-wrap nil
-                               :radius radius
+                               :diameter diameter
                                :e1 e1
                                :e2 e2))

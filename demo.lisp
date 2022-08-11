@@ -321,87 +321,93 @@
 
 ;;; heightfield ---------------------------------------------------------------
 ;;; try using various height functions and color functions
-(defun height-fn-1 (x z)
-  (* 4 (noise (p! x 0 z))))
-(defun height-fn-2 (x z)
-  (* 4 (turbulence (p! x 0 z) 3)))
-(defun height-fn-3 (x z)
-  (let* ((p (p! x 0 z))
-         (mag (p-mag (p-scale p .25))))
-    (if (= mag 0.0)
-        10.0
-        (/ 1.0 mag))))
-(defun height-fn-4 (x z)
-  (let* ((p (p! x 0 z))
-         (mag (max 0.001 (p-mag (p-scale p 4)))))
-    (* 3 (/ (sin mag) mag))))
 (with-clear-and-redraw
-  (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5) #'height-fn-4)))
-    (add-shape *scene* mesh)
-;    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (y p) -.25 1.0) 0.0 1.0))))
-    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0))))
-;    (set-point-colors-by-xyz mesh (lambda (p) (color-noise p)))
-    (translate-by mesh (p! 0 1 0))))      ;adjust to height values
+  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                       (lambda (x z)
+                                         (* 4 (noise (p! x 0 z)))))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                       (lambda (x z)
+                                         (* 4 (turbulence (p! x 0 z) 4))))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                       (lambda (x z)
+                                         (let* ((p (p! x 0 z))
+                                                (mag (p-mag (p-scale p .25))))
+                                           (if (= mag 0.0)
+                                               10.0
+                                               (/ 1.0 mag)))))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                       (lambda (x z)
+                                         (let* ((p (p! x 0 z))
+                                                (mag (max 0.001 (p-mag (p-scale p 4)))))
+                                           (* 3 (/ (sin mag) mag)))))))
+
+;;; rainbow color based on height
+(with-redraw
+  (let ((mesh (first (shapes *scene*))))
+    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (y p) -.25 1.0) 0.0 1.0))))))
+
+;;; rainbow color based on XZ distance from origin
+(with-redraw
+  (let ((mesh (first (shapes *scene*))))
+    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0))))))
+
+;;; 3D color noise
+(with-redraw
+  (let ((mesh (first (shapes *scene*))))
+    (set-point-colors-by-xyz mesh (lambda (p) (color-noise p)))))
 
 ;;; animated heightfield -------------------------------------------------------
 (with-clear-and-redraw
   (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5) nil)))
     (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0))))
     (add-shape *scene* mesh)
-    (add-animator *scene*
-                  (make-instance 'animator
-                                 :init-fn   (lambda ()
-                                              (setf (height-fn mesh)
-                                                    (lambda (x z)
-                                                      (let* ((p (p! x 0 z))
-                                                             (mag (max 0.001 (p-mag (p-scale p 1)))))
-                                                        (* 3 (/ (sin mag) mag)))))
+    (macrolet ((my-height-fn (scale)
+                 `(lambda (x z)
+                    (let* ((p (p! x 0 z))
+                           (mag (max 0.001 (p-mag (p-scale p ,scale)))))
+                      (* 3 (/ (sin mag) mag))))))
+      (add-animator *scene*
+                    (make-instance 'animator
+                                   :init-fn (lambda ()
+                                              (setf (height-fn mesh) (my-height-fn 1.0))
                                               (update-heightfield mesh))
-                                 :update-fn (lambda ()
-                                              (setf (height-fn mesh)
-                                                    (lambda (x z)
-                                                      (let* ((p (p! x 0 z))
-                                                             (mag (max 0.001 (p-mag (p-scale p (+ 1 (current-time *scene*)))))))
-                                                        (* 3 (/ (sin mag) mag)))))
-                                              (update-heightfield mesh))))))
-
-
-;;; heightfield ---------------------------------------------------------------
-;;; adjust color function as desired
-(defun terrain-color (p n)
-  (cond ;((< (y n) 0.5)
-        ; (c! 0.5 0.5 0.5))
-        ((> (y p) 4.5)
-         (c! 1 1 1))
-        ;; ((> (y p) 4)
-        ;;  (c! 0.5 0.5 0.5))
-        (t
-         (c! 0.1 0.6 0.1))))
-(with-clear-and-redraw
-  (let* ((freq 0.5)
-         (ampl 8.0)
-         (res 81)
-         (octaves 6)
-         (mesh (make-heightfield res res (p! -5 0 -5) (p! 5 0 5)
-                                 (lambda (x z)
-                                     (* ampl (turbulence (p-scale (p! x 0 z) freq) octaves))))))
-    (set-point-colors-by-point-and-normal mesh #'terrain-color)
-    (translate-by mesh (p! 0 -2 0))
-    (add-shape *scene* mesh)))
+                                   :update-fn (lambda ()
+                                                (setf (height-fn mesh) (my-height-fn (+ 1.0 (current-time *scene*))))
+                                                (update-heightfield mesh)))))))
 
 ;;; procedural-mixin superquadric ----------------------------------------------
 (with-clear-and-redraw
-  (let ((mesh (make-superquadric 16 16 1.0 1 0.1))) ; 0.2 0.2)))
+  (let ((mesh (make-superquadric 16 16 2.0 1 0.1)))
     (add-shape *scene* mesh)
     (translate-by mesh (p! 0 1 0))))
-;;; modify slots and shape will change
+;;; modify slots and shape will change due to prcedural-mixin setup
 (with-redraw
   (setf (e1 (first (shapes *scene*))) 0.5))
 (with-redraw
   (setf (u-dim (first (shapes *scene*))) 32))
 
 ;;; animated superquadric
-
+(with-clear-and-redraw
+  (let ((mesh (make-superquadric 32 32 2.0 1.0 1.0)))
+    (add-shape *scene* mesh)
+    (translate-by mesh (p! 0 1 0))
+    (add-animator *scene*
+                  (make-instance 'animator
+                                 :init-fn (lambda ()
+                                            (setf (e1 mesh) 1.0)
+                                            (setf (e2 mesh) 1.0))
+                                 :update-fn (lambda ()
+                                              (let ((p (p-normalize (noise-gradient (p! (+ (current-time *scene*) 0.123)
+                                                                                        (+ (current-time *scene*) 0.347)
+                                                                                        (+ (current-time *scene*) 0.965))))))
+                                              (setf (e1 mesh) (* (abs (x p)) 2.0))
+                                              (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
 
 
 ;;; xxx
