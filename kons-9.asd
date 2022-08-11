@@ -35,7 +35,7 @@
    (:file "plugins/manager-group")
    (:file "plugins/particle")
    (:file "plugins/l-system")
-   (:file "plugins/he-mesh")
+;   (:file "plugins/he-mesh")
    (:file "plugins/usd")
    (:file "plugins/obj")
 ;   (:file "ui")
