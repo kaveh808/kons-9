@@ -25,6 +25,7 @@
    (:file "kernel/scene")
    (:file "kernel/protocol")
    (:file "kernel/main")
+   (:file "plugins/parametric-curve")
    (:file "plugins/uv-mesh")
    (:file "plugins/heightfield")
    (:file "plugins/superquadric")

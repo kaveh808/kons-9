@@ -290,10 +290,10 @@
 (defun 3d-pop-matrix ()
   (#_glPopMatrix))
 
-(defun 3d-draw-curve (points is-closed?)
+(defun 3d-draw-curve (points is-closed? &optional (line-width 3.0))
   (with-gl-disable #$GL_LIGHTING
     (gl-set-fg-color)
-    (#_glLineWidth 3.0)
+    (#_glLineWidth line-width)
     (if is-closed?
         (#_glBegin #$GL_LINE_LOOP)
         (#_glBegin #$GL_LINE_STRIP))

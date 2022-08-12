@@ -24,13 +24,13 @@
 
 ;;; polygons -------------------------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (translate-to (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0  0.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0  2.0)))
-  (add-shape *scene* (translate-to (make-arc-polygon 2.0 16 0 pi) (p! 0 0  4.0)))
-  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0  6.0)))
-  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0  8.0))))
+  (add-shape *scene* (translate-to (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -6.0)))
+  (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0 0.0)))
+  (add-shape *scene* (translate-to (make-arc-polygon 2.0 16 0 pi) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0 4.0)))
+  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
 
 (with-clear-and-redraw
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
@@ -48,16 +48,7 @@
                        (translate-to (make-dodecahedron 2.0) (p!  2.5 0 0))
                        (translate-to (make-icosahedron  2.0) (p! 5 0 0)))))
 
-(with-clear-and-redraw
-    (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
-          (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
-          (icos (make-icosahedron 2.0)))
-      (setf (show-axis circle) 1.0)
-      (setf (show-normals icos) 1.0)
-      (setf (show-bounds? superq) t)
-      (add-shapes *scene* (list circle superq icos))))
-
-;;; transforms and hierarchies
+;;; transforms and hierarchies -------------------------------------------------
 
 (with-clear-and-redraw
   (defparameter *icosahedron* (make-icosahedron 1.0))
@@ -180,8 +171,9 @@
 
 ;;; animate a group
 (with-clear-and-redraw
-  (let ((group (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
-                                                           (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (make-cube 0.5))
+                                   (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
     (add-animator *scene*
                   (make-instance 'animator
                                  :init-fn (lambda ()
@@ -195,15 +187,18 @@
 
 ;;; shape animator -- store rotation data for each shape
 (with-clear-and-redraw
-  (let ((group (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
-                                                           (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (make-cube 0.5))
+                                   (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
     (do-hierarchy group
       (lambda (shape)
         (add-animator *scene*
                       (make-instance 'shape-animator
                                      :shape shape
-                                     :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
-                                     :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
+                                     :init-fn (lambda (anim)
+                                                (rotate-to (shape anim) (p! 0 0 0)))
+                                     :update-fn (lambda (anim)
+                                                  (rotate-by (shape anim) (anim-data anim :rotate)))
                                      :data `((:rotate . ,(p! 0 (rand1 10) 0))))))
       :test #'is-leaf?)))
 
@@ -261,6 +256,7 @@
 ;;;; end kernel demos ==========================================================
 
 
+;;;; start plugins demos =======================================================
 
 ;;; uv-mesh --------------------------------------------------------------------
 (with-clear-and-redraw
@@ -410,9 +406,36 @@
                                               (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
 
 
-;;; xxx
+;;; xxx -- updated to here...
+
+;;; parametric-curve
+
+(with-clear-and-redraw
+  (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
 
 
+
+
+
+
+(with-clear-and-redraw
+  (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
+(with-clear-and-redraw
+  (add-shape *scene* (import-obj "~/Downloads/shuttle.obj")))
+(with-clear-and-redraw
+  (add-shape *scene* (import-obj "~/Downloads/minicooper.obj")))
+
+
+
+
+(with-clear-and-redraw
+    (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
+          (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
+          (icos (make-icosahedron 2.0)))
+      (setf (show-axis circle) 1.0)
+      (setf (show-normals icos) 1.0)
+      (setf (show-bounds? superq) t)
+      (add-shapes *scene* (list circle superq icos))))
 
 ;;; procedural-mixin circle ----------------------------------------------------
 (with-clear-and-redraw
