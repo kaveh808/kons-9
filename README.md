@@ -1,5 +1,5 @@
 # kons-9
-#### Common Lisp 3D Graphics System
+## Common Lisp 3D Graphics System
 
 ## What kons-9 Is
 
@@ -23,6 +23,7 @@ If you wish to do so, please:
 - Turn on Notifications so you are aware of the Discussions postings.
 - Read the Introductions thread in Discussions.
 - Post your own introduction on the thread.
+- Expect an invitation to join the team.
 
 ## How To Run kons-9
 
