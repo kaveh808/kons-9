@@ -1,19 +1,37 @@
 # kons-9
-Common Lisp 3D Graphics System
+## Common Lisp 3D Graphics System
 
-This code is definitely not ready for primetime. It is very much a work in progress and a playground for my ideas.
+## What kons-9 Is
 
-More info about the thoughts behind this project at my blog:
+**kons-9** is a new 3D graphics and animation system written in Common Lisp. The intention is to develop a flexible and extensible system on which can be built a wide variety of application and domain specific tools and packages. The system is designed and implemented to allow exploratory development in a seamless way. All user extensions have the same power and functionality as the built-in code.
+
+More info about the thoughts (and random musings) behind this project at my blog:
 
 https://kaveh808.medium.com
 
-Invitation to contribute to the project:
+Demo of an early version of the software:
 
-https://old.reddit.com/r/lisp/comments/weocc5/new_open_source_common_lisp_3d_graphics_project/
+https://youtu.be/NJe4isZ7NHI
+
+## How To Join The kons-9 Team
+
+**kons-9** is an open source project under the MIT license. We welcome those wishing to contribute their time and skills.
+
+If you wish to do so, please:
+
+- Watch the project.
+- Turn on Notifications so you are aware of the Discussions postings.
+- Read the Introductions thread in Discussions.
+- Post your own introduction on the thread.
+- Expect an invitation to join the team.
+
+## How To Run kons-9
+
+These are early days of this project, so bear with us as we find our feet.
 
 There is no documentation beyond this file.
 
-This code currently only runs in CCL on MacOS.
+This code currently only runs in CCL on MacOS, though we are working on porting it to sbcl/Linux. We need developers to do ports for sbcl/Windows and sbcl/MacOS. The system currently used OpenGL as a graphics engine.
 
 Download the code and point your asdf to it:
 
