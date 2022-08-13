@@ -4,8 +4,8 @@
 
 (defun print-class-hierarchy (class &optional (indent 0))
   (print-spaces indent)
-  (format t "~a : ~a~%" (class-name class) (mapcar #'class-name (class-direct-superclasses class)))
-  (let ((subclasses (class-direct-subclasses class)))
+  (format t "~a : ~a~%" (class-name class) (mapcar #'class-name (ccl::class-direct-superclasses class)))
+  (let ((subclasses (ccl::class-direct-subclasses class)))
     (dolist (subclass subclasses)
       (print-class-hierarchy subclass (+ indent 2)))))
 

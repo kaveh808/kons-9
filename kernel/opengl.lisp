@@ -4,35 +4,35 @@
 
 (defmacro with-c-array-1 (vec &body forms)
   `(multiple-value-bind (v vp)
-       (make-heap-ivector 1 'single-float)
+       (ccl::make-heap-ivector 1 'single-float)
        (setf (aref v 0) (aref ,vec 0))
      (unwind-protect
           (progn ,@forms)
-       (dispose-heap-ivector v)
-       (dispose-heap-ivector vp))))
+       (ccl::dispose-heap-ivector v)
+       (ccl::dispose-heap-ivector vp))))
 
 (defmacro with-c-array-3 (vec &body forms)
   `(multiple-value-bind (v vp)
-       (make-heap-ivector 3 'single-float)
+       (ccl::make-heap-ivector 3 'single-float)
        (setf (aref v 0) (aref ,vec 0))
        (setf (aref v 1) (aref ,vec 1))
        (setf (aref v 2) (aref ,vec 2))
      (unwind-protect
           (progn ,@forms)
-       (dispose-heap-ivector v)
-       (dispose-heap-ivector vp))))
+       (ccl::dispose-heap-ivector v)
+       (ccl::dispose-heap-ivector vp))))
 
 (defmacro with-c-array-4 (vec &body forms)
   `(multiple-value-bind (v vp)
-       (make-heap-ivector 4 'single-float)
+       (ccl::make-heap-ivector 4 'single-float)
        (setf (aref v 0) (aref ,vec 0))
        (setf (aref v 1) (aref ,vec 1))
        (setf (aref v 2) (aref ,vec 2))
        (setf (aref v 3) (aref ,vec 3))
      (unwind-protect
           (progn ,@forms)
-       (dispose-heap-ivector v)
-       (dispose-heap-ivector vp))))
+       (ccl::dispose-heap-ivector v)
+       (ccl::dispose-heap-ivector vp))))
 
 ;;;; macros ==============================================================
 
