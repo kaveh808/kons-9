@@ -33,9 +33,9 @@ There is no documentation beyond this file.
 
 This code currently only runs in CCL on MacOS, though we are working on porting it to sbcl/Linux. We need developers to do ports for sbcl/Windows and sbcl/MacOS. The system currently used OpenGL as a graphics engine.
 
-Download the code and point your asdf to it:
+Download the code and load the local directory:
 
-    (push #p"<your directory>/kons-9/" asdf:*central-registry*)
+    (push (uiop:getcwd) ql:*local-project-directories*)
 
 Load the system:
 
