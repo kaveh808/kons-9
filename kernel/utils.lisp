@@ -11,7 +11,7 @@
 
 ;;;; utils ==============================================================
 
-(defun debug (x &optional (str ""))
+(defun my-debug (x &optional (str ""))
   (format t "DEBUG: ~a~s~%" str x)
   x)
 
