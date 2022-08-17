@@ -195,7 +195,7 @@
                 
 (defmethod refine-mesh ((polyh polyhedron) &optional (levels 1))
   (if (<= levels 0)
-      polyh
+      (merge-points polyh)
       (let ((points '())
             (faces '()))
         (dotimes (i (length (faces polyh)))
@@ -208,7 +208,27 @@
                   (push pref face)
                   (incf pref))
                 (push face faces)))))
-        (refine-mesh (make-polyhedron points faces) (1- levels)))))
+        (refine-mesh (make-polyhedron (coerce points 'array) (coerce faces 'array)) (1- levels)))))
+
+(defmethod merge-points ((polyh polyhedron))
+  (let ((hash (make-hash-table :test 'equal))
+        (count -1)
+        (new-refs (make-array (length (points polyh)))))
+    (doarray (i p (points polyh))
+      (let ((j (gethash (point->list p) hash)))
+        (if (null j)
+            (progn
+              (incf count)
+              (setf (gethash (point->list p) hash) count)
+              (setf (aref new-refs i) count))
+            (setf (aref new-refs i) j))))
+    (let ((new-points (make-array (1+ (apply #'max (coerce new-refs 'list)))))
+          (new-faces (make-array (length (faces polyh)))))
+      (doarray (i p (points polyh))
+        (setf (aref new-points (aref new-refs i)) p))
+      (doarray (i f (faces polyh))
+        (setf (aref new-faces i) (mapcar (lambda (ref) (aref new-refs ref)) f)))
+      (make-polyhedron new-points new-faces))))
 
 (defun triangle-area (p0 p1 p2)
   (let ((e1 (p-from-to p0 p1))
@@ -410,3 +430,10 @@
                              '(3 11 9) '(4 2 0) '(5 0 2) '(6 1 3) '(7 3 1) '(8 6 4)
                              '(9 4 6) '(10 5 7) '(11 7 5)))))
 
+(defun make-cube-sphere (side subdiv-levels)
+  (let ((polyh (refine-mesh (make-cube side) subdiv-levels))
+        (radius (/ side 2)))
+    (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
+    (compute-face-normals polyh)
+    (compute-point-normals polyh)
+    polyh))

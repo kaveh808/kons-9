@@ -4,6 +4,10 @@
   :description "Common Lisp 3D Graphics System"
   :author "Kaveh Kardan"
   :license "MIT"
+;  :depends-on
+;  (#:cffi
+;   #:cl-opengl
+;   #:cl-glu)
   :components
   ((:file "ccl64")
    (:file "package")
@@ -12,6 +16,7 @@
    (:file "kernel/point")
    (:file "kernel/matrix")
    (:file "kernel/noise")
+;   (:file "kernel/portable-opengl")
    (:file "kernel/opengl")
    (:file "kernel/transform")
    (:file "kernel/scene-item")

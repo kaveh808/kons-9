@@ -48,6 +48,12 @@
                        (translate-to (make-dodecahedron 2.0) (p!  2.5 0 0))
                        (translate-to (make-icosahedron  2.0) (p! 5 0 0)))))
 
+(with-clear-and-redraw
+  (add-shape *scene* (translate-to (refine-mesh (make-cube 2.0) 3) (p! 0 1 0))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (translate-to (make-cube-sphere 2.0 3) (p! 0 1 0))))
+
 ;;; transforms and hierarchies -------------------------------------------------
 
 (with-clear-and-redraw
@@ -412,6 +418,9 @@
 
 (with-clear-and-redraw
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
+
+(with-clear-and-redraw
+  (add-shape *scene* (make-butterfly-curve-polygon 1024)))
 
 
 
