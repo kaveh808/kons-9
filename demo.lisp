@@ -266,14 +266,17 @@
 
 ;;; uv-mesh --------------------------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0)))
-  (add-shape *scene* (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0)))
-  (add-shape *scene* (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0)))
-  (add-shape *scene* (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0)))
-  (add-shape *scene* (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))
-  )
+  (add-shape *scene*
+             (make-group (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0))
+                         (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0))
+                         (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0))
+                         (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0))
+                         (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0))
+                         (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0))
+                         (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))))
+
+(export-usd *scene* "~/foo11.usda")
+
 
 ;;; transform-extrude-uv-mesh --------------------------------------------------
 (with-clear-and-redraw
@@ -806,12 +809,12 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 (with-redraw
   (add-shape *scene* (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6) (first (shapes *scene*))))))
 
-;;; polyhedron subdivision -- new vertices are not merged ----------------------
+;;; polyhedron subdivision -- new vertices are merged ----------------------
 (with-clear-and-redraw
   (let ((polyh (make-cut-cube-polyhedron 2.0)))
     (add-shape *scene* (refine-mesh polyh 4))))
 
-;;; polyhedron subdivision -- new vertices are not merged ----------------------
+;;; polyhedron subdivision -- new vertices are merged ----------------------
 (with-clear-and-redraw
   (let ((polyh (import-obj "~/Development/3D DCC Project/data/teapot.obj")))
     (add-shape *scene* (refine-mesh polyh 1))))
@@ -836,7 +839,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 
 
 ;;; USD scene export (not recently tested) ------------------------------------
-(export-usd *scene* "foo.usda")
+(export-usd *scene* "~/foo1.usda")
 (export-usd-frame *scene* "foo")
 
 ;;; l-system ------------------------------------------------------------------
