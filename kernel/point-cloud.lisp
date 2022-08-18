@@ -22,6 +22,11 @@
 (defun make-point-cloud (points)
   (make-instance 'point-cloud :points points))
 
+(defmethod transform-shape-points ((p-cloud point-cloud) matrix)
+  (setf (points p-cloud)
+        (map 'vector (lambda (p) (transform-point p matrix))
+             (points p-cloud))))
+
 ;;; point generator functions --------------------------------------------------
 
 (defun make-line-points (p1 p2 num-segments)

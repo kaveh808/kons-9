@@ -108,13 +108,13 @@
 
 ;;; make robot arm
 (with-clear-and-redraw
-  (defparameter *waist-shape* (make-icosahedron 0.5))
+  (defparameter *waist-shape* (make-cube-sphere 0.5 2))
   (defparameter *torso-shape* (make-box 0.6 0.8 0.2))
-  (defparameter *shoulder-shape* (make-icosahedron 1.0))
+  (defparameter *shoulder-shape* (make-cube-sphere 1.0 2))
   (defparameter *upper-arm-shape* (make-box 1.05 0.5 0.2))
-  (defparameter *elbow-shape* (make-icosahedron 1.0))
+  (defparameter *elbow-shape* (make-cube-sphere 1.0 2))
   (defparameter *lower-arm-shape* (make-box 2.1 0.5 0.2))
-  (defparameter *wrist-shape* (make-icosahedron 1.0))
+  (defparameter *wrist-shape* (make-cube-sphere 1.0 2))
   (defparameter *hand-shape* (make-box 1.5 1.2 0.4))
 
   (defparameter *wrist* (make-group *wrist-shape* *hand-shape*))
@@ -156,6 +156,7 @@
     ;; (pprint (get-matrix-list *scene* (second paths)))
     (pprint (global-matrix *scene* (first paths)))
     (pprint (global-matrix *scene* (second paths)))
+    (transform-shape-points *x* (global-matrix *scene* (first paths)))
   ))
 
 ;;; turn off shading to see axes better (press 1 key)
