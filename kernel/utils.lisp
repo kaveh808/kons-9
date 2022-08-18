@@ -36,12 +36,6 @@
 (defun indent-padding (num)
   (format nil "~v{~a~:*~}" num '(#\space)))
 
-;; (defun array->list (array)
-;;   (map 'list #'identity array))
-
-;; (defun list->array (list)
-;;   (map 'array #'identity list))
-
 (defun wrap-list (list)
   (append list (list (first list))))
 

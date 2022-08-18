@@ -142,6 +142,17 @@
   (translate-to *hand-shape* (p! 1.2 0.0 0.0))
 )
 
+;;; scene generics test
+(progn
+  (defparameter *x* (make-box 0.2 0.2 0.2))
+  (setf (name *x*) 'yoyo)
+  (add-child *wrist* *x*)
+  (add-child *shoulder* *x*)
+  (print (get-scene-paths *scene* *x*))
+  (print (find-scene-item-by-name *scene* 'yoyo))
+  (print (eq *x* (find-scene-item-by-name *scene* 'yoyo)))
+  )
+
 ;;; turn off shading to see axes better (press 1 key)
 (with-redraw
   (do-hierarchy *waist* (lambda (s) (setf (show-axis s) 1.0))))
@@ -275,7 +286,7 @@
                          (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0))
                          (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))))
 
-(export-usd *scene* "~/foo11.usda")
+;(export-usd *scene* "~/foo11.usda")
 
 
 ;;; transform-extrude-uv-mesh --------------------------------------------------
@@ -415,8 +426,6 @@
                                               (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
 
 
-;;; xxx -- updated to here...
-
 ;;; parametric-curve
 
 (with-clear-and-redraw
@@ -426,9 +435,7 @@
   (add-shape *scene* (make-butterfly-curve-polygon 1024)))
 
 
-
-
-
+;;; xxx -- updated to here...
 
 (with-clear-and-redraw
   (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))

@@ -24,14 +24,6 @@
 (defmethod draw ((self group))
   (mapc #'draw (children self)))
 
-(defmethod print-hierarchy ((self shape) &optional (indent 0))
-  (print-spaces indent)
-  (format t "~a~%" self))
-
-(defmethod print-hierarchy :after ((self group) &optional (indent 0))
-  (dolist (child (children self))
-    (print-hierarchy child (+ indent 2))))
-
 (defmethod do-hierarchy ((self shape) func &key (test nil))
   (when (or (null test) (funcall test self))
     (funcall func self))

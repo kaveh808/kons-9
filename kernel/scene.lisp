@@ -12,12 +12,6 @@
    (sel-color :accessor sel-color :initarg :sel-color :initform (c! 1 0 0 1))
    (scene-generation-fn :accessor scene-generation-fn :initarg :scene-generation-fn :initform nil)))
 
-(defmethod print-hierarchy ((self scene) &optional (indent 0))
-  (print-spaces indent)
-  (format t "~a~%" self)
-  (dolist (shape (shapes self))
-    (print-hierarchy shape (+ indent 2))))
-
 (defmethod generate-scene ((scene scene))
   (when (scene-generation-fn scene)
     (funcall (scene-generation-fn scene))))
