@@ -21,9 +21,6 @@
 (defun make-group (&rest shapes)
   (make-instance 'group :children shapes))
 
-(defmethod draw ((self group))
-  (mapc #'draw (children self)))
-
 (defmethod do-hierarchy ((self shape) func &key (test nil))
   (when (or (null test) (funcall test self))
     (funcall func self))

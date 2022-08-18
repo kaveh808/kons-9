@@ -83,32 +83,6 @@
   (setf (selection scene) '())
   (clear-shapes scene)
   (clear-animators scene))
-
-;; (defmethod draw ((scene scene))
-  ;; (ccl:with-metering
-  ;;     (update-scene init-scene update-animator update-particle
-  ;;      add-point add-particle update-position update-velocity
-  ;;      p-rand p-cross p-normalize update-angle range-value
-  ;;      make-axis-rotation-matrix transform-point
-  ;;      p-scale rand1 rand2
-  ;;      make-sweep-mesh-group
-  ;;      compute-procedural-node profile-curve-generator path-curve-generator
-  ;;      sweep-extrude curve-source-curves curve-source-curves-closed
-  ;;      sweep-extrude-aux curve-remove-consecutive-duplicates
-  ;;      copy-points allocate-mesh-arrays curve-tangent make-axis-rotation-matrix
-  ;;      p-angle make-translation-matrix matrix-multiply-n transform-points!
-  ;;      make-scale-matrix p-lerp compute-polyhedron-data
-  ;;      compute-polyhedron-mesh compute-face-normals compute-point-normals allocate-point-colors
-  ;;      compute-face-list 2d-array-to-list face-normals point-normals p-normalize face-points
-  ;;      needs-compute? inputs-time-stamp has-dirty-input?
-  ;;      quad-normal triangle-normal x y z c-red c-green c-blue faces points
-  ;;      draw draw-faces draw-wireframe draw-points draw-normals)
-      ;; (:exclusive 0.0)
-    ;; (mapc #'draw (shapes scene)))
-  ;; )
-
-(defmethod draw ((scene scene))
-  (mapc #'draw (shapes scene)))
   
 (defmethod init-scene ((scene scene))
   (setf (current-frame scene) 0)

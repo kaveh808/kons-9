@@ -149,36 +149,6 @@
   (make-instance mesh-type :points points ;(make-array (length points) :initial-contents points)
                            :faces faces)) ;(make-array (length faces) :initial-contents faces)))
 
-(defmethod draw-normals ((polyh polyhedron))
-  (let ((lines ()))
-    (dotimes (f (length (faces polyh)))
-      (let* ((points (face-points polyh f))
-             (p0 (p-center points))
-             (p1 (p+ p0 (p-scale (aref (face-normals polyh) f) (show-normals polyh)))))
-        (push p1 lines)
-        (push p0 lines)))
-    (3d-draw-lines lines)))
-
-(defmethod draw ((polyh polyhedron))
-  (when (or (= 0 (length (points polyh)))
-          (= 0 (length (faces polyh))))
-      (return-from draw))
-
-  (3d-setup-lighting)
-
-  (when *display-filled?*
-    (3d-draw-filled-polygons (points polyh) (faces polyh)
-                             (face-normals polyh) (point-normals polyh) (point-colors polyh)))
-
-  (when *display-wireframe?*
-    (3d-draw-wireframe-polygons (points polyh) (faces polyh)))
-
-  (when *display-points?*
-    (draw-points polyh))
-
-  (when (show-normals polyh)
-    (draw-normals polyh)))
-
 (defmethod refine-face ((polyh polyhedron) face)
   (let* ((point-lists '())
          (points (face-points polyh face))

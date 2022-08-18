@@ -28,6 +28,7 @@
    (:file "kernel/procedural")
    (:file "kernel/animator")
    (:file "kernel/scene")
+   (:file "kernel/scene-draw")
    (:file "kernel/scene-generics")
    (:file "kernel/protocol")
    (:file "kernel/main")
