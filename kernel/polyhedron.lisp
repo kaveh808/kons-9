@@ -183,7 +183,7 @@
   (let* ((point-lists '())
          (points (face-points polyh face))
          (center (p-center points))
-        (face-points (list->array points))
+        (face-points (coerce points 'array))
         (n (length points)))
     (dotimes (i n)
       (push (list (aref face-points i)
