@@ -144,14 +144,19 @@
 
 ;;; scene generics test
 (progn
-  (defparameter *x* (make-box 0.2 0.2 0.2))
+  (defparameter *x* (make-cube-sphere 0.5 2))
   (setf (name *x*) 'yoyo)
   (add-child *wrist* *x*)
   (add-child *shoulder* *x*)
   (print (get-scene-paths *scene* *x*))
   (print (find-scene-item-by-name *scene* 'yoyo))
   (print (eq *x* (find-scene-item-by-name *scene* 'yoyo)))
-  )
+  (let ((paths (get-scene-paths *scene* *x*)))
+    ;; (pprint (get-matrix-list *scene* (first paths)))
+    ;; (pprint (get-matrix-list *scene* (second paths)))
+    (pprint (global-matrix *scene* (first paths)))
+    (pprint (global-matrix *scene* (second paths)))
+  ))
 
 ;;; turn off shading to see axes better (press 1 key)
 (with-redraw

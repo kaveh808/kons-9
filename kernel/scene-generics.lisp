@@ -110,6 +110,56 @@
         nil))
   )
 
+;;; global-matrix --------------------------------------------------------------
+
+(defmethod global-matrix ((scene scene) scene-path)
+  (let ((matrix-list (get-matrix-list scene scene-path)))
+    (if matrix-list
+        (apply #'matrix-multiply-n matrix-list)
+        (error "Shape not found for scene path ~a" scene-path))))
+
+(defgeneric get-matrix-list (obj scene-path)
+  
+  (:method ((scene scene) scene-path)
+    (if (null scene-path)
+        (make-id-matrix)
+        (let ((child (find (first scene-path) (shapes scene) :key #'name)))
+          (if child
+              (get-matrix-list child (rest scene-path))
+              nil))))
+
+  (:method ((group group) scene-path)
+    (if (null scene-path)
+        (list (transform-matrix (transform group)))
+        (let* ((child (find (first scene-path) (children group) :key #'name)))
+          (if child
+              (cons (transform-matrix (transform group))
+                    (get-matrix-list child (rest scene-path)))
+              nil))))
+
+  (:method ((shape shape) scene-path)
+    (if (null scene-path)
+        (list (transform-matrix (transform shape)))
+        nil))
+  )
+
+
+(defgeneric global-matrix (obj path)
+
+  (:method ((scene scene) path)
+    (print-spaces indent)
+    (format t "~a~%" scene)
+    (dolist (shape (shapes scene))
+      (print-hierarchy shape (+ indent 2))))
+
+  (:method :after ((group group) &optional (indent 0))
+    (dolist (child (children group))
+      (print-hierarchy child (+ indent 2))))
+
+  (:method ((scene-item scene-item) &optional (indent 0))
+    (print-spaces indent)
+    (format t "~a ~s~%" scene-item (name scene-item))))
+
 ;;; print-hierarchy ------------------------------------------------------------
 
 (defgeneric print-hierarchy (obj &optional indent)
