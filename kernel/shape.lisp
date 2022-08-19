@@ -73,3 +73,34 @@
                         1.0
                         (/ max-size size))))
         (scale-to self (p! scale scale scale))))))
+
+;;; push matrix and do transform operations before drawing
+(defmethod draw :before ((self shape))
+  (let ((xform (transform self)))
+    (3d-push-matrix (translate xform) (rotate xform) (scale xform))))
+
+;;; draw a marker
+(defmethod draw ((self shape))
+  (3d-draw-marker 0.1))
+
+(defmethod draw-axis ((self shape))
+  (3d-draw-axis (show-axis self)))
+
+(defmethod draw-bounds ((self shape) &optional (color (c! 0 1 1)))
+  (multiple-value-bind (lo hi center)
+      (bounds-and-center self)
+    (declare (ignore center))
+    (3d-draw-bounds lo hi color)))
+
+(defmethod draw-selected ((self shape))
+  (draw-bounds self (c! 1 0 0)))
+
+;;; draw axis and pop matrix after drawing
+(defmethod draw :after ((self shape))
+  (when (show-axis self)
+    (draw-axis self))
+  (if (is-selected? self)
+      (draw-selected self)
+      (when (show-bounds? self)
+        (draw-bounds self)))
+  (3d-pop-matrix))

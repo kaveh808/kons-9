@@ -12,6 +12,18 @@
 (defun make-polygon (points &optional (is-closed-polygon? t))
   (make-instance 'polygon :points points :is-closed-polygon? is-closed-polygon?))
 
+(defmethod draw ((poly polygon))
+  (when *display-wireframe?*
+    (draw-wireframe poly))
+  (when *display-points?*
+    (draw-points poly)))
+
+(defmethod draw-wireframe ((poly polygon))
+  (3d-draw-curve (points poly) (is-closed-polygon? poly)))
+
+(defmethod draw-points ((poly polygon))
+  (3d-draw-points (points poly)))
+
 (defun curve-point-tangent (i points &optional (is-closed? nil))
   (let ((len (length points))
 	i1

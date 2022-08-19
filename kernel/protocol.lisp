@@ -71,7 +71,9 @@
     (error "Method SOURCE-CURVES not implemented for object ~a" obj))
 
   (:method ((poly polygon))
-    (list (coerce (points poly) 'array)))
+    ;; (list (coerce (points poly) 'array))
+    (list (points poly))
+    )
 
   (:method ((polyh polyhedron))
     (let ((curves '()))
@@ -94,3 +96,13 @@
 ;; (defmethod source-curves-closed ((l-sys l-system))
 ;;   (make-list (length (faces l-sys)) :initial-element nil))
 
+
+;;;; scene view protocol
+
+(defgeneric set-needs-redisplay (scene-view))
+(defgeneric draw-scene-view (scene-view))
+(defgeneric accepts-first-responder (scene-view))
+(defgeneric accepts-first-mouse (scene-view event))
+(defgeneric mouse-down (scene-view event))
+(defgeneric mouse-dragged (scene-view event))
+(defgeneric key-down (scene-view event))

@@ -39,7 +39,7 @@ Download the code and load the local directory:
 
 Load the system:
 
-    (ql:quickload :kons-9)
+    (ql:quickload "kons-9")
 
 Run the code:
 
@@ -53,7 +53,5 @@ Type 'h' in the window to see the available key bindings.
 Open `demo.lisp` and start evaluating the blocks of code. Things should appear in the graphics window.
 
 Have fun.
-
-
 
 

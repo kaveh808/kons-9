@@ -160,7 +160,7 @@
 
 ;;; assumes profile curve has z-axis as normal
 (defmethod sweep-extrude-aux ((mesh uv-mesh) profile-points is-closed-profile? path-points is-closed-path?
-                              &key (twist 0.0) (taper 1.0) (from-end? nil) (v-caps? t))
+                              &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))); fix this
     (when (or (< (length profile-points) 2)
               (< (length unique-path-points) 2))
@@ -169,7 +169,7 @@
     (setf (v-dim mesh) (length unique-path-points))
     (setf (u-wrap mesh) is-closed-profile?)
     (setf (v-wrap mesh) is-closed-path?)
-    (setf (v-cap mesh) v-caps?)
+    (setf (v-cap mesh) t)
     (let* ((delta (/ 1.0 (1- (v-dim mesh))))
            (prev-tangent +z-axis+)
            (p0 +origin+)
@@ -220,11 +220,11 @@
     (nreverse meshes)))
 
 ;;; TODO -- fix coerce to list
-(defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil) (v-caps? t))
+(defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil))
   (sweep-extrude-aux (make-instance 'uv-mesh)
                      (coerce (points profile) 'list) (is-closed-polygon? profile)
                      (points path) (is-closed-polygon? path)
-                     :twist twist :taper taper :from-end? from-end? :v-caps? v-caps?))
+                     :twist twist :taper taper :from-end? from-end?))
 
 (defun transform-extrude-uv-mesh (profile transform num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
@@ -260,8 +260,7 @@
 
 (defun make-grid-uv-mesh (x-size z-size x-segments z-segments)
   (sweep-extrude-uv-mesh (make-line-polygon (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
-                         (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)
-                         :v-caps? nil))
+                         (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
 
 (defun make-cylinder-uv-mesh (diameter height radial-segments height-segments &key (taper 1.0))
   (sweep-extrude-uv-mesh (make-circle-polygon diameter radial-segments)
