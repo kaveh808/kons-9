@@ -4,8 +4,8 @@
 
 (defun print-class-hierarchy (class &optional (indent 0))
   (print-spaces indent)
-  (format t "~a : ~a~%" (class-name class) (mapcar #'class-name (ccl::class-direct-superclasses class)))
-  (let ((subclasses (ccl::class-direct-subclasses class)))
+  (format t "~a : ~a~%" (class-name class) (mapcar #'class-name (closer-mop::class-direct-superclasses class)))
+  (let ((subclasses (closer-mop::class-direct-subclasses class)))
     (dolist (subclass subclasses)
       (print-class-hierarchy subclass (+ indent 2)))))
 
@@ -35,6 +35,16 @@
 
 (defun indent-padding (num)
   (format nil "~v{~a~:*~}" num '(#\space)))
+
+(defun array->list (array)
+  (map 'list #'identity array))
+
+#+nil 
+(defun list->array (list)
+  (map 'array #'identity list))
+
+(defun list->array (list)
+  (map 'vector #'identity list))
 
 (defun wrap-list (list)
   (append list (list (first list))))
