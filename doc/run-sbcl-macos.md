@@ -33,11 +33,12 @@ Following are the steps that enable me to compile and load the **merge-sbcl-maco
    `(asdf:load-system :kons-9)`
    
 9. Show the kons-9 GLFW window:
-
-   `(trivial-main-thread:call-in-main-thread
+```
+   (trivial-main-thread:call-in-main-thread
       (lambda ()
        (sb-int:set-floating-point-modes :traps nil)
-       (kons-9::show-window kons-9::*scene*)))`
+       (kons-9::show-window kons-9::*scene*)))
+ ```
        
    [The two previous Lisp expressions are at the bottom of the kons-9.asd file. You can execute them by placing the cursor at the end of each expression and using the key command `C-x C-e`.]
    
