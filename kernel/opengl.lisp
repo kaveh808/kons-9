@@ -301,19 +301,29 @@
       (#_glVertex3f (x p) (y p) (z p)))
     (#_glEnd)))
 
-(defun 3d-draw-points (points)
+(defun 3d-draw-points (points &key (highlight? nil))
   (with-gl-disable #$GL_LIGHTING
-    (gl-set-fg-color)
-    (#_glPointSize 9.0)
+    (if highlight?
+        (progn
+          (gl-set-sel-color)
+          (#_glPointSize 17.0))
+        (progn
+          (gl-set-fg-color)
+          (#_glPointSize 9.0)))
     (#_glBegin #$GL_POINTS)
     (doarray (i p points)
       (#_glVertex3f (x p) (y p) (z p)))
     (#_glEnd)))
 
-(defun 3d-draw-lines (points)
+(defun 3d-draw-lines (points &key (highlight? nil))
   (with-gl-disable #$GL_LIGHTING
-    (gl-set-fg-color)
-    (#_glLineWidth 3.0)
+    (if highlight?
+        (progn
+          (gl-set-sel-color)
+          (#_glLineWidth 7.0))
+        (progn
+          (gl-set-fg-color)
+          (#_glLineWidth 3.0)))
     (#_glBegin #$GL_LINES)
     (dolist (p points)
       (#_glVertex3f (x p) (y p) (z p)))
@@ -354,6 +364,35 @@
         (let ((p (aref points pref)))
           (#_glVertex3f (x p) (y p) (z p))))
       (#_glEnd))))
+
+(defun 3d-draw-highlighted-polygons (points faces face-normals point-normals faces-highlighted)
+  (if *do-lighting?*
+      (#_glEnable #$GL_LIGHTING)
+      (#_glDisable #$GL_LIGHTING))
+  (if *do-smooth-shading?*
+      (#_glShadeModel #$GL_SMOOTH)
+      (#_glShadeModel #$GL_FLAT))
+  (#_glPolygonMode #$GL_FRONT_AND_BACK #$GL_FILL)
+  (with-gl-enable #$GL_RESCALE_NORMAL
+    (3d-draw-highlighted-polygons-aux points faces face-normals point-normals faces-highlighted)))
+
+(defmethod 3d-draw-highlighted-polygons-aux (points faces face-normals point-normals faces-highlighted)
+  (with-gl-enable #$GL_COLOR_MATERIAL
+    (#_glColorMaterial #$GL_FRONT_AND_BACK #$GL_DIFFUSE)
+    (dotimes (f (length faces))
+      (when (aref faces-highlighted f)
+        (#_glBegin #$GL_POLYGON)
+        (when (not *do-smooth-shading?*)
+          (let ((n (aref face-normals f)))
+            (#_glNormal3f (x n) (y n) (z n))))
+        (dolist (pref (aref faces f))
+          (#_glColor3f (c-red *sel-color*) (c-green *sel-color*) (c-blue *sel-color*))
+          (when *do-smooth-shading?*
+            (let ((n (aref point-normals pref)))
+              (#_glNormal3f (x n) (y n) (z n))))
+          (let ((p (aref points pref)))
+            (#_glVertex3f (x p) (y p) (z p))))
+        (#_glEnd)))))
 
 (defun 3d-draw-wireframe-polygons (points faces &key (closed? t))
   (#_glPolygonMode #$GL_FRONT_AND_BACK #$GL_LINE)
