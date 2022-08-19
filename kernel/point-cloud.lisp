@@ -8,13 +8,6 @@
 (defmethod copy-instance-data :after ((dst point-cloud) (src point-cloud))
   (setf (points dst) (points src))) ;;; TODO - deep copy arrays
 
-(defmethod draw ((p-cloud point-cloud))
-  (when *display-points?*
-    (draw-points p-cloud)))
-
-(defmethod draw-points ((p-cloud point-cloud))
-  (3d-draw-points (points p-cloud)))
-
 (defmethod bounds-and-center ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
     (return-from bounds-and-center (values nil nil nil)))
@@ -28,6 +21,11 @@
 
 (defun make-point-cloud (points)
   (make-instance 'point-cloud :points points))
+
+(defmethod transform-shape-points ((p-cloud point-cloud) matrix)
+  (setf (points p-cloud)
+        (map 'vector (lambda (p) (transform-point p matrix))
+             (points p-cloud))))
 
 ;;; point generator functions --------------------------------------------------
 

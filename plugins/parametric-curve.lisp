@@ -2,7 +2,9 @@
 
 #|
 - proof of concept for cubic parametric curves
-- do equation in matrix form
+- do equation in matrix form (need to extend point with w component)
+-- http://www.idav.ucdavis.edu/education/CAGDNotes/Matrix-Cubic-Bezier-Curve/Matrix-Cubic-Bezier-Curve.html
+-- https://viterbi-web.usc.edu/~jbarbic/cs420-s14/lec08-splines/08-splines-6up.pdf
 - need to do the other classes as well
 -- hermite-curve
 -- catmull-clark-curve
@@ -15,7 +17,6 @@ NOTE: This won't work with the existing procedural mixin set up, because
 
 ;;; cubic-parametric-curve class ===============================================
 
-;;; this shape is defined by a list of points (vertices)
 (defclass cubic-parametric-curve (polygon)
   ((cv0 :accessor cv0 :initarg :cv0 :initform (p! 0 0 0))
    (cv1 :accessor cv1 :initarg :cv1 :initform (p! 0 0 0))
@@ -69,5 +70,24 @@ NOTE: This won't work with the existing procedural mixin set up, because
                                            :cv0 cv0 :cv1 cv1 :cv2 cv2 :cv3 cv3
                                            :num-segments num-segments)))
 
+;; (defparameter *bezier-matrix* (make-matrix-with '((1.0 0.0 0.0 0.0)
+;;                                                   (-3.0 3.0 0.0 0.0)
+;;                                                   (3.0 -6.0 3.0 0.0)
+;;                                                   (-1.0 3.0 -3.0 1.0))))
+
 ;;; parametric-curve shape functions ----------------------------------------------------
+
+;;; just a fun mathematical curve
+(defun make-butterfly-curve-polygon (num-segments)
+  (let ((points (make-array num-segments))
+        (angle-delta (/ (* 12 pi) num-segments)))
+    (dotimes (i num-segments)
+      (let* ((angle (* i angle-delta))
+             (e 2.71828)
+             (radius (- (expt e (cos angle)) (* 2 (cos (* 4 angle))) (expt (sin (/ angle 12)) 5))))
+        (setf (aref points i)
+              (p! (* (sin angle) radius)
+                  (* (cos angle) radius)
+                  0))))
+    (make-polygon points)))
 

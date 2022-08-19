@@ -20,7 +20,7 @@
 (defmethod write-usd-header ((scene scene) &optional (stream t))
   (format stream "#usda 1.0~%")
   (format stream "(~%")
-  (format stream "    doc = \"Aambrosius v0.0.1\"~%")
+  (format stream "    doc = \"kons-9 pre-alpha\"~%")
   (format stream "    metersPerUnit = 1~%")
   (format stream "    upAxis = \"Y\"~%")
   (format stream ")~%~%"))
@@ -29,12 +29,23 @@
   (format stream (indent-padding indent))
   (apply #'format stream args))
 
-;;; xxx TODO: export transform matrix
+(defun point->usd-string (p)
+  (format nil "(~a, ~a, ~a)" (x p) (y p) (z p)))
+
+
+;;;; shape =====================================================================
+
 (defmethod write-usd :before ((shape shape) &optional (stream t) (indent 0))
-  (format-pad indent stream "def Xform \"~a\"~%" (next-shape-name "shape"))
-  (format-pad indent stream "{~%")
-  (format-pad indent stream "    matrix4d xformOp:transform = ( (1, 0, 0, 0), (0, 1, 0, 0), (0, 0, 1, 0), (0, 0, 0, 1) )~%")
-  (format-pad indent stream "    uniform token[] xformOpOrder = [\"xformOp:transform\"]~%~%"))
+  (let ((mtx (transform-matrix (transform shape))))
+    (format-pad indent stream "def Xform \"~a\"~%" (next-shape-name "shape"))
+    (format-pad indent stream "{~%")
+    (format-pad indent stream "    matrix4d xformOp:transform = ( (~s, ~s, ~s, ~s), (~s, ~s, ~s, ~s), (~s, ~s, ~s, ~s), (~s, ~s, ~s, ~s) )~%"
+                (aref mtx 0 0) (aref mtx 0 1) (aref mtx 0 2) (aref mtx 0 3)
+                (aref mtx 1 0) (aref mtx 1 1) (aref mtx 1 2) (aref mtx 1 3)
+                (aref mtx 2 0) (aref mtx 2 1) (aref mtx 2 2) (aref mtx 2 3)
+                (aref mtx 3 0) (aref mtx 3 1) (aref mtx 3 2) (aref mtx 3 3))
+    (format-pad indent stream "    uniform token[] xformOpOrder = [\"xformOp:transform\"]~%~%")))
+
 
 (defmethod write-usd ((shape shape) &optional (stream t) (indent 0))
   (declare (ignore stream))
@@ -44,14 +55,49 @@
 (defmethod write-usd :after ((shape shape) &optional (stream t) (indent 0))
   (format-pad indent stream "}~%"))
 
+;;;; point-cloud ===============================================================
+
+(defmethod usd-points ((p-cloud point-cloud))
+  (map 'list #'point->usd-string (points p-cloud)))
+
+;;;; polygon ===================================================================
+
 (defmethod write-usd ((poly polygon) &optional (stream t) (indent 0))
-  (declare (ignore stream indent))
-  ;; do nothing for now
-  )
+  (format-pad indent stream "    def BasisCurves \"~a\"~%" (next-shape-name "polygon"))
+  (format-pad indent stream "    {~%")
+  (format-pad indent stream "        uniform token type = \"linear\"~%")
+
+  (format-pad indent stream "        int[] curveVertexCounts = [~a]~%" (length (points poly)))
+  (format-pad indent stream "        point3f[] points = [~{~a~^, ~}]~%" (usd-points poly))
+  ;TODO -- width hardwired for now -- not working in Blender
+  (format-pad indent stream "        float[] widths = [0.01] (interpolation = \"constant\")~%")
+;;            color3f[] primvars:displayColor = [(1, 0, 0)]
+  (format-pad indent stream "    }~%"))
+
+;;;; polyhedron ================================================================
+
+(defmethod write-usd ((polyh polyhedron) &optional (stream t) (indent 0))
+  (format-pad indent stream "    def Mesh \"~a\"~%" (next-shape-name "polyhedron"))
+  (format-pad indent stream "    {~%")
+  (format-pad indent stream "        int[] faceVertexCounts = [~{~a~^, ~}]~%" (usd-face-counts polyh))
+  (format-pad indent stream "        int[] faceVertexIndices = [~{~a~^, ~}]~%" (usd-face-vertex-indices polyh))
+  (format-pad indent stream "        point3f[] points = [~{~a~^, ~}]~%" (usd-points polyh))
+  (format-pad indent stream "        uniform token subdivisionScheme = \"none\"~%")
+  (format-pad indent stream "    }~%"))
+
+(defmethod usd-face-counts ((polyh polyhedron))
+  (map 'list #'length (faces polyh)))
+
+(defmethod usd-face-vertex-indices ((polyh polyhedron))
+  (apply #'append (coerce (faces polyh) 'list)))
+
+;;;; group =====================================================================
 
 (defmethod write-usd ((group group) &optional (stream t) (indent 0))
   (dolist (shape (children group))
     (write-usd shape stream (+ indent 4))))
+
+;;;; uv-mesh ===================================================================
 
 (defmethod write-usd ((mesh uv-mesh) &optional (stream t) (indent 0))
   (format-pad indent stream "    def Mesh \"~a\"~%" (next-shape-name "uvmesh"))
@@ -62,33 +108,9 @@
   (format-pad indent stream "        uniform token subdivisionScheme = \"none\"~%")
   (format-pad indent stream "    }~%"))
 
-(defmethod usd-face-counts ((mesh uv-mesh))
-  (array->list (make-array (* (1- (wrapped-u-dim mesh)) (1- (wrapped-v-dim mesh)))
-			   :initial-element 4)))
-
-(defmethod usd-face-vertex-indices ((mesh uv-mesh))
-  (let ((indices '())
-	(u-dim (u-dim mesh))
-	(v-dim (v-dim mesh)))
-    (dotimes (u (1- (wrapped-u-dim mesh)))
-      (dotimes (v (1- (wrapped-v-dim mesh)))
-	(push (array-row-major-index (uv-point-array mesh)          u                  v)         indices)
-	(push (array-row-major-index (uv-point-array mesh) (mod (1+ u) u-dim)          v)         indices)
-	(push (array-row-major-index (uv-point-array mesh) (mod (1+ u) u-dim) (mod (1+ v) v-dim)) indices)
-	(push (array-row-major-index (uv-point-array mesh)          u         (mod (1+ v) v-dim)) indices)))
-    (reverse indices)))
-
-(defun point->usd-string (p)
-  (format nil "(~a, ~a, ~a)" (x p) (y p) (z p)))
-
-(defmethod usd-points ((mesh uv-mesh))
-  (let ((points '()))
-    (dotimes (u (u-dim mesh))
-      (dotimes (v (v-dim mesh))
-	(push (point->usd-string (aref (uv-point-array mesh) u v)) points)))
-    (reverse points)))
-
 ;;;; export-animator ==================================================
+
+#| needs testing
 
 (defclass export-animator (animator)
   ((base-filename :accessor base-filename :initarg :base-filename :initform "export")
@@ -111,3 +133,4 @@
   (update-animator
    (make-instance 'export-animator :base-filename filename :file-extension "usda"
 				   :scene scene :export-fn #'export-usd)))
+|#

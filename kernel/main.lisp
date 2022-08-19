@@ -2,12 +2,9 @@
 
 ;;; execute code on main thread -- necessary for interacting with UI elements
 (defmacro on-main-thread (&rest actions)
-  #+ccl`(ccl::call-in-event-process
+  `(ccl::call-in-event-process
      #'(lambda ()
-         ,@actions))
-  #-ccl`(tmt:call-in-main-thread
-        #'(lambda ()
-            ,@actions)))
+         ,@actions)))
 
 ;;;; run graphics =======================================================
 
@@ -16,15 +13,13 @@
 (defparameter *scene-views* '())
 
 (defun run ()
-  ;; (setf *window* (on-main-thread (show-window *scene*)))
-  (on-main-thread (show-window *scene*)))
+  (setf *window* (on-main-thread (show-window *scene*))))
 
 ;;(defun run-grid (n)
 ;;  (setf *window* (on-main-thread (show-grid-window n))))
 
 (defun redraw ()
   (dolist (v *scene-views*)
-    ;; (#/setNeedsDisplay: v t)
-    (set-needs-redisplay v)
+    (#/setNeedsDisplay: v t)
     (when (schematic-view v)
       (update-view (schematic-view v)))))
