@@ -143,23 +143,6 @@
         nil))
   )
 
-
-(defgeneric global-matrix (obj path)
-
-  (:method ((scene scene) path)
-    (print-spaces indent)
-    (format t "~a~%" scene)
-    (dolist (shape (shapes scene))
-      (print-hierarchy shape (+ indent 2))))
-
-  (:method :after ((group group) &optional (indent 0))
-    (dolist (child (children group))
-      (print-hierarchy child (+ indent 2))))
-
-  (:method ((scene-item scene-item) &optional (indent 0))
-    (print-spaces indent)
-    (format t "~a ~s~%" scene-item (name scene-item))))
-
 ;;; print-hierarchy ------------------------------------------------------------
 
 (defgeneric print-hierarchy (obj &optional indent)
