@@ -48,12 +48,6 @@
                        (translate-to (make-dodecahedron 2.0) (p!  2.5 0 0))
                        (translate-to (make-icosahedron  2.0) (p! 5 0 0)))))
 
-(with-clear-and-redraw
-  (add-shape *scene* (translate-to (refine-mesh (make-cube 2.0) 3) (p! 0 1 0))))
-
-(with-clear-and-redraw
-  (add-shape *scene* (translate-to (make-cube-sphere 2.0 3) (p! 0 1 0))))
-
 ;;; transforms and hierarchies -------------------------------------------------
 
 (with-clear-and-redraw
@@ -108,13 +102,13 @@
 
 ;;; make robot arm
 (with-clear-and-redraw
-  (defparameter *waist-shape* (make-cube-sphere 0.5 2))
+  (defparameter *waist-shape* (make-icosahedron 0.5))
   (defparameter *torso-shape* (make-box 0.6 0.8 0.2))
-  (defparameter *shoulder-shape* (make-cube-sphere 1.0 2))
+  (defparameter *shoulder-shape* (make-icosahedron 1.0))
   (defparameter *upper-arm-shape* (make-box 1.05 0.5 0.2))
-  (defparameter *elbow-shape* (make-cube-sphere 1.0 2))
+  (defparameter *elbow-shape* (make-icosahedron 1.0))
   (defparameter *lower-arm-shape* (make-box 2.1 0.5 0.2))
-  (defparameter *wrist-shape* (make-cube-sphere 1.0 2))
+  (defparameter *wrist-shape* (make-icosahedron 1.0))
   (defparameter *hand-shape* (make-box 1.5 1.2 0.4))
 
   (defparameter *wrist* (make-group *wrist-shape* *hand-shape*))
@@ -141,23 +135,6 @@
   (translate-to *lower-arm-shape* (p! 1.6 0.0 0.0))
   (translate-to *hand-shape* (p! 1.2 0.0 0.0))
 )
-
-;;; scene generics test
-(progn
-  (defparameter *x* (make-cube-sphere 0.5 2))
-  (setf (name *x*) 'yoyo)
-  (add-child *wrist* *x*)
-  (add-child *shoulder* *x*)
-  (print (get-scene-paths *scene* *x*))
-  (print (find-scene-item-by-name *scene* 'yoyo))
-  (print (eq *x* (find-scene-item-by-name *scene* 'yoyo)))
-  (let ((paths (get-scene-paths *scene* *x*)))
-    ;; (pprint (get-matrix-list *scene* (first paths)))
-    ;; (pprint (get-matrix-list *scene* (second paths)))
-    (pprint (global-matrix *scene* (first paths)))
-    (pprint (global-matrix *scene* (second paths)))
-    (transform-shape-points *x* (global-matrix *scene* (first paths)))
-  ))
 
 ;;; turn off shading to see axes better (press 1 key)
 (with-redraw
@@ -283,17 +260,14 @@
 
 ;;; uv-mesh --------------------------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene*
-             (make-group (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0))
-                         (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0))
-                         (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0))
-                         (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0))
-                         (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0))
-                         (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0))
-                         (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))))
-
-;(export-usd *scene* "~/foo11.usda")
-
+  (add-shape *scene* (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0)))
+  (add-shape *scene* (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0)))
+  (add-shape *scene* (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0)))
+  (add-shape *scene* (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))
+  )
 
 ;;; transform-extrude-uv-mesh --------------------------------------------------
 (with-clear-and-redraw
@@ -432,16 +406,17 @@
                                               (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
 
 
+;;; xxx -- updated to here...
+
 ;;; parametric-curve
 
 (with-clear-and-redraw
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
 
-(with-clear-and-redraw
-  (add-shape *scene* (make-butterfly-curve-polygon 1024)))
 
 
-;;; xxx -- updated to here...
+
+
 
 (with-clear-and-redraw
   (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
@@ -822,12 +797,12 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 (with-redraw
   (add-shape *scene* (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6) (first (shapes *scene*))))))
 
-;;; polyhedron subdivision -- new vertices are merged ----------------------
+;;; polyhedron subdivision -- new vertices are not merged ----------------------
 (with-clear-and-redraw
   (let ((polyh (make-cut-cube-polyhedron 2.0)))
     (add-shape *scene* (refine-mesh polyh 4))))
 
-;;; polyhedron subdivision -- new vertices are merged ----------------------
+;;; polyhedron subdivision -- new vertices are not merged ----------------------
 (with-clear-and-redraw
   (let ((polyh (import-obj "~/Development/3D DCC Project/data/teapot.obj")))
     (add-shape *scene* (refine-mesh polyh 1))))
@@ -852,7 +827,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 
 
 ;;; USD scene export (not recently tested) ------------------------------------
-(export-usd *scene* "~/foo1.usda")
+(export-usd *scene* "foo.usda")
 (export-usd-frame *scene* "foo")
 
 ;;; l-system ------------------------------------------------------------------

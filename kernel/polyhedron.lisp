@@ -55,8 +55,12 @@
 (defmethod face-center ((polyh polyhedron) face)
   (p-center (face-points polyh face)))
 
+#+nil
 (defmethod face-centers ((polyh polyhedron))
   (map 'array #'(lambda (f) (face-center polyh f)) (faces polyh)))
+
+(defmethod face-centers ((polyh polyhedron))
+  (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
 (defun triangle-normal (p0 p1 p2)
   (p-normalize (p-cross (p-from-to p0 p1) (p-from-to p1 p2))))
@@ -149,11 +153,41 @@
   (make-instance mesh-type :points points ;(make-array (length points) :initial-contents points)
                            :faces faces)) ;(make-array (length faces) :initial-contents faces)))
 
+(defmethod draw-normals ((polyh polyhedron))
+  (let ((lines ()))
+    (dotimes (f (length (faces polyh)))
+      (let* ((points (face-points polyh f))
+             (p0 (p-center points))
+             (p1 (p+ p0 (p-scale (aref (face-normals polyh) f) (show-normals polyh)))))
+        (push p1 lines)
+        (push p0 lines)))
+    (3d-draw-lines lines)))
+
+(defmethod draw ((polyh polyhedron))
+  (when (or (= 0 (length (points polyh)))
+          (= 0 (length (faces polyh))))
+      (return-from draw))
+
+  (3d-setup-lighting)
+
+  (when *display-filled?*
+    (3d-draw-filled-polygons (points polyh) (faces polyh)
+                             (face-normals polyh) (point-normals polyh) (point-colors polyh)))
+
+  (when *display-wireframe?*
+    (3d-draw-wireframe-polygons (points polyh) (faces polyh)))
+
+  (when *display-points?*
+    (draw-points polyh))
+
+  (when (show-normals polyh)
+    (draw-normals polyh)))
+
 (defmethod refine-face ((polyh polyhedron) face)
   (let* ((point-lists '())
          (points (face-points polyh face))
          (center (p-center points))
-        (face-points (coerce points 'array))
+        (face-points (list->array points))
         (n (length points)))
     (dotimes (i n)
       (push (list (aref face-points i)
@@ -165,7 +199,7 @@
                 
 (defmethod refine-mesh ((polyh polyhedron) &optional (levels 1))
   (if (<= levels 0)
-      (merge-points polyh)
+      polyh
       (let ((points '())
             (faces '()))
         (dotimes (i (length (faces polyh)))
@@ -178,27 +212,7 @@
                   (push pref face)
                   (incf pref))
                 (push face faces)))))
-        (refine-mesh (make-polyhedron (coerce points 'array) (coerce faces 'array)) (1- levels)))))
-
-(defmethod merge-points ((polyh polyhedron))
-  (let ((hash (make-hash-table :test 'equal))
-        (count -1)
-        (new-refs (make-array (length (points polyh)))))
-    (doarray (i p (points polyh))
-      (let ((j (gethash (point->list p) hash)))
-        (if (null j)
-            (progn
-              (incf count)
-              (setf (gethash (point->list p) hash) count)
-              (setf (aref new-refs i) count))
-            (setf (aref new-refs i) j))))
-    (let ((new-points (make-array (1+ (apply #'max (coerce new-refs 'list)))))
-          (new-faces (make-array (length (faces polyh)))))
-      (doarray (i p (points polyh))
-        (setf (aref new-points (aref new-refs i)) p))
-      (doarray (i f (faces polyh))
-        (setf (aref new-faces i) (mapcar (lambda (ref) (aref new-refs ref)) f)))
-      (make-polyhedron new-points new-faces))))
+        (refine-mesh (make-polyhedron points faces) (1- levels)))))
 
 (defun triangle-area (p0 p1 p2)
   (let ((e1 (p-from-to p0 p1))
@@ -266,7 +280,9 @@
     (dotimes (f (length (faces polyh)))
       (dolist (tri (face-triangle-refs (aref (faces polyh) f)))
         (push tri tri-faces)))
-    (make-polyhedron (points polyh) (coerce tri-faces 'array))))
+    ;; SBCL says we can't coerce a list to an array
+    ;; (make-polyhedron (points polyh) (coerce tri-faces 'array))
+    (make-polyhedron (points polyh) (coerce tri-faces 'vector))))
 
 (defmethod is-triangulated-polyhedron? ((polyh polyhedron))
   (dotimes (f (length (faces polyh)))
@@ -400,10 +416,3 @@
                              '(3 11 9) '(4 2 0) '(5 0 2) '(6 1 3) '(7 3 1) '(8 6 4)
                              '(9 4 6) '(10 5 7) '(11 7 5)))))
 
-(defun make-cube-sphere (side subdiv-levels)
-  (let ((polyh (refine-mesh (make-cube side) subdiv-levels))
-        (radius (/ side 2)))
-    (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
-    (compute-face-normals polyh)
-    (compute-point-normals polyh)
-    polyh))
