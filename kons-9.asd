@@ -1,4 +1,5 @@
 ;;;; kons-9.asd
+;;;; beginning merge of sbcl port --mle 2022-08-19
 
 (asdf:defsystem #:kons-9
   :description "Common Lisp 3D Graphics System"
@@ -50,3 +51,5 @@
    (:file "minimal-ui")
    )
   :serial t)
+
+
