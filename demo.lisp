@@ -54,6 +54,15 @@
 (with-clear-and-redraw
   (add-shape *scene* (translate-to (make-cube-sphere 2.0 3) (p! 0 1 0))))
 
+;;; polyhedron triangulation
+(with-clear-and-redraw
+  (add-shape *scene* (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))))
+
+;;; generate-point-cloud
+(with-clear-and-redraw
+  (add-shape *scene* (generate-point-cloud (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))
+                                           40)))
+
 ;;; transforms and hierarchies -------------------------------------------------
 
 (with-clear-and-redraw
@@ -432,7 +441,7 @@
                                               (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
 
 
-;;; parametric-curve
+;;; parametric-curve -----------------------------------------------------------
 
 (with-clear-and-redraw
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
@@ -440,19 +449,23 @@
 (with-clear-and-redraw
   (add-shape *scene* (make-butterfly-curve-polygon 1024)))
 
-
-;;; xxx -- updated to here...
-
+;;; half-edge-mesh -------------------------------------------------------------
 (with-clear-and-redraw
-  (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
-(with-clear-and-redraw
-  (add-shape *scene* (import-obj "~/Downloads/shuttle.obj")))
-(with-clear-and-redraw
-  (add-shape *scene* (import-obj "~/Downloads/minicooper.obj")))
+  (add-shape *scene* (translate-by (make-cube 2.0 :mesh-type 'poly-mesh) (p! 0 1 0))))
+;;; select vertices
+(with-redraw
+  (select-vertex (first (shapes *scene*)) 7)
+  (select-vertex (first (shapes *scene*)) 6))
+;;; select edges
+(with-redraw
+  (select-edge (first (shapes *scene*)) 11)
+  (select-edge (first (shapes *scene*)) 10))
+;;; select faces
+(with-redraw
+  (select-face (first (shapes *scene*)) 2)
+  (select-face (first (shapes *scene*)) 5))
 
-
-
-
+;;; display bounds, face-normals, and axis
 (with-clear-and-redraw
     (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
           (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
@@ -461,6 +474,62 @@
       (setf (show-normals icos) 1.0)
       (setf (show-bounds? superq) t)
       (add-shapes *scene* (list circle superq icos))))
+
+;;; l-system ------------------------------------------------------------------
+;;; uncomment an l-system to test
+(with-clear-and-redraw
+  (let ((l-sys
+          ;; (make-koch-curve-l-system)
+          ;; (make-binary-tree-l-system)
+          ;; (make-serpinski-triangle-l-system)
+          ;; (make-serpinski-arrowhead-l-system)
+           (make-dragon-curve-l-system)
+          ;; (make-fractal-plant-l-system)
+          ))
+    (add-shape *scene* l-sys)
+    (add-animator *scene* l-sys)))
+;;; press space key in 3D view to generate new l-system levels
+;;; resize shape to convenient size and center shape at origin
+(with-redraw
+  (scale-to-size (first (shapes *scene*)) 10.0)
+  (center-at-origin (first (shapes *scene*))))
+
+
+;;; particle-system ------------------------------------------------------------
+(with-clear-and-redraw
+  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
+                                     (p! 0 .2 0) 10 -1 'particle
+                                     :update-angle (range-float (/ pi 8) (/ pi 16))
+                                     :life-span 10)))
+    (add-shape *scene* p-sys)
+    (add-animator *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+;;; particle-system force-field collisions
+(with-clear-and-redraw
+  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
+                                     (p-rand .2) 2 -1 'dynamic-particle
+                                     :life-span 20
+                                     :do-collisions? t
+                                     :force-fields (list (make-instance 'constant-force-field
+                                                                        :force-vector (p! 0 -.02 0))))))
+    (add-shape *scene* p-sys)
+    (add-animator *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+;;; xxx -- updated to here =====================================================
+
+;; (with-clear-and-redraw
+;;   (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
+;; (with-clear-and-redraw
+;;   (add-shape *scene* (import-obj "~/Downloads/shuttle.obj")))
+;; (with-clear-and-redraw
+;;   (add-shape *scene* (import-obj "~/Downloads/minicooper.obj")))
+
+
+
+
+
 
 ;;; procedural-mixin circle ----------------------------------------------------
 (with-clear-and-redraw
@@ -531,7 +600,6 @@
 
 ;;; obj import -----------------------------------------------------------------
 
-
 (defparameter *example-object-filename* 
   (first '("~/Development/3D DCC Project/data/cow.obj"
 	   "~/Development/3D DCC Project/data/teapot.obj"))
@@ -547,14 +615,10 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (add-shape *scene*
              (import-obj *example-object-filename*)))
 
-;;; polyhedron triangulation ---------------------------------------------------
+;;; polyhedron subdivision -- new vertices are merged ----------------------
 (with-clear-and-redraw
-  (add-shape *scene* (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))))
-
-;;; generate-point-cloud -------------------------------------------------------
-(with-clear-and-redraw
-  (add-shape *scene* (generate-point-cloud (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))
-                                           40)))
+  (let ((polyh (import-obj "~/Development/3D DCC Project/data/teapot.obj")))
+    (add-shape *scene* (refine-mesh polyh 1))))
 
 ;;; particle system growth along point-cloud -----------------------------------
 (with-clear-and-redraw
@@ -605,25 +669,6 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 (with-redraw
   (setf (point-generator (first (shapes *scene*))) (make-procedural-sine-curve-polygon 360.0 1.0 4.0 4.0)))
 
-;;; particle-system ------------------------------------------------------------
-(with-clear-and-redraw
-  (let ((p-sys (make-particle-system (make-point-cloud (p! 0 0 0)) (p! 0 .2 0) 10 -1 'particle
-                                     :update-angle (range-float (/ pi 8) (/ pi 16))
-                                     :life-span 10)))
-    (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; particle-system force-field collisions -------------------------------------
-(with-clear-and-redraw
-  (let ((p-sys (make-particle-system (make-point-cloud (p! 0 2 0)) (p-rand .2) 2 -1 'dynamic-particle
-                                     :life-span 20
-                                     :do-collisions? t
-                                     :force-fields (list (make-instance 'constant-force-field
-                                                                        :force-vector (p! 0 -.02 0))))))
-    (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
 
 ;;; point-instancer particle-system --------------------------------------------
 (with-clear-and-redraw
@@ -822,57 +867,11 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 (with-redraw
   (add-shape *scene* (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6) (first (shapes *scene*))))))
 
-;;; polyhedron subdivision -- new vertices are merged ----------------------
-(with-clear-and-redraw
-  (let ((polyh (make-cut-cube-polyhedron 2.0)))
-    (add-shape *scene* (refine-mesh polyh 4))))
-
-;;; polyhedron subdivision -- new vertices are merged ----------------------
-(with-clear-and-redraw
-  (let ((polyh (import-obj "~/Development/3D DCC Project/data/teapot.obj")))
-    (add-shape *scene* (refine-mesh polyh 1))))
-
-#| TODO -- half-edge-mesh commented out for now
-;;; half-edge-mesh -------------------------------------------------------------
-(with-clear-and-redraw
-  (add-shape *scene* (translate-by (make-cube 4.0 'he-mesh) (p! 0 2 0))))
-;;; select vertices
-(with-redraw
-  (select-vertex (first (shapes *scene*)) 7)
-  (select-vertex (first (shapes *scene*)) 6))
-;;; select edges
-(with-redraw
-  (select-edge (first (shapes *scene*)) 11)
-  (select-edge (first (shapes *scene*)) 10))
-;;; select faces
-(with-redraw
-  (select-face (first (shapes *scene*)) 2)
-  (select-face (first (shapes *scene*)) 5))
-|#
-
 
 ;;; USD scene export (not recently tested) ------------------------------------
 (export-usd *scene* "~/foo1.usda")
 (export-usd-frame *scene* "foo")
 
-;;; l-system ------------------------------------------------------------------
-;;; uncomment an l-system to test
-(with-clear-and-redraw
-  (let ((l-sys
-          ;; (make-koch-curve-l-system)
-          ;; (make-binary-tree-l-system)
-          ;; (make-serpinski-triangle-l-system)
-          ;; (make-serpinski-arrowhead-l-system)
-          ;; (make-dragon-curve-l-system)
-           (make-fractal-plant-l-system)
-          ))
-    (add-shape *scene* l-sys)
-    (add-animator *scene* l-sys)))
-;;; press space key in 3D view to generate new l-system levels
-;;; resize shape to convenient size and center shape at origin
-(with-redraw
-  (scale-to-size (first (shapes *scene*)) 10.0)
-  (center-at-origin (first (shapes *scene*))))
 
 ;;; l-system sweep-mesh-group --------------------------------------------------
 (with-clear-and-redraw

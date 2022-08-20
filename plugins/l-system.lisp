@@ -97,16 +97,6 @@
 (defmethod draw-wireframe ((l-sys l-system))
   (3d-draw-wireframe-polygons (points l-sys) (faces l-sys) :closed? nil))
 
-;; (defmethod draw-wireframe-SAV ((l-sys l-system))
-;;     (with-gl-disable #$GL_LIGHTING
-;;       (gl-set-fg-color)
-;;       (dotimes (f (length (faces l-sys)))
-;;         (#_glBegin #$GL_LINE_STRIP)
-;;         (dolist (pref (aref (faces l-sys) f))
-;;           (let ((p (aref (points l-sys) pref)))
-;;             (#_glVertex3f (x p) (y p) (z p))))
-;;         (#_glEnd))))
-
 (defmethod draw-normals ((l-sys l-system))
   ;; do nothing
   )
