@@ -22,10 +22,6 @@
 (defun c-set-alpha (c alpha)
   (setf (aref c 3) alpha))
 
-#+nil
-(defun c-lerp (f c1 c2)
-  (map 'array #'(lambda (a b) (lerp f a b)) c1 c2))
-
 (defun c-lerp (f c1 c2)
   (map 'vector #'(lambda (a b) (lerp f a b)) c1 c2))
 

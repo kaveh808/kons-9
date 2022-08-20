@@ -19,6 +19,9 @@
                (:module "kernel"
                 :serial t
                 :components ((:file "utils")
-                             (:file "color")))))
+                             (:file "color")
+                             (:file "point")
+                             (:file "matrix")
+                             (:file "noise")))))
 
 #+nil (asdf:load-system :kons-9)

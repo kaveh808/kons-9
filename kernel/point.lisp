@@ -4,10 +4,13 @@
 
 ;;; class for representing 3D points
 ;;; change to more efficient representation later
+(eval-when (:compile-toplevel :load-toplevel :execute)
+
 (defclass point ()
-  ((x :accessor x :initarg :x :initform 0.0)
-   (y :accessor y :initarg :y :initform 0.0)
-   (z :accessor z :initarg :z :initform 0.0)))
+  ((x :reader x :initarg :x :initform 0.0)
+   (y :reader y :initarg :y :initform 0.0)
+   (z :reader z :initarg :z :initform 0.0)))
+)
 
 (defmethod (setf x) (val (self point))
   (setf (slot-value self 'x) (coerce val 'single-float)))
@@ -22,10 +25,12 @@
   (print-unreadable-object (self stream :type t)
     (format stream "[~a, ~a, ~a]" (x self) (y self) (z self))))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
 (defun p! (x y z)
   (make-instance 'point :x (coerce x 'single-float)
 			:y (coerce y 'single-float)
 			:z (coerce z 'single-float)))
+)
 
 (defun point->list (p)
   (list (x p) (y p) (z p)))
@@ -38,10 +43,18 @@
   (declare (ignore env))
   (make-load-form-saving-slots p))
 
+#| work around defconstant issues on sbcl
 (defconstant +origin+ (p! 0 0 0))
 (defconstant +x-axis+ (p! 1 0 0))
 (defconstant +y-axis+ (p! 0 1 0))
 (defconstant +z-axis+ (p! 0 0 1))
+|#
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defparameter +origin+ (p! 0 0 0))
+  (defparameter +x-axis+ (p! 1 0 0))
+  (defparameter +y-axis+ (p! 0 1 0))
+  (defparameter +z-axis+ (p! 0 0 1)))
 
 (defmethod p-set! ((self point) x y z)
   (setf (x self) x)
@@ -196,24 +209,14 @@
     (values y-angle x-angle)))
 
 (defun angle-2d (p1 p2)
-  "Angle of the rotation bringing the oriented line associated to P1 on the P2 one.
-The result is a value expressed in radians, between -PI (exclusive) and PI (inclusive).
-
-The computation is in the X-Y plane, the Z coordinate is completely omitted. (Orthogonal
-projection.)
-
-The oriented line associated to a point P is the line passing through the origin and P,
-so that the abscissae of P is a positive real number."
-  ;; Sketch of proof for the formula used:
-  ;;  Let Q be the intersection point of the line OP2 with the line normal
-  ;;  to OP1 going through P1. We need to compute (atan |P1Q| |OP1|) (using Lisp
-  ;;  notation for Arctan). Solve Q using the determinant and use homogeneity for atan.
-  (let ((x1 (x p1))
-	(y1 (y p1))
-	(x2 (x p2))
-	(y2 (y p2)))
-    (atan (- (* x1 y2) (* x2 y1)) (+ (* x1 x2) (* y1 y2)))))
-	    
+  (let* ((theta1 (atan (y p1) (x p1)))
+	 (theta2 (atan (y p2) (x p2)))
+	 (dtheta (- theta2 theta1)))
+    (loop while (> dtheta pi)
+	  do (setf dtheta (- dtheta (* 2 pi))))
+    (loop while (< dtheta (- pi))
+	  do (setf dtheta (+ dtheta (* 2 pi))))
+    dtheta))
 
 (defun p-radians (p)
   (p! (radians (x p)) (radians (y p)) (radians (z p))))
