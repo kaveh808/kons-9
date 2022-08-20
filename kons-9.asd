@@ -16,7 +16,7 @@
     :serial t
     :components ((:module "common"
                   :serial t
-                  :components ())
+                  :components ((:file "package")))
                  #+ccl
                  (:module "ccl"
                   :serial t
