@@ -15,6 +15,7 @@
           #:cl-glfw3) 
   :serial t
   :components ((:file "common/package")
-               ))
+               (:file "common/kernel/utils")
+               (:file "common/kernel/color")))
 
 #+nil (asdf:load-system :kons-9)
