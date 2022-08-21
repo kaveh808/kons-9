@@ -16,6 +16,7 @@
   :serial t
   :components ((:file "common/package")
                (:file "common/kernel/utils")
-               (:file "common/kernel/color")))
+               (:file "common/kernel/color")
+               (:file "common/kernel/point")))
 
 #+nil (asdf:load-system :kons-9)
