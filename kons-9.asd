@@ -18,6 +18,10 @@
                (:file "common/kernel/utils")
                (:file "common/kernel/color")
                (:file "common/kernel/point")
-               (:file "common/kernel/matrix")))
+               (:file "common/kernel/matrix")
+               (:file "common/kernel/noise")
+               #+ccl(:file "ccl/kernel/opengl")
+               #-ccl(:file "common/kernel/portable-opengl")
+               ))
 
 #+nil (asdf:load-system :kons-9)
