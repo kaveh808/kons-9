@@ -30,6 +30,8 @@
                #+ccl (:file "ccl/kernel/polyhedron")
                #+sbcl (:file "sbcl/kernel/polyhedron")
                (:file "common/kernel/group")
+               (:file "common/kernel/procedural")
+               (:file "common/kernel/animator")
                ))
 
 #+nil (asdf:load-system :kons-9)
