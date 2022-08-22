@@ -40,6 +40,8 @@
                (:file "common/plugins/parametric-curve")
                #+ccl (:file "ccl/plugins/uv-mesh")
                #+sbcl (:file "sbcl/plugins/uv-mesh")
+               (:file "common/plugins/heightfield")
+               (:file "common/plugins/superquadric")
                ))
 
 #+nil (asdf:load-system :kons-9)
