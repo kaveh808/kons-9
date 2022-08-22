@@ -92,11 +92,11 @@
 
 #+nil (in-package :kons-9)
 
-;;; sbcl only:
+;;; sbcl only: create the window
 #+nil (trivial-main-thread:call-in-main-thread
        (lambda ()
          (sb-int:set-floating-point-modes :traps nil)
          (kons-9::show-window kons-9::*scene*)))
 
-;;; ccl only:
+;;; ccl only: create the window
 #+nil (run)
