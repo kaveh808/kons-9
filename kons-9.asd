@@ -1,4 +1,7 @@
 ;;;; kons-9.asd
+;;;; Author: Kaveh Kardan
+;;;;  SBCL Linux port by Joel Boehland (joel.boehland@evocomputing.com)
+;;;;  SBCL macOS port by mikel evins (mikel@evins.net) based on Joel Boehland's work
 
 (asdf:defsystem #:kons-9
     :description "Common Lisp 3D Graphics System"
