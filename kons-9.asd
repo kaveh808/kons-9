@@ -32,6 +32,11 @@
                (:file "common/kernel/group")
                (:file "common/kernel/procedural")
                (:file "common/kernel/animator")
+               (:file "common/kernel/scene")
+               #+ccl (:file "ccl/kernel/protocol")
+               #+sbcl (:file "sbcl/kernel/protocol")
+               #+ccl (:file "ccl/kernel/main")
+               #+sbcl (:file "sbcl/kernel/main")
                ))
 
 #+nil (asdf:load-system :kons-9)
