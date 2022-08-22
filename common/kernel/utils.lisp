@@ -39,10 +39,6 @@
 (defun array->list (array)
   (map 'list #'identity array))
 
-#+nil 
-(defun list->array (list)
-  (map 'array #'identity list))
-
 (defun list->array (list)
   (map 'vector #'identity list))
 

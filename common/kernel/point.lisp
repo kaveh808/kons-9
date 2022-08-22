@@ -7,9 +7,9 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
 
 (defclass point ()
-  ((x :accessor x :initarg :x :initform 0.0)
-   (y :accessor y :initarg :y :initform 0.0)
-   (z :accessor z :initarg :z :initform 0.0)))
+  ((x :reader x :initarg :x :initform 0.0)
+   (y :reader y :initarg :y :initform 0.0)
+   (z :reader z :initarg :z :initform 0.0)))
 )
 
 (defmethod (setf x) (val (self point))
@@ -209,6 +209,18 @@
     (values y-angle x-angle)))
 
 (defun angle-2d (p1 p2)
+  "Angle of the rotation bringing the oriented line associated to P1 on the P2 one.
+The result is a value expressed in radians, between -PI (exclusive) and PI (inclusive).
+
+The computation is in the X-Y plane, the Z coordinate is completely omitted. (Orthogonal
+projection.)
+
+The oriented line associated to a point P is the line passing through the origin and P,
+so that the abscissae of P is a positive real number."
+  ;; Sketch of proof for the formula used:
+  ;;  Let Q be the intersection point of the line OP2 with the line normal
+  ;;  to OP1 going through P1. We need to compute (atan |P1Q| |OP1|) (using Lisp
+  ;;  notation for Arctan). Solve Q using the determinant and use homogeneity for atan.
   (let* ((theta1 (atan (y p1) (x p1)))
 	 (theta2 (atan (y p2) (x p2)))
 	 (dtheta (- theta2 theta1)))

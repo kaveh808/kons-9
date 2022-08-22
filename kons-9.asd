@@ -23,6 +23,10 @@
                #+ccl(:file "ccl/kernel/opengl")
                #-ccl(:file "common/kernel/portable-opengl")
                (:file "common/kernel/transform")
+               (:file "common/kernel/scene-item")
+               (:file "common/kernel/shape")
+               (:file "common/kernel/point-cloud")
+               (:file "common/kernel/polygon")
                ))
 
 #+nil (asdf:load-system :kons-9)
