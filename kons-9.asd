@@ -50,6 +50,11 @@
                #+ccl (:file "ccl/plugins/particle")
                #+sbcl (:file "sbcl/plugins/particle")
                (:file "common/plugins/l-system")
+               #+ccl (:file "ccl/plugins/usd")
+               #+sbcl (:file "sbcl/plugins/usd")
+               (:file "common/plugins/obj")
+               #+ccl (:file "ccl/minimal-ui")
+               #+sbcl (:file "sbcl/minimal-ui")
                ))
 
 #+nil (asdf:load-system :kons-9)
