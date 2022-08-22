@@ -44,6 +44,12 @@
                (:file "common/plugins/superquadric")
                (:file "common/plugins/sweep-mesh")
                (:file "common/plugins/sweep-mesh-group")
+               (:file "common/plugins/dynamics-animator")
+               (:file "common/plugins/procedural-curve-shape")
+               (:file "common/plugins/manager-group")
+               #+ccl (:file "ccl/plugins/particle")
+               #+sbcl (:file "sbcl/plugins/particle")
+               (:file "common/plugins/l-system")
                ))
 
 #+nil (asdf:load-system :kons-9)
