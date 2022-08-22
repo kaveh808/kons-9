@@ -37,6 +37,9 @@
                #+sbcl (:file "sbcl/kernel/protocol")
                #+ccl (:file "ccl/kernel/main")
                #+sbcl (:file "sbcl/kernel/main")
+               (:file "common/plugins/parametric-curve")
+               #+ccl (:file "ccl/plugins/uv-mesh")
+               #+sbcl (:file "sbcl/plugins/uv-mesh")
                ))
 
 #+nil (asdf:load-system :kons-9)
