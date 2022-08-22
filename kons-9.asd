@@ -22,6 +22,7 @@
                (:file "common/kernel/noise")
                #+ccl(:file "ccl/kernel/opengl")
                #-ccl(:file "common/kernel/portable-opengl")
+               (:file "common/kernel/transform")
                ))
 
 #+nil (asdf:load-system :kons-9)
