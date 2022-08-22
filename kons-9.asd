@@ -42,6 +42,8 @@
                #+sbcl (:file "sbcl/plugins/uv-mesh")
                (:file "common/plugins/heightfield")
                (:file "common/plugins/superquadric")
+               (:file "common/plugins/sweep-mesh")
+               (:file "common/plugins/sweep-mesh-group")
                ))
 
 #+nil (asdf:load-system :kons-9)
