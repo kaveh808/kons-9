@@ -12,19 +12,7 @@
 ;;;; run graphics =======================================================
 
 (defparameter *scene* (make-instance 'scene))
-;;(defparameter *window* nil)
-;;(defparameter *scene-views* '())
 
 (defun run ()
   ;; (setf *window* (on-main-thread (show-window *scene*)))
   (on-main-thread (show-window *scene*)))
-
-;;(defun run-grid (n)
-;;  (setf *window* (on-main-thread (show-grid-window n))))
-
-;; (defun redraw ()
-;;   (dolist (v *scene-views*)
-;;     ;; (#/setNeedsDisplay: v t)
-;;     (set-needs-redisplay v)
-;;     (when (schematic-view v)
-;;       (update-view (schematic-view v)))))

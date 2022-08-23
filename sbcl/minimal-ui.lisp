@@ -4,11 +4,6 @@
 (defun update-view (x)
   (declare (ignore x)))
 
-;;;; app-window ================================================================
-;; Not being used in glfw3
-;; (defclass app-window ()
-;;   ())
-
 (defparameter *window-x-size* 960)
 (defparameter *window-y-size* 540)
 
@@ -17,10 +12,6 @@
 (defclass scene-view ()
   ((scene :accessor scene :initarg :scene :initform nil)))
 
-   ;; (schematic-view :accessor schematic-view :initarg :schematic-view :initform nil); dummy code to keep main.lisp happy
-   ;; ;; XXX thread safety???
-   ;; (needs-display? :accessor needs-display? :initform nil)))
-
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera))
@@ -28,12 +19,6 @@
 ;; Hack! Figure out the right analogous representation
 ;; of a GL-enabled NSView for the GLFW3 backend
 (defvar *default-scene-view* nil)
-
-
-;;; notify scene view that it needs to be redrawn
-;; (defmethod set-needs-redisplay ((view scene-view))
-;;   ;;XXX NOT being used
-;;   )
 
 (defvar *draw-scene-count* 0)
 
@@ -189,7 +174,6 @@ h or ?: print this help message~%"))
   (update-window-title window))
 
 (defun show-window (scene)
-  (setf *scene-views* '())
   ;; XXX TODO assert that this is running on the main thread.
   ;; Graphics calls on OS X must occur in the main thread
   ;; Normally this is called by run function in kernel/main.lisp
@@ -206,7 +190,7 @@ h or ?: print this help message~%"))
          :divide-by-zero)
       (glfw:with-init-window (:title "glfw3 foo" :width *window-x-size* :height *window-y-size*)
          (let ((scene-view (make-instance 'scene-view :scene scene)))
-;;;           (push scene-view *scene-views*)
+
            ;; Hack! Need to figure out how to tie a scene-view to a window
            ;; in glfw3. For now, just set the first scene-view created
            ;; as default and use that for event handling
@@ -225,9 +209,9 @@ h or ?: print this help message~%"))
                  do (glfw:swap-buffers)
                  do (glfw:poll-events)))))))
 
+;;; no longer necessary
 (defmacro with-redraw (&body body)
   `(let ((result (progn ,@body)))
-;;     (redraw)
      result))
 
 (defmacro with-clear-and-redraw (&body body)
@@ -236,14 +220,4 @@ h or ?: print this help message~%"))
      (setf (init-done? *scene*) nil)
      (setf (current-frame *scene*) 0)
      (let ((_result (progn ,@body)))
-;;       (redraw)
        _result)))
-
-;; (defmacro with-grid-clear-and-redraw (&body body)
-;;   `(progn
-;;      (dolist (v *scene-views*)
-;;        (clear-scene (scene v)))
-;;      (let ((_result (progn ,@body)))
-;;        (redraw)
-;;        _result)))
-
