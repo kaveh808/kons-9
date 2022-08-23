@@ -45,6 +45,8 @@
       (gl:vertex    size  0.0 coord)))
   (gl:end))
 
+(defparameter *viewport-aspect-ratio* (/ 16.0 9.0))
+
 (defparameter *cam-x-rot* 0.0)
 (defparameter *cam-y-rot* 0.0)
 (defparameter *cam-fwd-dist* 0.0)
@@ -178,7 +180,7 @@
 (defun 3d-setup-projection ()
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (glu:perspective 45.0d0 (/ 16.0d0 9.0d0) 0.01d0 1000.0d0)
+  (glu:perspective 45.0d0 (coerce *viewport-aspect-ratio* 'double-float) 0.01d0 1000.0d0)
   (gl:matrix-mode :modelview)
   (gl:load-identity)
 ;;  (glu:look-at 4.0d0 3.0d0 5.0d0 0.0d0 0.0d0 0.0d0 0.0d0 1.0d0 0.0d0)

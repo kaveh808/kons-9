@@ -6,8 +6,8 @@
 
 ;;;; app-window ================================================================
 ;; Not being used in glfw3
-(defclass app-window ()
-  ())
+;; (defclass app-window ()
+;;   ())
 
 (defparameter *window-x-size* 960)
 (defparameter *window-y-size* 540)
@@ -15,10 +15,11 @@
 ;;;; scene-view ================================================================
 
 (defclass scene-view ()
-  ((scene :accessor scene :initarg :scene :initform nil)
-   (schematic-view :accessor schematic-view :initarg :schematic-view :initform nil); dummy code to keep main.lisp happy
-   ;; XXX thread safety???
-   (needs-display? :accessor needs-display? :initform nil)))
+  ((scene :accessor scene :initarg :scene :initform nil)))
+
+   ;; (schematic-view :accessor schematic-view :initarg :schematic-view :initform nil); dummy code to keep main.lisp happy
+   ;; ;; XXX thread safety???
+   ;; (needs-display? :accessor needs-display? :initform nil)))
 
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
@@ -30,9 +31,9 @@
 
 
 ;;; notify scene view that it needs to be redrawn
-(defmethod set-needs-redisplay ((view scene-view))
-  ;;XXX NOT being used
-  )
+;; (defmethod set-needs-redisplay ((view scene-view))
+;;   ;;XXX NOT being used
+;;   )
 
 (defvar *draw-scene-count* 0)
 
@@ -57,7 +58,7 @@
   t)
 
 (defmethod mouse-down ((self scene-view) event)
-  (redraw))
+  )
 
 ;;; accept key events
 (defmethod accepts-first-responder ((self scene-view))
@@ -87,9 +88,9 @@ h or ?: print this help message~%"))
     ;; (finish-output)
     (case key
       (:h (print-scene-view-help))
-      (:? (print-scene-view-help))
+      (:? (print-scene-view-help))      ;TODO -- not working, test for slash & shift?
       (:a (when scene (init-scene scene)))
-      (:n (dolist (v *scene-views*) (clear-scene (scene v))))
+      (:n (clear-scene scene))
       (:grave-accent (setf *do-lighting?* (not *do-lighting?*)))
       (:1 (setf *display-filled?* (not *display-filled?*)))
       (:2 (setf *display-wireframe?* (not *display-wireframe?*)))
@@ -99,10 +100,9 @@ h or ?: print this help message~%"))
       (:6 (setf *display-ground-plane?* (not *display-ground-plane?*)))
       (:7 (setf *display-axes?* (not *display-axes?*)))
       (:z (init-view-camera) (3d-update-light-settings)) ;TODO -- lights don't update when camera reset
-      (:space (dolist (v *scene-views*) (update-scene (scene v))))
-      (:backspace (dolist (v *scene-views*) (remove-current-selection (scene v))))
-      ))
-  (redraw))
+      (:space (update-scene scene))
+      (:backspace (remove-current-selection scene))
+      )))
 
 (defparameter *keys-pressed* nil)
 (defparameter *buttons-pressed* nil)
@@ -111,10 +111,11 @@ h or ?: print this help message~%"))
 ;;XXX This doesn't work on wayland. I think wayland expects clients
 ;; to draw the window decorations themselves
 (defun update-window-title (window)
-  (glfw:set-window-title (format nil "size ~A | keys ~A | buttons ~A"
+  (glfw:set-window-title (format nil "size ~A | keys ~A | buttons ~A | frame ~A"
                                  *window-size*
                                  *keys-pressed*
-                                 *buttons-pressed*)
+                                 *buttons-pressed*
+                                 (current-frame (scene *default-scene-view*)))
                          window))
 
 (glfw:def-key-callback key-callback (window key scancode action mod-keys)
@@ -122,21 +123,22 @@ h or ?: print this help message~%"))
   ;; (format t "key-callback: w: ~a, k: ~a, sc: ~a, a: ~a, mk: ~a ~%"
   ;;         window key scancode action mod-keys)
   ;; (finish-output)
-  (when (and (eq key :escape) (eq action :press))
-    ;; (format t "XXX got ESC! Closing...")
-    ;; (finish-output)
-    (glfw:set-window-should-close))
-  (cond ((eq action :press)
-         (pushnew key *keys-pressed*)
-         (when *default-scene-view*
-           (key-down *default-scene-view* key))) ;(string-downcase (string key)))))
-        ((eq action :repeat)
-         (when *default-scene-view*
-           (key-down *default-scene-view* key))) ;(string-downcase (string key)))))
-        (t (alexandria:deletef *keys-pressed* key)))
-  (update-window-title window))
+  (if (and (eq key :escape) (eq action :press))
+      (progn
+        ;; (format t "XXX got ESC! Closing...")
+        ;; (finish-output)
+        (glfw:set-window-should-close))
+      (progn
+        (cond ((eq action :press)
+               (pushnew key *keys-pressed*)
+               (when *default-scene-view*
+                 (key-down *default-scene-view* key)))
+              ((eq action :repeat)
+               (when *default-scene-view*
+                 (key-down *default-scene-view* key)))
+              (t (alexandria:deletef *keys-pressed* key)))
+        (update-window-title window))))
 
-;; TODO move to opengl.lisp
 (defparameter *current-mouse-pos-x* 0)
 (defparameter *current-mouse-pos-y* 0)
 (defparameter *current-mouse-modifier* nil)
@@ -176,28 +178,15 @@ h or ?: print this help message~%"))
                (incf *cam-fwd-dist* (* 0.1 dx)))
               (t
                (incf *cam-x-rot* dy)
-               (incf *cam-y-rot* dx))))
-
-      (redraw))))
-
-;; TODO why is this calling ortho?
-(defun set-viewport (width height)
-  ;; (format t "set-viewport: w: ~a, h: ~a ~%" width height)
-  (gl:viewport 0 0 width height)
-  (gl:matrix-mode :projection)
-  (gl:load-identity)
-  (gl:ortho -50 50 -50 50 -1 1)
-  (gl:matrix-mode :modelview)
-  (gl:load-identity))
+               (incf *cam-y-rot* dx)))))))
 
 ;; TODO resize window and do aspect ratio
 (glfw:def-window-size-callback window-size-callback (window w h)
-  ;; (format t "window-size-callback: win: ~a, w: ~a, h: ~a ~%" window w h)
-  ;; (finish-output)
+  (format t "window-size-callback: win: ~a, w: ~a, h: ~a ~%" window w h)
+  (finish-output)
   (setf *window-size* (list w h))
-  (update-window-title window)
-  (set-viewport w h))
-
+  (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
+  (update-window-title window))
 
 (defun show-window (scene)
   (setf *scene-views* '())
@@ -214,10 +203,10 @@ h or ?: print this help message~%"))
          :inexact
          :overflow
          :underflow
-         :divide-by-zero)(glfw:with-init-window (:title "glfw3 foo"
-                                                 :width *window-x-size* :height *window-y-size*)
+         :divide-by-zero)
+      (glfw:with-init-window (:title "glfw3 foo" :width *window-x-size* :height *window-y-size*)
          (let ((scene-view (make-instance 'scene-view :scene scene)))
-           (push scene-view *scene-views*)
+;;;           (push scene-view *scene-views*)
            ;; Hack! Need to figure out how to tie a scene-view to a window
            ;; in glfw3. For now, just set the first scene-view created
            ;; as default and use that for event handling
@@ -226,11 +215,10 @@ h or ?: print this help message~%"))
            (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
            (glfw:set-key-callback 'key-callback)
            (glfw:set-mouse-button-callback 'mouse-callback)
-
            (glfw:set-cursor-position-callback 'cursor-position-callback)
-
            (glfw:set-window-size-callback 'window-size-callback)
            (setf *window-size* (glfw:get-window-size))
+           (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
            (update-window-title glfw:*window*)
            (loop until (glfw:window-should-close-p)
                  do (draw-scene-view *default-scene-view*)
@@ -239,24 +227,23 @@ h or ?: print this help message~%"))
 
 (defmacro with-redraw (&body body)
   `(let ((result (progn ,@body)))
-     (redraw)
+;;     (redraw)
      result))
 
-;;; with-redraw macro: add variant that clears scene
 (defmacro with-clear-and-redraw (&body body)
   `(progn
      (clear-scene *scene*)
      (setf (init-done? *scene*) nil)
      (setf (current-frame *scene*) 0)
      (let ((_result (progn ,@body)))
-       (redraw)
+;;       (redraw)
        _result)))
 
-(defmacro with-grid-clear-and-redraw (&body body)
-  `(progn
-     (dolist (v *scene-views*)
-       (clear-scene (scene v)))
-     (let ((_result (progn ,@body)))
-       (redraw)
-       _result)))
+;; (defmacro with-grid-clear-and-redraw (&body body)
+;;   `(progn
+;;      (dolist (v *scene-views*)
+;;        (clear-scene (scene v)))
+;;      (let ((_result (progn ,@body)))
+;;        (redraw)
+;;        _result)))
 
