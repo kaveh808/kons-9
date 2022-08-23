@@ -167,10 +167,13 @@ h or ?: print this help message~%"))
 
 ;; TODO resize window and do aspect ratio
 (glfw:def-window-size-callback window-size-callback (window w h)
-  (format t "window-size-callback: win: ~a, w: ~a, h: ~a ~%" window w h)
-  (finish-output)
+  ;; (format t "window-size-callback: win: ~a, w: ~a, h: ~a ~%" window w h)
+  ;; (finish-output)
   (setf *window-size* (list w h))
   (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
+  ;; redraw while being resized
+  (draw-scene-view *default-scene-view*)
+  (glfw:swap-buffers)
   (update-window-title window))
 
 (defun show-window (scene)
