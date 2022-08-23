@@ -1,5 +1,5 @@
 (defpackage #:kons-9
-  (:use #:common-lisp #+ccl #:ccl)
+  (:use #:common-lisp)
   (:export
    #:*scene*
    #:run
