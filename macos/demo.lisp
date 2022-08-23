@@ -512,6 +512,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (add-shape *scene* (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))))
 
 ;;; generate-point-cloud -------------------------------------------------------
+;;; BUG: too many arguments for SBCL
 (with-clear-scene
   (add-shape *scene* (generate-point-cloud (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))
                                            40)))
