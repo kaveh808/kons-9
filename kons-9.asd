@@ -53,9 +53,9 @@
 
 #+nil (asdf:load-system :kons-9)
 
-#+nil (in-package :kons-9)
-
 #+nil (trivial-main-thread:call-in-main-thread
        (lambda ()
          (sb-int:set-floating-point-modes :traps nil)
          (kons-9::show-window kons-9::*scene*)))
+
+#+nil (in-package :kons-9)
