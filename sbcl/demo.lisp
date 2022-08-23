@@ -16,14 +16,14 @@
 ;;; press 'h' in 3d view to see key bindings and navigation
 
 ;;; point-cloud ----------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-point-cloud (make-grid-points 10 2 5 (p! -2.0 -0.4 -1.0) (p! 2.0 0.4 1.0)))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -1 -1 -1) (p! 1 1 1)))))
 
 ;;; polygons -------------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (translate-to (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -6.0)))
   (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -4.0)))
   (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0 -2.0)))
@@ -32,7 +32,7 @@
   (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0 4.0)))
   (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  6) (p! 0 0 -2.0)))
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  5) (p! 0 0  0.0)))
@@ -40,7 +40,7 @@
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  3) (p! 0 0  4.0))))
 
 ;; polyhedrons -----------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shapes *scene* (list
                        (translate-to (make-tetrahedron  2.0) (p! -5 0 0))
                        (translate-to (make-cube         2.0) (p! -2.5 0 0))
@@ -50,7 +50,7 @@
 
 ;;; transforms and hierarchies -------------------------------------------------
 
-(with-clear-and-redraw
+(with-clear-scene
   (defparameter *icosahedron* (make-icosahedron 1.0))
   (defparameter *cube* (make-cube 1.0))
   (defparameter *tetrahedron* (make-tetrahedron 1.0))
@@ -67,41 +67,37 @@
   ;; show hierarchy
   (print-hierarchy *group-2*))
 
-(with-redraw
-  (rotate-by *group-1* (p! 0.0 0.0 10.0)))
+(rotate-by *group-1* (p! 0.0 0.0 10.0))
 
-(with-redraw
-  (rotate-by *group-2* (p! 10.0 0.0 0.0)))
+(rotate-by *group-2* (p! 10.0 0.0 0.0))
 
 ;;; parent shape to transformed group - inherits transformation
 ;;; placed at two spots in hierarchy (instancing)
-(with-redraw
+(progn
   (defparameter *octahedron* (make-octahedron 1.0))
   (setf (show-axis *octahedron*) 1.0)
   (add-child *group-1* *octahedron*)
   (add-child *group-2* *octahedron*))
 
-(with-redraw
-  (translate-by *octahedron* (p! 0.0 0.0 -.5)))
+(translate-by *octahedron* (p! 0.0 0.0 -.5))
 
 ;;; make group of shapes placed at points
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
                                               (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2)))))
 
 ;;; make group of shapes placed at points
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (scatter-shapes-in-group (lambda () (make-octahedron 0.5))
                                               (make-circle-points 4.0 32))))
 
 ;;; randomly scale (uniformly) leaf nodes
-(with-redraw
-  (do-hierarchy (first (shapes *scene*))
-    (lambda (shape) (scale-to shape (rand2 0.5 1.5)))
-    :test #'is-leaf?))
+(do-hierarchy (first (shapes *scene*))
+  (lambda (shape) (scale-to shape (rand2 0.5 1.5)))
+  :test #'is-leaf?)
 
 ;;; make robot arm
-(with-clear-and-redraw
+(with-clear-scene
   (defparameter *waist-shape* (make-icosahedron 0.5))
   (defparameter *torso-shape* (make-box 0.6 0.8 0.2))
   (defparameter *shoulder-shape* (make-icosahedron 1.0))
@@ -137,8 +133,7 @@
 )
 
 ;;; turn off shading to see axes better (press 1 key)
-(with-redraw
-  (do-hierarchy *waist* (lambda (s) (setf (show-axis s) 1.0))))
+(do-hierarchy *waist* (lambda (s) (setf (show-axis s) 1.0)))
 
 (progn
   (defun reset-pose ()
@@ -153,16 +148,14 @@
     (rotate-by *elbow* (p! 0 0 15))
     (rotate-by *wrist* (p! 0 0 10))))
 
-(with-redraw
-  (flex))
+(flex)
 
-(with-redraw
-  (reset-pose))
+(reset-pose)
 
 ;;; animators --  hold down space key to update scene, press 'a' key to reset animation
 
 ;;; animate shape translation
-(with-clear-and-redraw
+(with-clear-scene
   (let ((shape (add-shape *scene* (make-cut-cube-polyhedron 2.0))))
     (add-animator *scene*
                   (make-instance 'animator
@@ -170,7 +163,7 @@
                                  :update-fn (lambda () (translate-by shape (p! 0.1 0 0)))))))
 
 ;;; animate a group
-(with-clear-and-redraw
+(with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
                                    (lambda () (make-cube 0.5))
                                    (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
@@ -186,7 +179,7 @@
                                                 :test #'is-leaf?))))))
 
 ;;; shape animator -- store rotation data for each shape
-(with-clear-and-redraw
+(with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
                                    (lambda () (make-cube 0.5))
                                    (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
@@ -203,7 +196,7 @@
       :test #'is-leaf?)))
 
 ;;; evaluate robot arm and functions above
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* *waist*)
   (reset-pose)
   (add-animator *scene*
@@ -233,7 +226,7 @@
 )
 
 ;;; animator using scene time and establishing constraint -- use of add-animator-at-end
-(with-clear-and-redraw
+(with-clear-scene
   (let ((tetrahedron (translate-to (make-tetrahedron 2.0) (p! -1.5 0 0)))
         (dodecahedron (translate-to (make-dodecahedron 2.0) (p! 1.5 0 0))))
     (add-shapes *scene* (list tetrahedron dodecahedron))
@@ -259,7 +252,7 @@
 ;;;; start plugins demos =======================================================
 
 ;;; uv-mesh --------------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0)))
   (add-shape *scene* (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0)))
   (add-shape *scene* (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0)))
@@ -270,32 +263,30 @@
   )
 
 ;;; transform-extrude-uv-mesh --------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-polygon 2 2 2)
                                                 (make-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
                                                 16)))
 
 ;;; transform-extrude-uv-mesh --------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
                                                 (make-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
                                                 40)))
 
 ;;; sweep-extrude-uv-mesh ------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((path (make-sine-curve-polygon 360 1 4 2 64))
          (prof (make-circle-polygon 1.0 4))
          (mesh (sweep-extrude-uv-mesh prof path :twist (* 2 pi) :taper 0.0)))
     (add-shape *scene* mesh)))
 ;;; assign point colors by uv
-(with-redraw
-  (set-point-colors-by-uv (first (shapes *scene*)) (lambda (u v) (c-rainbow v))))
+(set-point-colors-by-uv (first (shapes *scene*)) (lambda (u v) (c-rainbow v)))
 ;;; assign point colors by xyz
-(with-redraw
-  (set-point-colors-by-xyz (first (shapes *scene*)) (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0)))))
+(set-point-colors-by-xyz (first (shapes *scene*)) (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0))))
 
 ;;; function-extrude-uv-mesh --------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (function-extrude-uv-mesh
                       (make-circle-polygon 2.0 16)
                       (lambda (points f)
@@ -305,7 +296,7 @@
                       20)))
 
 ;;; function-extrude-uv-mesh --------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (function-extrude-uv-mesh
                       (make-circle-polygon 2.0 16)
                       (lambda (points f)
@@ -317,17 +308,17 @@
 
 ;;; heightfield ---------------------------------------------------------------
 ;;; try using various height functions and color functions
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (* 4 (noise (p! x 0 z)))))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (* 4 (turbulence (p! x 0 z) 4))))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (let* ((p (p! x 0 z))
@@ -336,7 +327,7 @@
                                                10.0
                                                (/ 1.0 mag)))))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (let* ((p (p! x 0 z))
@@ -344,22 +335,19 @@
                                            (* 3 (/ (sin mag) mag)))))))
 
 ;;; rainbow color based on height
-(with-redraw
-  (let ((mesh (first (shapes *scene*))))
-    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (y p) -.25 1.0) 0.0 1.0))))))
+(let ((mesh (first (shapes *scene*))))
+  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (y p) -.25 1.0) 0.0 1.0)))))
 
 ;;; rainbow color based on XZ distance from origin
-(with-redraw
-  (let ((mesh (first (shapes *scene*))))
-    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0))))))
+(let ((mesh (first (shapes *scene*))))
+  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0)))))
 
 ;;; 3D color noise
-(with-redraw
-  (let ((mesh (first (shapes *scene*))))
-    (set-point-colors-by-xyz mesh (lambda (p) (color-noise p)))))
+(let ((mesh (first (shapes *scene*))))
+  (set-point-colors-by-xyz mesh (lambda (p) (color-noise p))))
 
 ;;; animated heightfield -------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5) nil)))
     (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0))))
     (add-shape *scene* mesh)
@@ -378,18 +366,17 @@
                                                 (update-heightfield mesh)))))))
 
 ;;; procedural-mixin superquadric ----------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((mesh (make-superquadric 16 16 2.0 1 0.1)))
     (add-shape *scene* mesh)
     (translate-by mesh (p! 0 1 0))))
 ;;; modify slots and shape will change due to prcedural-mixin setup
-(with-redraw
-  (setf (e1 (first (shapes *scene*))) 0.5))
-(with-redraw
-  (setf (u-dim (first (shapes *scene*))) 32))
+(setf (e1 (first (shapes *scene*))) 0.5)
+
+(setf (u-dim (first (shapes *scene*))) 32)
 
 ;;; animated superquadric
-(with-clear-and-redraw
+(with-clear-scene
   (let ((mesh (make-superquadric 32 32 2.0 1.0 1.0)))
     (add-shape *scene* mesh)
     (translate-by mesh (p! 0 1 0))
@@ -406,31 +393,13 @@
                                               (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
 
 
-;;; xxx -- updated to here...
-
 ;;; parametric-curve
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
 
-
-;;; ---------------------------------------------------------------------
-;;; end of code that works reliably on macos in sbcl
-;;; ---------------------------------------------------------------------
-
-
-
-(with-clear-and-redraw
-  (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
-(with-clear-and-redraw
-  (add-shape *scene* (import-obj "~/Downloads/shuttle.obj")))
-(with-clear-and-redraw
-  (add-shape *scene* (import-obj "~/Downloads/minicooper.obj")))
-
-
-
-
-(with-clear-and-redraw
+;;; show bounds, face normals, and axis
+(with-clear-scene
     (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
           (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
           (icos (make-icosahedron 2.0)))
@@ -439,8 +408,22 @@
       (setf (show-bounds? superq) t)
       (add-shapes *scene* (list circle superq icos))))
 
+;;; ---------------------------------------------------------------------
+;;; end of code that works reliably on macos in sbcl
+;;; ---------------------------------------------------------------------
+
+
+
+;; (with-clear-scene
+;;   (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
+;; (with-clear-scene
+;;   (add-shape *scene* (import-obj "~/Downloads/shuttle.obj")))
+;; (with-clear-scene
+;;   (add-shape *scene* (import-obj "~/Downloads/minicooper.obj")))
+
+
 ;;; procedural-mixin circle ----------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((shape (make-instance 'procedural-circle-polygon :diameter 4.0 :num-points 8)))
     (add-shape *scene* shape)))
 ;;; modify slots and shape will change
@@ -450,7 +433,7 @@
   (setf (diameter (first (shapes *scene*))) 1.0))
 
 ;;; procedural-mixin sine curve ------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((shape (make-instance 'procedural-sine-curve-polygon :num-points 64 :frequency 2 :period 720
                                                              :x-scale 4 :y-scale 2)))
     (add-shape *scene* shape)))
@@ -465,7 +448,7 @@
   (defparameter *profile* (make-procedural-circle-polygon 0.8 4))
   (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
-  (with-clear-and-redraw
+  (with-clear-scene
     (add-shape *scene* *mesh*)))
 ;;; modify slots and shape will change
 (with-redraw
@@ -480,7 +463,7 @@
   (defparameter *profile* (make-procedural-circle-polygon 1.2 4))
   (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
-  (with-clear-and-redraw
+  (with-clear-scene
     (let ((anim (make-instance 'animator :init-fn (lambda (anim) (setf (num-points *profile*) 4) nil)
                                          :update-fn (lambda (anim) (incf (num-points *profile*))))))
       (add-animator *scene* anim)
@@ -488,7 +471,7 @@
 ;;; hold down space key in 3D view to run animation
 
 ;;; dynamics-animator ----------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((shapes '()))
     (dotimes (i 100) (push (make-cube 0.2) shapes))
     (add-shape *scene* (apply #'make-group shapes))
@@ -520,21 +503,21 @@ You can find obj files at
 
 in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene*
              (import-obj *example-object-filename*)))
 
 ;;; polyhedron triangulation ---------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))))
 
 ;;; generate-point-cloud -------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (generate-point-cloud (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))
                                            40)))
 
 ;;; particle system growth along point-cloud -----------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((shape (generate-point-cloud (triangulate-polyhedron
 ;;;                                       (make-cut-cube-polyhedron 2.0) ; can use instead of obj file
                                        (import-obj *example-object-filename*)
@@ -549,7 +532,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
 
 ;;; particle system growth along point-cloud & sweep-extrude -------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((shape
 ;;;        (triangulate-polyhedron (make-cut-cube-polyhedron 2.0)) ; can use instead of obj file
            (import-obj "~/Development/3D DCC Project/data/teapot.obj"))
@@ -570,7 +553,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
     (add-shape *scene* group)))
 
 ;;; point-instancer ------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((shape (make-point-instancer (import-obj "~/Development/3D DCC Project/data/teapot.obj")
                                      (make-octahedron .1))))
     (add-shape *scene* shape)))
@@ -583,7 +566,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (setf (point-generator (first (shapes *scene*))) (make-procedural-sine-curve-polygon 360.0 1.0 4.0 4.0)))
 
 ;;; particle-system ------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (p! 0 0 0)) (p! 0 .2 0) 10 -1 'particle
                                      :update-angle (range-float (/ pi 8) (/ pi 16))
                                      :life-span 10)))
@@ -592,7 +575,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system force-field collisions -------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (p! 0 2 0)) (p-rand .2) 2 -1 'dynamic-particle
                                      :life-span 20
                                      :do-collisions? t
@@ -603,7 +586,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 
 ;;; point-instancer particle-system --------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-sys (make-particle-system (make-point-cloud (p! 0 0 0)) (p! 0 .2 0) 10 -1 'particle
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10))))
@@ -617,7 +600,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
                                              (make-octahedron .1))))
 
 ;;; point-instancer particle-system dependency-node-mixin ----------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-sys (make-particle-system (make-point-cloud (p! 0 0 0)) (p! 0 .2 0) 10 -1 'particle
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10)))
@@ -636,7 +619,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
     (make-transform-instancer (make-cube 1.0)
                               (make-transform (p! 0 7 0) (p! 0 (* 90 7/8) 0) (p! 1 1 0.2))
                               8))
-  (with-clear-and-redraw
+  (with-clear-scene
     (add-shape *scene* *instancer*)))
 ;;; change inputs and shape regenerates
 (with-redraw
@@ -645,7 +628,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (setf (num-steps *instancer*) 6))
 
 ;;; uv-mesh transform-instancer 1 ----------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((path (make-procedural-sine-curve-polygon 360 1 4 1 32))
          (prof (make-procedural-circle-polygon 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0)))
@@ -656,7 +639,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (setf (num-steps (first (shapes *scene*))) 4))
 
 ;;; uv-mesh transform-instancer 2 ----------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((path (make-procedural-sine-curve-polygon 360 1 4 1 32))
          (prof (make-procedural-circle-polygon 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0))))
@@ -668,7 +651,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
       (add-shape *scene* group-2))))
 
 ;;; particle-system curve-shape force-field ------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((curve (make-procedural-circle-polygon 4.0 16))
          (p-sys (make-particle-system curve (p! .2 .2 .2) 1 4 'dynamic-particle
                                       :force-fields (list (make-instance 'constant-force-field
@@ -679,7 +662,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system curve-shape sweep-extrude ----------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-gen (make-procedural-circle-polygon 4.0 16))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 4 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
@@ -695,7 +678,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
     (add-shape *scene* group)))
 
 ;;; particle-system point-generator-mixin uv-mesh ------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
@@ -711,7 +694,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
     (add-shape *scene* group)))
 
 ;;; particle-system point-generator-mixin sweep-mesh-group ---------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))
@@ -725,7 +708,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system point-generator-mixin sweep-mesh-group spawning ------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 4 4 1 1))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 8 'particle
                                       :life-span (round (rand2 5 10))
@@ -738,7 +721,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system point-generator-mixin use polyh face centers ---------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((p-gen (make-icosahedron 2.0)))
     (setf (point-source-use-face-centers? p-gen) t)
     (let* ((p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
@@ -754,7 +737,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system point-generator-mixin polyhedron ---------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-gen (import-obj "~/Development/3D DCC Project/data/teapot.obj"))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'dynamic-particle
                                        :force-fields (list (make-instance 'constant-force-field
@@ -765,7 +748,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation -- slow, profile & optimize
 
 ;;; particle-system point-generator-mixin particle-system ----------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((p-gen (polyhedron-bake (translate-by (make-superquadric 8 5 2.0 1.0 1.0)
                                               ;(make-cut-cube-polyhedron 2.0)
                                                (p! 0 2 0))))
@@ -792,7 +775,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
     (add-shape *scene* group)))
 
 ;;; polyhedron curve-generator-mixin -------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((polyh (make-cut-cube-polyhedron 4.0)))
     (add-shape *scene* polyh)))
 ;;; sweep-extrude circle along polyh faces
@@ -800,18 +783,18 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (add-shape *scene* (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6) (first (shapes *scene*))))))
 
 ;;; polyhedron subdivision -- new vertices are not merged ----------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((polyh (make-cut-cube-polyhedron 2.0)))
     (add-shape *scene* (refine-mesh polyh 4))))
 
 ;;; polyhedron subdivision -- new vertices are not merged ----------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((polyh (import-obj "~/Development/3D DCC Project/data/teapot.obj")))
     (add-shape *scene* (refine-mesh polyh 1))))
 
 #| TODO -- half-edge-mesh commented out for now
 ;;; half-edge-mesh -------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (translate-by (make-cube 4.0 'he-mesh) (p! 0 2 0))))
 ;;; select vertices
 (with-redraw
@@ -834,7 +817,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
 
 ;;; l-system ------------------------------------------------------------------
 ;;; uncomment an l-system to test
-(with-clear-and-redraw
+(with-clear-scene
   (let ((l-sys
           ;; (make-koch-curve-l-system)
           ;; (make-binary-tree-l-system)
@@ -852,7 +835,7 @@ in this and demos below, update the *EXAMPLE-OBJECT-FILENAME* for your setup.")
   (center-at-origin (first (shapes *scene*))))
 
 ;;; l-system sweep-mesh-group --------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let* ((l-sys
           ;; (make-koch-curve-l-system)
           ;; (make-binary-tree-l-system)

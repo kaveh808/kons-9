@@ -93,54 +93,19 @@
 
 (defun gl-enable-light (light-id dir &optional (color *light-color*))
   (gl:enable light-id)
-
-  ;; (with-c-array-4 (vector (x dir) (y dir) (z dir) 0.0)
-  ;;   (gl:light light-id :position vp))
   (gl:light light-id :position (vector (x dir) (y dir) (z dir) 0.0))
-
-  ;; (with-c-array-4 (vector 0.25 0.25 0.25 1.0)
-  ;;   (gl:light light-id :ambient vp))
   (gl:light light-id :ambient (vector 0.25 0.25 0.25 1.0))
-
-  ;; (with-c-array-4 (vector (c-red color) (c-green color) (c-blue color) 1.0)
-  ;;   (gl:light light-id :diffuse vp))
   (gl:light light-id :diffuse (vector (c-red color) (c-green color) (c-blue color) 1.0))
-
-  ;; (with-c-array-4 (vector (c-red color) (c-green color) (c-blue color) 1.0)
-  ;;   (gl:light light-id :specular vp))
-  (gl:light light-id :specular (vector (c-red color) (c-green color) (c-blue color) 1.0))
-  )
+  (gl:light light-id :specular (vector (c-red color) (c-green color) (c-blue color) 1.0)))
 
 (defun gl-disable-light (light-id)
   (gl:disable light-id))
 
 (defun gl-set-material (&optional (diff *shading-color*) (spec (c! 0 0 0)) (shine 0.0))
-  ;; (with-c-array-4 (vector (c-red diff) (c-green diff) (c-blue diff) 1.0)
-  ;;   (gl:material :front-and-back :diffuse vp))
   (gl:material :front-and-back :diffuse (vector (c-red diff) (c-green diff) (c-blue diff) 1.0))
-  ;; (with-c-array-4 (vector (c-red spec) (c-green spec) (c-blue spec) 1.0)
-  ;;   (gl:material :front-and-back :specular vp))
   (gl:material :front-and-back :specular (vector (c-red spec) (c-green spec) (c-blue spec) 1.0))
-  ;; (with-c-array-1 (vector shine)
-  ;;   (gl:material :front-and-back :shininess vp))
   (gl:material :front-and-back :shininess shine))
   
-;; (defun new-pixel-format (&rest attributes)
-;;   ;; take a list of opengl pixel format attributes (enums and other
-;;   ;; small ints), make an array (character array?), and create and
-;;   ;; return an NSOpenGLPixelFormat
-;;   (let* ((attribute-size (ccl::foreign-size #>NSOpenGLPixelFormatAttribute :bytes))
-;;          (nattributes (length attributes)))
-;;     (ccl::%stack-block ((objc-attributes (* attribute-size (1+ nattributes))))
-;;       (loop for i from 0 to nattributes
-;;             for attribute in attributes do
-;;             (setf (ccl:paref objc-attributes (:* #>NSOpenGLPixelFormatAttribute) i)
-;;                   attribute) ; <- autocoerced?
-;;             finally (setf
-;;                      (ccl:paref objc-attributes
-;;                                 (:* #>NSOpenGLPixelFormatAttribute) nattributes) 0))
-;;       (make-instance ns:ns-opengl-pixel-format :with-attributes objc-attributes))))
-
 (defun 3d-update-light-settings ()
   (if *do-backface-cull?*
       (progn

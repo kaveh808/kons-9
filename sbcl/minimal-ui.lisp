@@ -74,7 +74,7 @@ h or ?: print this help message~%"))
     (case key
       (:h (print-scene-view-help))
       (:? (print-scene-view-help))      ;TODO -- not working, test for slash & shift?
-      (:a (when scene (init-scene scene)))
+      (:a (when scene (setf (current-frame scene) 0)))
       (:n (clear-scene scene))
       (:grave-accent (setf *do-lighting?* (not *do-lighting?*)))
       (:1 (setf *display-filled?* (not *display-filled?*)))
@@ -217,10 +217,7 @@ h or ?: print this help message~%"))
   `(let ((result (progn ,@body)))
      result))
 
-(defmacro with-clear-and-redraw (&body body)
+(defmacro with-clear-scene (&body body)
   `(progn
      (clear-scene *scene*)
-     (setf (init-done? *scene*) nil)
-     (setf (current-frame *scene*) 0)
-     (let ((_result (progn ,@body)))
-       _result)))
+     ,@body))
