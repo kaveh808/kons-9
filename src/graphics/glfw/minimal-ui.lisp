@@ -159,7 +159,7 @@ h or ?: print this help message~%"))
                (if (>= (abs dx) (abs dy))
                    (incf *cam-side-dist* (* 0.1 dx))
                    (incf *cam-up-dist* (* -0.1 dy))))
-              ((eq :super *current-mouse-modifier*)
+              ((eq :control *current-mouse-modifier*)
                (incf *cam-fwd-dist* (* 0.1 dx)))
               (t
                (incf *cam-x-rot* dy)
