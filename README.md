@@ -31,7 +31,7 @@ These are early days of this project, so bear with us as we find our feet.
 
 There is no documentation beyond this file.
 
-This code currently only runs in CCL on MacOS, though we are working on porting it to sbcl/Linux. We need developers to do ports for sbcl/Windows and sbcl/MacOS. The system currently used OpenGL as a graphics engine.
+This code currently runs in sbcl on MacOS and Linux. We need developers to work on sbcl/Windows, as well. The system currently used OpenGL as a graphics engine.
 
 Download the code and load the local directory:
 
