@@ -1,4 +1,0 @@
-#!/bin/sh
-
-ccl64 --eval '(ql:quickload "kons-9")'\
-      --eval '(kons-9:run)'

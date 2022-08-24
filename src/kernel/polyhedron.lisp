@@ -55,8 +55,12 @@
 (defmethod face-center ((polyh polyhedron) face)
   (p-center (face-points polyh face)))
 
+#+nil
 (defmethod face-centers ((polyh polyhedron))
   (map 'array #'(lambda (f) (face-center polyh f)) (faces polyh)))
+
+(defmethod face-centers ((polyh polyhedron))
+  (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
 (defun triangle-normal (p0 p1 p2)
   (p-normalize (p-cross (p-from-to p0 p1) (p-from-to p1 p2))))
@@ -145,15 +149,45 @@
     (let ((n (aref (point-normals polyh) i)))
       (setf (aref (point-colors polyh) i) (funcall color-fn p n)))))
 
-(defun make-polyhedron (points faces &key (mesh-type 'polyhedron))
-  (make-instance mesh-type :points points
-                           :faces faces))
+(defun make-polyhedron (points faces &optional (mesh-type 'polyhedron))
+  (make-instance mesh-type :points points ;(make-array (length points) :initial-contents points)
+                           :faces faces)) ;(make-array (length faces) :initial-contents faces)))
+
+(defmethod draw-normals ((polyh polyhedron))
+  (let ((lines ()))
+    (dotimes (f (length (faces polyh)))
+      (let* ((points (face-points polyh f))
+             (p0 (p-center points))
+             (p1 (p+ p0 (p-scale (aref (face-normals polyh) f) (show-normals polyh)))))
+        (push p1 lines)
+        (push p0 lines)))
+    (3d-draw-lines lines)))
+
+(defmethod draw ((polyh polyhedron))
+  (when (or (= 0 (length (points polyh)))
+          (= 0 (length (faces polyh))))
+      (return-from draw))
+
+  (3d-setup-lighting)
+
+  (when *display-filled?*
+    (3d-draw-filled-polygons (points polyh) (faces polyh)
+                             (face-normals polyh) (point-normals polyh) (point-colors polyh)))
+
+  (when *display-wireframe?*
+    (3d-draw-wireframe-polygons (points polyh) (faces polyh)))
+
+  (when *display-points?*
+    (draw-points polyh))
+
+  (when (show-normals polyh)
+    (draw-normals polyh)))
 
 (defmethod refine-face ((polyh polyhedron) face)
   (let* ((point-lists '())
          (points (face-points polyh face))
          (center (p-center points))
-        (face-points (coerce points 'array))
+        (face-points (list->array points))
         (n (length points)))
     (dotimes (i n)
       (push (list (aref face-points i)
@@ -165,7 +199,7 @@
                 
 (defmethod refine-mesh ((polyh polyhedron) &optional (levels 1))
   (if (<= levels 0)
-      (merge-points polyh)
+      polyh
       (let ((points '())
             (faces '()))
         (dotimes (i (length (faces polyh)))
@@ -178,27 +212,7 @@
                   (push pref face)
                   (incf pref))
                 (push face faces)))))
-        (refine-mesh (make-polyhedron (coerce points 'array) (coerce faces 'array)) (1- levels)))))
-
-(defmethod merge-points ((polyh polyhedron))
-  (let ((hash (make-hash-table :test 'equal))
-        (count -1)
-        (new-refs (make-array (length (points polyh)))))
-    (doarray (i p (points polyh))
-      (let ((j (gethash (point->list p) hash)))
-        (if (null j)
-            (progn
-              (incf count)
-              (setf (gethash (point->list p) hash) count)
-              (setf (aref new-refs i) count))
-            (setf (aref new-refs i) j))))
-    (let ((new-points (make-array (1+ (apply #'max (coerce new-refs 'list)))))
-          (new-faces (make-array (length (faces polyh)))))
-      (doarray (i p (points polyh))
-        (setf (aref new-points (aref new-refs i)) p))
-      (doarray (i f (faces polyh))
-        (setf (aref new-faces i) (mapcar (lambda (ref) (aref new-refs ref)) f)))
-      (make-polyhedron new-points new-faces))))
+        (refine-mesh (make-polyhedron points faces) (1- levels)))))
 
 (defun triangle-area (p0 p1 p2)
   (let ((e1 (p-from-to p0 p1))
@@ -265,7 +279,9 @@
     (dotimes (f (length (faces polyh)))
       (dolist (tri (face-triangle-refs (aref (faces polyh) f)))
         (push tri tri-faces)))
-    (make-polyhedron (points polyh) (coerce tri-faces 'array))))
+    ;; SBCL says we can't coerce a list to an array
+    ;; (make-polyhedron (points polyh) (coerce tri-faces 'array))
+    (make-polyhedron (points polyh) (coerce tri-faces 'vector))))
 
 (defmethod is-triangulated-polyhedron? ((polyh polyhedron))
   (dotimes (f (length (faces polyh)))
@@ -273,17 +289,16 @@
       (return-from is-triangulated-polyhedron? nil)))
   t)
 
-(defun make-tetrahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-tetrahedron (diameter)
   (let ((r (* diameter 0.5))
         (-r (* diameter -0.5)))
     (make-polyhedron (vector (p!  r (/     -r (sqrt 6)) (/     -r (sqrt 3)))
                              (p! -r (/     -r (sqrt 6)) (/     -r (sqrt 3)))
                              (p!  0 (/     -r (sqrt 6)) (/ (* 2 r) (sqrt 3)))
                              (p!  0 (/ (* 3 r) (sqrt 6)) 0))
-                     (vector '(0 2 1) '(0 3 2) '(1 2 3) '(0 1 3))
-                     :mesh-type mesh-type)))
+                     (vector '(0 2 1) '(0 3 2) '(1 2 3) '(0 1 3)))))
 
-(defun make-box (x-size y-size z-size &key (mesh-type 'polyhedron))
+(defun make-box (x-size y-size z-size)
   (let ((x (* x-size 0.5))
         (y (* y-size 0.5))
         (z (* z-size 0.5)))
@@ -296,10 +311,9 @@
                              (p!    x     y     z)
                              (p! (- x)    y     z))
                      (vector '(0 1 2 3) '(0 4 5 1) '(1 5 6 2)
-                             '(2 6 7 3) '(3 7 4 0) '(4 7 6 5))
-                     :mesh-type mesh-type)))
+                             '(2 6 7 3) '(3 7 4 0) '(4 7 6 5)))))
 
-(defun make-cube (side &key (mesh-type 'polyhedron))
+(defun make-cube (side)
   (let ((r (* side 0.5))
         (-r (* side -0.5)))
     (make-polyhedron (vector (p! -r -r -r)
@@ -311,10 +325,9 @@
                              (p!  r  r  r)
                              (p! -r  r  r))
                      (vector '(0 1 2 3) '(0 4 5 1) '(1 5 6 2)
-                             '(2 6 7 3) '(3 7 4 0) '(4 7 6 5))
-                     :mesh-type mesh-type)))
+                             '(2 6 7 3) '(3 7 4 0) '(4 7 6 5)))))
 
-(defun make-cut-cube-polyhedron (side &key (mesh-type 'polyhedron))
+(defun make-cut-cube-polyhedron (side)
   (let ((r (* side 0.5))
         (-r (* side -0.5))
         (b (* side 0.3)))
@@ -329,10 +342,9 @@
                              (p! -r  r  r)
                              (p!  r  b  r))
                      (vector '(1 2 3 0) '(5 6 9 2 1) '(9 7 8 3 2)
-                             '(0 4 5 1) '(8 4 0 3) '(8 7 6 5 4) '(6 7 9))
-                     :mesh-type mesh-type)))
+                             '(0 4 5 1) '(8 4 0 3) '(8 7 6 5 4) '(6 7 9)))))
 
-(defun make-octahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-octahedron (diameter)
   (let* ((r (abs (/ diameter 2)))
          (-r (- r)))
     (make-polyhedron (vector (p!  r  0  0) 
@@ -342,10 +354,9 @@
                              (p!  0  0  r) 
                              (p!  0  0 -r))
                      (vector '(0 2 4) '(2 0 5) '(3 0 4) '(0 3 5)
-                             '(2 1 4) '(1 2 5) '(1 3 4) '(3 1 5))
-                     :mesh-type mesh-type)))
+                             '(2 1 4) '(1 2 5) '(1 3 4) '(3 1 5)))))
 
-(defun make-dodecahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-dodecahedron (diameter)
   (let* ((r (/ diameter 4))
          (phi (* 1.61803 r))
          (inv (* 0.6180355 r)))
@@ -380,10 +391,9 @@
                              '(15 11 16 7 4)
                              '(4 7 17 8 12)
                              '(13 9 18 6 5)
-                             '(5 6 19 10 14))
-                     :mesh-type mesh-type)))
+                             '(5 6 19 10 14)))))
 
-(defun make-icosahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-icosahedron (diameter)
   (let* ((p1 (/ (abs (/ diameter 2)) 1.902076))
          (p2 (* p1 1.618034))
          (-p1 (- p1))
@@ -403,13 +413,5 @@
                      (vector '(0 8 4) '(0 5 10) '(2 4 9) '(2 11 5) '(1 6 8) '(1 10 7)
                              '(3 9 6) '(3 7 11) '(0 10 8) '(1 8 10) '(2 9 11)
                              '(3 11 9) '(4 2 0) '(5 0 2) '(6 1 3) '(7 3 1) '(8 6 4)
-                             '(9 4 6) '(10 5 7) '(11 7 5))
-                     :mesh-type mesh-type)))
+                             '(9 4 6) '(10 5 7) '(11 7 5)))))
 
-(defun make-cube-sphere (side subdiv-levels &key (mesh-type 'polyhedron))
-  (let ((polyh (refine-mesh (make-cube side :mesh-type mesh-type) subdiv-levels))
-        (radius (/ side 2)))
-    (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
-    (compute-face-normals polyh)
-    (compute-point-normals polyh)
-    polyh))

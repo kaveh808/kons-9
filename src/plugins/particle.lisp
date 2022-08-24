@@ -232,7 +232,7 @@
   (let ((visible-points '()))
     (doarray-if (i ptcl #'is-alive? (particles p-sys))
                 (push (pos ptcl) visible-points))
-    (3d-draw-points (coerce visible-points 'array))))
+    (3d-draw-points (make-array (length visible-points) :initial-contents visible-points))))
 
 ;; (defmethod draw-wireframe-SAV ((p-sys particle-system))
 ;;   (with-accessors ((trail draw-trails))
@@ -298,12 +298,13 @@
         (dotimes (i (length (faces p-sys)))
           (let ((curve (reverse (face-points p-sys i))))
             (setf points (append curve points))))) ;use all points of face
-    (coerce points 'array)))
+    (make-array (length points) :initial-contents points)))
 
 (defmethod source-directions ((p-sys particle-system))
   (let ((tangents #()))
     (dotimes (i (length (faces p-sys)))
-      (let ((curve (coerce (reverse (face-points p-sys i)) 'array)))
+      (let* ((fp-reversed (reverse (face-points p-sys i)))
+            (curve (make-array (length fp-reversed) :initial-contents fp-reversed)))
         (setf tangents (concatenate 'vector (curve-tangents-aux curve nil) tangents))))
         ;; (setf tangents (append (curve-tangents-aux curve nil) tangents))))
     tangents))
