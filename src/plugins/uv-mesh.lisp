@@ -33,13 +33,15 @@
   (setf (uv-point-array mesh) (make-array (list (u-dim mesh) (v-dim mesh)))))
 
 (defmethod set-point-colors-by-uv ((mesh uv-mesh) color-fn)
-  (allocate-point-colors mesh)
-  (dotimes (u (u-dim mesh))
-    (let ((u0 (tween u 0.0 (1- (u-dim mesh)))))
-      (dotimes (v (v-dim mesh))
-        (let ((v0 (tween v 0.0 (1- (v-dim mesh)))))
-          (setf (aref (point-colors mesh) (uv-mesh-1d-ref mesh  u v))
-                (funcall color-fn u0 v0)))))))
+  (when (> (length (points mesh)) 0)    ;need this because sweep-mesh seems to return
+                                        ;some degenerate meshes with no points (see BUG in demo.lisp)
+    (allocate-point-colors mesh)
+    (dotimes (u (u-dim mesh))
+      (let ((u0 (tween u 0.0 (1- (u-dim mesh)))))
+        (dotimes (v (v-dim mesh))
+          (let ((v0 (tween v 0.0 (1- (v-dim mesh)))))
+            (setf (aref (point-colors mesh) (uv-mesh-1d-ref mesh  u v))
+                  (funcall color-fn u0 v0))))))))
 
 (defmethod set-point-colors-by-uv ((group group) color-fn)
   (dolist (child (children group))

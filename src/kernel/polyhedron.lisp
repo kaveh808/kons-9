@@ -56,7 +56,7 @@
   (p-center (face-points polyh face)))
 
 (defmethod face-centers ((polyh polyhedron))
-  (map 'array #'(lambda (f) (face-center polyh f)) (faces polyh)))
+  (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
 (defun triangle-normal (p0 p1 p2)
   (p-normalize (p-cross (p-from-to p0 p1) (p-from-to p1 p2))))
@@ -128,7 +128,7 @@
 
 (defmethod allocate-point-colors ((polyh polyhedron))
   (setf (point-colors polyh) (make-array (length (points polyh))
-                                              :initial-element *shading-color*)))
+                                         :initial-element *shading-color*)))
   
 (defmethod reset-point-colors ((polyh polyhedron))
   (allocate-point-colors polyh)

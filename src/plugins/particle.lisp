@@ -234,31 +234,6 @@
                 (push (pos ptcl) visible-points))
     (3d-draw-points (make-array (length visible-points) :initial-contents visible-points))))
 
-;; (defmethod draw-wireframe-SAV ((p-sys particle-system))
-;;   (with-accessors ((trail draw-trails))
-;;       p-sys
-;;     (with-gl-disable #$GL_LIGHTING
-;;       (gl-set-fg-color)
-;;       (dotimes (f (length (faces p-sys)))
-;;         (#_glBegin #$GL_LINE_STRIP)
-;;         (let ((count 0))
-;;           (dolist (pref (aref (faces p-sys) f))
-;;             (when (or (< trail 0) (< count trail))
-;;               (let ((p (aref (points p-sys) pref)))
-;;                 (#_glVertex3f (x p) (y p) (z p)))
-;;               (incf count))))
-;;         (#_glEnd)))))
-
-;; (defmethod draw-live-points-SAV ((p-sys particle-system))
-;;   (with-gl-disable #$GL_LIGHTING
-;;     (gl-set-fg-color)
-;;     (#_glPointSize 9.0)
-;;     (#_glBegin #$GL_POINTS)
-;;     (doarray-if (i ptcl #'is-alive? (particles p-sys))
-;;       (let ((p (pos ptcl)))
-;;         (#_glVertex3f (x p) (y p) (z p))))
-;;     (#_glEnd)))
-
 (defmethod draw-points ((p-sys particle-system))
   (if (draw-live-points-only? p-sys)
       (draw-live-points p-sys)
