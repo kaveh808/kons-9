@@ -50,9 +50,9 @@
   (reset-transform (transform self))
   self)
 
-(defmethod bounds-and-center ((self shape))
-  (warn "Object ~a does not have BOUNDS-AND-CENTER defined. Using default values." self)
-  (values nil nil nil))
+(defmethod get-bounds ((self shape))
+  (warn "Shape ~a does not have GET-BOUNDS defined. Using default bounds values." self)
+  (values (p! -1 -1 -1) (p! 1 1 1)))
 
 (defmethod center-at-origin ((self shape))
   (multiple-value-bind (bounds-lo bounds-hi center)
@@ -62,9 +62,8 @@
       (translate-to self (p-negate (p* center (scale (transform self))))))))
 
 (defmethod scale-to-size ((self shape) max-size)
-  (multiple-value-bind (bounds-lo bounds-hi center)
-      (bounds-and-center self)
-    (declare (ignore center))
+  (multiple-value-bind (bounds-lo bounds-hi)
+      (get-bounds self)
     (when (and bounds-lo bounds-hi)
       (let* ((size (max (abs (- (x bounds-hi) (x bounds-lo)))
                         (abs (- (y bounds-hi) (y bounds-lo)))

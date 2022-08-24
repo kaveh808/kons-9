@@ -243,19 +243,30 @@
       (gl:vertex (x p) (y p) (z p)))
     (gl:end)))
 
-(defun 3d-draw-points (points)
+(defun 3d-draw-points (points &key (highlight? nil))
   (with-gl-disable :lighting
-    (gl-set-fg-color)
-    (gl:point-size 9.0)
+    (if highlight?
+        (progn
+          (gl-set-sel-color)
+          (gl:point-size 17.0))
+        (progn
+          (gl-set-fg-color)
+          (gl:point-size 9.0)))
     (gl:begin :points)
     (doarray (i p points)
       (gl:vertex (x p) (y p) (z p)))
     (gl:end)))
 
-(defun 3d-draw-lines (points)
+(defun 3d-draw-lines (points &key (highlight? nil))
   (with-gl-disable :lighting
     (gl-set-fg-color)
-    (gl:line-width 3.0)
+    (if highlight?
+        (progn
+          (gl-set-sel-color)
+          (gl:line-width 7.0))
+        (progn
+          (gl-set-fg-color)
+          (gl:line-width 3.0)))
     (gl:begin :lines)
     (dolist (p points)
       (gl:vertex (x p) (y p) (z p)))
@@ -296,6 +307,35 @@
         (let ((p (aref points pref)))
           (gl:vertex (x p) (y p) (z p))))
       (gl:end))))
+
+(defun 3d-draw-highlighted-polygons (points faces face-normals point-normals faces-highlighted)
+  (if *do-lighting?*
+      (gl:enable :lighting)
+      (gl:disable :lighting))
+  (if *do-smooth-shading?*
+      (gl:shade-model :smooth)
+      (gl:shade-model :flat))
+  (gl:polygon-mode :front-and-back :fill)
+  (with-gl-enable :rescale-normal
+    (3d-draw-highlighted-polygons-aux points faces face-normals point-normals faces-highlighted)))
+
+(defmethod 3d-draw-highlighted-polygons-aux (points faces face-normals point-normals faces-highlighted)
+  (with-gl-enable :color-material
+    (gl:color-material :front-and-back :diffuse)
+    (dotimes (f (length faces))
+      (when (aref faces-highlighted f)
+        (gl:begin :polygon)
+        (when (not *do-smooth-shading?*)
+          (let ((n (aref face-normals f)))
+            (gl:normal (x n) (y n) (z n))))
+        (dolist (pref (aref faces f))
+          (gl:color (c-red *sel-color*) (c-green *sel-color*) (c-blue *sel-color*))
+          (when *do-smooth-shading?*
+            (let ((n (aref point-normals pref)))
+              (gl:normal (x n) (y n) (z n))))
+          (let ((p (aref points pref)))
+            (gl:vertex (x p) (y p) (z p))))
+      (gl:end)))))
 
 (defun 3d-draw-wireframe-polygons (points faces &key (closed? t))
   (gl:polygon-mode :front-and-back :line)

@@ -53,13 +53,12 @@
                                             (translate-to (funcall shape-fn) p))
                                           (coerce points 'list))))
 
-(defmethod bounds-and-center ((self group))
+(defmethod get-bounds ((self group))
   (let ((bounds-lo nil)
         (bounds-hi nil))
     (dolist (child (children self))
-      (multiple-value-bind (lo hi center)
-          (bounds-and-center child)
-        (declare (ignore center))
+      (multiple-value-bind (lo hi)
+          (get-bounds child)
         (when lo
           (setf bounds-lo (if bounds-lo
                               (p-min bounds-lo lo)
@@ -68,9 +67,7 @@
           (setf bounds-hi (if bounds-hi
                               (p-max bounds-hi hi)
                               hi)))))
-    (values bounds-lo bounds-hi (if (and bounds-lo bounds-hi)
-                                    (p-average bounds-lo bounds-hi)
-                                    nil))))
+    (values bounds-lo bounds-hi)))
 
 (defmethod set-point-colors-by-xyz ((group group) color-fn)
   (dolist (child (children group))

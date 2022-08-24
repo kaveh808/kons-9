@@ -48,18 +48,18 @@
                        (translate-to (make-dodecahedron 2.0) (p!  2.5 0 0))
                        (translate-to (make-icosahedron  2.0) (p! 5 0 0)))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (translate-to (refine-mesh (make-cube 2.0) 3) (p! 0 1 0))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (translate-to (make-cube-sphere 2.0 3) (p! 0 1 0))))
 
 ;;; polyhedron triangulation
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))))
 
 ;;; generate-point-cloud
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (generate-point-cloud (triangulate-polyhedron (make-cut-cube-polyhedron 2.0))
                                            40)))
 
@@ -211,7 +211,7 @@
       :test #'is-leaf?)))
 
 ;;; evaluate robot arm and functions above
-(with-clear-scene
+(progn
   (add-shape *scene* *waist*)
   (reset-pose)
   (add-animator *scene*
@@ -296,9 +296,11 @@
          (mesh (sweep-extrude-uv-mesh prof path :twist (* 2 pi) :taper 0.0)))
     (add-shape *scene* mesh)))
 ;;; assign point colors by uv
-(set-point-colors-by-uv (first (shapes *scene*)) (lambda (u v) (c-rainbow v)))
+(set-point-colors-by-uv (first (shapes *scene*))
+                        (lambda (u v) (declare (ignore u)) (c-rainbow v)))
 ;;; assign point colors by xyz
-(set-point-colors-by-xyz (first (shapes *scene*)) (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0))))
+(set-point-colors-by-xyz (first (shapes *scene*))
+                         (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0))))
 
 ;;; function-extrude-uv-mesh --------------------------------------------------
 (with-clear-scene
@@ -385,6 +387,7 @@
   (let ((mesh (make-superquadric 16 16 2.0 1 0.1)))
     (add-shape *scene* mesh)
     (translate-by mesh (p! 0 1 0))))
+
 ;;; modify slots and shape will change due to prcedural-mixin setup
 (setf (e1 (first (shapes *scene*))) 0.5)
 
@@ -401,39 +404,42 @@
                                             (setf (e1 mesh) 1.0)
                                             (setf (e2 mesh) 1.0))
                                  :update-fn (lambda ()
-                                              (let ((p (p-normalize (noise-gradient (p! (+ (current-time *scene*) 0.123)
-                                                                                        (+ (current-time *scene*) 0.347)
-                                                                                        (+ (current-time *scene*) 0.965))))))
+                                              (let ((p (p-normalize
+                                                        (noise-gradient
+                                                         (p! (+ (current-time *scene*) 0.123)
+                                                             (+ (current-time *scene*) 0.347)
+                                                             (+ (current-time *scene*) 0.965))))))
                                               (setf (e1 mesh) (* (abs (x p)) 2.0))
                                               (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
-
 
 ;;; parametric-curve -----------------------------------------------------------
 
 (with-clear-scene
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
 
-(with-clear-and-redraw
+(with-clear-scene
   (add-shape *scene* (make-butterfly-curve-polygon 1024)))
 
-;;; half-edge-mesh -------------------------------------------------------------
-(with-clear-and-redraw
+;;; poly-mesh ------------------------------------------------------------------
+(with-clear-scene
   (add-shape *scene* (translate-by (make-cube 2.0 :mesh-type 'poly-mesh) (p! 0 1 0))))
 ;;; select vertices
-(with-redraw
+(progn
   (select-vertex (first (shapes *scene*)) 7)
   (select-vertex (first (shapes *scene*)) 6))
 ;;; select edges
-(with-redraw
+(progn
   (select-edge (first (shapes *scene*)) 11)
   (select-edge (first (shapes *scene*)) 10))
 ;;; select faces
-(with-redraw
+(progn
   (select-face (first (shapes *scene*)) 2)
   (select-face (first (shapes *scene*)) 5))
 
+;;; shapes ---------------------------------------------------------------------
+
 ;;; display bounds, face-normals, and axis
-(with-clear-and-redraw
+(with-clear-scene
     (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
           (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
           (icos (make-icosahedron 2.0)))
@@ -445,26 +451,26 @@
 
 ;;; l-system ------------------------------------------------------------------
 ;;; uncomment an l-system to test
-(with-clear-and-redraw
+(with-clear-scene
   (let ((l-sys
           ;; (make-koch-curve-l-system)
           ;; (make-binary-tree-l-system)
           ;; (make-serpinski-triangle-l-system)
           ;; (make-serpinski-arrowhead-l-system)
-           (make-dragon-curve-l-system)
-          ;; (make-fractal-plant-l-system)
+          ;; (make-dragon-curve-l-system)
+           (make-fractal-plant-l-system)
           ))
     (add-shape *scene* l-sys)
-    (add-animator *scene* l-sys)))
-;;; press space key in 3D view to generate new l-system levels
-;;; resize shape to convenient size and center shape at origin
-(with-redraw
-  (scale-to-size (first (shapes *scene*)) 10.0)
-  (center-at-origin (first (shapes *scene*))))
-
+    (add-animator *scene* l-sys)
+    (update-scene *scene* 5)
+    ;; resize shape to convenient size and center shape at origin
+    (scale-to-size (first (shapes *scene*)) 5.0)
+    (center-at-origin (first (shapes *scene*)))))
+;;; WARNING -- press space key in 3D view to generate new l-system levels hangs for some of these
+;;; need to investigate
 
 ;;; particle-system ------------------------------------------------------------
-(with-clear-and-redraw
+(with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
                                      (p! 0 .2 0) 10 -1 'particle
                                      :update-angle (range-float (/ pi 8) (/ pi 16))
@@ -474,7 +480,7 @@
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system force-field collisions
-(with-clear-and-redraw
+(with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
                                      (p-rand .2) 2 -1 'dynamic-particle
                                      :life-span 20
@@ -486,13 +492,6 @@
 ;;; hold down space key in 3D view to run animation
 
 ;;; xxx -- updated to here =====================================================
-
-;; (with-clear-and-redraw
-;;   (add-shape *scene* (import-obj "~/Downloads/cessna.obj")))
-;; (with-clear-and-redraw
-;;   (add-shape *scene* (import-obj "~/Downloads/shuttle.obj")))
-;; (with-clear-and-redraw
-;;   (add-shape *scene* (import-obj "~/Downloads/minicooper.obj")))
 
 ;;; ---------------------------------------------------------------------
 ;;; end of code that works reliably on macos in sbcl

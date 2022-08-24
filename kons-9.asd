@@ -47,6 +47,7 @@
      (:file "src/plugins/manager-group")
      (:file "src/plugins/particle")
      (:file "src/plugins/l-system")
+     (:file "src/plugins/poly-mesh")
      (:file "src/plugins/usd")
      (:file "src/plugins/obj")
      (:file "src/graphics/glfw/minimal-ui")))

@@ -74,7 +74,7 @@ h or ?: print this help message~%"))
     (case key
       (:h (print-scene-view-help))
       (:? (print-scene-view-help))      ;TODO -- not working, test for slash & shift?
-      (:a (when scene (setf (current-frame scene) 0)))
+      (:a (when scene (init-scene scene)))
       (:n (clear-scene scene))
       (:grave-accent (setf *do-lighting?* (not *do-lighting?*)))
       (:1 (setf *display-filled?* (not *display-filled?*)))

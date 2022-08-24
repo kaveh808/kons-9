@@ -71,3 +71,17 @@ NOTE: This won't work with the existing procedural mixin set up, because
 
 ;;; parametric-curve shape functions ----------------------------------------------------
 
+;;; just a fun mathematical curve
+(defun make-butterfly-curve-polygon (num-segments)
+  (let ((points (make-array num-segments))
+        (angle-delta (/ (* 12 pi) num-segments)))
+    (dotimes (i num-segments)
+      (let* ((angle (* i angle-delta))
+             (e 2.71828)
+             (radius (- (expt e (cos angle)) (* 2 (cos (* 4 angle))) (expt (sin (/ angle 12)) 5))))
+        (setf (aref points i)
+              (p! (* (sin angle) radius)
+                  (* (cos angle) radius)
+                  0))))
+    (make-polygon points)))
+

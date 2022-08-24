@@ -110,11 +110,16 @@
 (defmethod draw ((scene scene))
   (mapc #'draw (shapes scene)))
   
-(defmethod update-scene ((scene scene))
+(defmethod init-scene ((scene scene))
+  (setf (current-frame scene) 0)
+  (mapc #'init-animator (animators scene)))
+
+(defmethod update-scene ((scene scene) &optional (num-frames 1))
   ;; (when (not (init-done? scene))
   ;;   (init-scene scene)
   ;;   (setf (init-done? scene) t))
-  (incf (current-frame scene))
-  (mapc #'update-animator (animators scene)))
+  (dotimes (i num-frames)
+    (incf (current-frame scene))
+    (mapc #'update-animator (animators scene))))
 
 
