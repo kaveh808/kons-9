@@ -260,9 +260,8 @@
              (p2 (elt face-points 2))
              (barycentric-points (generate-face-barycentric-points p0 p1 p2 (* area density))))
         (dolist (p barycentric-points)
-                                        ;          (vector-push-extend p points))))
           (push p points))))
-    (apply #'make-point-cloud points)))
+    (make-point-cloud (coerce points 'vector))))
 
 (defun face-triangle-refs (prefs)
   (cond ((< (length prefs) 3)
