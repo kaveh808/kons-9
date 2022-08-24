@@ -41,12 +41,7 @@ Load the system:
 
     (ql:quickload "kons-9")
 
-Run the code:
-
-    (in-package :kons-9)
-    (run)
-
-You should see a graphics window appear.
+Run the code at the end of the kons-9.asd file to open a window.
 
 Type 'h' in the window to see the available key bindings.
 
