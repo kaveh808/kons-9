@@ -52,8 +52,8 @@
 (defun make-sweep-mesh (profile-curve-generator profile-curve-index path-curve-generator path-curve-index
                         &rest initargs)
   (apply #'make-instance 'sweep-mesh :profile-curve-generator profile-curve-generator
-                                       :profile-curve-index profile-curve-index
-                                       :path-curve-generator path-curve-generator
-                                       :path-curve-index path-curve-index
-                                       initargs))
+                                     :profile-curve-index profile-curve-index
+                                     :path-curve-generator path-curve-generator
+                                     :path-curve-index path-curve-index
+                                     initargs))
 

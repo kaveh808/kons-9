@@ -165,7 +165,6 @@ h or ?: print this help message~%"))
                (incf *cam-x-rot* dy)
                (incf *cam-y-rot* dx)))))))
 
-;; TODO resize window and do aspect ratio
 (glfw:def-window-size-callback window-size-callback (window w h)
   ;; (format t "window-size-callback: win: ~a, w: ~a, h: ~a ~%" window w h)
   ;; (finish-output)

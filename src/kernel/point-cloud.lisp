@@ -8,13 +8,6 @@
 (defmethod copy-instance-data :after ((dst point-cloud) (src point-cloud))
   (setf (points dst) (points src))) ;;; TODO - deep copy arrays
 
-(defmethod draw ((p-cloud point-cloud))
-  (when *display-points?*
-    (draw-points p-cloud)))
-
-(defmethod draw-points ((p-cloud point-cloud))
-  (3d-draw-points (points p-cloud)))
-
 (defmethod get-bounds ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
     (warn "Shape ~a does not have any points. Using default bounds values." self)

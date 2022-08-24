@@ -34,6 +34,7 @@
      (:file "src/kernel/procedural")
      (:file "src/kernel/animator")
      (:file "src/kernel/scene")
+     (:file "src/kernel/scene-draw")
      (:file "src/kernel/protocol")
      (:file "src/kernel/main")
      (:file "src/plugins/parametric-curve")

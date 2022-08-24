@@ -206,7 +206,7 @@
 ;;; for now sweep 0-th profile along all paths
 (defmethod sweep-extrude (profiles paths &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((meshes '())
-        (profile-curve (coerce (elt (source-curves profiles) 0) 'list)) ;TODO -- fix this...
+        (profile-curve (coerce (elt (source-curves profiles) 0) 'list))
         (profile-closed (elt (source-curves-closed profiles) 0))
         (path-curves (source-curves paths))
         (path-closed (source-curves-closed paths)))

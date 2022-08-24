@@ -491,42 +491,34 @@
     (add-animator *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
-;;; xxx -- updated to here =====================================================
-
-;;; ---------------------------------------------------------------------
-;;; end of code that works reliably on macos in sbcl
-;;; ---------------------------------------------------------------------
-
-
-
 ;;; procedural-mixin circle ----------------------------------------------------
 (with-clear-scene
   (let ((shape (make-instance 'procedural-circle-polygon :diameter 4.0 :num-points 8)))
     (add-shape *scene* shape)))
+
 ;;; modify slots and shape will change
-(with-redraw
-  (setf (num-points (first (shapes *scene*))) 32))
-(with-redraw
-  (setf (diameter (first (shapes *scene*))) 1.0))
+(setf (num-points (first (shapes *scene*))) 32)
+
+(setf (diameter (first (shapes *scene*))) 1.0)
 
 ;;; procedural-mixin sine curve ------------------------------------------------
 (with-clear-scene
   (let ((shape (make-instance 'procedural-sine-curve-polygon :num-points 64 :frequency 2 :period 720
                                                              :x-scale 4 :y-scale 2)))
     (add-shape *scene* shape)))
+
 ;;; modify slots and shape will change
-(with-redraw
-  (setf (frequency (first (shapes *scene*))) 1.0))
-(with-redraw
-  (setf (num-points (first (shapes *scene*))) 16))
+(setf (frequency (first (shapes *scene*))) 1.0)
+
+(setf (num-points (first (shapes *scene*))) 16)
 
 ;;; sweep-mesh dependency-node-mixin -------------------------------------------
-(progn
+(with-clear-scene
   (defparameter *profile* (make-procedural-circle-polygon 0.8 4))
   (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
-  (with-clear-scene
-    (add-shape *scene* *mesh*)))
+  (add-shape *scene* *mesh*))
+
 ;;; modify slots and shape will change
 (with-redraw
   (setf (num-points *profile*) 6))
@@ -535,16 +527,21 @@
 (with-redraw
   (setf (taper *mesh*) 1.0))
 
+;;; xxx -- updated to here =====================================================
+
+;;; ---------------------------------------------------------------------
+;;; end of code that works reliably on macos in sbcl
+;;; ---------------------------------------------------------------------
+
 ;;; sweep-mesh dependency-node-mixin animator ----------------------------------
-(progn
+(with-clear-scene
   (defparameter *profile* (make-procedural-circle-polygon 1.2 4))
   (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
-  (with-clear-scene
-    (let ((anim (make-instance 'animator :init-fn (lambda (anim) (setf (num-points *profile*) 4) nil)
-                                         :update-fn (lambda (anim) (incf (num-points *profile*))))))
-      (add-animator *scene* anim)
-      (add-shape *scene* *mesh*))))
+  (let ((anim (make-instance 'animator :init-fn (lambda (anim) (setf (num-points *profile*) 4) nil)
+                                       :update-fn (lambda (anim) (incf (num-points *profile*))))))
+    (add-animator *scene* anim)
+    (add-shape *scene* *mesh*)))
 ;;; hold down space key in 3D view to run animation
 
 ;;; dynamics-animator ----------------------------------------------------------
