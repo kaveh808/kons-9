@@ -171,6 +171,7 @@ h or ?: print this help message~%"))
   (setf *window-size* (list w h))
   (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
   ;; redraw while being resized
+  #-:darwin(gl:viewport 0 0 w h)
   (draw-scene-view *default-scene-view*)
   (glfw:swap-buffers)
   (update-window-title window))
