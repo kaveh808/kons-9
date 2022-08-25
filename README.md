@@ -41,7 +41,10 @@ Load the system:
 
     (ql:quickload "kons-9")
 
-Run the code at the end of the kons-9.asd file to open a window.
+Run the following code to open a 3D view window:
+
+    (in-package :kons-9)
+    (run)
 
 Type 'h' in the window to see the available key bindings.
 
