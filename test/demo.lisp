@@ -289,6 +289,37 @@
                                                 (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
                                                 40)))
 
+;;; transform-extrude-uv-mesh rotate-pivot -------------------------------------
+(with-clear-scene
+  (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
+    (setf (pivot (rotate xform)) (p! 1 0 0))
+;;;    (setf (operator-order xform) :trs) ;comment out to test effect of operator order
+    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+                                                  xform
+                                                  40))))
+
+;;; transform-extrude-uv-mesh scale-pivot -------------------------------------
+(with-clear-scene
+  (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
+    (setf (pivot (scale xform)) (p! 1 2 0))
+    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+                                                  xform
+                                                  40))))
+
+;;; transform-extrude-uv-mesh generalized-transform ----------------------------
+;;; should exactly match previous case
+(with-clear-scene
+  (let ((xform (make-instance 'generalized-transform
+                              :operators
+                              (list (make-instance 'translate-operator :offset (p! 0 0 4))
+                                    (make-instance 'euler-rotate-operator :angles (p! 0 0 360))
+                                    (make-instance 'scale-operator
+                                                   :scaling (p! 2 .2 1)
+                                                   :pivot (p! 1 2 0))))))
+    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+                                                  xform
+                                                  40))))
+
 ;;; sweep-extrude-uv-mesh ------------------------------------------------------
 (with-clear-scene
   (let* ((path (make-sine-curve-polygon 360 1 4 2 64))
