@@ -42,15 +42,32 @@
          (list 0.0       0.0       1.0       0.0)
          (list (x point) (y point) (z point) 1.0))))
                           
-(defun make-rotation-matrix (point &optional (center nil))
+(defun make-rotation-matrix (point order &optional (pivot nil))
   (let ((rot-matrix
-         (matrix-multiply-n (make-x-rotation-matrix (x point))
-                            (make-y-rotation-matrix (y point))
-                            (make-z-rotation-matrix (z point)))))
-    (if center
-      (matrix-multiply-n (make-translation-matrix (p-negate center))
+          (case order
+            (:xyz (matrix-multiply-n (make-x-rotation-matrix (x point))
+                                     (make-y-rotation-matrix (y point))
+                                     (make-z-rotation-matrix (z point))))
+            (:xzy (matrix-multiply-n (make-x-rotation-matrix (x point))
+                                     (make-z-rotation-matrix (z point))
+                                     (make-y-rotation-matrix (y point))))
+            (:yxz (matrix-multiply-n (make-y-rotation-matrix (y point))
+                                     (make-x-rotation-matrix (x point))
+                                     (make-z-rotation-matrix (z point))))
+            (:yzx (matrix-multiply-n (make-y-rotation-matrix (y point))
+                                     (make-z-rotation-matrix (z point))
+                                     (make-x-rotation-matrix (x point))))
+            (:zxy (matrix-multiply-n (make-z-rotation-matrix (y point))
+                                     (make-x-rotation-matrix (x point))
+                                     (make-z-rotation-matrix (z point))))
+            (:zyx (matrix-multiply-n (make-z-rotation-matrix (z point))
+                                     (make-y-rotation-matrix (y point))
+                                     (make-x-rotation-matrix (x point))))
+            (otherwise (error "Unknown rotate order ~a in MAKE-ROTATION-MATRIX" order)))))
+    (if pivot
+      (matrix-multiply-n (make-translation-matrix (p-negate pivot))
                          rot-matrix
-                         (make-translation-matrix center))
+                         (make-translation-matrix pivot))
       rot-matrix)))
 
 (defun make-x-rotation-matrix (angle)
@@ -80,7 +97,7 @@
            (list 0.0   0.0 1.0 0.0)
            (list 0.0   0.0 0.0 1.0)))))
 
-(defun make-axis-rotation-matrix (angle axis &optional (center nil))
+(defun make-axis-rotation-matrix (angle axis &optional (pivot nil))
   (let* ((s (sin angle))
          (c (cos angle))
          (c1 (- 1 c))
@@ -106,23 +123,23 @@
 		       (list (- xyc1 sz)   (+ y2 cy2)    (+ yzc1 sx)   0.0)
 		       (list (+ xzc1 sy)   (- yzc1 sx)   (+ z2 cz2)    0.0)
 		       (list 0.0           0.0           0.0           1.0)))))
-    (if center
-	(matrix-multiply-n (make-translation-matrix (p-negate center))
+    (if pivot
+	(matrix-multiply-n (make-translation-matrix (p-negate pivot))
 			   rot-matrix
-			   (make-translation-matrix center))
+			   (make-translation-matrix pivot))
 	rot-matrix)))
 
 
-(defun make-scale-matrix (point &optional (center nil))
+(defun make-scale-matrix (point &optional (pivot nil))
   (let ((mtx (make-matrix-with
 	      (list (list (x point) 0.0       0.0       0.0)
 		    (list 0.0       (y point) 0.0       0.0)
 		    (list 0.0       0.0       (z point) 0.0)
 		    (list 0.0       0.0       0.0       1.0)))))
-    (if center
-	(matrix-multiply-n (make-translation-matrix (p-negate center))
+    (if pivot
+	(matrix-multiply-n (make-translation-matrix (p-negate pivot))
 			   mtx
-			   (make-translation-matrix center))
+			   (make-translation-matrix pivot))
 	mtx)))
 
 (defun make-shear-matrix (point)

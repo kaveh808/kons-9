@@ -70,7 +70,7 @@
 (defmethod update-animator ((anim dynamics-animator))
   (if (null (shape anim))
     (error "DYNAMICS-ANIMATOR ~a HAS NO SHAPE.~%" anim)
-    (let* ((p0 (translate (transform (shape anim))))
+    (let* ((p0 (offset (translate (transform (shape anim)))))
            (force (if (force-fields anim) ;compute force
                       (reduce #'p+ (mapcar #'(lambda (field) (field-value field p0
                                                                           (current-time *scene*)))
@@ -89,7 +89,6 @@
 	    (setf (x vel) (* friction (x vel)))
             (setf (y vel) (* elast (- (y vel))))
             (setf (z vel) (* friction (z vel))))))
-            
 
       ;; update state
       (setf (velocity anim) vel)

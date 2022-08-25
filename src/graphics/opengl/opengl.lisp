@@ -162,13 +162,9 @@
 
 ;;; 3d display =================================================================
 
-(defun 3d-push-matrix (translate rotate scale)
+(defun 3d-push-matrix (matrix)
   (gl:push-matrix)
-  (gl:translate (x translate) (y translate) (z translate))
-  (gl:rotate (x rotate) 1.0 0.0 0.0)
-  (gl:rotate (y rotate) 0.0 1.0 0.0)
-  (gl:rotate (z rotate) 0.0 0.0 1.0)
-  (gl:scale (x scale) (y scale) (z scale)))
+  (gl:mult-matrix (matrix->vector matrix))) ;is order correct?
 
 (defun 3d-draw-marker (size)
   (gl:color 1.0 1.0 0.0)

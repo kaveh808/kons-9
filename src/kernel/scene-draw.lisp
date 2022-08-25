@@ -13,7 +13,7 @@
   ;; push matrix and do transform operations before drawing
   (:method :before ((shape shape))
     (let ((xform (transform shape)))
-      (3d-push-matrix (translate xform) (rotate xform) (scale xform))))
+      (3d-push-matrix (transform-matrix xform))))
 
   ;; draw a marker as a default
   (:method ((shape shape))

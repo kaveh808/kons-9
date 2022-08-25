@@ -257,7 +257,7 @@
                                         :shape dodecahedron
                                         :init-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
                                         :update-fn (lambda (anim)
-                                                     (let ((target-y (y (translate (transform (anim-data anim :target))))))
+                                                     (let ((target-y (y (offset (translate (transform (anim-data anim :target)))))))
                                                        (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
                                         :data `((:target . ,tetrahedron))))))
     
@@ -280,13 +280,13 @@
 ;;; transform-extrude-uv-mesh --------------------------------------------------
 (with-clear-scene
   (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-polygon 2 2 2)
-                                                (make-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
+                                                (make-euler-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
                                                 16)))
 
 ;;; transform-extrude-uv-mesh --------------------------------------------------
 (with-clear-scene
   (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
-                                                (make-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
+                                                (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
                                                 40)))
 
 ;;; sweep-extrude-uv-mesh ------------------------------------------------------
@@ -480,6 +480,7 @@
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system force-field collisions
+;;; TODO -- num of intial particles not working -- always 1
 (with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
                                      (p-rand .2) 2 -1 'dynamic-particle
@@ -654,11 +655,11 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     ))
 ;;; hold down space key in 3D view to run animation
 
-;;; transform-instancer --------------------------------------------------------
+;;; transform-instancer euler-transform ----------------------------------------
 (progn
   (defparameter *instancer*
     (make-transform-instancer (make-cube 1.0)
-                              (make-transform (p! 0 7 0) (p! 0 (* 90 7/8) 0) (p! 1 1 0.2))
+                              (make-euler-transform (p! 0 7 0) (p! 0 90 0) (p! 1 1 0.2))
                               8))
   (with-clear-scene
     (add-shape *scene* *instancer*)))
@@ -668,13 +669,29 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 (setf (num-steps *instancer*) 6)
 
+;;; transform-instancer angle-axis-transform -----------------------------------
+(progn
+  (defparameter *instancer*
+    (make-transform-instancer (make-cube 1.0)
+                              (make-axis-angle-transform (p! 0 7 0) 90 (p! 1 2 3) (p! 1 1 0.2))
+                              8))
+  (with-clear-scene
+    (add-shape *scene* *instancer*)))
+
+;;; change inputs and shape regenerates
+(setf (instance-shape *instancer*) (make-superquadric 16 16 1 .2 .2))
+
+;;; requires call to compute because of limitations of dependency-node-mixin
+(progn
+  (rotate-to (instance-transform *instancer*) 150)
+  (compute-procedural-node *instancer*))
+
 ;;; uv-mesh transform-instancer 1 ----------------------------------------------
 (with-clear-scene
   (let* ((path (make-procedural-sine-curve-polygon 360 1 4 1 32))
          (prof (make-procedural-circle-polygon 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0)))
-         (transform (make-instance 'transform
-                                   :translate (p! 0 0 0) :rotate (p! 0 (* 360 7/8) 0) :scale (p! 1 1 1))))
+         (transform (make-euler-transform (p! 0 0 0) (p! 0 (* 360 7/8) 0) (p! 1 1 1))))
     (add-shape *scene* (make-transform-instancer mesh transform 8))))
 
 ;;; change inputs and shape regenerates
@@ -688,9 +705,9 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     (set-point-colors-by-uv mesh (lambda (u v)
                                    (declare (ignore u))
                                    (c-rainbow v)))
-    (let* ((transform-1 (make-instance 'transform :rotate (p! 0 (* 360 7/8) 0)))
+    (let* ((transform-1 (make-euler-transform (p! 0 0 0) (p! 0 (* 360 7/8) 0) (p! 1 1 1)))
            (group-1 (make-transform-instancer mesh transform-1 8))
-           (transform-2 (make-instance 'transform :translate (p! 0 6 0) :rotate (p! 0 45 0)))
+           (transform-2 (make-euler-transform (p! 0 6 0) (p! 0 45 0) (p! .2 .2 .2)))
            (group-2 (make-transform-instancer group-1 transform-2 6)))
       (add-shape *scene* group-2))))
 
@@ -803,7 +820,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 ;;; make new particle-system generate from paths of existing particle-system
 (progn
-  (clear-animators *scene*)
+  (clear-animators *scene*)             ;remove exsting particle animator
   (let* ((p-gen (first (shapes *scene*)))
          (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))

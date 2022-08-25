@@ -3,7 +3,7 @@
 ;;;; shape =====================================================================
 
 (defclass shape (scene-item)
-  ((transform :accessor transform :initarg :transform :initform (make-instance 'transform))
+  ((transform :accessor transform :initarg :transform :initform (make-instance 'euler-transform))
    (show-axis :accessor show-axis :initarg :show-axis :initform nil) ;nil or length
    (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
 
@@ -59,7 +59,7 @@
       (get-bounds self)
     (when (and bounds-lo bounds-hi)
       (let ((center (p-average bounds-lo bounds-hi)))
-        (translate-to self (p-negate (p* center (scale (transform self)))))))))
+        (translate-to self (p-negate (p* center (scaling (scale (transform self))))))))))
 
 (defmethod scale-to-size ((self shape) max-size)
   (multiple-value-bind (bounds-lo bounds-hi)

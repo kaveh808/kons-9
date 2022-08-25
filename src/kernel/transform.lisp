@@ -1,77 +1,219 @@
 (in-package #:kons-9)
 
-;;;; transform ==========================================================
+;;;; transform-operator classes ================================================
 
+(defclass transform-operator ()
+  ())
+
+(defclass translate-operator ()
+  ((offset :accessor offset :initarg :offset :initform (p! 0.0 0.0 0.0))))
+
+(defmethod transform-matrix ((self translate-operator) &optional (factor 1.0))
+  (make-translation-matrix (p-lerp factor (p! 0.0 0.0 0.0) (offset self))))
+
+;; TODO: rotate order, rotate pivot
+(defclass euler-rotate-operator ()
+  ((angles :accessor angles :initarg :angles :initform (p! 0.0 0.0 0.0)) ;degrees
+   ;; :xyz :xzy :yxz :yzx :zxy :zyx
+   (rotate-order :accessor rotate-order :initarg :rotate-order :initform :xyz)
+   (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
+
+
+(defmethod transform-matrix ((self euler-rotate-operator) &optional (factor 1.0))
+  (make-rotation-matrix (p-radians (p-lerp factor (p! 0.0 0.0 0.0) (angles self))) ;convert to radians
+                        (rotate-order self)
+                        (pivot self)))
+
+(defclass angle-axis-rotate-operator ()
+  ((angle :accessor angle :initarg :angle :initform 0.0) ;degrees
+   (axis :accessor axis :initarg :axis :initform (p! 0.0 0.0 1.0))
+   (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
+
+(defmethod transform-matrix ((self angle-axis-rotate-operator) &optional (factor 1.0))
+  (make-axis-rotation-matrix (radians (lerp factor 0.0 (angle self))) ;convert to radians
+                             (axis self)
+                             (pivot self)))
+
+;; TODO: scale pivot
+(defclass scale-operator ()
+  ((scaling :accessor scaling :initarg :scaling :initform (p! 1.0 1.0 1.0))
+   (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
+
+(defmethod transform-matrix ((self scale-operator) &optional (factor 1.0))
+  (make-scale-matrix (p-lerp factor (p! 1.0 1.0 1.0) (scaling self))
+                     (pivot self)))
+
+;;; transform ==================================================================
+
+;;; abstract superclass
 (defclass transform ()
-  ((translate :accessor translate :initarg :translate :initform (p! 0.0 0.0 0.0))
-   (rotate :accessor rotate :initarg :rotate :initform (p! 0.0 0.0 0.0)) ;degrees
-   (scale :accessor scale :initarg :scale :initform (p! 1.0 1.0 1.0))))
+  ;; :trs :tsr :rts :rst :str :srt
+  ((operator-order :accessor operator-order :initarg :operator-order :initform :srt)))
 
-(defmethod copy-instance-data ((dst transform) (src transform))
-  (setf (translate dst) (p-copy (translate src)))
-  (setf (rotate    dst) (p-copy (rotate    src)))
-  (setf (scale     dst) (p-copy (scale     src))))
+;;; euler-transform ============================================================
 
-(defun make-transform (translate rotate scale)
-  (make-instance 'transform :translate translate :rotate rotate :scale scale))
+(defclass euler-transform (transform)
+  ((translate :accessor translate :initarg :translate :initform (make-instance 'translate-operator))
+   (rotate :accessor rotate :initarg :rotate :initform (make-instance 'euler-rotate-operator))
+   (scale :accessor scale :initarg :scale :initform (make-instance 'scale-operator))))
 
-(defmethod duplicate-transform ((self transform))
-  (let ((new-transform (make-instance 'transform)))
-    (copy-instance-data new-transform self)
-    new-transform))
+(defmethod transform-matrix ((self euler-transform) &optional (factor 1.0))
+  (let ((t-mtx (transform-matrix (translate self) factor))
+	(r-mtx (transform-matrix (rotate self) factor))
+	(s-mtx (transform-matrix (scale self) factor)))
+    (case (operator-order self)
+      (:trs (matrix-multiply-n t-mtx r-mtx s-mtx))
+      (:tsr (matrix-multiply-n t-mtx s-mtx r-mtx))
+      (:rts (matrix-multiply-n r-mtx t-mtx s-mtx))
+      (:rst (matrix-multiply-n r-mtx s-mtx t-mtx))
+      (:str (matrix-multiply-n s-mtx t-mtx r-mtx))
+      (:srt (matrix-multiply-n s-mtx r-mtx t-mtx))
+      (otherwise (error "Unknown rotate order ~a in TRANSFORM-MATRIX" (operator-order self))))))
 
-(defmethod translate-by ((self transform) (p point))
-  (setf (translate self) (p+ (translate self) p)))
+(defmethod translate-by ((self euler-transform) (p point))
+  (setf (offset (translate self)) (p+ (offset (translate self)) p)))
 
-(defmethod rotate-by ((self transform) (p point))
-  (setf (rotate self) (p+ (rotate self) p)))
+(defmethod rotate-by ((self euler-transform) (p point))
+  (setf (angles (rotate self)) (p+ (angles (rotate self)) p)))
 
-(defmethod scale-by ((self transform) (p point))
-  (setf (scale self) (p* (scale self) p)))
+(defmethod scale-by ((self euler-transform) (p point))
+  (setf (scaling (scale self)) (p* (scaling (scale self)) p)))
 
-(defmethod scale-by ((self transform) (s number))
-  (setf (scale self) (p* (scale self) (p! s s s))))
+(defmethod scale-by ((self euler-transform) (s number))
+  (setf (scaling (scale self)) (p* (scaling (scale self)) s)))
 
-(defmethod translate-to ((self transform) (p point))
-  (setf (translate self) p))
+(defmethod translate-to ((self euler-transform) (p point))
+  (setf (offset (translate self)) p))
 
-(defmethod rotate-to ((self transform) (p point))
-  (setf (rotate self) p))
+(defmethod rotate-to ((self euler-transform) (p point))
+  (setf (angles (rotate self)) p))
 
-(defmethod scale-to ((self transform) (p point))
-  (setf (scale self) p))
+(defmethod scale-to ((self euler-transform) (p point))
+  (setf (scaling (scale self)) p))
 
-(defmethod scale-to ((self transform) (s number))
-  (setf (scale self) (p! s s s)))
+(defmethod scale-to ((self euler-transform) (s number))
+  (setf (scaling (scale self)) (p! s s s)))
 
-(defmethod reset-transform ((self transform))
-  (setf (translate self) (p! 0.0 0.0 0.0))
-  (setf (rotate self) (p! 0.0 0.0 0.0))
-  (setf (scale self) (p! 1.0 1.0 1.0)))
+(defun make-euler-transform (translate rotate scale)
+  (let ((xform (make-instance 'euler-transform)))
+    (translate-to xform translate)
+    (rotate-to xform rotate)
+    (scale-to xform scale)
+    xform))
 
-(defmethod print-object ((self transform) stream)
+(defmethod reset-transform ((self euler-transform))
+  (setf (offset (translate self)) (p! 0.0 0.0 0.0))
+  (setf (angles (rotate self)) (p! 0.0 0.0 0.0))
+  (setf (scaling (scale self)) (p! 1.0 1.0 1.0)))
+
+(defmethod partial-translate ((self euler-transform) factor)
+  (p-scale (offset (translate self)) factor))
+
+(defmethod partial-rotate ((self euler-transform) factor)
+  (p-scale (angles (rotate self)) factor))
+
+(defmethod partial-scale ((self euler-transform) factor)
+  (p-lerp factor (p! 1.0 1.0 1.0) (scaling (scale self))))
+
+(defmethod partial-copy ((dst euler-transform) (src euler-transform) factor)
+  (setf (offset (translate dst)) (partial-translate src factor))
+  (setf (angles (rotate dst)) (partial-rotate src factor))
+  (setf (scaling (scale dst)) (partial-scale src factor)))
+
+(defmethod print-object ((self euler-transform) stream)
   (print-unreadable-object (self stream :type t :identity t)
     (format stream ":TRANSLATE ~a :ROTATE ~a :SCALE ~a"
-	    (translate self) (rotate self) (scale self))))
+	    (offset (translate self)) (angles (rotate self)) (scaling (scale self)))))
 
-(defmethod partial-translate ((self transform) factor)
-  (p-scale (translate self) factor))
+;;; angle-axis-transform =======================================================
 
-(defmethod partial-rotate ((self transform) factor)
-  (p-scale (rotate self) factor))
+(defclass angle-axis-transform (transform)
+  ((translate :accessor translate :initarg :translate :initform (make-instance 'translate-operator))
+   (rotate :accessor rotate :initarg :rotate :initform (make-instance 'angle-axis-rotate-operator))
+   (scale :accessor scale :initarg :scale :initform (make-instance 'scale-operator))))
 
-(defmethod partial-scale ((self transform) factor)
-  (p-lerp factor (p! 1.0 1.0 1.0) (scale self)))
+(defmethod transform-matrix ((self angle-axis-transform) &optional (factor 1.0))
+  (let ((t-mtx (transform-matrix (translate self) factor))
+	(r-mtx (transform-matrix (rotate self) factor))
+	(s-mtx (transform-matrix (scale self) factor)))
+    (case (operator-order self)
+      (:trs (matrix-multiply-n t-mtx r-mtx s-mtx))
+      (:tsr (matrix-multiply-n t-mtx s-mtx r-mtx))
+      (:rts (matrix-multiply-n r-mtx t-mtx s-mtx))
+      (:rst (matrix-multiply-n r-mtx s-mtx t-mtx))
+      (:str (matrix-multiply-n s-mtx t-mtx r-mtx))
+      (:srt (matrix-multiply-n s-mtx r-mtx t-mtx))
+      (otherwise (error "Unknown operator order ~a in TRANSFORM-MATRIX" (operator-order self))))))
 
-(defmethod partial-copy ((dst transform) (src transform) factor)
-  (setf (translate dst) (partial-translate src factor))
-  (setf (rotate dst) (partial-rotate src factor))
-  (setf (scale dst) (partial-scale src factor)))
-  
-;;; fixed scale/rotate/translate order for now - add options later
-(defmethod transform-matrix ((self transform) &optional (factor 1.0))
-  (let ((t-mtx (make-translation-matrix (partial-translate self factor)))
-	(r-mtx (make-rotation-matrix (p-radians (partial-rotate self factor)))) ;convert to radians
-	(s-mtx (make-scale-matrix (partial-scale self factor))))
-    (matrix-multiply-n s-mtx r-mtx t-mtx)))
+(defmethod translate-by ((self angle-axis-transform) (p point))
+  (setf (offset (translate self)) (p+ (offset (translate self)) p)))
+
+(defmethod rotate-by ((self angle-axis-transform) a)
+  (setf (angle (rotate self)) (+ (angle (rotate self)) a)))
+
+(defmethod scale-by ((self angle-axis-transform) (p point))
+  (setf (scaling (scale self)) (p* (scaling (scale self)) p)))
+
+(defmethod scale-by ((self angle-axis-transform) (s number))
+  (setf (scaling (scale self)) (p* (scaling (scale self)) s)))
+
+(defmethod translate-to ((self angle-axis-transform) (p point))
+  (setf (offset (translate self)) p))
+
+(defmethod rotate-to ((self angle-axis-transform) a)
+  (setf (angle (rotate self)) a))
+
+(defmethod scale-to ((self angle-axis-transform) (p point))
+  (setf (scaling (scale self)) p))
+
+(defmethod scale-to ((self angle-axis-transform) (s number))
+  (setf (scaling (scale self)) (p! s s s)))
+
+(defun make-axis-angle-transform (translate angle axis scale)
+  (let ((xform (make-instance 'angle-axis-transform)))
+    (translate-to xform translate)
+    (rotate-to xform angle)
+    (setf (axis (rotate xform)) axis)
+    (scale-to xform scale)
+    xform))
+
+(defmethod reset-transform ((self angle-axis-transform))
+  (setf (offset (translate self)) (p! 0.0 0.0 0.0))
+  (setf (angle (rotate self)) 0.0)
+  (setf (axis (rotate self)) (p! 0.0 0.0 1.0))
+  (setf (scaling (scale self)) (p! 1.0 1.0 1.0)))
+
+(defmethod partial-translate ((self angle-axis-transform) factor)
+  (p-scale (offset (translate self)) factor))
+
+(defmethod partial-rotate ((self angle-axis-transform) factor)
+  (* (angle (rotate self)) factor))
+
+(defmethod partial-scale ((self angle-axis-transform) factor)
+  (p-lerp factor (p! 1.0 1.0 1.0) (scaling (scale self))))
+
+(defmethod partial-copy ((dst angle-axis-transform) (src angle-axis-transform) factor)
+  (setf (offset (translate dst)) (partial-translate src factor))
+  (setf (angle (rotate dst)) (partial-rotate src factor))
+  (setf (axis (rotate dst)) (axis (rotate src)))
+  (setf (scaling (scale dst)) (partial-scale src factor)))
+
+(defmethod print-object ((self angle-axis-transform) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream ":TRANSLATE ~a :ROTATE ~a, ~a :SCALE ~a"
+	    (offset (translate self)) (angle (rotate self)) (axis (rotate self)) (scaling (scale self)))))
+
+;;; generalized-transform ======================================================
+
+(defclass generalized-transform (transform)
+  ((operators :accessor operators :initarg :operators :initform (make-array 0 :adjustable t :fill-pointer t))))
+
+;; TODO: reverse mtx-list for correct transform order -- needs testing
+(defmethod transform-matrix ((self generalized-transform) &optional (factor 1.0))
+  (if (> (length (operators self)) 0)
+      (let ((mtx-list (nreverse (mapcar (lambda (op) (transform-matrix op factor))
+                                        (operators self)))))
+        (apply #'matrix-multiply-n mtx-list))
+      (make-id-matrix)))
+
 

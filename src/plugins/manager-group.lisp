@@ -59,6 +59,8 @@
                          1.0
                          (tween i 0.0 (1- steps))))
              (instance-group (make-group (instance-shape self))))
+        ;; make group transform same type as the instance-transform
+        (setf (transform instance-group) (make-instance (type-of (instance-transform self))))
         (partial-copy (transform instance-group) (instance-transform self) factor)
         (add-child self instance-group)))))
 
