@@ -1,18 +1,13 @@
 (in-package #:kons-9)
 
-;;; execute code on main thread -- necessary for interacting with UI elements
-(defmacro on-main-thread (&rest actions)
-  #+ccl`(ccl::call-in-event-process
-     #'(lambda ()
-         ,@actions))
-  #-ccl`(tmt:call-in-main-thread
-        #'(lambda ()
-            ,@actions)))
-
 ;;;; run graphics =======================================================
 
 (defparameter *scene* (make-instance 'scene))
 
+;;; execute code on main thread -- necessary for interacting with UI elements
 (defun run ()
-  ;; (setf *window* (on-main-thread (show-window *scene*)))
-  (on-main-thread (show-window *scene*)))
+  (trivial-main-thread:call-in-main-thread
+   (lambda ()
+     (sb-int:set-floating-point-modes :traps nil)
+     (kons-9::show-window kons-9::*scene*))))
+
