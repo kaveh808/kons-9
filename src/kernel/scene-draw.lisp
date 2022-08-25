@@ -61,9 +61,8 @@
   (3d-draw-axis (show-axis shape)))
 
 (defmethod draw-bounds ((shape shape) &optional (color (c! 0 1 1)))
-  (multiple-value-bind (lo hi center)
-      (bounds-and-center shape)
-    (declare (ignore center))
+  (multiple-value-bind (lo hi)
+      (get-bounds shape)
     (3d-draw-bounds lo hi color)))
 
 (defmethod draw-selected ((shape shape))

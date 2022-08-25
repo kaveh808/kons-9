@@ -55,11 +55,11 @@
   (values (p! -1 -1 -1) (p! 1 1 1)))
 
 (defmethod center-at-origin ((self shape))
-  (multiple-value-bind (bounds-lo bounds-hi center)
-      (bounds-and-center self)
-    (declare (ignore bounds-lo bounds-hi))
-    (when center
-      (translate-to self (p-negate (p* center (scale (transform self))))))))
+  (multiple-value-bind (bounds-lo bounds-hi)
+      (get-bounds self)
+    (when (and bounds-lo bounds-hi)
+      (let ((center (p-average bounds-lo bounds-hi)))
+        (translate-to self (p-negate (p* center (scale (transform self)))))))))
 
 (defmethod scale-to-size ((self shape) max-size)
   (multiple-value-bind (bounds-lo bounds-hi)
