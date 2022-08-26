@@ -173,9 +173,9 @@
 ;;; animate shape translation
 (with-clear-scene
   (let ((shape (add-shape *scene* (make-cut-cube-polyhedron 2.0))))
-    (add-animator *scene*
+    (add-motion *scene*
                   (make-instance 'animator
-                                 :init-fn   (lambda () (translate-to shape (p! 0.0 0 0)))
+                                 :setup-fn (lambda () (translate-to shape (p! 0.0 0 0)))
                                  :update-fn (lambda () (translate-by shape (p! 0.1 0 0)))))))
 
 ;;; animate a group
@@ -183,9 +183,9 @@
   (let ((group (add-shape *scene* (scatter-shapes-in-group
                                    (lambda () (make-cube 0.5))
                                    (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
-    (add-animator *scene*
+    (add-motion *scene*
                   (make-instance 'animator
-                                 :init-fn (lambda ()
+                                 :setup-fn (lambda ()
                                             (do-hierarchy group
                                               (lambda (shape) (rotate-to shape (p! 0 0 0)))
                                               :test #'is-leaf?))
@@ -194,69 +194,124 @@
                                                 (lambda (shape) (rotate-by shape (p! 0 5 0)))
                                                 :test #'is-leaf?))))))
 
-;;; shape animator -- store rotation data for each shape
+;;; shape-animator -- store rotation data for each shape
 (with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
                                    (lambda () (make-cube 0.5))
                                    (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
     (do-hierarchy group
       (lambda (shape)
-        (add-animator *scene*
+        (add-motion *scene*
                       (make-instance 'shape-animator
                                      :shape shape
-                                     :init-fn (lambda (anim)
+                                     :setup-fn (lambda (anim)
                                                 (rotate-to (shape anim) (p! 0 0 0)))
                                      :update-fn (lambda (anim)
                                                   (rotate-by (shape anim) (anim-data anim :rotate)))
                                      :data `((:rotate . ,(p! 0 (rand1 10) 0))))))
       :test #'is-leaf?)))
 
-;;; evaluate robot arm and functions above
+;;; motions for hierarchical animation -----------------------------------------
+
+;;; use (local-time anim) for hierarchical motions
+(with-clear-scene
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (scale-to (make-cube 0.5) (p! 2 1 .2)))
+                                   (make-grid-points 3 1 1 (p! -2 0 0) (p! 2 0 0))))))
+    (add-motion
+     *scene*
+     (make-instance 'motion-group
+                    :scene *scene*
+                    :children (mapcar (lambda (shape)
+                                        (make-instance
+                                         'shape-animator
+                                         :scene *scene*
+                                         :shape shape
+                                         :setup-fn (lambda (anim)
+                                                     (rotate-to (shape anim) (p! 0 0 0)))
+                                         :update-fn (lambda (anim)
+                                                      (rotate-to (shape anim)
+                                                                 (p! 0 (* 90 (local-time anim)) 0)))))
+                                      (children group))))))
+;;; run animation -- shapes rotate 90 degrees over duration of scene timeline (240 frames)
+
+;;; press 'a' to reset animation
+;;; run animation -- shapes rotate 90 degrees over 42 frames
+(setf (end-frame *scene*) 42)
+
+;;; press 'a' to reset animation
+;;; run animation -- shapes rotate 90 degrees over 0.5 of scene duration (21 frames)
+(setf (duration (first (motions *scene*))) 0.5)
+
+;;; press 'a' to reset animation
+;;; run animation -- shapes rotate 90 degrees with sequential timing
+(let* ((anims (children (first (motions *scene*))))
+       (anim-0 (nth 0 anims))
+       (anim-1 (nth 1 anims))
+       (anim-2 (nth 2 anims)))
+  (set-timing anim-0 0 1/3)
+  (set-timing anim-1 1/3 1/3)
+  (set-timing anim-2 2/3 1/3))
+
+;;; press 'a' to reset animation
+;;; run animation -- shapes rotate 90 degrees with varying start-times and durations
+(let* ((anims (children (first (motions *scene*))))
+       (anim-0 (nth 0 anims))
+       (anim-1 (nth 1 anims))
+       (anim-2 (nth 2 anims)))
+  (set-timing anim-0 0.0 1.0)
+  (set-timing anim-1 0.0 0.5)
+  (set-timing anim-2 0.5 0.5))
+
+;;; run animation -- parent motion covers full range of scene duration (42 frames)
+(setf (duration (first (motions *scene*))) 1.0)
+
+;;; evaluate robot arm and functions above -------------------------------------
 (progn
   (add-shape *scene* *waist*)
   (reset-pose)
-  (add-animator *scene*
+  (add-motion *scene*
                 (make-instance 'shape-animator
                                :shape *waist*
-                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                                :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                                :data `((:rotate . ,(p! 0 0 -2)))))
-  (add-animator *scene*
+  (add-motion *scene*
                 (make-instance 'shape-animator
                                :shape *shoulder*
-                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                                :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                                :data `((:rotate . ,(p! 0 0 -6)))))
-  (add-animator *scene*
+  (add-motion *scene*
                 (make-instance 'shape-animator
                                :shape *elbow*
-                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                                :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                                :data `((:rotate . ,(p! 0 0 12)))))
-  (add-animator *scene*
+  (add-motion *scene*
                 (make-instance 'shape-animator
                                :shape *wrist*
-                               :init-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
+                               :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                                :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                                :data `((:rotate . ,(p! 0 0 9)))))
 )
 
-;;; animator using scene time and establishing constraint -- use of add-animator-at-end
+;;; animator using scene time and establishing constraint -- use of add-motion-at-end
 (with-clear-scene
   (let ((tetrahedron (translate-to (make-tetrahedron 2.0) (p! -1.5 0 0)))
         (dodecahedron (translate-to (make-dodecahedron 2.0) (p! 1.5 0 0))))
     (add-shapes *scene* (list tetrahedron dodecahedron))
-    (add-animator *scene*
+    (add-motion *scene*
                   (make-instance 'shape-animator
                                  :shape tetrahedron
-                                 :init-fn (lambda (anim) (translate-to (shape anim) (p! -1.5 0 0)))
+                                 :setup-fn (lambda (anim) (translate-to (shape anim) (p! -1.5 0 0)))
                                  :update-fn (lambda (anim)
                                               (translate-to (shape anim)
                                                             (p! -1.5 (sin (current-time (scene anim))) 0)))))
-    (add-animator-at-end *scene*
+    (add-motion-at-end *scene*
                          (make-instance 'shape-animator
                                         :shape dodecahedron
-                                        :init-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
+                                        :setup-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
                                         :update-fn (lambda (anim)
                                                      (let ((target-y (y (offset (translate (transform (anim-data anim :target)))))))
                                                        (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
@@ -405,9 +460,9 @@
                     (let* ((p (p! x 0 z))
                            (mag (max 0.001 (p-mag (p-scale p ,scale)))))
                       (* 3 (/ (sin mag) mag))))))
-      (add-animator *scene*
+      (add-motion *scene*
                     (make-instance 'animator
-                                   :init-fn (lambda ()
+                                   :setup-fn (lambda ()
                                               (setf (height-fn mesh) (my-height-fn 1.0))
                                               (update-heightfield mesh))
                                    :update-fn (lambda ()
@@ -430,9 +485,9 @@
   (let ((mesh (make-superquadric 32 32 2.0 1.0 1.0)))
     (add-shape *scene* mesh)
     (translate-by mesh (p! 0 1 0))
-    (add-animator *scene*
+    (add-motion *scene*
                   (make-instance 'animator
-                                 :init-fn (lambda ()
+                                 :setup-fn (lambda ()
                                             (setf (e1 mesh) 1.0)
                                             (setf (e2 mesh) 1.0))
                                  :update-fn (lambda ()
@@ -493,7 +548,7 @@
            (make-fractal-plant-l-system)
           ))
     (add-shape *scene* l-sys)
-    (add-animator *scene* l-sys)
+    (add-motion *scene* l-sys)
     (update-scene *scene* 5)
     ;; resize shape to convenient size and center shape at origin
     (scale-to-size (first (shapes *scene*)) 5.0)
@@ -508,7 +563,7 @@
                                      :update-angle (range-float (/ pi 8) (/ pi 16))
                                      :life-span 10)))
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system force-field collisions
@@ -521,7 +576,7 @@
                                      :force-fields (list (make-instance 'constant-force-field
                                                                         :force-vector (p! 0 -.02 0))))))
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
 ;;; procedural-mixin circle ----------------------------------------------------
@@ -566,9 +621,9 @@
   (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
   (let ((anim (make-instance 'animator
-                             :init-fn (lambda () (setf (num-points *profile*) 4) nil)
+                             :setup-fn (lambda () (setf (num-points *profile*) 4) nil)
                              :update-fn (lambda () (incf (num-points *profile*))))))
-    (add-animator *scene* anim)
+    (add-motion *scene* anim)
     (add-shape *scene* *mesh*)))
 ;;; hold down space key in 3D view to run animation
 
@@ -577,7 +632,7 @@
   (let ((shapes '()))
     (dotimes (i 100) (push (make-cube 0.2) shapes))
     (add-shape *scene* (apply #'make-group shapes))
-    (add-animators *scene*
+    (add-motions *scene*
                    (mapcar (lambda (s)
                                (translate-by s (p! (rand1 2.0) (rand2 2.0 4.0) (rand1 2.0)))
                                (make-instance 'dynamics-animator
@@ -618,7 +673,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10))))
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
 
 ;;; particle system growth along point-cloud & sweep-extrude -------------------
@@ -633,7 +688,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :life-span (rand1 5 10))))
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
 ;;; sweep-extrude along particle system paths (first shape in scene)
 ;;; BUG -- the group contains at least one degenerate uv-mesh (16x16) with no points, causing
@@ -664,7 +719,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :life-span (rand1 5 10))))
 ;    (setf (draw-live-points-only? p-sys) nil)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; instance shapes along particle system points
 (add-shape *scene* (make-point-instancer (first (shapes *scene*))
@@ -682,7 +737,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     ;;; uncomment to only instance at live position
 ;;;    (setf (point-generator-use-live-positions-only p-sys) t)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)
+    (add-motion *scene* p-sys)
     (add-shape *scene* shape)
     ))
 ;;; hold down space key in 3D view to run animation
@@ -751,7 +806,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                                                          :force-vector (p! 0 -.02 0))))))
     (add-shape *scene* curve)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system curve-shape sweep-extrude ----------------------------------
@@ -761,7 +816,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
 (let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
@@ -777,7 +832,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
 (let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.2 6)
@@ -797,7 +852,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;    (add-shape *scene* p-gen)
 ;;    (add-shape *scene* p-sys)
     (add-shape *scene* sweep-mesh-group)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system point-generator-mixin sweep-mesh-group spawning ------------
@@ -810,7 +865,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                                   :taper 0.0 :twist 0.0)))
     (add-shape *scene* p-sys)
     (add-shape *scene* sweep-mesh-group)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system point-generator-mixin use polyh face centers ---------------
@@ -826,7 +881,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
       (add-shape *scene* p-gen)
       (add-shape *scene* p-sys)
       (add-shape *scene* sweep-mesh-group)
-      (add-animator *scene* p-sys))))
+      (add-motion *scene* p-sys))))
 ;;; hold down space key in 3D view to run animation
 
 ;;; particle-system point-generator-mixin polyhedron ---------------------------
@@ -837,7 +892,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                                                           :force-vector (p! 0 -.05 0))))))
     (add-shape *scene* p-gen)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation -- slow, profile & optimize
 
 ;;; particle-system point-generator-mixin particle-system ----------------------
@@ -848,7 +903,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; make new particle-system generate from paths of existing particle-system
 (progn
@@ -857,7 +912,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
          (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-sys)
-    (add-animator *scene* p-sys)))
+    (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep-extrude
 (let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.25 4)

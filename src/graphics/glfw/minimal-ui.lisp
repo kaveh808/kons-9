@@ -96,12 +96,20 @@ h or ?: print this help message~%"))
 ;;XXX This doesn't work on wayland. I think wayland expects clients
 ;; to draw the window decorations themselves
 (defun update-window-title (window)
-  (glfw:set-window-title (format nil "size ~A | keys ~A | buttons ~A | frame ~A"
+  (glfw:set-window-title (format nil "kons-9 | window ~A | start-frame ~A | end-frame ~A | curr-frame ~A"
                                  *window-size*
-                                 *keys-pressed*
-                                 *buttons-pressed*
+                                 (start-frame (scene *default-scene-view*))
+                                 (end-frame (scene *default-scene-view*))
                                  (current-frame (scene *default-scene-view*)))
                          window))
+
+;; (defun update-window-title (window)
+;;   (glfw:set-window-title (format nil "size ~A | keys ~A | buttons ~A | frame ~A"
+;;                                  *window-size*
+;;                                  *keys-pressed*
+;;                                  *buttons-pressed*
+;;                                  (current-frame (scene *default-scene-view*)))
+;;                          window))
 
 (glfw:def-key-callback key-callback (window key scancode action mod-keys)
   (declare (ignore scancode mod-keys))

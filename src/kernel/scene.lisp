@@ -4,7 +4,8 @@
 
 (defclass scene ()
   ((shapes :accessor shapes :initarg :shapes :initform '())
-   (animators :accessor animators :initarg :animators :initform '())
+   (motions :accessor motions :initarg :motions :initform '())
+   (initialized? :accessor initialized? :initarg :initialized? :initform nil)
    (selection :accessor selection :initarg :selection :initform '())
    (start-frame :accessor start-frame :initarg :start-frame :initform 0)
    (end-frame :accessor end-frame :initarg :end-frame :initform 240)
@@ -55,26 +56,26 @@
   (setf (scene shape) nil)
   shape)
 
-(defmethod add-animator ((scene scene) (anim animator))
-  (push anim (animators scene))
-  (setf (scene anim) scene)
-  anim)
+(defmethod add-motion ((scene scene) (motion motion))
+  (push motion (motions scene))
+  (setf (scene motion) scene)
+  motion)
 
-(defmethod add-animator-at-end ((scene scene) (anim animator))
-  (setf (animators scene) (append (animators scene) (list anim)))
-  (setf (scene anim) scene)
-  anim)
+(defmethod add-motion-at-end ((scene scene) (motion motion))
+  (setf (motions scene) (append (motions scene) (list motion)))
+  (setf (scene motion) scene)
+  motion)
 
-(defmethod add-animators ((scene scene) animators)
-  (mapcar #'(lambda (a) (add-animator scene a)) (reverse animators)))
+(defmethod add-motions ((scene scene) motions)
+  (mapcar #'(lambda (a) (add-motion scene a)) (reverse motions)))
 
 ;;; TODO -- set shape scene to nil, remove shapes from scene selection
 (defmethod clear-shapes ((scene scene))
   (setf (shapes scene) '()))
 
-;;; TODO -- set anim scene to nil, remove shapes from scene selection
-(defmethod clear-animators ((scene scene))
-  (setf (animators scene) '()))
+;;; TODO -- set motion scene to nil, remove motions from scene selection
+(defmethod clear-motions ((scene scene))
+  (setf (motions scene) '()))
 
 (defmethod remove-current-selection ((scene scene))
   (dolist (shape (selection scene))
@@ -83,40 +84,37 @@
 (defmethod clear-scene ((scene scene))
   (setf (selection scene) '())
   (clear-shapes scene)
-  (clear-animators scene)
+  (clear-motions scene)
     (setf (current-frame scene) 0))
-
-;; (defmethod draw ((scene scene))
-  ;; (ccl:with-metering
-  ;;     (update-scene init-scene update-animator update-particle
-  ;;      add-point add-particle update-position update-velocity
-  ;;      p-rand p-cross p-normalize update-angle range-value
-  ;;      make-axis-rotation-matrix transform-point
-  ;;      p-scale rand1 rand2
-  ;;      make-sweep-mesh-group
-  ;;      compute-procedural-node profile-curve-generator path-curve-generator
-  ;;      sweep-extrude curve-source-curves curve-source-curves-closed
-  ;;      sweep-extrude-aux curve-remove-consecutive-duplicates
-  ;;      copy-points allocate-mesh-arrays curve-tangent make-axis-rotation-matrix
-  ;;      p-angle make-translation-matrix matrix-multiply-n transform-points!
-  ;;      make-scale-matrix p-lerp compute-polyhedron-data
-  ;;      compute-polyhedron-mesh compute-face-normals compute-point-normals allocate-point-colors
-  ;;      compute-face-list 2d-array-to-list face-normals point-normals p-normalize face-points
-  ;;      needs-compute? inputs-time-stamp has-dirty-input?
-  ;;      quad-normal triangle-normal x y z c-red c-green c-blue faces points
-  ;;      draw draw-faces draw-wireframe draw-points draw-normals)
-      ;; (:exclusive 0.0)
-    ;; (mapc #'draw (shapes scene)))
-  ;; )
 
 (defmethod init-scene ((scene scene))
   (setf (current-frame scene) (start-frame scene))
-  (mapc #'init-animator (animators scene)))
+  (do-motion-hierarchy scene (lambda (m) (setf (scene m) scene)))
+  (mapc #'setup-motion (motions scene))
+  (setf (initialized? scene) t))
 
 (defmethod update-scene ((scene scene) &optional (num-frames 1))
+  (when (not (initialized? scene))
+    (init-scene scene))
   (dotimes (i num-frames)
     (when (< (current-frame scene) (end-frame scene))
       (incf (current-frame scene))
-      (mapc #'update-animator (animators scene)))))
+      (mapc (lambda (m) (update-motion m (compute-motion-absolute-timing scene nil)))
+            (motions scene)))))
+
+(defmethod compute-motion-absolute-timing ((scene scene) parent-absolute-timing)
+  (declare (ignore parent-absolute-timing))
+  (vector (coerce (/ (start-frame scene) (fps scene)) 'float)
+          (coerce (/ (- (end-frame scene) (start-frame scene)) (fps scene)) 'float)))
+
+(defmethod do-motion-hierarchy ((scene scene) func &key (test nil))
+  (dolist (child (motions scene))
+    (do-hierarchy child func :test test))
+  scene)
+
+(defmethod do-shape-hierarchy ((scene scene) func &key (test nil))
+  (dolist (child (shapes scene))
+    (do-hierarchy child func :test test))
+  scene)
 
 

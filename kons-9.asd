@@ -32,6 +32,7 @@
      (:file "src/kernel/polyhedron")
      (:file "src/kernel/group")
      (:file "src/kernel/procedural")
+     (:file "src/kernel/motion")
      (:file "src/kernel/animator")
      (:file "src/kernel/scene")
      (:file "src/kernel/scene-draw")
