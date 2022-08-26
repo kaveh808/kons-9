@@ -71,14 +71,15 @@
 (defmethod source-curves-closed ((l-sys l-system))
   (make-list (length (faces l-sys)) :initial-element nil))
 
-(defmethod init-animator ((l-sys l-system))
+(defmethod setup-motion ((l-sys l-system))
   (setf (genome l-sys) '())
   (setf (turtle l-sys)
         (turtle-init (make-instance 'turtle) (initial-location l-sys) (initial-heading l-sys)))
   (empty-polyhedron l-sys)
   nil)
 
-(defmethod update-animator ((l-sys l-system))
+(defmethod update-motion ((l-sys l-system) parent-absolute-timing)
+  (declare (ignore parent-absolute-timing))
   (if (null (genome l-sys))
       (setf (genome l-sys) (copy-list (axiom l-sys)))
       (setf (genome l-sys) (apply-production-rules (genome l-sys) (production-rules l-sys))))

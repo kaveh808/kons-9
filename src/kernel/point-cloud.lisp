@@ -10,7 +10,7 @@
 
 (defmethod get-bounds ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
-    (warn "Shape ~a does not have any points. Using default bounds values." self)
+    (warn "Shape ~a does not have any points. Using default bounds values." p-cloud)
     (return-from get-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
   (let* ((points (points p-cloud))
          (bounds-lo (p-copy (aref points 0)))

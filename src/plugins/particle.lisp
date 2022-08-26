@@ -254,7 +254,8 @@
   (add-point p-sys (pos ptcl))
   (add-face p-sys (list (1- (length (points p-sys))))))
 
-(defmethod update-animator ((p-sys particle-system))
+(defmethod update-motion ((p-sys particle-system) parent-absolute-timing)
+  (declare (ignore parent-absolute-timing))
   (doarray (i ptcl (particles p-sys))
     (when (or (= -1 (max-generations p-sys))
               (<= (generation ptcl) (max-generations p-sys)))

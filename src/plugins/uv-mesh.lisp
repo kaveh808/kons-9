@@ -285,7 +285,9 @@
                          (make-circle-polygon outer-diameter outer-segments)))
 
 (defun make-sphere-uv-mesh (diameter latitude-segments longitude-segments)
-  (let ((xform (make-instance 'transform :rotate (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0))))
+  (let ((xform (make-euler-transform (p! 0 0 0)
+                                     (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0)
+                                     (p! 1 1 1))))
     (transform-extrude-uv-mesh (make-arc-polygon diameter latitude-segments 0 (- pi))
                                xform
                                longitude-segments

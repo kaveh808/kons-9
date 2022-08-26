@@ -886,7 +886,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin polyhedron ---------------------------
 (with-clear-scene
-  (let* ((p-gen (import-obj *example-obj-filename*))
+z  (let* ((p-gen (import-obj *example-obj-filename*))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'dynamic-particle
                                        :force-fields (list (make-instance 'constant-force-field
                                                                           :force-vector (p! 0 -.05 0))))))
@@ -907,7 +907,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; hold down space key in 3D view to run animation
 ;;; make new particle-system generate from paths of existing particle-system
 (progn
-  (clear-animators *scene*)             ;remove exsting particle animator
+  (clear-motions *scene*)             ;remove exsting particle animator
   (let* ((p-gen (first (shapes *scene*)))
          (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
