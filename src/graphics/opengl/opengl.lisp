@@ -344,7 +344,7 @@
       (gl:shade-model :smooth)
       (gl:shade-model :flat))
   (gl:polygon-mode :front-and-back :fill)
-  (with-gl-enable :rescale-normal
+  (with-gl-enable :normalize
     (with-gl-enable :polygon-offset-fill
       (gl:polygon-offset 1.0 1.0)
       (3d-draw-filled-polygons-aux points faces face-normals point-normals point-colors))))
