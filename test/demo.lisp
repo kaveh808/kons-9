@@ -167,7 +167,8 @@
 
 (reset-pose)
 
-;;; animators --  hold down space key to update scene, press 'a' key to reset animation
+;;; animators ------------------------------------------------------------------
+;;; hold down space key to update scene, press 'a' key to reset animation
 
 ;;; animate shape translation
 (with-clear-scene

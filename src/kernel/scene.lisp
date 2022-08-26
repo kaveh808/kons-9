@@ -6,6 +6,8 @@
   ((shapes :accessor shapes :initarg :shapes :initform '())
    (animators :accessor animators :initarg :animators :initform '())
    (selection :accessor selection :initarg :selection :initform '())
+   (start-frame :accessor start-frame :initarg :start-frame :initform 0)
+   (end-frame :accessor end-frame :initarg :end-frame :initform 240)
    (current-frame :accessor current-frame :initarg :current-frame :initform 0)
    (fps :accessor fps :initarg :fps :initform 24)))
 
@@ -108,12 +110,13 @@
   ;; )
 
 (defmethod init-scene ((scene scene))
-  (setf (current-frame scene) 0)
+  (setf (current-frame scene) (start-frame scene))
   (mapc #'init-animator (animators scene)))
 
 (defmethod update-scene ((scene scene) &optional (num-frames 1))
   (dotimes (i num-frames)
-    (incf (current-frame scene))
-    (mapc #'update-animator (animators scene))))
+    (when (< (current-frame scene) (end-frame scene))
+      (incf (current-frame scene))
+      (mapc #'update-animator (animators scene)))))
 
 
