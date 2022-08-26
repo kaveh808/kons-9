@@ -1,6 +1,79 @@
 (in-package #:kons-9)
 
-;;;; macros ==============================================================
+;;;; drawing-settings ==========================================================
+
+(defclass drawing-settings ()
+  ((point-size :accessor point-size :initarg :point-size :initform 9.0)
+   (line-thickness :accessor line-thickness :initarg :line-thickness :initform 3.0)
+   (fg-color :accessor fg-color :initarg :fg-color :initform (c! 0 0 0))
+   (bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1))
+   (sel-color :accessor sel-color :initarg :sel-color :initform (c! 1 0 0))
+   (shading-color :accessor shading-color :initarg :shading-color :initform (c! 1 1 1))
+   (light-color :accessor light-color :initarg :light-color :initform (c! 2 2 2))
+   (axes-size :accessor axes-size :initarg :axes-size :initform 3.0)
+   (axes-thickness :accessor axes-thickness :initarg :axes-thickness :initform 3.0)
+   (ground-plane-size :accessor ground-plane-size :initarg :ground-plane-size :initform 10.0)
+   (ground-plane-segments :accessor ground-plane-segments :initarg :ground-plane-segments :initform 10)
+   (ground-plane-thickness :accessor ground-plane-thickness :initarg :ground-plane-thickness :initform 1.0)
+   (ground-plane-color :accessor ground-plane-color :initarg :ground-plane-color :initform (c! .8 .8 .8))
+   (secondary-line-thickness :accessor secondary-line-thickness :initarg :secondary-line-thickness :initform 1.0)))
+
+(defun set-lines-thin ()
+  (setf (point-size *drawing-settings*) 3.0)
+  (setf (line-thickness *drawing-settings*) 1.0)
+  (setf (axes-thickness *drawing-settings*) 1.0)
+  (setf (secondary-line-thickness *drawing-settings*) 0.5))
+
+(defun set-lines-thick ()
+  (setf (point-size *drawing-settings*) 7.0)
+  (setf (line-thickness *drawing-settings*) 3.0)
+  (setf (axes-thickness *drawing-settings*) 3.0)
+  (setf (secondary-line-thickness *drawing-settings*) 1.0))
+
+(defun set-theme-bright ()
+  (setf (fg-color *drawing-settings*) (c! 0 0 0))
+  (setf (bg-color *drawing-settings*) (c! 1 1 1))
+  (set-ground-plane-bright))
+
+(defun set-theme-dark ()
+  (setf (fg-color *drawing-settings*) (c! 1 1 1))
+  (setf (bg-color *drawing-settings*) (c! 0 0 0))
+  (set-ground-plane-dark))
+
+(defun set-ground-plane-bright ()
+  (setf (ground-plane-color *drawing-settings*) (c! .8 .8 .8)))
+
+(defun set-ground-plane-dark ()
+  (setf (ground-plane-color *drawing-settings*) (c! .2 .2 .2)))
+
+(defun set-ground-plane-sparse ()
+  (setf (ground-plane-segments *drawing-settings*) 10))
+
+(defun set-ground-plane-dense ()
+  (setf (ground-plane-segments *drawing-settings*) 40))
+
+#| test changing appearance
+
+(set-lines-thin)
+(set-lines-thick)
+(set-theme-bright)
+(set-theme-dark)
+(set-ground-plane-bright)
+(set-ground-plane-dark)
+(set-ground-plane-sparse)
+(set-ground-plane-dense)
+
+|#
+
+(defparameter *drawing-settings* (make-instance 'drawing-settings))
+
+(defparameter *shading-color* (c! 1 1 1))
+(defparameter *light-color* (c! 2 2 2))
+(defparameter *fg-color* (c! 0 0 0))
+(defparameter *bg-color* (c! 1 1 1))
+(defparameter *sel-color* (c! 1 0 0))
+
+;;;; utils =====================================================================
 
 (defmacro with-gl-enable (flag &body body)
   `(progn
@@ -16,34 +89,48 @@
        (gl:enable ,flag)
        result)))
 
-;;;; graphics ===========================================================
+(defun gl-set-color (col)
+  (gl:color (c-red col) (c-green col) (c-blue col)))
 
-(defun draw-world-axes (size)
-  (gl:line-width 3.0)
-  (gl:begin :lines)
-  (gl:color 1.0 0.0 0.0)
-  (gl:vertex 0.0  0.0  0.0)
-  (gl:vertex size 0.0  0.0)
-  (gl:color 0.0 1.0 0.0)
-  (gl:vertex 0.0 0.0  0.0 )
-  (gl:vertex 0.0 size 0.0 )
-  (gl:color 0.0 0.0 1.0)
-  (gl:vertex 0.0  0.0  0.0)
-  (gl:vertex 0.0  0.0 size)
-  (gl:end))
+(defun gl-set-fg-color ()
+  (gl-set-color (fg-color *drawing-settings*)))
+  
+(defun gl-set-sel-color ()
+  (gl-set-color (sel-color *drawing-settings*)))
 
-(defun draw-ground-plane (size segments)
-  (gl:color 0.8 0.8 0.8)
-  (gl:line-width 1.0)
-  (gl:begin :lines)
-  (dotimes (i (+ segments 1))
-    (let* ((f (/ i segments))
-           (coord (lerp f (- size) size)))
-      (gl:vertex coord 0.0 (- size))
-      (gl:vertex coord 0.0    size)
-      (gl:vertex (- size) 0.0 coord)
-      (gl:vertex    size  0.0 coord)))
-  (gl:end))
+;;;; graphics ==================================================================
+
+(defun draw-world-axes ()
+  (let ((size (axes-size *drawing-settings*)))
+    (gl:line-width (axes-thickness *drawing-settings*))
+    (gl:begin :lines)
+    (gl:color 1.0 0.0 0.0)
+    (gl:vertex 0.0  0.0  0.0)
+    (gl:vertex size 0.0  0.0)
+    (gl:color 0.0 1.0 0.0)
+    (gl:vertex 0.0 0.0  0.0 )
+    (gl:vertex 0.0 size 0.0 )
+    (gl:color 0.0 0.0 1.0)
+    (gl:vertex 0.0  0.0  0.0)
+    (gl:vertex 0.0  0.0 size)
+    (gl:end)))
+
+(defun draw-ground-plane ()
+  (let ((size (ground-plane-size *drawing-settings*))
+        (segs (ground-plane-segments *drawing-settings*))
+        (col (ground-plane-color *drawing-settings*))
+        (thick (ground-plane-thickness *drawing-settings*)))
+    (gl-set-color col)
+    (gl:line-width thick)
+    (gl:begin :lines)
+    (dotimes (i (1+ segs))
+      (let* ((f (/ i segs))
+             (coord (lerp f (- size) size)))
+        (gl:vertex coord 0.0 (- size))
+        (gl:vertex coord 0.0    size)
+        (gl:vertex (- size) 0.0 coord)
+        (gl:vertex    size  0.0 coord)))
+    (gl:end)))
 
 (defparameter *viewport-aspect-ratio* (/ 16.0 9.0))
 
@@ -64,20 +151,6 @@
 ;; (defparameter *light-0-on?* t)
 ;; (defparameter *light-1-on?* t)
 
-(defparameter *shading-color* (c! 1 1 1))
-(defparameter *light-color* (c! 2 2 2))
-(defparameter *fg-color* (c! 0 0 0))
-(defparameter *bg-color* (c! 1 1 1))
-(defparameter *sel-color* (c! 1 0 0))
-
-(defun set-theme-bright ()
-  (setf *fg-color* (c! 0 0 0))
-  (setf *bg-color* (c! 1 1 1)))
-
-(defun set-theme-dark ()
-  (setf *fg-color* (c! 1 1 1))
-  (setf *bg-color* (c! 0 0 0)))
-
 (defun init-view-camera ()
   (setf *cam-x-rot* 15.0)
   (setf *cam-y-rot* -35.0)
@@ -85,25 +158,19 @@
   (setf *cam-side-dist* 0.0)
   (setf *cam-up-dist* 0.0)) ;-2.0))
 
-(defun gl-set-fg-color ()
-  (gl:color (c-red *fg-color*) (c-green *fg-color*) (c-blue *fg-color*)))
-  
-(defun gl-set-sel-color ()
-  (gl:color (c-red *sel-color*) (c-green *sel-color*) (c-blue *sel-color*)))
-
 (defun gl-enable-light (light-id dir &optional (color *light-color*))
   (gl:enable light-id)
   (gl:light light-id :position (vector (x dir) (y dir) (z dir) 0.0))
   (gl:light light-id :ambient (vector 0.25 0.25 0.25 1.0))
-  (gl:light light-id :diffuse (vector (c-red color) (c-green color) (c-blue color) 1.0))
-  (gl:light light-id :specular (vector (c-red color) (c-green color) (c-blue color) 1.0)))
+  (gl:light light-id :diffuse color) ;(vector (c-red color) (c-green color) (c-blue color) 1.0))
+  (gl:light light-id :specular color)) ;(vector (c-red color) (c-green color) (c-blue color) 1.0)))
 
 (defun gl-disable-light (light-id)
   (gl:disable light-id))
 
-(defun gl-set-material (&optional (diff *shading-color*) (spec (c! 0 0 0)) (shine 0.0))
-  (gl:material :front-and-back :diffuse (vector (c-red diff) (c-green diff) (c-blue diff) 1.0))
-  (gl:material :front-and-back :specular (vector (c-red spec) (c-green spec) (c-blue spec) 1.0))
+(defun gl-set-material (&optional (diff (shading-color *drawing-settings*)) (spec (c! 0 0 0)) (shine 0.0))
+  (gl:material :front-and-back :diffuse diff) ;(vector (c-red diff) (c-green diff) (c-blue diff) 1.0))
+  (gl:material :front-and-back :specular spec) ;(vector (c-red spec) (c-green spec) (c-blue spec) 1.0))
   (gl:material :front-and-back :shininess shine))
   
 (defun 3d-update-light-settings ()
@@ -134,13 +201,12 @@
   ;;     (gl-enable-light :light0 (transform-point (p! 0 0 1) mtx))))
 ;;  )
 
-
-
 (defun 3d-setup-buffer ()
-  (gl:clear-color (c-red *bg-color*) (c-green *bg-color*) (c-blue *bg-color*) 0.0)
-  (gl:clear :color-buffer-bit :depth-buffer-bit)
-  (gl:enable :depth-test)
-  (gl:cull-face :back))
+  (let ((bg-color (bg-color *drawing-settings*)))
+    (gl:clear-color (c-red bg-color) (c-green bg-color) (c-blue bg-color) 0.0)
+    (gl:clear :color-buffer-bit :depth-buffer-bit)
+    (gl:enable :depth-test)
+    (gl:cull-face :back)))
 
 (defun 3d-setup-projection ()
   (gl:matrix-mode :projection)
@@ -168,7 +234,7 @@
 
 (defun 3d-draw-marker (size)
   (gl:color 1.0 1.0 0.0)
-  (gl:line-width 5.0)
+  (gl:line-width (* 2 (line-thickness *drawing-settings*)))
   (gl:begin :lines)
   (gl:vertex    size  0.0  0.0)
   (gl:vertex (- size) 0.0  0.0)
@@ -180,7 +246,7 @@
 
 (defun 3d-draw-axis (size)
   (with-gl-disable :lighting
-    (gl:line-width 3.0)
+    (gl:line-width (line-thickness *drawing-settings*))
     (gl:begin :lines)
     ;; x axis (red)
     (gl:color 1.0 0.0 0.0)
@@ -198,8 +264,8 @@
 
 (defun 3d-draw-bounds (lo hi color)
   (with-gl-disable :lighting
-    (gl:line-width 3.0)
-    (gl:color (c-red color) (c-green color) (c-blue color))
+    (gl:line-width (line-thickness *drawing-settings*))
+    (gl-set-color color)
     (gl:begin :lines)
       (when (and lo hi)
         (let ((x0 (x lo))
@@ -228,7 +294,7 @@
 (defun 3d-pop-matrix ()
   (gl:pop-matrix))
 
-(defun 3d-draw-curve (points is-closed? &optional (line-width 3.0))
+(defun 3d-draw-curve (points is-closed? &optional (line-width (line-thickness *drawing-settings*)))
   (with-gl-disable :lighting
     (gl-set-fg-color)
     (gl:line-width line-width)
@@ -244,10 +310,10 @@
     (if highlight?
         (progn
           (gl-set-sel-color)
-          (gl:point-size 17.0))
+          (gl:point-size (* 2 (point-size *drawing-settings*))))
         (progn
           (gl-set-fg-color)
-          (gl:point-size 9.0)))
+          (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
     (doarray (i p points)
       (gl:vertex (x p) (y p) (z p)))
@@ -259,10 +325,10 @@
     (if highlight?
         (progn
           (gl-set-sel-color)
-          (gl:line-width 7.0))
+          (gl:line-width (* 2 (line-thickness *drawing-settings*))))
         (progn
           (gl-set-fg-color)
-          (gl:line-width 3.0)))
+          (gl:line-width (line-thickness *drawing-settings*))))
     (gl:begin :lines)
     (dolist (p points)
       (gl:vertex (x p) (y p) (z p)))
@@ -337,7 +403,7 @@
   (gl:polygon-mode :front-and-back :line)
   (with-gl-disable :lighting
     (gl-set-fg-color)
-    (gl:line-width 1.0)
+    (gl:line-width (secondary-line-thickness *drawing-settings*))
     (dotimes (f (length faces))
       (if closed?
           (gl:begin :polygon)

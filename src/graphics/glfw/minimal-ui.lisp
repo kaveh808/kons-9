@@ -31,9 +31,9 @@
     (draw (scene view)))
   (3d-cleanup-render)
   (when *display-ground-plane?*
-    (draw-ground-plane 10.0 10))
+    (draw-ground-plane))
   (when *display-axes?*
-    (draw-world-axes 3.0))
+    (draw-world-axes))
   (3d-flush-render)
   (incf *draw-scene-count*))
 
