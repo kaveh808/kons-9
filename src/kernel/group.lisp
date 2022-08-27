@@ -6,6 +6,9 @@
 (defclass group (shape)
   ((children :accessor children :initarg :children :initform '())))
 
+(defmethod printable-data ((self group))
+  (strcat (call-next-method) (format nil ", ~a children" (length (children self)))))
+
 (defmethod add-child ((self group) (s shape))
   (push s (children self))
   self)
@@ -20,9 +23,6 @@
 
 (defun make-group (&rest shapes)
   (make-instance 'group :children shapes))
-
-(defmethod draw ((self group))
-  (mapc #'draw (children self)))
 
 (defun scatter-shapes-in-group (shape-fn points)
   (make-instance 'group :children (mapcar (lambda (p)

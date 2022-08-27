@@ -7,6 +7,8 @@
    (e1 :accessor e1 :initarg :e1 :initform 0.2)
    (e2 :accessor e2 :initarg :e2 :initform 0.2))
   (:default-initargs
+   :u-dim 16
+   :v-dim 16
    :u-wrap t))
 
 (def-procedural-input superquadric u-dim)

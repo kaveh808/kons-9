@@ -4,14 +4,17 @@
 
 ;;; class for parametrized quad meshes
 (defclass uv-mesh (polyhedron)
-  ((u-dim :accessor u-dim :initarg :u-dim :initform 16)
-   (v-dim :accessor v-dim :initarg :v-dim :initform 16)
+  ((u-dim :accessor u-dim :initarg :u-dim :initform 0)
+   (v-dim :accessor v-dim :initarg :v-dim :initform 0)
    (u-wrap :accessor u-wrap :initarg :u-wrap :initform nil)
    (v-wrap :accessor v-wrap :initarg :v-wrap :initform nil)
    (u-cap :accessor u-cap :initarg :u-cap :initform nil)
    (v-cap :accessor v-cap :initarg :v-cap :initform nil)
    (uv-point-array :accessor uv-point-array :initarg :uv-point-array :initform nil)
    ))
+
+(defmethod printable-data ((self uv-mesh))
+  (strcat (call-next-method) (format nil ", dims (~a ~a)" (u-dim self) (v-dim self))))
 
 (defmethod copy-instance-data ((dst uv-mesh) (src uv-mesh))
   (error "COPY-INSTANCE-DATA not implemented for UV-MESH"))
@@ -302,31 +305,3 @@
                               longitude-segments
                               :v-wrap t
                               :v-cap nil)))
-
-#| TODO -- need to tesselate top and bottom faces, compute normals after sphericize
--- may be simpler to implement a general refine-polyhedron method?
-(defun make-cube-sphere-uv-mesh (diameter segments)
-  (let* ((mesh (make-rect-prism-uv-mesh diameter diameter segments segments))
-         (uv-array (uv-point-array mesh))
-         (radius (/ diameter 2))
-         (center (p! 0 radius 0)))
-    (dotimes (u (u-dim mesh))
-      (dotimes (v (v-dim mesh))
-        (setf (aref uv-array u v) (p-sphericize (aref uv-array u v) radius 1.0 center))))
-    (setf (points mesh) (flatten-array (uv-point-array mesh)))
-    mesh))
-;;; test
-(add-shape *scene* (translate-to (make-cube-sphere-uv-mesh 1.0 8) (p! 0 0 6.0)))
-|#
-
-
-#|
-(defun every-nth (step list)
-   (remove-if
-    (let ((iterator 0))
-      (lambda (x)
-        (declare (ignore x))
-        (not (= 0 (mod (incf iterator) step)))))
-    list))
-|#
-

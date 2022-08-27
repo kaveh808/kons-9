@@ -208,6 +208,11 @@
    (draw-live-points-only? :accessor draw-live-points-only? :initarg :draw-live-points-only? :initform t)
    (draw-trails :accessor draw-trails :initarg :draw-trails :initform -1))) ;length, -1 = draw entire trail
 
+(defmethod print-object ((self particle-system) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a, timing = ~a ~a, ~a particles" (name self) (start-time self) (duration self)
+            (length (particles self)))))
+
 (defmethod add-force-field ((p-sys particle-system) (field force-field))
   (doarray (i ptcl (particles p-sys))
     (push field (force-fields ptcl)))

@@ -10,6 +10,9 @@
    (show-normals :accessor show-normals :initarg :show-normals :initform nil)  ; length or nil
    (point-source-use-face-centers? :accessor point-source-use-face-centers? :initarg :point-source-use-face-centers? :initform nil)))
 
+(defmethod printable-data ((self polyhedron))
+  (strcat (call-next-method) (format nil ", ~a faces" (length (faces self)))))
+
 (defmethod initialize-instance :after ((polyh polyhedron) &rest initargs)
   (declare (ignore initargs))
   (compute-face-normals polyh)

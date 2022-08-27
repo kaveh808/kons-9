@@ -5,6 +5,9 @@
 (defclass point-cloud (shape)
   ((points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t))))
 
+(defmethod printable-data ((self point-cloud))
+  (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))
+
 (defmethod copy-instance-data :after ((dst point-cloud) (src point-cloud))
   (setf (points dst) (points src))) ;;; TODO - deep copy arrays
 

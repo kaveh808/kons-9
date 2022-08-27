@@ -9,6 +9,9 @@
    (timing-mode :accessor timing-mode :initarg :timing-mode :initform :relative-to-parent)
    (local-time :accessor local-time :initarg :local-time :initform 0.0)))
 
+(defmethod printable-data ((self motion))
+  (strcat (call-next-method) (format nil ", timing = ~a ~a" (start-time self) (duration self))))
+
 (defmethod set-timing ((motion motion) start-time duration)
   (setf (start-time motion) start-time)
   (setf (duration motion) duration)
@@ -43,6 +46,9 @@
 
 (defclass motion-group (motion)
   ((children :accessor children :initarg :children :initform ())))
+
+(defmethod printable-data ((self motion-group))
+  (strcat (call-next-method) (format nil ", ~a children" (length (children self)))))
 
 (defmethod setup-motion ((motion motion-group))
   (mapc #'setup-motion (children motion)))

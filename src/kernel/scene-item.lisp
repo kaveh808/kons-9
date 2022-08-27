@@ -16,7 +16,10 @@
 
 (defmethod print-object ((self scene-item) stream)
   (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~a" (name self))))
+    (format stream (printable-data self))))
+
+(defmethod printable-data ((self scene-item))
+  (format nil "~a" (name self)))
 
 (defmethod copy-instance-data ((dst scene-item) (src scene-item))
   ;; TODO - name not copied - always generate new name?
