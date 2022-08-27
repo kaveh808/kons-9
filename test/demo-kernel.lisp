@@ -141,7 +141,7 @@ Create a hierarchy and turn on shape axis display.
   (defparameter *group-1* (make-group *cube* *tetrahedron*))
   (defparameter *group-2* (make-group *group-1* *icosahedron*))
   (add-shape *scene* *group-2*)
-  (do-hierarchy *group-2* (lambda (s) (setf (show-axis s) 1.0)))
+  (do-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
   (translate-by *tetrahedron* (p! 0.0 1.5 0.0))
   (translate-by *cube* (p! 0.0 -1.5 0.0))
   (translate-by *group-1* (p! 1.5 0.0 0.0))
@@ -284,7 +284,20 @@ Create a robot arm as a hierarchical structure.
   (defparameter *torso* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
   (defparameter *waist* (make-group *waist-shape* *torso-shape* *shoulder*))
 
-  (add-shape *scene* *waist*)
+  (setf (name *waist-shape*) 'waist-shape)
+  (setf (name *torso-shape*) 'torso-shape)
+  (setf (name *shoulder-shape*) 'shoulder-shape)
+  (setf (name *upper-arm-shape*) 'arm-shape)
+  (setf (name *elbow-shape*) 'elbow-shape)
+  (setf (name *lower-arm-shape*) 'arm-shape)
+  (setf (name *wrist-shape*) 'wrist-shape)
+  (setf (name *hand-shape*) 'hand-shape)
+
+  (setf (name *wrist*) 'wrist-group)
+  (setf (name *elbow*) 'elbow-group)
+  (setf (name *shoulder*) 'shoulder-group)
+  (setf (name *torso*) 'torso-group)
+  (setf (name *waist*) 'waist-group)
 
   (translate-to *waist* (p! -0.6 -0.4 0.0))
   (scale-to *waist* 2.0)
@@ -299,6 +312,8 @@ Create a robot arm as a hierarchical structure.
   (translate-to *upper-arm-shape* (p! 1.0 0.0 0.0))
   (translate-to *lower-arm-shape* (p! 1.6 0.0 0.0))
   (translate-to *hand-shape* (p! 1.2 0.0 0.0))
+
+  (add-shape *scene* *waist*)
 )
 
 #|
@@ -306,7 +321,7 @@ Turn on shape axis display.
 
 You can turn off shading to see axes better (press 1 key).
 |#
-(do-hierarchy *waist* (lambda (s) (setf (show-axis s) 1.0)))
+(do-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
 
 #|
 Animate each joined by a specified number of degrees per frame.
@@ -316,32 +331,81 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (progn
   (add-motion *scene*
               (make-instance 'shape-animator
+                             :name 'waist-animator
                              :shape *waist*
                              :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                              :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                              :data `((:rotate . ,(p! 0 0 -2)))))
   (add-motion *scene*
               (make-instance 'shape-animator
+                             :name 'shape-animator
                              :shape *shoulder*
                              :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                              :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                              :data `((:rotate . ,(p! 0 0 -6)))))
   (add-motion *scene*
               (make-instance 'shape-animator
+                             :name 'elbow-animator
                              :shape *elbow*
                              :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                              :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                              :data `((:rotate . ,(p! 0 0 12)))))
   (add-motion *scene*
               (make-instance 'shape-animator
+                             :name 'wrist-animator
                              :shape *wrist*
                              :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                              :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                              :data `((:rotate . ,(p! 0 0 9)))))
   )
 
+
+
 #|
-(Demo 12) hierarchical animation timing using motions ==========================
+(Demo 12) scene shape management ===============================================
+
+Continue from (Demo 11).
+
+Print scene shape hierarchy.
+|#
+(print-shape-hierarchy *scene* :names-only t)
+  
+#|
+Add a shape in two places in the hierarchy.
+|#
+(let ((tetra (translate-to (make-tetrahedron 1.0) (p! 0 1 0))))
+  (setf (name tetra) 'tetra)
+  (add-child *wrist* tetra)
+  (add-child *shoulder* tetra))
+
+#|
+Find shapes by name.
+|#
+(pprint (find-shape-by-name *scene* 'shoulder-shape))
+
+(pprint (find-shape-by-name *scene* 'tetra))
+
+(pprint (find-shape-by-name *scene* 'foobar)) ;no such name -- return nil
+
+#|
+Get shape scene paths.
+|#
+(pprint (get-scene-paths *scene* (find-shape-by-name *scene* 'wrist-group)))
+
+(pprint (get-scene-paths *scene* (find-shape-by-name *scene* 'tetra))) ;two paths
+
+#|
+Compute shape global matrices of shape scene paths.
+
+Animate the scene and evaluate the expression below again to see updated
+matrices.
+|#
+(let ((paths (get-scene-paths *scene* (find-shape-by-name *scene* 'tetra))))
+  (pprint (shape-global-matrix *scene* (first paths)))
+  (pprint (shape-global-matrix *scene* (second paths))))
+
+#|
+(Demo 13) hierarchical animation timing using motions ==========================
 
 We put our animators inside a MOTION-GROUP. The animators reference a local time
 within their timing range between zero and one.
@@ -354,14 +418,17 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
                                    (lambda () (scale-to (make-cube 0.5) (p! 2 1 .2)))
-                                   (make-grid-points 3 1 1 (p! -2 0 0) (p! 2 0 0))))))
+                                   (make-grid-points 3 1 1 (p! -2 0 0) (p! 2 0 0)))))
+        (counter -1))
     (add-motion
      *scene*
      (make-instance 'motion-group
+                    :name 'top-motion-group
                     :scene *scene*
                     :children (mapcar (lambda (shape)
                                         (make-instance
                                          'shape-animator
+                                         :name (mashup-symbol 'animator- (incf counter))
                                          :scene *scene*
                                          :shape shape
                                          :setup-fn (lambda (anim)
@@ -420,7 +487,28 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (setf (duration (first (motions *scene*))) 1.0)
 
 #|
-(Demo 13) creating constraints with animators.
+(Demo 14) scene motion management ==============================================
+
+Continue from (Demo 13).
+
+Print scene motion hierarchy.
+|#
+(print-motion-hierarchy *scene* :names-only t)
+
+#|
+Find shapes by name.
+|#
+(pprint (find-motion-by-name *scene* 'animator-2))
+
+(pprint (find-motion-by-name *scene* 'foobar)) ;no such name -- return nil
+
+#|
+Get animator motion paths.
+|#
+(pprint (get-motion-paths *scene* (find-motion-by-name *scene* 'animator-2)))
+
+#|
+(Demo 15) creating constraints with animators ==================================
 
 The dodecahedron moves in Y as the negative of the Y the tetrahedron.
 We use ADD-MOTION-AT-END so the second animator runs after the first one.

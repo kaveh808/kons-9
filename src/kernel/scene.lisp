@@ -12,12 +12,6 @@
    (current-frame :accessor current-frame :initarg :current-frame :initform 0)
    (fps :accessor fps :initarg :fps :initform 24)))
 
-(defmethod print-hierarchy ((self scene) &optional (indent 0))
-  (print-spaces indent)
-  (format t "~a~%" self)
-  (dolist (shape (shapes self))
-    (print-hierarchy shape (+ indent 2))))
-
 (defmethod current-time ((scene scene))
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
 
@@ -106,15 +100,4 @@
   (declare (ignore parent-absolute-timing))
   (vector (coerce (/ (start-frame scene) (fps scene)) 'float)
           (coerce (/ (- (end-frame scene) (start-frame scene)) (fps scene)) 'float)))
-
-(defmethod do-motion-hierarchy ((scene scene) func &key (test nil))
-  (dolist (child (motions scene))
-    (do-hierarchy child func :test test))
-  scene)
-
-(defmethod do-shape-hierarchy ((scene scene) func &key (test nil))
-  (dolist (child (shapes scene))
-    (do-hierarchy child func :test test))
-  scene)
-
 

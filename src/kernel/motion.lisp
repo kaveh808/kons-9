@@ -39,11 +39,6 @@
                 (* (duration motion) parent-duration))
         (vector (start-time motion) (duration motion)))))
 
-(defmethod do-hierarchy ((motion motion) func &key (test nil))
-  (when (or (null test) (funcall test motion))
-    (funcall func motion))
-  motion)
-
 ;;;; motion-group ============================================================
 
 (defclass motion-group (motion)
@@ -57,9 +52,4 @@
     (when (in-time-interval? motion timing)
       (mapc (lambda (m) (update-motion m timing))
             (children motion)))))
-
-(defmethod do-hierarchy :after ((motion motion-group) func &key (test nil))
-  (dolist (child (children motion))
-    (do-hierarchy child func :test test))
-  motion)
 
