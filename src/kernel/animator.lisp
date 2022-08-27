@@ -55,7 +55,7 @@
   (when (setup-fn anim)
     (funcall (setup-fn anim) anim)))
 
-(defmethod update-motion ((anim animator) parent-absolute-timing)
+(defmethod update-motion ((anim shape-animator) parent-absolute-timing)
   (let ((timing (compute-motion-absolute-timing anim parent-absolute-timing)))
     (when (in-time-interval? anim timing)
       (when (not (setup-done? anim))

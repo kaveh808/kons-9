@@ -14,6 +14,10 @@
   (when (null (name item))
     (setf (name item) (mashup-symbol (class-name (class-of item)) '- (incf *scene-item-counter*)))))
 
+(defmethod print-object ((self scene-item) stream)
+  (print-unreadable-object (self stream :type t :identity t)
+    (format stream "~a" (name self))))
+
 (defmethod copy-instance-data ((dst scene-item) (src scene-item))
   ;; TODO - name not copied - always generate new name?
   )

@@ -50,7 +50,7 @@
   t)
 
 (defun print-scene-view-help ()
-  (format t "Mouse drag: orbit, [option] track left/right and up/down, [command] track in/out~%~
+  (format t "~%~%Mouse drag: orbit, [option/alt] track left/right and up/down, [control] track in/out~%~
 `: toggle lighting~%~
 1: toggle filled display~%~
 2: toggle wireframe display~%~
@@ -65,7 +65,7 @@ n: clear scene~%~
 space: update scene (hold down for animation) ~%~
 delete: delete selected items ~%~
 tab: show/hide contextual menu ~%~
-h or ?: print this help message~%"))
+h: print this help message~%"))
 
 (defmethod key-down ((self scene-view) key)
   (let* ((scene (scene self)))
@@ -73,7 +73,7 @@ h or ?: print this help message~%"))
     ;; (finish-output)
     (case key
       (:h (print-scene-view-help))
-      (:? (print-scene-view-help))      ;TODO -- not working, test for slash & shift?
+;;;      (:? (print-scene-view-help))      ;TODO -- not working, test for slash & shift?
       (:a (when scene (init-scene scene)))
       (:n (clear-scene scene))
       (:grave-accent (setf *do-lighting?* (not *do-lighting?*)))
