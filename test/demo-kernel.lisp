@@ -141,7 +141,7 @@ Create a hierarchy and turn on shape axis display.
   (defparameter *group-1* (make-group *cube* *tetrahedron*))
   (defparameter *group-2* (make-group *group-1* *icosahedron*))
   (add-shape *scene* *group-2*)
-  (do-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
+  (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
   (translate-by *tetrahedron* (p! 0.0 1.5 0.0))
   (translate-by *cube* (p! 0.0 -1.5 0.0))
   (translate-by *group-1* (p! 1.5 0.0 0.0))
@@ -189,7 +189,7 @@ Create a group by creating shapes at specified points.
 #|
 Randomly scale leaf nodes of the hierarchy.
 |#
-(do-shape-hierarchy *scene*
+(map-shape-hierarchy *scene*
   (lambda (shape) (scale-to shape (rand2 0.2 2.0)))
   :test #'is-leaf?)
 
@@ -228,11 +228,11 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
     (add-motion *scene*
                 (make-instance 'animator
                                :setup-fn (lambda ()
-                                           (do-hierarchy group
+                                           (map-hierarchy group
                                              (lambda (shape) (rotate-to shape (p! 0 0 0)))
                                              :test #'is-leaf?))
                                :update-fn (lambda ()
-                                            (do-hierarchy group
+                                            (map-hierarchy group
                                               (lambda (shape) (rotate-by shape (p! 0 5 0)))
                                               :test #'is-leaf?))))))
 
@@ -251,7 +251,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
   (let ((group (add-shape *scene* (scatter-shapes-in-group
                                    (lambda () (make-cube 0.5))
                                    (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
-    (do-hierarchy group
+    (map-hierarchy group
       (lambda (shape)
         (add-motion *scene*
                       (make-instance 'shape-animator
@@ -321,7 +321,7 @@ Turn on shape axis display.
 
 You can turn off shading to see axes better (press 1 key).
 |#
-(do-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
+(map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
 
 #|
 Animate each joined by a specified number of degrees per frame.

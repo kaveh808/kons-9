@@ -35,22 +35,19 @@
         (format t "~a~%" (name scene-item))
         (format t "~a~%" scene-item))))
 
-;;;; traverse scene hierarchies ================================================
+;;;; map scene hierarchies =====================================================
 
-;;; do-shape-hierarchy
-;;; do-motion-hierarchy
-
-(defmethod do-motion-hierarchy ((scene scene) func &key (test nil))
-  (dolist (child (motions scene))
-    (do-hierarchy child func :test test))
-  scene)
-
-(defmethod do-shape-hierarchy ((scene scene) func &key (test nil))
+(defmethod map-shape-hierarchy ((scene scene) func &key (test nil))
   (dolist (child (shapes scene))
-    (do-hierarchy child func :test test))
+    (map-hierarchy child func :test test))
   scene)
 
-(defgeneric do-hierarchy (self func &key test)
+(defmethod map-motion-hierarchy ((scene scene) func &key (test nil))
+  (dolist (child (motions scene))
+    (map-hierarchy child func :test test))
+  scene)
+
+(defgeneric map-hierarchy (self func &key test)
 
   (:method ((shape shape) func &key (test nil))
     (when (or (null test) (funcall test shape))
@@ -59,7 +56,7 @@
 
   (:method :after ((group group) func &key (test nil))
     (dolist (child (children group))
-      (do-hierarchy child func :test test))
+      (map-hierarchy child func :test test))
     group)
 
   (:method ((motion motion) func &key (test nil))
@@ -69,7 +66,7 @@
 
   (:method :after ((motion motion-group) func &key (test nil))
     (dolist (child (children motion))
-      (do-hierarchy child func :test test))
+      (map-hierarchy child func :test test))
     motion)
   )
 

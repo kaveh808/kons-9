@@ -88,7 +88,7 @@
 
 (defmethod init-scene ((scene scene))
   (setf (current-frame scene) (start-frame scene))
-  (do-motion-hierarchy scene (lambda (m) (setf (scene m) scene)))
+  (map-motion-hierarchy scene (lambda (m) (setf (scene m) scene)))
   (mapc #'setup-motion (motions scene))
   (setf (initialized? scene) t))
 
