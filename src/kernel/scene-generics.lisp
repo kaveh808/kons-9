@@ -1,7 +1,6 @@
 (in-package #:kons-9)
 
 ;;; TODO:
-;;; print-motion-hierarchy ?
 ;;; does instancing of motions make sense? they do same anim on same shapes...
 
 

@@ -2,7 +2,7 @@
 
 ;;;; scene =====================================================================
 
-(defclass scene ()
+(defclass scene (item)
   ((shapes :accessor shapes :initarg :shapes :initform '())
    (motions :accessor motions :initarg :motions :initform '())
    (initialized? :accessor initialized? :initarg :initialized? :initform nil)
@@ -12,10 +12,10 @@
    (current-frame :accessor current-frame :initarg :current-frame :initform 0)
    (fps :accessor fps :initarg :fps :initform 24)))
 
-(defmethod print-object ((self scene) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream "frame bounds: ~a ~a, current: ~a "
-            (start-frame self) (end-frame self) (current-frame self))))
+(defmethod printable-data ((self scene))
+  (strcat (call-next-method)
+          (format nil ", frame bounds: ~a ~a, current: ~a "
+                  (start-frame self) (end-frame self) (current-frame self))))
 
 (defmethod current-time ((scene scene))
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
