@@ -330,8 +330,8 @@
 ;;; obj import -----------------------------------------------------------------
 
 (defparameter *example-obj-filename* 
-  (first '("~/Development/kons-9/test/data/cow.obj"
-	   "~/Development/kons-9/test/data/teapot.obj"))
+  (first (list (asdf:system-relative-pathname "kons-9" "test/data/cow.obj")
+               (asdf:system-relative-pathname "kons-9" "test/data/teapot.obj")))
   "An example object filename used in demonstrations for the OBJ-IMPORT facility.
 
 You can find obj files at

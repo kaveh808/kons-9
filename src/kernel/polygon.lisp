@@ -2,7 +2,7 @@
 
 ;;; polygon class ====================================================
 
-;;; this shape is defined by a list of points (vertices)
+;;; this shape is defined by an array of points (vertices)
 (defclass polygon (point-cloud)
   ((is-closed-polygon? :accessor is-closed-polygon? :initarg :is-closed-polygon? :initform t)))
 
