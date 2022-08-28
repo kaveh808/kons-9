@@ -50,6 +50,7 @@
   t)
 
 (defun print-scene-view-help ()
+  #-windows
   (format t "~%~%Mouse drag: orbit, [option/alt] track left/right and up/down, [control] track in/out~%~
 `: toggle lighting~%~
 1: toggle filled display~%~

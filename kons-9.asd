@@ -3,6 +3,11 @@
 ;;;;  SBCL Linux port by Joel Boehland (joel.boehland@evocomputing.com)
 ;;;;  SBCL macOS port by mikel evins (mikel@evins.net) based on Joel Boehland's work
 
+#+(and windows x86-64) 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (pushnew "c:/Program Files/glfw-3.3.8/lib/"
+           cffi:*foreign-library-directories*))
+
 (asdf:defsystem #:kons-9
     :description "Common Lisp 3D Graphics System"
     :author "Kaveh Kardan"
