@@ -1,13 +1,22 @@
 # kons-9
-## Common Lisp 3D Graphics System
 
-## What kons-9 Is
+## An IDE For 3D Production
 
-**kons-9** is a new 3D graphics and animation system written in Common Lisp. The intention is to develop a flexible and extensible system on which can be built a wide variety of application and domain specific tools and packages. The system is designed and implemented to allow exploratory development in a seamless way. All user extensions have the same power and functionality as the built-in code.
+**kons-9** is a new 3D computer graphics and animation software system being developed as an **open source project** under the MIT license. It broadly falls under the category of a **3D digital content creation tool**, while providing interesting and unique features not found in other systems. The intention is to develop a **flexible and extensible system** in which can be built a wide variety of application and domain specific tools and packages.
 
-More info about the thoughts (and random musings) behind this project at my blog:
+The unique differentiating aspect of **kons-9** is that it combines the power of a **software development IDE** with the visual tools of **3D graphics authoring system**. It does this by being implemented in **Common Lisp**, an **object-oriented dynamic language** which provides powerful facilities for **exploratory development and rapid prototyping** within a live interactive software environment.
 
-https://kaveh808.medium.com
+This allows for **unlimited extensibility** of the system by both developers and users. In fact, this unique aspect of **kons-9** erases the distinction between developers and end users. Code developed within the kons-9 framework is always first class, not limited to some arbitrary API or scripting language. The source code for the system is available for extension, customization and exploration, and development in new directions, all within a **REPL-based** integrated development environment operating on a **live image of a 3D scene**.
+
+Every user of **kons-9** has at their disposal the same full range of facilities and tools as the original developers of the system. Therefore code developed by them is first class in the sense that it has all the capabilities of code written by the developers of the system. There is no concept of a limited scripting language separate from the source code of the software.
+
+Users of **kons-9** are able to modify 3D classes, subclass and extend them, and add new behaviors as desired. The system is **highly extensible and customizable** to suit different application domains and workflow needs.
+
+**kons-9** can be used as a traditional **user interface driven 3D application** by general artists, or as a **REPL-based development environment** by technical artists and software developers. These two approaches can be seamlessly combined into a flexible and powerful workflow, where non-technical users can immediately benefit from software tools and extensions developed by technical users.
+
+Developers work in a live image of their 3D scene, able to immediately see the results of their code in action. There is no need for a separate compile, link, and load process. Nor does the system have to be restarted to be updated. The REPL-based development experience is **highly interactive** with a **continuous and tight feedback loop**. Class and function definitions can be **modified on the fly** and the **results seen immediately** in the 3D scene. Incremental and exploratory development is facilitated and encouraged by the nature of the system.
+
+
 
 Demo of an early version of the software:
 
@@ -23,13 +32,9 @@ If you wish to do so, please:
 - Turn on Notifications so you are aware of the Discussions postings.
 - Read the Introductions thread in Discussions.
 - Post your own introduction on the thread.
-- Expect an invitation to join the team.
+- Join the Discussions and look at the open Issues.
 
 ## How To Run kons-9
-
-These are early days of this project, so bear with us as we find our feet.
-
-There is no documentation beyond this file.
 
 This code currently runs in sbcl on MacOS and Linux. We need developers to work on sbcl/Windows, as well. The system currently uses OpenGL as a graphics engine.
 
@@ -48,7 +53,7 @@ Run the following code to open a 3D view window:
 
 Type 'h' in the window to see the available key bindings.
 
-Open `demo.lisp` and start evaluating the blocks of code. Things should appear in the graphics window.
+Open `test/demo-kernel.lisp` and start evaluating the blocks of code for the demos. Things should appear in the graphics window.
 
 Have fun.
 
