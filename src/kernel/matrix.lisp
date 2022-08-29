@@ -33,6 +33,12 @@
           (aref matrix 2 0) (aref matrix 2 1) (aref matrix 2 2) (aref matrix 2 3)
           (aref matrix 3 0) (aref matrix 3 1) (aref matrix 3 2) (aref matrix 3 3)))
 
+(defun matrix-copy (matrix)
+  (make-matrix-with (list (list (aref matrix 0 0) (aref matrix 0 1) (aref matrix 0 2) (aref matrix 0 3))
+                          (list (aref matrix 1 0) (aref matrix 1 1) (aref matrix 1 2) (aref matrix 1 3))
+                          (list (aref matrix 2 0) (aref matrix 2 1) (aref matrix 2 2) (aref matrix 2 3))
+                          (list (aref matrix 3 0) (aref matrix 3 1) (aref matrix 3 2) (aref matrix 3 3)))))
+
 ;;; transformation matrices
 
 (defun make-translation-matrix (point)

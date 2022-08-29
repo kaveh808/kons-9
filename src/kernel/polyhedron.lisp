@@ -18,18 +18,6 @@
   (compute-face-normals polyh)
   (compute-point-normals polyh))
 
-(defmethod copy-instance-data :after ((dst polyhedron) (src polyhedron))
-  (setf (faces dst) (faces src)) ;;; TODO - deep copy arrays
-  (setf (face-normals dst) (face-normals src))
-  (setf (point-normals dst) (point-normals src))
-  (setf (point-colors dst) (point-colors src))
-  (setf (show-normals dst) (show-normals src)))
-
-(defmethod duplicate-shape ((polyh polyhedron))
-  (let ((new-shape (make-instance 'polyhedron)))
-    (copy-instance-data new-shape polyh)
-    new-shape))
-
 (defmethod empty-polyhedron ((polyh polyhedron))
   (setf (points polyh) (make-array 0 :adjustable t :fill-pointer t))
   (setf (faces polyh) (make-array 0 :adjustable t :fill-pointer t))
@@ -148,8 +136,9 @@
     (let ((n (aref (point-normals polyh) i)))
       (setf (aref (point-colors polyh) i) (funcall color-fn p n)))))
 
-(defun make-polyhedron (points faces &key (mesh-type 'polyhedron))
-  (make-instance mesh-type :points points
+(defun make-polyhedron (points faces &key (name nil) (mesh-type 'polyhedron))
+  (make-instance mesh-type :name name
+                           :points points
                            :faces faces))
 
 (defmethod refine-face ((polyh polyhedron) face)
@@ -276,7 +265,7 @@
       (return-from is-triangulated-polyhedron? nil)))
   t)
 
-(defun make-tetrahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-tetrahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* diameter 0.5))
         (-r (* diameter -0.5)))
     (make-polyhedron (vector (p!  r (/     -r (sqrt 6)) (/     -r (sqrt 3)))
@@ -284,9 +273,10 @@
                              (p!  0 (/     -r (sqrt 6)) (/ (* 2 r) (sqrt 3)))
                              (p!  0 (/ (* 3 r) (sqrt 6)) 0))
                      (vector '(0 2 1) '(0 3 2) '(1 2 3) '(0 1 3))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-box (x-size y-size z-size &key (mesh-type 'polyhedron))
+(defun make-box (x-size y-size z-size &key (name nil) (mesh-type 'polyhedron))
   (let ((x (* x-size 0.5))
         (y (* y-size 0.5))
         (z (* z-size 0.5)))
@@ -300,9 +290,10 @@
                              (p! (- x)    y     z))
                      (vector '(0 1 2 3) '(0 4 5 1) '(1 5 6 2)
                              '(2 6 7 3) '(3 7 4 0) '(4 7 6 5))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-cube (side &key (mesh-type 'polyhedron))
+(defun make-cube (side &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* side 0.5))
         (-r (* side -0.5)))
     (make-polyhedron (vector (p! -r -r -r)
@@ -315,9 +306,10 @@
                              (p! -r  r  r))
                      (vector '(0 1 2 3) '(0 4 5 1) '(1 5 6 2)
                              '(2 6 7 3) '(3 7 4 0) '(4 7 6 5))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-cut-cube-polyhedron (side &key (mesh-type 'polyhedron))
+(defun make-cut-cube-polyhedron (side &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* side 0.5))
         (-r (* side -0.5))
         (b (* side 0.3)))
@@ -333,9 +325,10 @@
                              (p!  r  b  r))
                      (vector '(1 2 3 0) '(5 6 9 2 1) '(9 7 8 3 2)
                              '(0 4 5 1) '(8 4 0 3) '(8 7 6 5 4) '(6 7 9))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-octahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-octahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let* ((r (abs (/ diameter 2)))
          (-r (- r)))
     (make-polyhedron (vector (p!  r  0  0) 
@@ -346,9 +339,10 @@
                              (p!  0  0 -r))
                      (vector '(0 2 4) '(2 0 5) '(3 0 4) '(0 3 5)
                              '(2 1 4) '(1 2 5) '(1 3 4) '(3 1 5))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-dodecahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-dodecahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let* ((r (/ diameter 4))
          (phi (* 1.61803 r))
          (inv (* 0.6180355 r)))
@@ -384,9 +378,10 @@
                              '(4 7 17 8 12)
                              '(13 9 18 6 5)
                              '(5 6 19 10 14))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-icosahedron (diameter &key (mesh-type 'polyhedron))
+(defun make-icosahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let* ((p1 (/ (abs (/ diameter 2)) 1.902076))
          (p2 (* p1 1.618034))
          (-p1 (- p1))
@@ -407,10 +402,11 @@
                              '(3 9 6) '(3 7 11) '(0 10 8) '(1 8 10) '(2 9 11)
                              '(3 11 9) '(4 2 0) '(5 0 2) '(6 1 3) '(7 3 1) '(8 6 4)
                              '(9 4 6) '(10 5 7) '(11 7 5))
+                     :name name
                      :mesh-type mesh-type)))
 
-(defun make-cube-sphere (side subdiv-levels &key (mesh-type 'polyhedron))
-  (let ((polyh (refine-mesh (make-cube side :mesh-type mesh-type) subdiv-levels))
+(defun make-cube-sphere (side subdiv-levels &key (name nil) (mesh-type 'polyhedron))
+  (let ((polyh (refine-mesh (make-cube side :name name :mesh-type mesh-type) subdiv-levels))
         (radius (/ side 2)))
     (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
     (compute-face-normals polyh)

@@ -359,7 +359,7 @@
         (let ((n (aref face-normals f)))
           (gl:normal (x n) (y n) (z n))))
       (dolist (pref (aref faces f))
-        (if point-colors
+        (if (> (length point-colors) 0)
             (let ((c (aref point-colors pref)))
               (gl:color (c-red c) (c-green c) (c-blue c)))
             (gl:color (c-red *shading-color*) (c-green *shading-color*) (c-blue *shading-color*))) ;inefficient...

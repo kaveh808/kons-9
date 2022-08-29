@@ -5,14 +5,13 @@
 (defclass transform-operator ()
   ())
 
-(defclass translate-operator ()
+(defclass translate-operator (transform-operator)
   ((offset :accessor offset :initarg :offset :initform (p! 0.0 0.0 0.0))))
 
 (defmethod transform-matrix ((self translate-operator) &optional (factor 1.0))
   (make-translation-matrix (p-lerp factor (p! 0.0 0.0 0.0) (offset self))))
 
-;; TODO: rotate order, rotate pivot
-(defclass euler-rotate-operator ()
+(defclass euler-rotate-operator (transform-operator)
   ((angles :accessor angles :initarg :angles :initform (p! 0.0 0.0 0.0)) ;degrees
    ;; :xyz :xzy :yxz :yzx :zxy :zyx
    (rotate-order :accessor rotate-order :initarg :rotate-order :initform :xyz)
@@ -24,7 +23,7 @@
                         (rotate-order self)
                         (pivot self)))
 
-(defclass angle-axis-rotate-operator ()
+(defclass angle-axis-rotate-operator (transform-operator)
   ((angle :accessor angle :initarg :angle :initform 0.0) ;degrees
    (axis :accessor axis :initarg :axis :initform (p! 0.0 0.0 1.0))
    (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
@@ -35,7 +34,7 @@
                              (pivot self)))
 
 ;; TODO: scale pivot
-(defclass scale-operator ()
+(defclass scale-operator (transform-operator)
   ((scaling :accessor scaling :initarg :scaling :initform (p! 1.0 1.0 1.0))
    (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
 
@@ -46,7 +45,7 @@
 ;;; transform ==================================================================
 
 ;;; abstract superclass
-(defclass transform ()
+(defclass transform (item)
   ;; :trs :tsr :rts :rst :str :srt
   ((operator-order :accessor operator-order :initarg :operator-order :initform :srt)))
 

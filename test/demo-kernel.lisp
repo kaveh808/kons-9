@@ -138,8 +138,8 @@ Create a hierarchy and turn on shape axis display.
   (defparameter *icosahedron* (make-icosahedron 1.0))
   (defparameter *cube* (make-cube 1.0))
   (defparameter *tetrahedron* (make-tetrahedron 1.0))
-  (defparameter *group-1* (make-group *cube* *tetrahedron*))
-  (defparameter *group-2* (make-group *group-1* *icosahedron*))
+  (defparameter *group-1* (make-group (list *cube* *tetrahedron*)))
+  (defparameter *group-2* (make-group (list *group-1* *icosahedron*)))
   (add-shape *scene* *group-2*)
   (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
   (translate-by *tetrahedron* (p! 0.0 1.5 0.0))
@@ -278,11 +278,11 @@ Create a robot arm as a hierarchical structure.
   (defparameter *wrist-shape* (make-cube-sphere 1.0 2))
   (defparameter *hand-shape* (make-box 1.5 1.2 0.4))
 
-  (defparameter *wrist* (make-group *wrist-shape* *hand-shape*))
-  (defparameter *elbow* (make-group *elbow-shape* *lower-arm-shape* *wrist*))
-  (defparameter *shoulder* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
-  (defparameter *torso* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
-  (defparameter *waist* (make-group *waist-shape* *torso-shape* *shoulder*))
+  (defparameter *wrist* (make-group (list *wrist-shape* *hand-shape*)))
+  (defparameter *elbow* (make-group (list *elbow-shape* *lower-arm-shape* *wrist*)))
+  (defparameter *shoulder* (make-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
+  (defparameter *torso* (make-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
+  (defparameter *waist* (make-group (list *waist-shape* *torso-shape* *shoulder*)))
 
   (setf (name *waist-shape*) 'waist-shape)
   (setf (name *torso-shape*) 'torso-shape)
@@ -534,6 +534,49 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                                    (let ((target-y (y (offset (translate (transform (anim-data anim :target)))))))
                                                      (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
                                       :data `((:target . ,tetrahedron))))))
+
+#|
+(Demo 16) object duplication ===================================================
+
+
+Create a hierarchy and turn on shape axis display.
+|#
+(with-clear-scene
+  (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
+         (cube (make-cube 1.0 :name 'cube))
+         (tetrahedron (make-tetrahedron 1.0 :name 'tetrahedron))
+         (group-1 (make-group (list cube tetrahedron) :name 'group-1))
+         (group-2 (make-group (list group-1 icosahedron) :name 'group-2)))
+    (translate-by tetrahedron (p! 0.0 1.5 0.0))
+    (translate-by cube (p! 0.0 -1.5 0.0))
+    (translate-by group-1 (p! 1.5 0.0 0.0))
+    (translate-by icosahedron (p! -2.0 0.0 0.0))
+    (rotate-by group-1 (p! 0.0 0.0 10.0))
+
+    (add-shape *scene* group-2)
+    (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
+
+    (format t "~%~%Original scene hierarchy:~%")
+    (print-shape-hierarchy *scene*)))
+
+#|
+Duplicate cube (and add to parent of original)
+|#
+(let ((dup (duplicate-shape *scene* '(group-2 group-1 cube))))
+  (scale-to dup (p! 0.5 0.5 0.5))
+  (translate-by dup (p! 2.0 0.0 0.0))
+  (format t "~%~%After cube duplication:~%")
+  (print-shape-hierarchy *scene*))
+
+#|
+Duplicate group-1 (and add to parent of original)
+|#
+(let ((dup (duplicate-shape *scene* '(group-2 group-1))))
+  (rotate-by dup (p! 0.0 0.0 -30.0))
+  (translate-by dup (p! 0.0 0.0 4.0))
+  (format t "~%~%After cube duplication:~%")
+  (print-shape-hierarchy *scene*))
+
 
 #|
 END ============================================================================

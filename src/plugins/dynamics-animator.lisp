@@ -46,7 +46,7 @@
 
 ;;;; dynamics-animator =========================================================
 
-(defclass dynamics-animator (animator)
+(defclass dynamics-animator (shape-animator)
   ((velocity :accessor velocity :initarg :velocity :initform (p! 0 0 0))
    (mass :accessor mass :initarg :mass :initform 1.0)
    (elasticity :accessor elasticity :initarg :elasticity :initform 0.75)

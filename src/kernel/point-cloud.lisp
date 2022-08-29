@@ -8,9 +8,6 @@
 (defmethod printable-data ((self point-cloud))
   (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))
 
-(defmethod copy-instance-data :after ((dst point-cloud) (src point-cloud))
-  (setf (points dst) (points src))) ;;; TODO - deep copy arrays
-
 (defmethod get-bounds ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
     (warn "Shape ~a does not have any points. Using default bounds values." p-cloud)

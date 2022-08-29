@@ -6,9 +6,6 @@
 (defclass polygon (point-cloud)
   ((is-closed-polygon? :accessor is-closed-polygon? :initarg :is-closed-polygon? :initform t)))
 
-(defmethod copy-instance-data ((dst polygon) (src polygon))
-  (error "COPY-INSTANCE-DATA not implemented for POLYGON"))
-
 (defun make-polygon (points &optional (is-closed-polygon? t))
   (make-instance 'polygon :points points :is-closed-polygon? is-closed-polygon?))
 

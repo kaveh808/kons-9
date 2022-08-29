@@ -86,6 +86,19 @@
 
 ;;;; utils =====================================================================
 
+(defun scene-path-item (scene-path)
+  (if (null scene-path)
+      nil
+      (first (last scene-path))))
+  
+(defun scene-parent-path (scene-path)
+  (if (or (null scene-path) (= 1 (length scene-path)))
+      ()
+      (butlast scene-path)))
+
+(defun scene-path-parent-item (scene-path)
+  (scene-path-item (scene-parent-path scene-path)))
+
 (defun cleanup-nested-path-list (l)
   (if (not (listp (car l)))
       (list l)
@@ -105,12 +118,14 @@
                                   (shapes scene)))))
 
   (:method ((group group) test-fn)
-    (remove nil
-            (flatten-list (cons (if (funcall test-fn group)
-                                    group
-                                    nil)
-                                (mapcar (lambda (child) (find-shapes child test-fn))
-                                        (children group))))))
+    (if (funcall test-fn group)
+        group
+        (remove nil
+                (flatten-list (cons (if (funcall test-fn group)
+                                        group
+                                        nil)
+                                    (mapcar (lambda (child) (find-shapes child test-fn))
+                                            (children group)))))))
 
   (:method ((scene-item scene-item) test-fn)
     (if (funcall test-fn scene-item)
@@ -242,12 +257,14 @@
                                   (motions scene)))))
 
   (:method ((group motion-group) test-fn)
-    (remove nil
-            (flatten-list (cons (if (funcall test-fn group)
-                                    group
-                                    nil)
-                                (mapcar (lambda (child) (find-motions child test-fn))
-                                        (children group))))))
+    (if (funcall test-fn group)
+        group
+        (remove nil
+                (flatten-list (cons (if (funcall test-fn group)
+                                        group
+                                        nil)
+                                    (mapcar (lambda (child) (find-motions child test-fn))
+                                            (children group)))))))
 
   (:method ((scene-item scene-item) test-fn)
     (if (funcall test-fn scene-item)

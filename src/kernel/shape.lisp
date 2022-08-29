@@ -7,12 +7,6 @@
    (show-axis :accessor show-axis :initarg :show-axis :initform nil) ;nil or length
    (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
 
-(defmethod copy-instance-data :after ((dst shape) (src shape))
-  ;; TODO - name not copied - always generate new name?
-  (copy-instance-data (transform dst) (transform src))
-  (setf (show-axis dst) (show-axis src))
-  (setf (show-bounds? dst) (show-bounds? src)))
-
 ;;; utility methods for transforming shapes
 (defmethod translate-by ((self shape) (p point))
   (translate-by (transform self) p)
