@@ -51,6 +51,18 @@
 (defmethod printable-data ((self motion-group))
   (strcat (call-next-method) (format nil ", ~a children" (length (children self)))))
 
+(defmethod add-child ((self motion-group) (m motion))
+  (push m (children self))
+  self)
+
+(defmethod set-children ((self motion-group) motions)
+  (setf (children self) motions)
+  self)
+
+(defmethod remove-all-children ((self motion-group))
+  (setf (children self) '())
+  self)
+
 (defmethod setup-motion ((motion motion-group))
   (when (is-active? motion)
     (mapc #'setup-motion (children motion))))

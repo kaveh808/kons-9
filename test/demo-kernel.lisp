@@ -653,5 +653,42 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) t)
 
 #|
+(Demo 19) events using animators ===============================================
+
+Use an animator to stop rotations and scale shapes past a certain angle.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(with-clear-scene
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (make-cube 0.5))
+                                   (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2)))))
+        (motion-group (add-motion *scene* (make-instance 'motion-group
+                                                         :name 'top-motion-group
+                                                         :scene *scene*))))
+    (map-hierarchy group
+                   (lambda (shape)
+                     (add-child motion-group
+                                (make-instance 'shape-animator
+                                               :shape shape
+                                               :scene *scene*
+                                               :setup-fn (lambda (anim)
+                                                           (rotate-to (shape anim) (p! 0 0 0)))
+                                               :update-fn (lambda (anim)
+                                                            (rotate-by (shape anim) (anim-data anim :rotate)))
+                                               :data `((:rotate . ,(p! 0 (rand1 10) 0))))))
+                   :test #'is-leaf?)
+    ;; add event animator
+    (add-motion *scene*
+                (make-instance 'animator
+                               :scene *scene*
+                               :update-fn (lambda ()
+                                            (dolist (anim (children motion-group))
+                                              (let ((angle (y (angles (rotate (transform (shape anim)))))))
+                                                (when (> (abs angle) 45)
+                                                  (scale-to (shape anim) 0.5)
+                                                  (setf (is-active? anim) nil)))))))))
+
+#|
 END ============================================================================
 |#
