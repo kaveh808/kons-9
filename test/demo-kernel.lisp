@@ -537,9 +537,6 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 
 #|
 (Demo 16) object duplication ===================================================
-
-
-Create a hierarchy and turn on shape axis display.
 |#
 (with-clear-scene
   (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
@@ -576,6 +573,38 @@ Duplicate group-1 (and add to parent of original)
   (translate-by dup (p! 0.0 0.0 4.0))
   (format t "~%~%After cube duplication:~%")
   (print-shape-hierarchy *scene*))
+
+#|
+(Demo 17) object visibility ====================================================
+|#
+(with-clear-scene
+  (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
+         (cube (make-cube 1.0 :name 'cube))
+         (tetrahedron (make-tetrahedron 1.0 :name 'tetrahedron))
+         (group-1 (make-group (list cube tetrahedron) :name 'group-1))
+         (group-2 (make-group (list group-1 icosahedron) :name 'group-2)))
+    (translate-by tetrahedron (p! 0.0 1.5 0.0))
+    (translate-by cube (p! 0.0 -1.5 0.0))
+    (translate-by group-1 (p! 1.5 0.0 0.0))
+    (translate-by icosahedron (p! -2.0 0.0 0.0))
+    (rotate-by group-1 (p! 0.0 0.0 10.0))
+
+    (add-shape *scene* group-2)
+    (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))))
+
+#|
+Toggle cube visibility.
+|#
+(setf (is-visible? (find-shape-by-name *scene* 'cube)) nil)
+
+(setf (is-visible? (find-shape-by-name *scene* 'cube)) t)
+
+#|
+Toggle group-1 visibility.
+|#
+(setf (is-visible? (find-shape-by-name *scene* 'group-1)) nil)
+
+(setf (is-visible? (find-shape-by-name *scene* 'group-1)) t)
 
 
 #|
