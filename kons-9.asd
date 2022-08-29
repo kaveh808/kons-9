@@ -34,6 +34,7 @@
      (:file "src/kernel/procedural")
      (:file "src/kernel/motion")
      (:file "src/kernel/animator")
+     (:file "src/kernel/item")
      (:file "src/kernel/scene")
      (:file "src/kernel/scene-draw")
      (:file "src/kernel/scene-generics")
