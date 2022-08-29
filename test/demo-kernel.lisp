@@ -428,7 +428,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                     :children (mapcar (lambda (shape)
                                         (make-instance
                                          'shape-animator
-                                         :name (mashup-symbol 'animator- (incf counter))
+                                         :name (concat-syms 'animator- (incf counter))
                                          :scene *scene*
                                          :shape shape
                                          :setup-fn (lambda (anim)
@@ -606,6 +606,51 @@ Toggle group-1 visibility.
 
 (setf (is-visible? (find-shape-by-name *scene* 'group-1)) t)
 
+#|
+(Demo 18) motion is-active? flag ===============================================
+|#
+
+(with-clear-scene
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (scale-to (make-cube 0.5) (p! 2 1 .2)))
+                                   (make-grid-points 3 1 1 (p! -2 0 0) (p! 2 0 0)))))
+        (counter -1))
+    (add-motion
+     *scene*
+     (make-instance 'motion-group
+                    :name 'top-motion-group
+                    :scene *scene*
+                    :children (mapcar (lambda (shape)
+                                        (make-instance
+                                         'shape-animator
+                                         :name (concat-syms 'animator- (incf counter))
+                                         :scene *scene*
+                                         :shape shape
+                                         :setup-fn (lambda (anim)
+                                                     (rotate-to (shape anim) (p! 0 0 0)))
+                                         :update-fn (lambda (anim)
+                                                      (rotate-to (shape anim)
+                                                                 (p! 0 (* 90 (local-time anim)) 0)))))
+                                      (children group)))))
+  (setf (end-frame *scene*) 42))
+
+#|
+Toggle second animator.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(setf (is-active? (find-motion-by-name *scene* 'animator-1)) nil)
+
+(setf (is-active? (find-motion-by-name *scene* 'animator-1)) t)
+
+#|
+Toggle parent motion.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) nil)
+
+(setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) t)
 
 #|
 END ============================================================================

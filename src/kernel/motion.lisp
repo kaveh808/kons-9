@@ -5,6 +5,7 @@
 (defclass motion (scene-item)
   ((start-time :accessor start-time :initarg :start-time :initform 0.0)
    (duration :accessor duration :initarg :duration :initform 1.0) ;nil = infinite duration
+   (is-active? :accessor is-active? :initarg :is-active? :initform t)
    ;; :absolute-time :relative-to-parent
    (timing-mode :accessor timing-mode :initarg :timing-mode :initform :relative-to-parent)
    (local-time :accessor local-time :initarg :local-time :initform 0.0)))
@@ -51,11 +52,13 @@
   (strcat (call-next-method) (format nil ", ~a children" (length (children self)))))
 
 (defmethod setup-motion ((motion motion-group))
-  (mapc #'setup-motion (children motion)))
+  (when (is-active? motion)
+    (mapc #'setup-motion (children motion))))
 
 (defmethod update-motion ((motion motion-group) parent-absolute-timing)
-  (let ((timing (compute-motion-absolute-timing motion parent-absolute-timing)))
-    (when (in-time-interval? motion timing)
-      (mapc (lambda (m) (update-motion m timing))
-            (children motion)))))
+  (when (is-active? motion)
+    (let ((timing (compute-motion-absolute-timing motion parent-absolute-timing)))
+      (when (in-time-interval? motion timing)
+        (mapc (lambda (m) (update-motion m timing))
+              (children motion))))))
 
