@@ -55,6 +55,7 @@
      (:file "src/plugins/poly-mesh")
      (:file "src/plugins/usd")
      (:file "src/plugins/obj")
+     (:file "src/ui/command-table")
      (:file "src/graphics/glfw/minimal-ui")))
 
 #+nil (asdf:load-system :kons-9)

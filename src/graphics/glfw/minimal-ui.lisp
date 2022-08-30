@@ -10,11 +10,74 @@
 ;;;; scene-view ================================================================
 
 (defclass scene-view ()
-  ((scene :accessor scene :initarg :scene :initform nil)))
+  ((scene :accessor scene :initarg :scene :initform nil)
+   (command-tables :accessor command-tables :initarg :command-tables :initform '())))
 
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
-  (init-view-camera))
+  (init-view-camera)
+  (push (make-default-command-table view) (command-tables view)))
+
+(defun make-default-command-table (view)
+  (let ((scene (scene view))
+        (table (make-instance 'command-table
+                              :mouse-help-string "Drag: orbit, [option/alt] track left/right and up/down, [control] track in/out.")))
+    (add-entry table
+               :h
+               (lambda () (print-command-table-help table))
+               "Print this help message.")
+    (add-entry table
+               :a
+               (lambda () (when scene (init-scene scene)))
+               "Init scene.")
+    (add-entry table
+               :n
+               (lambda () (clear-scene scene))
+               "Clear scene.")
+    (add-entry table
+               :grave-accent (lambda () (setf *do-lighting?* (not *do-lighting?*)))
+               "Toggle lighting.")
+    (add-entry table
+               :1
+               (lambda () (setf *display-filled?* (not *display-filled?*)))
+               "Toggle filled display.")
+    (add-entry table
+               :2
+               (lambda () (setf *display-wireframe?* (not *display-wireframe?*)))
+               "Toggle wireframe display.")
+    (add-entry table
+               :3
+               (lambda () (setf *display-points?* (not *display-points?*)))
+               "Toggle point display.")
+    (add-entry table
+               :4
+               (lambda () (setf *do-backface-cull?* (not *do-backface-cull?*)))
+               "Toggle backface culling.")
+    (add-entry table
+               :5
+               (lambda () (setf *do-smooth-shading?* (not *do-smooth-shading?*)))
+               "Toggle smooth shading.")
+    (add-entry table
+               :6
+               (lambda () (setf *display-ground-plane?* (not *display-ground-plane?*)))
+               "Toggle ground plane display.")
+    (add-entry table
+               :7
+               (lambda () (setf *display-axes?* (not *display-axes?*)))
+               "Toggle axes display.")
+    (add-entry table                    ;TODO -- lights don't update when camera reset
+               :z
+               (lambda () (init-view-camera) (3d-update-light-settings))
+               "Reset camera.")
+    (add-entry table
+               :space
+               (lambda () (update-scene scene))
+               "Update scene (hold down for animation).")
+    (add-entry table
+               :backspace
+               (lambda () (remove-current-selection scene))
+               "Delete selected items.")
+    table))
 
 ;; Hack! Figure out the right analogous representation
 ;; of a GL-enabled NSView for the GLFW3 backend
@@ -49,45 +112,10 @@
 (defmethod accepts-first-responder ((self scene-view))
   t)
 
-(defun print-scene-view-help ()
-  (format t "~%~%Mouse drag: orbit, [option/alt] track left/right and up/down, [control] track in/out~%~
-`: toggle lighting~%~
-1: toggle filled display~%~
-2: toggle wireframe display~%~
-3: toggle point display~%~
-4: toggle backface culling~%~
-5: toggle smooth shading~%~
-6: toggle ground plane display~%~
-7: toggle axes display~%~
-z: reset camera~%~
-a: init scene~%~
-n: clear scene~%~
-space: update scene (hold down for animation) ~%~
-delete: delete selected items ~%~
-tab: show/hide contextual menu ~%~
-h: print this help message~%"))
-
 (defmethod key-down ((self scene-view) key)
-  (let* ((scene (scene self)))
-    ;; (format t "key-down self: ~a, key: ~a~%" self key)
-    ;; (finish-output)
-    (case key
-      (:h (print-scene-view-help))
-;;;      (:? (print-scene-view-help))      ;TODO -- not working, test for slash & shift?
-      (:a (when scene (init-scene scene)))
-      (:n (clear-scene scene))
-      (:grave-accent (setf *do-lighting?* (not *do-lighting?*)))
-      (:1 (setf *display-filled?* (not *display-filled?*)))
-      (:2 (setf *display-wireframe?* (not *display-wireframe?*)))
-      (:3 (setf *display-points?* (not *display-points?*)))
-      (:4 (setf *do-backface-cull?* (not *do-backface-cull?*)))
-      (:5 (setf *do-smooth-shading?* (not *do-smooth-shading?*)))
-      (:6 (setf *display-ground-plane?* (not *display-ground-plane?*)))
-      (:7 (setf *display-axes?* (not *display-axes?*)))
-      (:z (init-view-camera) (3d-update-light-settings)) ;TODO -- lights don't update when camera reset
-      (:space (update-scene scene))
-      (:backspace (remove-current-selection scene))
-      )))
+  ;; (format t "key-down self: ~a, key: ~a~%" self key)
+  ;; (finish-output)
+  (do-command (car (command-tables self)) key))
 
 (defparameter *keys-pressed* nil)
 (defparameter *buttons-pressed* nil)
