@@ -1,5 +1,26 @@
 (in-package #:kons-9)
 
+;;;; macros ====================================================================
+
+(defmacro ct-subtable (key title c-table-fn)
+  `(add-entry table
+              ,key
+              (lambda () (push ,c-table-fn (command-tables *default-scene-view*)))
+              (strcat "Push " ,title " command table.")))
+
+(defmacro ct-make-shape (key help expr)
+  `(add-entry table
+              ,key
+              (lambda () (add-shape *scene* ,expr))
+              (strcat "Create " ,help ".")))
+
+(defmacro ct-entry (key help &rest expr)
+  `(add-entry table
+              ,key
+              (lambda () ,@expr)
+              ,help))
+
+
 ;;;; command-table =============================================================
 
 (defclass command-table-entry ()
@@ -13,8 +34,16 @@
 ;;;; command-table =============================================================
 
 (defclass command-table ()
-  ((entries :accessor entries :initarg :entries :initform (make-array 0 :adjustable t :fill-pointer t))
+  ((title :accessor title :initarg :title :initform nil)
+   (entries :accessor entries :initarg :entries :initform (make-array 0 :adjustable t :fill-pointer t))
    (mouse-help-string :accessor mouse-help-string :initarg :mouse-help-string :initform nil)))
+
+(defmethod initialize-instance :after ((table command-table) &rest initargs)
+  (declare (ignore initargs))
+  (add-entry table
+             :h
+             (lambda () (print-command-table-help table))
+             "Print this help message."))
 
 (defmethod add-entry ((table command-table) key func doc)
   (vector-push-extend (make-instance 'command-table-entry :key key :command-fn func :help-string doc)
@@ -27,6 +56,7 @@
       (funcall command-fn))))
 
 (defmethod print-command-table-help ((table command-table))
+  (format t "~%~a table key commands:~%" (title table))
   (when (mouse-help-string table)
     (format t "Mouse: ~a~%" (mouse-help-string table)))
   (loop for entry across (entries table)

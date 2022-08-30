@@ -1,9 +1,5 @@
 (in-package #:kons-9)
 
-;;; dummy code to keep main.lisp happy
-(defun update-view (x)
-  (declare (ignore x)))
-
 (defparameter *window-x-size* 960)
 (defparameter *window-y-size* 540)
 
@@ -16,67 +12,26 @@
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera)
-  (push (make-default-command-table view) (command-tables view)))
+  (push (default-command-table view) (command-tables view)))
 
-(defun make-default-command-table (view)
+(defun default-command-table (view)
   (let ((scene (scene view))
         (table (make-instance 'command-table
+                              :title "Default"
                               :mouse-help-string "Drag: orbit, [option/alt] track left/right and up/down, [control] track in/out.")))
-    (add-entry table
-               :h
-               (lambda () (print-command-table-help table))
-               "Print this help message.")
-    (add-entry table
-               :a
-               (lambda () (when scene (init-scene scene)))
-               "Init scene.")
-    (add-entry table
-               :n
-               (lambda () (clear-scene scene))
-               "Clear scene.")
-    (add-entry table
-               :grave-accent (lambda () (setf *do-lighting?* (not *do-lighting?*)))
-               "Toggle lighting.")
-    (add-entry table
-               :1
-               (lambda () (setf *display-filled?* (not *display-filled?*)))
-               "Toggle filled display.")
-    (add-entry table
-               :2
-               (lambda () (setf *display-wireframe?* (not *display-wireframe?*)))
-               "Toggle wireframe display.")
-    (add-entry table
-               :3
-               (lambda () (setf *display-points?* (not *display-points?*)))
-               "Toggle point display.")
-    (add-entry table
-               :4
-               (lambda () (setf *do-backface-cull?* (not *do-backface-cull?*)))
-               "Toggle backface culling.")
-    (add-entry table
-               :5
-               (lambda () (setf *do-smooth-shading?* (not *do-smooth-shading?*)))
-               "Toggle smooth shading.")
-    (add-entry table
-               :6
-               (lambda () (setf *display-ground-plane?* (not *display-ground-plane?*)))
-               "Toggle ground plane display.")
-    (add-entry table
-               :7
-               (lambda () (setf *display-axes?* (not *display-axes?*)))
-               "Toggle axes display.")
-    (add-entry table                    ;TODO -- lights don't update when camera reset
-               :z
-               (lambda () (init-view-camera) (3d-update-light-settings))
-               "Reset camera.")
-    (add-entry table
-               :space
-               (lambda () (update-scene scene))
-               "Update scene (hold down for animation).")
-    (add-entry table
-               :backspace
-               (lambda () (remove-current-selection scene))
-               "Delete selected items.")
+    (ct-entry :a "Init scene." (when scene (init-scene scene)))
+    (ct-entry :n "Clear scene." (when scene (clear-scene scene)))
+    (ct-entry :grave-accent "Toggle lighting." (setf *do-lighting?* (not *do-lighting?*)))
+    (ct-entry :1 "Toggle filled display." (setf *display-filled?* (not *display-filled?*)))
+    (ct-entry :2 "Toggle wireframe display." (setf *display-wireframe?* (not *display-wireframe?*)))
+    (ct-entry :3 "Toggle point display." (setf *display-points?* (not *display-points?*)))
+    (ct-entry :4 "Toggle backface culling." (setf *do-backface-cull?* (not *do-backface-cull?*)))
+    (ct-entry :5 "Toggle smooth shading." (setf *do-smooth-shading?* (not *do-smooth-shading?*)))
+    (ct-entry :6 "Toggle ground plane display." (setf *display-ground-plane?* (not *display-ground-plane?*)))
+    (ct-entry :7 "Toggle axes display." (setf *display-axes?* (not *display-axes?*)))
+    (ct-entry :z "Reset camera." (init-view-camera) (3d-update-light-settings))
+    (ct-entry :space "Update scene (hold down for animation)." (update-scene scene))
+    (ct-entry :backspace "Delete selected items." (remove-current-selection scene))
     table))
 
 ;; Hack! Figure out the right analogous representation
@@ -115,7 +70,9 @@
 (defmethod key-down ((self scene-view) key)
   ;; (format t "key-down self: ~a, key: ~a~%" self key)
   ;; (finish-output)
-  (do-command (car (command-tables self)) key))
+  (if (eq :tab key)
+      (setf (command-tables self) (last (command-tables self))) ;pop all but original table
+      (do-command (car (command-tables self)) key)))
 
 (defparameter *keys-pressed* nil)
 (defparameter *buttons-pressed* nil)
@@ -124,12 +81,17 @@
 ;;XXX This doesn't work on wayland. I think wayland expects clients
 ;; to draw the window decorations themselves
 (defun update-window-title (window)
-  (glfw:set-window-title (format nil "kons-9 | window ~A | start-frame ~A | end-frame ~A | curr-frame ~A"
-                                 *window-size*
-                                 (start-frame (scene *default-scene-view*))
-                                 (end-frame (scene *default-scene-view*))
-                                 (current-frame (scene *default-scene-view*)))
-                         window))
+  (glfw:set-window-title
+   (if (= 1 (length (command-tables *default-scene-view*)))
+       (format nil "kons-9 | window ~A | start-frame ~A | end-frame ~A | curr-frame ~A"
+               *window-size*
+               (start-frame (scene *default-scene-view*))
+               (end-frame (scene *default-scene-view*))
+               (current-frame (scene *default-scene-view*)))
+       (format nil "kons-9 | ~A [tab to reset]"
+               (apply #'strcat (mapcar (lambda (table) (strcat (title table) " > "))
+                                       (reverse (butlast (command-tables *default-scene-view*)))))))
+       window))
 
 ;; (defun update-window-title (window)
 ;;   (glfw:set-window-title (format nil "size ~A | keys ~A | buttons ~A | frame ~A"
