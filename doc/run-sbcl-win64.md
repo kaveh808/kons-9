@@ -8,7 +8,7 @@ Following are the steps that enable me to compile and load the **sbcl-win64-test
 The TL;DR version is that you just need to:
 
 1. Install the 64-bit version of glfw
-2. Push the directory containing the glfw DLL onto cffi:*foreign-library-directories*, something like this:
+2. Push the directory containing the glfw DLL onto cffi:*foreign-library-directories*. For example, you can open kons-9.asd and find the following text near the top of the file:
 ```
 #+(and windows x86-64) 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -16,7 +16,9 @@ The TL;DR version is that you just need to:
            cffi:*foreign-library-directories*))
 
 ```
-3. Modify the definition of print-scene-view-help so that it doesn't try to use "~%~" to end lines in the message string; this does not work well across filesystems. For testing purposes, I simply commented out the FORMAT call with a "#-windows", which means that printing help doesn't currnetly work on Windows, for now.
+Change the pathname `"c:/Program Files/glfw-3.3.8/lib/"` to the path that contains the GLFW DLL you want to use.
+
+3. Modify the definition of print-scene-view-help (in kons-9/src/graphics/glfw/minimal-ui.lisp) so that it doesn't try to use "~%~" to end lines in the message string; this does not work well across filesystems. For testing purposes, I simply commented out the FORMAT call with a "#-windows", which means that printing help doesn't currnetly work on Windows, for now.
 
 Here's a fuller version of the explanation:
 
