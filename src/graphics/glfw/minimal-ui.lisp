@@ -7,6 +7,7 @@
 
 (defclass scene-view ()
   ((scene :accessor scene :initarg :scene :initform nil)
+   (menu :accessor menu :initarg :menu :initform nil)
    (command-tables :accessor command-tables :initarg :command-tables :initform '())))
 
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
@@ -43,8 +44,8 @@
 ;;; display the view
 (defmethod draw-scene-view ((view scene-view))
   (3d-setup-buffer)
-  (3d-update-light-settings)
   (3d-setup-projection)
+  (3d-update-light-settings)
   (when (scene view)
     (draw (scene view)))
   (3d-cleanup-render)
@@ -52,8 +53,23 @@
     (draw-ground-plane))
   (when *display-axes?*
     (draw-world-axes))
+
+  ;; display ui layer
+  (2d-setup-projection)
+  (draw-scene-view-ui view)
+  
   (3d-flush-render)
   (incf *draw-scene-count*))
+
+(defmethod draw-scene-view-ui ((view scene-view))
+  (when (command-tables view)
+    (when (or (null (menu view))
+              (not (eq (command-table (menu view)) (car (command-tables view)))))
+      (setf (menu view)
+            (make-instance 'ui-popup-menu :x 20 :y 20 :command-table (car (command-tables view))))
+      (update-layout (menu view))))
+  (when (menu view)
+    (draw-view (menu view))))
 
 ;;; respond to first click in window
 (defmethod accepts-first-mouse ((self scene-view) event)

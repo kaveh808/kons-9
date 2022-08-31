@@ -148,8 +148,6 @@
 (defparameter *do-smooth-shading?* nil)
 (defparameter *display-ground-plane?* t)
 (defparameter *display-axes?* t)
-;; (defparameter *light-0-on?* t)
-;; (defparameter *light-1-on?* t)
 
 (defun init-view-camera ()
   (setf *cam-x-rot* 15.0)
@@ -162,15 +160,15 @@
   (gl:enable light-id)
   (gl:light light-id :position (vector (x dir) (y dir) (z dir) 0.0))
   (gl:light light-id :ambient (vector 0.25 0.25 0.25 1.0))
-  (gl:light light-id :diffuse color) ;(vector (c-red color) (c-green color) (c-blue color) 1.0))
-  (gl:light light-id :specular color)) ;(vector (c-red color) (c-green color) (c-blue color) 1.0)))
+  (gl:light light-id :diffuse color)
+  (gl:light light-id :specular color))
 
 (defun gl-disable-light (light-id)
   (gl:disable light-id))
 
 (defun gl-set-material (&optional (diff (shading-color *drawing-settings*)) (spec (c! 0 0 0)) (shine 0.0))
-  (gl:material :front-and-back :diffuse diff) ;(vector (c-red diff) (c-green diff) (c-blue diff) 1.0))
-  (gl:material :front-and-back :specular spec) ;(vector (c-red spec) (c-green spec) (c-blue spec) 1.0))
+  (gl:material :front-and-back :diffuse diff)
+  (gl:material :front-and-back :specular spec)
   (gl:material :front-and-back :shininess shine))
   
 (defun 3d-update-light-settings ()
@@ -189,18 +187,6 @@
                               (make-y-rotation-matrix (- (radians *cam-y-rot*))))))
     (gl-enable-light :light0 (transform-point (p! 0 0 1) mtx) (c! 0.7 0.7 0.7))))
 
-;; (if *light-0-on?*
-  ;;     (gl-enable-light :light0 (p! 0 1 0.8) (c! 0.7 0.7 0.7))
-  ;;     (gl-disable-light :light0))
-  ;; (if *light-1-on?*
-  ;;     (gl-enable-light :light1 (p! 1 -0.5 0) (c! 0.3 0.3 0.3))
-  ;;     (gl-disable-light :light1))
-  ;; (when (and (not *light-0-on?*) (not *light-1-on?*)) ;use camera light
-  ;;   (let ((mtx (matrix-multiply (make-x-rotation-matrix (- (radians *cam-x-rot*)))
-  ;;                               (make-y-rotation-matrix (- (radians *cam-y-rot*))))))
-  ;;     (gl-enable-light :light0 (transform-point (p! 0 0 1) mtx))))
-;;  )
-
 (defun 3d-setup-buffer ()
   (let ((bg-color (bg-color *drawing-settings*)))
     (gl:clear-color (c-red bg-color) (c-green bg-color) (c-blue bg-color) 0.0)
@@ -214,7 +200,6 @@
   (glu:perspective 45.0d0 (coerce *viewport-aspect-ratio* 'double-float) 0.01d0 1000.0d0)
   (gl:matrix-mode :modelview)
   (gl:load-identity)
-;;  (glu:look-at 4.0d0 3.0d0 5.0d0 0.0d0 0.0d0 0.0d0 0.0d0 1.0d0 0.0d0)
   (gl:translate *cam-side-dist* *cam-up-dist* *cam-fwd-dist*)
   (gl:rotate *cam-x-rot* 1.0 0.0 0.0)
   (gl:rotate *cam-y-rot* 0.0 1.0 0.0))
@@ -412,3 +397,18 @@
         (let ((p (aref points pref)))
           (gl:vertex (x p) (y p) (z p))))
       (gl:end))))
+
+;;; 2d display =================================================================
+
+(defun 2d-setup-projection ()
+  (gl:matrix-mode :projection)
+  (gl:load-identity)
+  (gl:ortho 0.0 *window-x-size* 0.0 *window-y-size* -1.0 1.0)
+  (gl:matrix-mode :modelview)
+  (gl:load-identity)
+  (gl:disable :depth-test)
+  (gl:blend-func :src-alpha :one-minus-src-alpha)
+  (gl:enable :blend)
+)
+
+
