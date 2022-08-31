@@ -403,10 +403,11 @@
 (defun 2d-setup-projection ()
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (gl:ortho 0.0 *window-x-size* 0.0 *window-y-size* -1.0 1.0)
+  (gl:ortho 0.0 (first *window-size*) (second *window-size*) 0.0 -1.0 1.0) ; y=0 at top
   (gl:matrix-mode :modelview)
   (gl:load-identity)
   (gl:disable :depth-test)
+  (gl:disable :cull-face)
   (gl:blend-func :src-alpha :one-minus-src-alpha)
   (gl:enable :blend)
 )

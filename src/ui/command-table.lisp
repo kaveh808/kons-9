@@ -6,13 +6,13 @@
   `(add-entry table
               ,key
               (lambda () (push ,c-table-fn (command-tables *default-scene-view*)))
-              (strcat "Push " ,title " command table.")))
+              (strcat "Show " ,title " menu")))
 
 (defmacro ct-make-shape (key help expr)
   `(add-entry table
               ,key
               (lambda () (add-shape *scene* ,expr))
-              (strcat "Create " ,help ".")))
+              (strcat "Create " ,help)))
 
 (defmacro ct-entry (key help &rest expr)
   `(add-entry table
