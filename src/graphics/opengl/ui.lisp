@@ -25,10 +25,10 @@
 ;;;; ui-rect ===================================================================
 
 (defclass ui-rect ()
-  ((x :accessor x :initarg :x :initform 0.0)
-   (y :accessor y :initarg :y :initform 0.0)
-   (w :accessor w :initarg :w :initform 0.0)
-   (h :accessor h :initarg :h :initform 0.0)))
+  ((ui-x :accessor ui-x :initarg :ui-x :initform 0.0)
+   (ui-y :accessor ui-y :initarg :ui-y :initform 0.0)
+   (ui-w :accessor ui-w :initarg :ui-w :initform 0.0)
+   (ui-h :accessor ui-h :initarg :ui-h :initform 0.0)))
 
 ;;;; ui-view ===================================================================
 
@@ -72,11 +72,11 @@
     (when table
       (let* ((height (* (length (entries table)) *ui-button-item-height*))
              (y height))
-        (setf (w view) *ui-popup-menu-width*)
-        (setf (h view) height)
+        (setf (ui-w view) *ui-popup-menu-width*)
+        (setf (ui-h view) height)
         (loop for entry across (entries table)
-              do (push (make-instance 'ui-menu-item :x 0 :y (decf y *ui-button-item-height*)
-                                                    :w *ui-popup-menu-width* :h *ui-button-item-height*
+              do (push (make-instance 'ui-menu-item :ui-x 0 :ui-y (decf y *ui-button-item-height*)
+                                                    :ui-w *ui-popup-menu-width* :ui-h *ui-button-item-height*
                                                     :text (string (help-string entry))
                                                     :action-fn (command-fn entry))
                        (children view))))))
@@ -110,7 +110,7 @@
 (defgeneric draw-view (view &optional x-offset y-offset)
 
   (:method ((view ui-view) &optional (x-offset 0) (y-offset 0))  
-    (with-accessors ((bg bg-color) (fg fg-color) (x x) (y y) (w w) (h h))
+    (with-accessors ((bg bg-color) (fg fg-color) (x ui-x) (y ui-y) (w ui-w) (h ui-h))
         view
       ;; fill
       (when (> (c-alpha bg) 0)
@@ -124,7 +124,7 @@
   
   (:method :after ((view ui-group) &optional (x-offset 0) (y-offset 0))
     (dolist (child (children view))
-      (draw-view child (+ (x view) x-offset) (+ (y view) y-offset))))
+      (draw-view child (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))))
   )
 
 ;;;; hit testing -------------------------
@@ -135,7 +135,7 @@
 (defgeneric find-ui-at-point (view global-x global-y &optional x-offset y-offset)
 
   (:method ((view ui-rect) global-x global-y &optional (x-offset 0) (y-offset 0))
-    (with-accessors ((x x) (y y) (w w) (h h))
+    (with-accessors ((x ui-x) (y ui-y) (w ui-w) (h ui-h))
         view
       (let ((local-x (- global-x x-offset))
             (local-y (- global-y y-offset)))
@@ -148,7 +148,7 @@
            (when (children view)
              (dolist (child (children view))
                (let ((found (find-ui-at-point child global-x global-y
-                                              (+ (x view) x-offset) (+ (y view) y-offset))))
+                                              (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))))
                  (when found
                    (return-from find-ui-at-point found))))
              view))

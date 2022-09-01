@@ -69,7 +69,7 @@
                 (not (eq (command-table (menu view)) table))
                 (not (= (length (children (menu view))) (length (entries table)))))
         (setf (menu view)
-              (make-instance 'ui-popup-menu :x 20 :y 20 :command-table (car (command-tables view))))
+              (make-instance 'ui-popup-menu :ui-x 20 :ui-y 20 :command-table (car (command-tables view))))
         (update-layout (menu view)))))
   (when (menu view)
     (draw-view (menu view))))

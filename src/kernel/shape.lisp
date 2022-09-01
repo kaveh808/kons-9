@@ -9,36 +9,28 @@
    (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
 
 ;;; utility methods for transforming shapes
-(defmethod translate-by ((self shape) (p point))
+(defmethod translate-by ((self shape) p)
   (translate-by (transform self) p)
   self)
 
-(defmethod rotate-by ((self shape) (p point))
+(defmethod rotate-by ((self shape) p)
   (rotate-by (transform self) p)
   self)
 
-(defmethod scale-by ((self shape) (p point))
+(defmethod scale-by ((self shape) p)
   (scale-by (transform self) p)
   self)
 
-(defmethod scale-by ((self shape) (s number))
-  (scale-by (transform self) s)
-  self)
-
-(defmethod translate-to ((self shape) (p point))
+(defmethod translate-to ((self shape) p)
   (translate-to (transform self) p)
   self)
 
-(defmethod rotate-to ((self shape) (p point))
+(defmethod rotate-to ((self shape) p)
   (rotate-to (transform self) p)
   self)
 
-(defmethod scale-to ((self shape) (p point))
+(defmethod scale-to ((self shape) p)
   (scale-to (transform self) p)
-  self)
-
-(defmethod scale-to ((self shape) (s number))
-  (scale-to (transform self) s)
   self)
 
 (defmethod reset-transform ((self shape))

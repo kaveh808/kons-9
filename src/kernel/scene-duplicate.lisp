@@ -22,8 +22,9 @@
       (copy-instance-data dup item)
       dup))
 
-  (:method ((p point))
-    (p-copy p))
+  (:method ((val t))
+    (etypecase val
+      (point (p-copy val))))
 
   (:method ((seq sequence))
     (copy-seq seq))

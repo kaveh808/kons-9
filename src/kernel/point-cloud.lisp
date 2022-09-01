@@ -119,7 +119,7 @@
 
 ;;; TODO - in-place array modification?
 ;;; randomize points
-(defmethod randomize-points ((p-cloud point-cloud) (delta point))
+(defmethod randomize-points ((p-cloud point-cloud) delta)
   (setf (points p-cloud)
 	(map 'vector #'(lambda (p)
                          (let ((offset (p! (rand1 (x delta)) (rand1 (y delta)) (rand1 (z delta)))))

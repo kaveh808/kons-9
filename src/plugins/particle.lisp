@@ -299,7 +299,7 @@
 (defmethod source-curves-closed ((p-sys particle-system))
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
-(defmethod make-particle-system (p-gen (vel point) num max-gen particle-class &rest initargs)
+(defmethod make-particle-system (p-gen vel num max-gen particle-class &rest initargs)
   (apply #'make-particle-system-aux
          (source-points p-gen)
          (source-directions p-gen)
