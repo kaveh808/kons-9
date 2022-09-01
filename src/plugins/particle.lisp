@@ -190,10 +190,10 @@
             (friction (friction ptcl))
             (lo (collision-padding ptcl)))
         (when (< (y pos) lo)
-          (setf (y pos) (+ lo (abs (- lo (y pos)))))
-	    (setf (x vel) (* friction (x vel)))
-            (setf (y vel) (* elast (- (y vel))))
-            (setf (z vel) (* friction (z vel))))))
+          (set-y! pos (+ lo (abs (- lo (y pos)))))
+          (set-x! vel (* friction (x vel)))
+          (set-y! vel (* elast (- (y vel))))
+          (set-z! vel (* friction (z vel))))))
     ;; update state
     (setf (vel ptcl) vel)
     (update-velocity ptcl)              ;do wiggle

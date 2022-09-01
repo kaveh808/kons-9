@@ -98,8 +98,9 @@
   (dotimes (i num-frames)
     (when (< (current-frame scene) (end-frame scene))
       (incf (current-frame scene))
-      (mapc (lambda (m) (update-motion m (compute-motion-absolute-timing scene nil)))
-            (motions scene)))))
+      (let ((timing (compute-motion-absolute-timing scene nil)))
+        (mapc (lambda (m) (update-motion m timing))
+              (motions scene))))))
 
 (defmethod compute-motion-absolute-timing ((scene scene) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))

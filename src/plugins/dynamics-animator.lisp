@@ -67,7 +67,8 @@
   (setf (collision-padding dst) (collision-padding src))
   dst)
 
-(defmethod update-animator ((anim dynamics-animator))
+(defmethod update-motion ((anim dynamics-animator) parent-absolute-timing)
+  (declare (ignore parent-absolute-timing))
   (if (null (shape anim))
     (error "DYNAMICS-ANIMATOR ~a HAS NO SHAPE.~%" anim)
     (let* ((p0 (offset (translate (transform (shape anim)))))
@@ -85,11 +86,11 @@
               (friction (friction anim))
 	      (lo (collision-padding anim)))
 	  (when (< (y pos) lo)
-	    (setf (y pos) (+ lo (abs (- lo (y pos)))))
-	    (setf (x vel) (* friction (x vel)))
-            (setf (y vel) (* elast (- (y vel))))
-            (setf (z vel) (* friction (z vel))))))
-
+	    (set-y! pos (+ lo (abs (- lo (y pos)))))
+	    (set-x! vel (* friction (x vel)))
+            (set-y! vel (* elast (- (y vel))))
+            (set-z! vel (* friction (z vel))))))
+      
       ;; update state
       (setf (velocity anim) vel)
       (translate-to (shape anim) pos))))
