@@ -8,51 +8,58 @@
     (mapc #'draw (shapes scene)))
 
   (:method ((group group))
-    (mapc #'draw (children group)))
+    (when (is-visible? group)
+      (mapc #'draw (children group))))
 
   ;; push matrix and do transform operations before drawing
   (:method :before ((shape shape))
-    (let ((xform (transform shape)))
-      (3d-push-matrix (transform-matrix xform))))
+    (when (is-visible? shape)
+      (let ((xform (transform shape)))
+        (3d-push-matrix (transform-matrix xform)))))
 
   ;; draw a marker as a default
   (:method ((shape shape))
-    (3d-draw-marker 0.1))
+    (when (is-visible? shape)
+      (3d-draw-marker 0.1)))
 
   ;; draw axis and pop matrix after drawing
   (:method :after ((shape shape))
-    (when (show-axis shape)
-      (draw-axis shape))
-    (if (is-selected? shape)
-        (draw-selected shape)
-        (when (show-bounds? shape)
-          (draw-bounds shape)))
-    (3d-pop-matrix))
+    (when (is-visible? shape)
+      (when (show-axis shape)
+        (draw-axis shape))
+      (if (is-selected? shape)
+          (draw-selected shape)
+          (when (show-bounds? shape)
+            (draw-bounds shape)))
+      (3d-pop-matrix)))
 
   (:method ((p-cloud point-cloud))
-    (when *display-points?*
-      (draw-points p-cloud)))
+    (when (is-visible? p-cloud)
+      (when *display-points?*
+        (draw-points p-cloud))))
 
   (:method ((poly polygon))
-    (when *display-wireframe?*
-      (draw-wireframe poly))
-    (when *display-points?*
-      (draw-points poly)))
+    (when (is-visible? poly)
+      (when *display-wireframe?*
+        (draw-wireframe poly))
+      (when *display-points?*
+        (draw-points poly))))
 
   (:method ((polyh polyhedron))
-    (when (or (= 0 (length (points polyh)))
-              (= 0 (length (faces polyh))))
-      (return-from draw))
-    (3d-setup-lighting)
-    (when *display-filled?*
-      (3d-draw-filled-polygons (points polyh) (faces polyh)
-                               (face-normals polyh) (point-normals polyh) (point-colors polyh)))
-    (when *display-wireframe?*
-      (3d-draw-wireframe-polygons (points polyh) (faces polyh)))
-    (when *display-points?*
-      (draw-points polyh))
-    (when (show-normals polyh)
-      (draw-normals polyh)))
+    (when (is-visible? polyh)
+      (when (or (= 0 (length (points polyh)))
+                (= 0 (length (faces polyh))))
+        (return-from draw))
+      (3d-setup-lighting)
+      (when *display-filled?*
+        (3d-draw-filled-polygons (points polyh) (faces polyh)
+                                 (face-normals polyh) (point-normals polyh) (point-colors polyh)))
+      (when *display-wireframe?*
+        (3d-draw-wireframe-polygons (points polyh) (faces polyh)))
+      (when *display-points?*
+        (draw-points polyh))
+      (when (show-normals polyh)
+        (draw-normals polyh))))
   )
 
 ;;; shape helper methods -------------------------------------------------------

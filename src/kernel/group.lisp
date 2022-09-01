@@ -21,8 +21,8 @@
   (setf (children self) '())
   self)
 
-(defun make-group (&rest shapes)
-  (make-instance 'group :children shapes))
+(defun make-group (shapes &key (name nil))
+  (make-instance 'group :name name :children shapes))
 
 (defun scatter-shapes-in-group (shape-fn points)
   (make-instance 'group :children (mapcar (lambda (p)

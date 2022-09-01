@@ -138,8 +138,8 @@ Create a hierarchy and turn on shape axis display.
   (defparameter *icosahedron* (make-icosahedron 1.0))
   (defparameter *cube* (make-cube 1.0))
   (defparameter *tetrahedron* (make-tetrahedron 1.0))
-  (defparameter *group-1* (make-group *cube* *tetrahedron*))
-  (defparameter *group-2* (make-group *group-1* *icosahedron*))
+  (defparameter *group-1* (make-group (list *cube* *tetrahedron*)))
+  (defparameter *group-2* (make-group (list *group-1* *icosahedron*)))
   (add-shape *scene* *group-2*)
   (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
   (translate-by *tetrahedron* (p! 0.0 1.5 0.0))
@@ -278,11 +278,11 @@ Create a robot arm as a hierarchical structure.
   (defparameter *wrist-shape* (make-cube-sphere 1.0 2))
   (defparameter *hand-shape* (make-box 1.5 1.2 0.4))
 
-  (defparameter *wrist* (make-group *wrist-shape* *hand-shape*))
-  (defparameter *elbow* (make-group *elbow-shape* *lower-arm-shape* *wrist*))
-  (defparameter *shoulder* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
-  (defparameter *torso* (make-group *shoulder-shape* *upper-arm-shape* *elbow*))
-  (defparameter *waist* (make-group *waist-shape* *torso-shape* *shoulder*))
+  (defparameter *wrist* (make-group (list *wrist-shape* *hand-shape*)))
+  (defparameter *elbow* (make-group (list *elbow-shape* *lower-arm-shape* *wrist*)))
+  (defparameter *shoulder* (make-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
+  (defparameter *torso* (make-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
+  (defparameter *waist* (make-group (list *waist-shape* *torso-shape* *shoulder*)))
 
   (setf (name *waist-shape*) 'waist-shape)
   (setf (name *torso-shape*) 'torso-shape)
@@ -428,7 +428,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                     :children (mapcar (lambda (shape)
                                         (make-instance
                                          'shape-animator
-                                         :name (mashup-symbol 'animator- (incf counter))
+                                         :name (concat-syms 'animator- (incf counter))
                                          :scene *scene*
                                          :shape shape
                                          :setup-fn (lambda (anim)
@@ -534,6 +534,160 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                                    (let ((target-y (y (offset (translate (transform (anim-data anim :target)))))))
                                                      (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
                                       :data `((:target . ,tetrahedron))))))
+
+#|
+(Demo 16) object duplication ===================================================
+|#
+(with-clear-scene
+  (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
+         (cube (make-cube 1.0 :name 'cube))
+         (tetrahedron (make-tetrahedron 1.0 :name 'tetrahedron))
+         (group-1 (make-group (list cube tetrahedron) :name 'group-1))
+         (group-2 (make-group (list group-1 icosahedron) :name 'group-2)))
+    (translate-by tetrahedron (p! 0.0 1.5 0.0))
+    (translate-by cube (p! 0.0 -1.5 0.0))
+    (translate-by group-1 (p! 1.5 0.0 0.0))
+    (translate-by icosahedron (p! -2.0 0.0 0.0))
+    (rotate-by group-1 (p! 0.0 0.0 10.0))
+
+    (add-shape *scene* group-2)
+    (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
+
+    (format t "~%~%Original scene hierarchy:~%")
+    (print-shape-hierarchy *scene*)))
+
+#|
+Duplicate cube (and add to parent of original)
+|#
+(let ((dup (duplicate-shape *scene* '(group-2 group-1 cube))))
+  (scale-to dup (p! 0.5 0.5 0.5))
+  (translate-by dup (p! 2.0 0.0 0.0))
+  (format t "~%~%After cube duplication:~%")
+  (print-shape-hierarchy *scene*))
+
+#|
+Duplicate group-1 (and add to parent of original)
+|#
+(let ((dup (duplicate-shape *scene* '(group-2 group-1))))
+  (rotate-by dup (p! 0.0 0.0 -30.0))
+  (translate-by dup (p! 0.0 0.0 4.0))
+  (format t "~%~%After cube duplication:~%")
+  (print-shape-hierarchy *scene*))
+
+#|
+(Demo 17) object visibility ====================================================
+|#
+(with-clear-scene
+  (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
+         (cube (make-cube 1.0 :name 'cube))
+         (tetrahedron (make-tetrahedron 1.0 :name 'tetrahedron))
+         (group-1 (make-group (list cube tetrahedron) :name 'group-1))
+         (group-2 (make-group (list group-1 icosahedron) :name 'group-2)))
+    (translate-by tetrahedron (p! 0.0 1.5 0.0))
+    (translate-by cube (p! 0.0 -1.5 0.0))
+    (translate-by group-1 (p! 1.5 0.0 0.0))
+    (translate-by icosahedron (p! -2.0 0.0 0.0))
+    (rotate-by group-1 (p! 0.0 0.0 10.0))
+
+    (add-shape *scene* group-2)
+    (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))))
+
+#|
+Toggle cube visibility.
+|#
+(setf (is-visible? (find-shape-by-name *scene* 'cube)) nil)
+
+(setf (is-visible? (find-shape-by-name *scene* 'cube)) t)
+
+#|
+Toggle group-1 visibility.
+|#
+(setf (is-visible? (find-shape-by-name *scene* 'group-1)) nil)
+
+(setf (is-visible? (find-shape-by-name *scene* 'group-1)) t)
+
+#|
+(Demo 18) motion is-active? flag ===============================================
+|#
+
+(with-clear-scene
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (scale-to (make-cube 0.5) (p! 2 1 .2)))
+                                   (make-grid-points 3 1 1 (p! -2 0 0) (p! 2 0 0)))))
+        (counter -1))
+    (add-motion
+     *scene*
+     (make-instance 'motion-group
+                    :name 'top-motion-group
+                    :scene *scene*
+                    :children (mapcar (lambda (shape)
+                                        (make-instance
+                                         'shape-animator
+                                         :name (concat-syms 'animator- (incf counter))
+                                         :scene *scene*
+                                         :shape shape
+                                         :setup-fn (lambda (anim)
+                                                     (rotate-to (shape anim) (p! 0 0 0)))
+                                         :update-fn (lambda (anim)
+                                                      (rotate-to (shape anim)
+                                                                 (p! 0 (* 90 (local-time anim)) 0)))))
+                                      (children group)))))
+  (setf (end-frame *scene*) 42))
+
+#|
+Toggle second animator.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(setf (is-active? (find-motion-by-name *scene* 'animator-1)) nil)
+
+(setf (is-active? (find-motion-by-name *scene* 'animator-1)) t)
+
+#|
+Toggle parent motion.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) nil)
+
+(setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) t)
+
+#|
+(Demo 19) events using animators ===============================================
+
+Use an animator to stop rotations and scale shapes past a certain angle.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(with-clear-scene
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (make-cube 0.5))
+                                   (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2)))))
+        (motion-group (add-motion *scene* (make-instance 'motion-group
+                                                         :name 'top-motion-group
+                                                         :scene *scene*))))
+    (map-hierarchy group
+                   (lambda (shape)
+                     (add-child motion-group
+                                (make-instance 'shape-animator
+                                               :shape shape
+                                               :scene *scene*
+                                               :setup-fn (lambda (anim)
+                                                           (rotate-to (shape anim) (p! 0 0 0)))
+                                               :update-fn (lambda (anim)
+                                                            (rotate-by (shape anim) (anim-data anim :rotate)))
+                                               :data `((:rotate . ,(p! 0 (rand1 10) 0))))))
+                   :test #'is-leaf?)
+    ;; add event animator
+    (add-motion *scene*
+                (make-instance 'animator
+                               :scene *scene*
+                               :update-fn (lambda ()
+                                            (dolist (anim (children motion-group))
+                                              (let ((angle (y (angles (rotate (transform (shape anim)))))))
+                                                (when (> (abs angle) 45)
+                                                  (scale-to (shape anim) 0.5)
+                                                  (setf (is-active? anim) nil)))))))))
 
 #|
 END ============================================================================

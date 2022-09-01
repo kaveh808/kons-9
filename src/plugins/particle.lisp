@@ -111,7 +111,7 @@
          (axis (p-normalize (p-cross vel rnd)))
          (mtx (make-axis-rotation-matrix (range-value (spawn-angle ptcl)) axis))
          (new-vel (transform-point vel mtx)))
-    (p-scale new-vel (range-value (spawn-velocity-factor ptcl)))))
+    (p* new-vel (range-value (spawn-velocity-factor ptcl)))))
 
 (defmethod spawn-particle ((ptcl particle))
   (let ((child (make-instance (type-of ptcl)
@@ -190,10 +190,10 @@
             (friction (friction ptcl))
             (lo (collision-padding ptcl)))
         (when (< (y pos) lo)
-          (setf (y pos) (+ lo (abs (- lo (y pos)))))
-	    (setf (x vel) (* friction (x vel)))
-            (setf (y vel) (* elast (- (y vel))))
-            (setf (z vel) (* friction (z vel))))))
+          (set-y! pos (+ lo (abs (- lo (y pos)))))
+          (set-x! vel (* friction (x vel)))
+          (set-y! vel (* elast (- (y vel))))
+          (set-z! vel (* friction (z vel))))))
     ;; update state
     (setf (vel ptcl) vel)
     (update-velocity ptcl)              ;do wiggle
@@ -299,7 +299,7 @@
 (defmethod source-curves-closed ((p-sys particle-system))
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
-(defmethod make-particle-system (p-gen (vel point) num max-gen particle-class &rest initargs)
+(defmethod make-particle-system (p-gen vel num max-gen particle-class &rest initargs)
   (apply #'make-particle-system-aux
          (source-points p-gen)
          (source-directions p-gen)

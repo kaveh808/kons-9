@@ -312,7 +312,7 @@
 (with-clear-scene
   (let ((shapes '()))
     (dotimes (i 100) (push (make-cube 0.2) shapes))
-    (add-shape *scene* (apply #'make-group shapes))
+    (add-shape *scene* (make-group shapes))
     (add-motions *scene*
                    (mapcar (lambda (s)
                                (translate-by s (p! (rand1 2.0) (rand2 2.0 4.0) (rand1 2.0)))
@@ -330,8 +330,8 @@
 ;;; obj import -----------------------------------------------------------------
 
 (defparameter *example-obj-filename* 
-  (first '("~/Development/kons-9/test/data/cow.obj"
-	   "~/Development/kons-9/test/data/teapot.obj"))
+  (first (list (asdf:system-relative-pathname "kons-9" "test/data/cow.obj")
+               (asdf:system-relative-pathname "kons-9" "test/data/teapot.obj")))
   "An example object filename used in demonstrations for the OBJ-IMPORT facility.
 
 You can find obj files at
@@ -374,9 +374,9 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; sweep-extrude along particle system paths (first shape in scene)
 ;;; BUG -- the group contains at least one degenerate uv-mesh (16x16) with no points, causing
 ;;; a crash in set-point-colors-by-uv (added sanity check in that method)
-(let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.1 8)
-                                                (first (shapes *scene*))
-                                                :taper 1.0 :twist 0.0 :from-end? nil))))
+(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.1 8)
+                                        (first (shapes *scene*))
+                                        :taper 1.0 :twist 0.0 :from-end? nil))))
   (set-point-colors-by-uv group (lambda (u v)
                                   (declare (ignore u v))
                                   (c! 0.1 0.5 0.1)))
@@ -500,9 +500,9 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
-(let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
-                                                (first (shapes *scene*))
-                                                :taper 0.0))))
+(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
+                                        (first (shapes *scene*))
+                                        :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v) (c-rainbow v)))
   (add-shape *scene* group))
 
@@ -516,9 +516,9 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
-(let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.2 6)
-                                                (first (shapes *scene*))
-                                                :taper 0.0))))
+(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.2 6)
+                                        (first (shapes *scene*))
+                                        :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v) (declare (ignore u)) (c-rainbow v)))
   (add-shape *scene* group))
 
@@ -596,9 +596,9 @@ z  (let* ((p-gen (import-obj *example-obj-filename*))
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep-extrude
-(let ((group (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.25 4)
-                                                (first (shapes *scene*))
-                                                :taper 0.0))))
+(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.25 4)
+                                        (first (shapes *scene*))
+                                        :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v)
                                   (declare (ignore u))
                                   (c-rainbow v)))
@@ -610,7 +610,7 @@ z  (let* ((p-gen (import-obj *example-obj-filename*))
     (add-shape *scene* polyh)))
 ;;; sweep-extrude circle along polyh faces
 (add-shape *scene*
-           (apply #'make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
-                                              (first (shapes *scene*)))))
+           (make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
+                                      (first (shapes *scene*)))))
 
 ;;;; END ========================================================================

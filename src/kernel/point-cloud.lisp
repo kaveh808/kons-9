@@ -8,9 +8,6 @@
 (defmethod printable-data ((self point-cloud))
   (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))
 
-(defmethod copy-instance-data :after ((dst point-cloud) (src point-cloud))
-  (setf (points dst) (points src))) ;;; TODO - deep copy arrays
-
 (defmethod get-bounds ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
     (warn "Shape ~a does not have any points. Using default bounds values." p-cloud)
@@ -122,7 +119,7 @@
 
 ;;; TODO - in-place array modification?
 ;;; randomize points
-(defmethod randomize-points ((p-cloud point-cloud) (delta point))
+(defmethod randomize-points ((p-cloud point-cloud) delta)
   (setf (points p-cloud)
 	(map 'vector #'(lambda (p)
                          (let ((offset (p! (rand1 (x delta)) (rand1 (y delta)) (rand1 (z delta)))))

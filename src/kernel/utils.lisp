@@ -20,10 +20,7 @@
   (apply #'concatenate 'string strings))
 
 ;;; concatenate symbols
-(defun concat-syms (&rest syms)
-  (intern (apply #'concatenate 'string (mapcar #'symbol-name syms))))
-
-(defun mashup-symbol (&rest objects)
+(defun concat-syms (&rest objects)
   (intern (format nil "~{~a~}" objects)))
 
 (defun make-keyword (name)

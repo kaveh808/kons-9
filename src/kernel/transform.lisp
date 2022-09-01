@@ -5,14 +5,13 @@
 (defclass transform-operator ()
   ())
 
-(defclass translate-operator ()
+(defclass translate-operator (transform-operator)
   ((offset :accessor offset :initarg :offset :initform (p! 0.0 0.0 0.0))))
 
 (defmethod transform-matrix ((self translate-operator) &optional (factor 1.0))
   (make-translation-matrix (p-lerp factor (p! 0.0 0.0 0.0) (offset self))))
 
-;; TODO: rotate order, rotate pivot
-(defclass euler-rotate-operator ()
+(defclass euler-rotate-operator (transform-operator)
   ((angles :accessor angles :initarg :angles :initform (p! 0.0 0.0 0.0)) ;degrees
    ;; :xyz :xzy :yxz :yzx :zxy :zyx
    (rotate-order :accessor rotate-order :initarg :rotate-order :initform :xyz)
@@ -24,7 +23,7 @@
                         (rotate-order self)
                         (pivot self)))
 
-(defclass angle-axis-rotate-operator ()
+(defclass angle-axis-rotate-operator (transform-operator)
   ((angle :accessor angle :initarg :angle :initform 0.0) ;degrees
    (axis :accessor axis :initarg :axis :initform (p! 0.0 0.0 1.0))
    (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
@@ -35,7 +34,7 @@
                              (pivot self)))
 
 ;; TODO: scale pivot
-(defclass scale-operator ()
+(defclass scale-operator (transform-operator)
   ((scaling :accessor scaling :initarg :scaling :initform (p! 1.0 1.0 1.0))
    (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
 
@@ -46,7 +45,7 @@
 ;;; transform ==================================================================
 
 ;;; abstract superclass
-(defclass transform ()
+(defclass transform (item)
   ;; :trs :tsr :rts :rst :str :srt
   ((operator-order :accessor operator-order :initarg :operator-order :initform :srt)))
 
@@ -70,25 +69,22 @@
       (:srt (matrix-multiply-n s-mtx r-mtx t-mtx))
       (otherwise (error "Unknown rotate order ~a in TRANSFORM-MATRIX" (operator-order self))))))
 
-(defmethod translate-by ((self euler-transform) (p point))
-  (setf (offset (translate self)) (p+ (offset (translate self)) p)))
+(defmethod translate-by ((self euler-transform) point-or-number)
+  (setf (offset (translate self)) (p+ (offset (translate self)) point-or-number)))
 
-(defmethod rotate-by ((self euler-transform) (p point))
-  (setf (angles (rotate self)) (p+ (angles (rotate self)) p)))
+(defmethod rotate-by ((self euler-transform) point-or-number)
+  (setf (angles (rotate self)) (p+ (angles (rotate self)) point-or-number)))
 
-(defmethod scale-by ((self euler-transform) (p point))
-  (setf (scaling (scale self)) (p* (scaling (scale self)) p)))
+(defmethod scale-by ((self euler-transform) point-or-number)
+  (setf (scaling (scale self)) (p* (scaling (scale self)) point-or-number)))
 
-(defmethod scale-by ((self euler-transform) (s number))
-  (setf (scaling (scale self)) (p* (scaling (scale self)) s)))
-
-(defmethod translate-to ((self euler-transform) (p point))
+(defmethod translate-to ((self euler-transform) p)
   (setf (offset (translate self)) p))
 
-(defmethod rotate-to ((self euler-transform) (p point))
+(defmethod rotate-to ((self euler-transform) p)
   (setf (angles (rotate self)) p))
 
-(defmethod scale-to ((self euler-transform) (p point))
+(defmethod scale-to ((self euler-transform) p)
   (setf (scaling (scale self)) p))
 
 (defmethod scale-to ((self euler-transform) (s number))
@@ -145,25 +141,25 @@
       (:srt (matrix-multiply-n s-mtx r-mtx t-mtx))
       (otherwise (error "Unknown operator order ~a in TRANSFORM-MATRIX" (operator-order self))))))
 
-(defmethod translate-by ((self angle-axis-transform) (p point))
-  (setf (offset (translate self)) (p+ (offset (translate self)) p)))
+(defmethod translate-by ((self angle-axis-transform) point-or-number)
+  (setf (offset (translate self)) (p+ (offset (translate self)) point-or-number)))
 
 (defmethod rotate-by ((self angle-axis-transform) a)
   (setf (angle (rotate self)) (+ (angle (rotate self)) a)))
 
-(defmethod scale-by ((self angle-axis-transform) (p point))
+(defmethod scale-by ((self angle-axis-transform) p)
   (setf (scaling (scale self)) (p* (scaling (scale self)) p)))
 
 (defmethod scale-by ((self angle-axis-transform) (s number))
   (setf (scaling (scale self)) (p* (scaling (scale self)) s)))
 
-(defmethod translate-to ((self angle-axis-transform) (p point))
+(defmethod translate-to ((self angle-axis-transform) p)
   (setf (offset (translate self)) p))
 
 (defmethod rotate-to ((self angle-axis-transform) a)
   (setf (angle (rotate self)) a))
 
-(defmethod scale-to ((self angle-axis-transform) (p point))
+(defmethod scale-to ((self angle-axis-transform) p)
   (setf (scaling (scale self)) p))
 
 (defmethod scale-to ((self angle-axis-transform) (s number))
