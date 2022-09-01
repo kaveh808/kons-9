@@ -31,7 +31,7 @@
         (dir (p-normalize (p-from-to point (location field)))))
     (if (= 0.0 dist)
         (p! 0 0 0)
-        (p-scale dir (/ (magnitude field) (* dist dist))))))
+        (p* dir (/ (magnitude field) (* dist dist))))))
 
 ;;;; noise-force-field =========================================================
 
@@ -41,8 +41,8 @@
 
 (defmethod field-value ((field noise-force-field) point time)
   (declare (ignore time))
-  (p-scale (noise-gradient (p-scale point (noise-frequency field)))
-           (noise-amplitude field)))
+  (p* (noise-gradient (p-scale point (noise-frequency field)))
+      (noise-amplitude field)))
 
 ;;;; dynamics-animator =========================================================
 

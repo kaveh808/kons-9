@@ -111,7 +111,7 @@
          (axis (p-normalize (p-cross vel rnd)))
          (mtx (make-axis-rotation-matrix (range-value (spawn-angle ptcl)) axis))
          (new-vel (transform-point vel mtx)))
-    (p-scale new-vel (range-value (spawn-velocity-factor ptcl)))))
+    (p* new-vel (range-value (spawn-velocity-factor ptcl)))))
 
 (defmethod spawn-particle ((ptcl particle))
   (let ((child (make-instance (type-of ptcl)
