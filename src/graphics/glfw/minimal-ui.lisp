@@ -177,13 +177,14 @@ h: print this help message~%"))
 (glfw:def-window-size-callback window-size-callback (window w h)
   ;; (format t "window-size-callback: win: ~a, w: ~a, h: ~a ~%" window w h)
   ;; (finish-output)
-  (setf *window-size* (list w h))
-  (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
-  ;; redraw while being resized
-  #-:darwin(gl:viewport 0 0 w h)
-  (draw-scene-view *default-scene-view*)
-  (glfw:swap-buffers)
-  (update-window-title window))
+  (unless (zerop h)
+    (setf *window-size* (list w h))
+    (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
+    ;; redraw while being resized
+    #-:darwin(gl:viewport 0 0 w h)
+    (draw-scene-view *default-scene-view*)
+    (glfw:swap-buffers)
+    (update-window-title window)))
 
 (defun show-window (scene)
   ;; XXX TODO assert that this is running on the main thread.
