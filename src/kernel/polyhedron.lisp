@@ -211,8 +211,8 @@
 
 (defun barycentric-point (p0 p1 p2 a b)
   (p+ p0
-      (p+ (p-scale (p-from-to p0 p1) a)
-          (p-scale (p-from-to p0 p2) b))))
+      (p+ (p* (p-from-to p0 p1) a)
+          (p* (p-from-to p0 p2) b))))
 
 (defun generate-face-barycentric-points (p0 p1 p2 num)
   (let ((barycentric-points '()))

@@ -94,7 +94,7 @@
     (dotimes (f (length (faces polyh)))
       (let* ((points (face-points polyh f))
              (p0 (p-center points))
-             (p1 (p+ p0 (p-scale (aref (face-normals polyh) f) (show-normals polyh)))))
+             (p1 (p+ p0 (p* (aref (face-normals polyh) f) (show-normals polyh)))))
         (push p1 lines)
         (push p0 lines)))
     (3d-draw-lines lines)))

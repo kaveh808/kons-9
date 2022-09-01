@@ -107,7 +107,7 @@
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (let* ((p (p! x 0 z))
-                                                (mag (p-mag (p-scale p .25))))
+                                                (mag (p-mag (p* p .25))))
                                            (if (= mag 0.0)
                                                10.0
                                                (/ 1.0 mag)))))))
@@ -116,7 +116,7 @@
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (let* ((p (p! x 0 z))
-                                                (mag (max 0.001 (p-mag (p-scale p 4)))))
+                                                (mag (max 0.001 (p-mag (p* p 4)))))
                                            (* 3 (/ (sin mag) mag)))))))
 
 ;;; rainbow color based on height
@@ -139,7 +139,7 @@
     (macrolet ((my-height-fn (scale)
                  `(lambda (x z)
                     (let* ((p (p! x 0 z))
-                           (mag (max 0.001 (p-mag (p-scale p ,scale)))))
+                           (mag (max 0.001 (p-mag (p* p ,scale)))))
                       (* 3 (/ (sin mag) mag))))))
       (add-motion *scene*
                     (make-instance 'animator

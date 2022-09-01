@@ -95,7 +95,7 @@
   (let ((sum 0.0)
         (scale 1.0))
     (dotimes (i n-octaves)
-      (incf sum (/ (noise (p-scale p scale)) (* scale 2)))
+      (incf sum (/ (noise (p* p scale)) (* scale 2)))
       (setf scale (* scale 2)))
     sum))
 

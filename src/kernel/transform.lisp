@@ -103,10 +103,10 @@
   (setf (scaling (scale self)) (p! 1.0 1.0 1.0)))
 
 (defmethod partial-translate ((self euler-transform) factor)
-  (p-scale (offset (translate self)) factor))
+  (p* (offset (translate self)) factor))
 
 (defmethod partial-rotate ((self euler-transform) factor)
-  (p-scale (angles (rotate self)) factor))
+  (p* (angles (rotate self)) factor))
 
 (defmethod partial-scale ((self euler-transform) factor)
   (p-lerp factor (p! 1.0 1.0 1.0) (scaling (scale self))))
@@ -180,7 +180,7 @@
   (setf (scaling (scale self)) (p! 1.0 1.0 1.0)))
 
 (defmethod partial-translate ((self angle-axis-transform) factor)
-  (p-scale (offset (translate self)) factor))
+  (p* (offset (translate self)) factor))
 
 (defmethod partial-rotate ((self angle-axis-transform) factor)
   (* (angle (rotate self)) factor))
