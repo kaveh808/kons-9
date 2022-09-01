@@ -24,16 +24,20 @@
 
 ;;; display the view
 (defmethod draw-scene-view ((view scene-view))
-  (3d-setup-buffer)
-  (3d-update-light-settings)
-  (3d-setup-projection)
-  (when (scene view)
-    (draw (scene view)))
-  (3d-cleanup-render)
-  (when *display-ground-plane?*
-    (draw-ground-plane))
-  (when *display-axes?*
-    (draw-world-axes))
+  (text-engine-begin-frame)
+  (progn
+    (3d-setup-buffer)
+    (3d-update-light-settings)
+    (3d-setup-projection)
+    (when (scene view)
+      (draw (scene view)))
+    (3d-cleanup-render)  
+    (when *display-ground-plane?*
+      (draw-ground-plane))
+    (when *display-axes?*
+      (draw-world-axes)))
+  (test-text)
+  (text-engine-end-frame)
   (3d-flush-render)
   (incf *draw-scene-count*))
 
@@ -215,8 +219,9 @@ h: print this help message~%"))
            (setf *window-size* (glfw:get-window-size))
            (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
            (update-window-title glfw:*window*)
+	   (initial-text-engine-setup)
            (loop until (glfw:window-should-close-p)
-                 do (draw-scene-view *default-scene-view*)
+	      do (draw-scene-view *default-scene-view*)
                  do (glfw:swap-buffers)
                  do (glfw:poll-events)))))))
 

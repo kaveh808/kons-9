@@ -24,6 +24,7 @@
      (:file "src/kernel/matrix")
      (:file "src/kernel/noise")
      (:file "src/graphics/opengl/opengl")
+     (:file "src/graphics/opengl/text")
      (:file "src/kernel/transform")
      (:file "src/kernel/scene-item")
      (:file "src/kernel/shape")
