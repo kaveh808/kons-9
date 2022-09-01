@@ -65,7 +65,7 @@ declarations
     (make-array 4 :element-type 'single-float :initial-contents (list (coerce x 'single-float)
                                                                       (coerce y 'single-float)
                                                                       (coerce z 'single-float)
-                                                                      1.0)))
+                                                                      1.0f0)))
   )
 
 (defun point->list (p)
