@@ -78,7 +78,6 @@
         (update-layout (menu view)))))
   (when (menu view)
     (draw-view (menu view))))
->>>>>>> 70171deb9a507383be5110f71967a558a5f260e8
 
 ;;; respond to first click in window
 (defmethod accepts-first-mouse ((self scene-view) event)

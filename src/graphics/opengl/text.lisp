@@ -588,7 +588,7 @@
   (render-text 100 100 "The quick brown fox jumps over the lazy dog." :color #x0000ffff))
 
 (defun text-engine-end-frame ()
-  (render-draw-lists (list *draw-list*) 0 0 *window-x-size* *window-y-size*)
+  (render-draw-lists (list *draw-list*) 0 0 (elt *window-size* 0) (elt *window-size* 1))
   (values))
 	       
 (defun run-1 ()
