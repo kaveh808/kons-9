@@ -18,7 +18,7 @@ We hope you find the system enjoyable and useful.
 |#
 
 #|
-(Demo 1) 3D navigation and display =============================================
+(Demo 01 kernel) 3D navigation and display =====================================
 
 The SCENE class manages shapes and motions for display and animation
 respectively. For our tests, the global variable *SCENE* is bound to our scene.
@@ -36,7 +36,7 @@ Press the 'h' key to print available keyboard commands. Try them out.
 |#
 
 #|
-(Demo 2) display customizations ================================================
+(Demo 02 kernel) display customizations ========================================
 |#
 (with-clear-scene
   (add-shape *scene* (make-cut-cube-polyhedron 2.0)))
@@ -56,7 +56,7 @@ kons-9/src/graphics/opengl/opengl.lisp
 (set-ground-plane-dense)
 
 #|
-(Demo 3) point clouds ==========================================================
+(Demo 03 kernel) point clouds ==================================================
 
 The POINT-CLOUD class displays 3D points. It is the basis for many geometry
 classes.
@@ -68,7 +68,7 @@ classes.
   (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -3 -3 -3) (p! 3 3 3)))))
 
 #|
-(Demo 4) polygons ==============================================================
+(Demo 04 kernel) polygons ======================================================
 
 The POLYGON class represents open or closed paths in 3D space.
 |#
@@ -89,7 +89,7 @@ The POLYGON class represents open or closed paths in 3D space.
   (add-shape *scene* (translate-to (make-circle-polygon 3.0  3) (p! 0 0  4.0))))
 
 #|
-(Demo 5) polyhedral objects ====================================================
+(Demo 05 kernel) polyhedral objects ============================================
 
 The POLYHEDRON class is the basic 3D shape representaion.
 |#
@@ -127,7 +127,7 @@ Generate a point cloud on the surface of a polyhedron.
                                            40)))
 
 #|
-(Demo 6) transforms and hierarchies ============================================
+(Demo 06 kernel) transforms and hierarchies ====================================
 
 Hierarchies are implemented by SHAPE and GROUP classes, both of which have
 a TRANSFORM.
@@ -174,7 +174,7 @@ Moving the octahedron translates both instances.
 (translate-by *octahedron* (p! 0.0 0.0 -.5))
 
 #|
-(Demo 7) groups ================================================================
+(Demo 07 kernel) groups ========================================================
 
 Create a group by creating shapes at specified points.
 |#
@@ -194,7 +194,7 @@ Randomly scale leaf nodes of the hierarchy.
   :test #'is-leaf?)
 
 #|
-(Demo 8) animation =============================================================
+(Demo 08 kernel) animation =====================================================
 
 The simplest way of doing animation is to add an ANIMATOR to the motions of a 
 scene. The animator will call its setup function (if it has one) when the scene
@@ -215,7 +215,7 @@ This animation translates the shape in the X axis direction.
                                :update-fn (lambda () (translate-by shape (p! 0.1 0 0)))))))
 
 #|
-(Demo 9) multiple animators ====================================================
+(Demo 09 kernel) multiple animators ============================================
 
 Animate all the leaf shapes in a group by the same amount.
 
@@ -237,7 +237,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                               :test #'is-leaf?))))))
 
 #|
-(Demo 10) shape-animator =======================================================
+(Demo 10 kernel) shape-animator ===============================================
 
 The previous example animated all the shapes by the same amount.
 A SHAPE-ANIMATOR allows us to store and use per-animator data in an association
@@ -264,7 +264,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
       :test #'is-leaf?)))
 
 #|
-(Demo 11) animating hierarchical scene geometry ================================
+(Demo 11 kernel) animating hierarchical scene geometry ========================
 
 Create a robot arm as a hierarchical structure.
 |#
@@ -362,9 +362,9 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 
 
 #|
-(Demo 12) scene shape management ===============================================
+(Demo 12 kernel) scene shape management =======================================
 
-Continue from (Demo 11).
+Continue from (Demo 11 kernel).
 
 Print scene shape hierarchy.
 |#
@@ -405,7 +405,7 @@ matrices.
   (pprint (shape-global-matrix *scene* (second paths))))
 
 #|
-(Demo 13) hierarchical animation timing using motions ==========================
+(Demo 13 kernel) hierarchical animation timing using motions ==================
 
 We put our animators inside a MOTION-GROUP. The animators reference a local time
 within their timing range between zero and one.
@@ -487,9 +487,9 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (setf (duration (first (motions *scene*))) 1.0)
 
 #|
-(Demo 14) scene motion management ==============================================
+(Demo 14 kernel) scene motion management ======================================
 
-Continue from (Demo 13).
+Continue from (Demo 13 kernel).
 
 Print scene motion hierarchy.
 |#
@@ -508,7 +508,7 @@ Get animator motion paths.
 (pprint (get-motion-paths *scene* (find-motion-by-name *scene* 'animator-2)))
 
 #|
-(Demo 15) creating constraints with animators ==================================
+(Demo 15 kernel) creating constraints with animators ==========================
 
 The dodecahedron moves in Y as the negative of the Y the tetrahedron.
 We use ADD-MOTION-AT-END so the second animator runs after the first one.
@@ -536,7 +536,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                       :data `((:target . ,tetrahedron))))))
 
 #|
-(Demo 16) object duplication ===================================================
+(Demo 16 kernel) object duplication ===========================================
 |#
 (with-clear-scene
   (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
@@ -575,7 +575,7 @@ Duplicate group-1 (and add to parent of original)
   (print-shape-hierarchy *scene*))
 
 #|
-(Demo 17) object visibility ====================================================
+(Demo 17 kernel) object visibility ============================================
 |#
 (with-clear-scene
   (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
@@ -607,7 +607,7 @@ Toggle group-1 visibility.
 (setf (is-visible? (find-shape-by-name *scene* 'group-1)) t)
 
 #|
-(Demo 18) motion is-active? flag ===============================================
+(Demo 18 kernel) motion is-active? flag =======================================
 |#
 
 (with-clear-scene
@@ -653,7 +653,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) t)
 
 #|
-(Demo 19) events using animators ===============================================
+(Demo 19 kernel) events using animators =======================================
 
 Use an animator to stop rotations and scale shapes past a certain angle.
 
@@ -688,6 +688,20 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                                 (when (> (abs angle) 45)
                                                   (scale-to (shape anim) 0.5)
                                                   (setf (is-active? anim) nil)))))))))
+
+#|
+(Demo 20 kernel) shape display options =========================================
+
+Display shape bounds, face-normals, and axes.
+|#
+(with-clear-scene
+    (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
+          (sphere (translate-by (make-cube-sphere 2.0 3) (p! 0 0 4.0)))
+          (icos (make-icosahedron 2.0)))
+      (setf (show-axis circle) 1.0)
+      (setf (show-normals icos) 1.0)
+      (setf (show-bounds? sphere) t)
+      (add-shapes *scene* (list circle sphere icos))))
 
 #|
 END ============================================================================

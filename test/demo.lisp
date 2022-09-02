@@ -3,94 +3,6 @@
 
 ;;;; start plugins demos =======================================================
 
-;;; uv-mesh --------------------------------------------------------------------
-(with-clear-scene
-  (add-shape *scene* (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0)))
-  (add-shape *scene* (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-cone-uv-mesh 2 2 16 7) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-rect-prism-uv-mesh 1.5 3 4 2) (p! 0 0 0.0)))
-  (add-shape *scene* (translate-to (make-pyramid-uv-mesh 2 2 5 3) (p! 0 0 2.0)))
-  (add-shape *scene* (translate-to (make-torus-uv-mesh 1.0 2.0 8 32) (p! 0 0 4.0)))
-  (add-shape *scene* (translate-to (make-sphere-uv-mesh 1.5 8 16) (p! 0 0 6.0)))
-  )
-
-;;; transform-extrude-uv-mesh --------------------------------------------------
-(with-clear-scene
-  (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-polygon 2 2 2)
-                                                (make-euler-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
-                                                16)))
-
-;;; transform-extrude-uv-mesh --------------------------------------------------
-(with-clear-scene
-  (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
-                                                (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
-                                                40)))
-
-;;; transform-extrude-uv-mesh rotate-pivot -------------------------------------
-(with-clear-scene
-  (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
-    (setf (pivot (rotate xform)) (p! 1 0 0))
-;;;    (setf (operator-order xform) :trs) ;comment out to test effect of operator order
-    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
-                                                  xform
-                                                  40))))
-
-;;; transform-extrude-uv-mesh scale-pivot -------------------------------------
-(with-clear-scene
-  (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
-    (setf (pivot (scale xform)) (p! 1 2 0))
-    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
-                                                  xform
-                                                  40))))
-
-;;; transform-extrude-uv-mesh generalized-transform ----------------------------
-;;; should exactly match previous case
-(with-clear-scene
-  (let ((xform (make-instance 'generalized-transform
-                              :operators
-                              (list (make-instance 'translate-operator :offset (p! 0 0 4))
-                                    (make-instance 'euler-rotate-operator :angles (p! 0 0 360))
-                                    (make-instance 'scale-operator
-                                                   :scaling (p! 2 .2 1)
-                                                   :pivot (p! 1 2 0))))))
-    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
-                                                  xform
-                                                  40))))
-
-;;; sweep-extrude-uv-mesh ------------------------------------------------------
-(with-clear-scene
-  (let* ((path (make-sine-curve-polygon 360 1 4 2 64))
-         (prof (make-circle-polygon 1.0 4))
-         (mesh (sweep-extrude-uv-mesh prof path :twist (* 2 pi) :taper 0.0)))
-    (add-shape *scene* mesh)))
-;;; assign point colors by uv
-(set-point-colors-by-uv (first (shapes *scene*))
-                        (lambda (u v) (declare (ignore u)) (c-rainbow v)))
-;;; assign point colors by xyz
-(set-point-colors-by-xyz (first (shapes *scene*))
-                         (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0))))
-
-;;; function-extrude-uv-mesh --------------------------------------------------
-(with-clear-scene
-  (add-shape *scene* (function-extrude-uv-mesh
-                      (make-circle-polygon 2.0 16)
-                      (lambda (points f)
-                       (map 'vector (lambda (p)
-                                      (p+ (p-jitter p (* .1 f)) (p! 0 0 (* 4 f))))
-                            points))
-                      20)))
-
-;;; function-extrude-uv-mesh --------------------------------------------------
-(with-clear-scene
-  (add-shape *scene* (function-extrude-uv-mesh
-                      (make-circle-polygon 2.0 16)
-                      (lambda (points f)
-                       (map 'vector (lambda (p)
-                                      (p+ (p* p (sin (* pi f)))
-                                          (p! 0 0 (* 4 f))))
-                            points))
-                      20)))
-
 ;;; heightfield ---------------------------------------------------------------
 ;;; try using various height functions and color functions
 (with-clear-scene
@@ -203,18 +115,6 @@
 (progn
   (select-face (first (shapes *scene*)) 2)
   (select-face (first (shapes *scene*)) 5))
-
-;;; shapes ---------------------------------------------------------------------
-
-;;; display bounds, face-normals, and axis
-(with-clear-scene
-    (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
-          (superq (translate-by (make-superquadric 32 16 1.0 0.2 0.5) (p! 0 0 4.0)))
-          (icos (make-icosahedron 2.0)))
-      (setf (show-axis circle) 1.0)
-      (setf (show-normals icos) 1.0)
-      (setf (show-bounds? superq) t)
-      (add-shapes *scene* (list circle superq icos))))
 
 
 ;;; l-system ------------------------------------------------------------------
