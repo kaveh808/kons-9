@@ -51,7 +51,7 @@
      (:file "src/plugins/sweep-mesh")
      (:file "src/plugins/sweep-mesh-group")
      (:file "src/plugins/dynamics-animator")
-     (:file "src/plugins/procedural-curve-shape")
+     (:file "src/plugins/procedural-polygon")
      (:file "src/plugins/manager-group")
      (:file "src/plugins/particle")
      (:file "src/plugins/l-system")

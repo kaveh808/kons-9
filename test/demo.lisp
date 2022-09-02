@@ -260,46 +260,24 @@
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
-;;; procedural-mixin circle ----------------------------------------------------
-(with-clear-scene
-  (let ((shape (make-instance 'procedural-circle-polygon :diameter 4.0 :num-points 8)))
-    (add-shape *scene* shape)))
-
-;;; modify slots and shape will change
-(setf (num-points (first (shapes *scene*))) 32)
-
-(setf (diameter (first (shapes *scene*))) 1.0)
-
-;;; procedural-mixin sine curve ------------------------------------------------
-(with-clear-scene
-  (let ((shape (make-instance 'procedural-sine-curve-polygon :num-points 64 :frequency 2 :period 720
-                                                             :x-scale 4 :y-scale 2)))
-    (add-shape *scene* shape)))
-
-;;; modify slots and shape will change
-(setf (frequency (first (shapes *scene*))) 1.0)
-
-(setf (num-points (first (shapes *scene*))) 16)
+;;; xxx
 
 ;;; sweep-mesh dependency-node-mixin -------------------------------------------
 (with-clear-scene
-  (defparameter *profile* (make-procedural-circle-polygon 0.8 4))
-  (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
+  (defparameter *profile* (make-circle 0.8 4))
+  (defparameter *path* (make-sine-curve 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
   (add-shape *scene* *mesh*))
 
 ;;; modify slots and shape will change
-(with-redraw
-  (setf (num-points *profile*) 6))
-(with-redraw
-  (setf (num-points *path*) 8))
-(with-redraw
-  (setf (taper *mesh*) 1.0))
+(setf (num-points *profile*) 6)
+(setf (num-points *path*) 8)
+(setf (taper *mesh*) 1.0)
 
 ;;; sweep-mesh dependency-node-mixin animator ----------------------------------
 (with-clear-scene
-  (defparameter *profile* (make-procedural-circle-polygon 1.2 4))
-  (defparameter *path* (make-procedural-sine-curve-polygon 360 1 4 1 32))
+  (defparameter *profile* (make-circle 1.2 4))
+  (defparameter *path* (make-sine-curve 360 1 4 1 32))
   (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
   (let ((anim (make-instance 'animator
                              :setup-fn (lambda () (setf (num-points *profile*) 4) nil)
@@ -374,7 +352,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; sweep-extrude along particle system paths (first shape in scene)
 ;;; BUG -- the group contains at least one degenerate uv-mesh (16x16) with no points, causing
 ;;; a crash in set-point-colors-by-uv (added sanity check in that method)
-(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.1 8)
+(let ((group (make-group (sweep-extrude (make-circle 0.1 8)
                                         (first (shapes *scene*))
                                         :taper 1.0 :twist 0.0 :from-end? nil))))
   (set-point-colors-by-uv group (lambda (u v)
@@ -390,7 +368,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; change inputs and shape regenerates
 (setf (instance-shape (first (shapes *scene*))) (make-icosahedron .2))
 
-(setf (point-generator (first (shapes *scene*))) (make-procedural-sine-curve-polygon 360.0 1.0 4.0 4.0))
+(setf (point-generator (first (shapes *scene*))) (make-sine-curve 360.0 1.0 4.0 4.0))
 
 ;;; point-instancer particle-system --------------------------------------------
 (with-clear-scene
@@ -456,8 +434,8 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; uv-mesh transform-instancer 1 ----------------------------------------------
 (with-clear-scene
-  (let* ((path (make-procedural-sine-curve-polygon 360 1 4 1 32))
-         (prof (make-procedural-circle-polygon 0.6 4))
+  (let* ((path (make-sine-curve 360 1 4 1 32))
+         (prof (make-circle 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0)))
          (transform (make-euler-transform (p! 0 0 0) (p! 0 (* 360 7/8) 0) (p! 1 1 1))))
     (add-shape *scene* (make-transform-instancer mesh transform 8))))
@@ -467,8 +445,8 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; uv-mesh transform-instancer 2 ----------------------------------------------
 (with-clear-scene
-  (let* ((path (make-procedural-sine-curve-polygon 360 1 4 1 32))
-         (prof (make-procedural-circle-polygon 0.6 4))
+  (let* ((path (make-sine-curve 360 1 4 1 32))
+         (prof (make-circle 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0))))
     (set-point-colors-by-uv mesh (lambda (u v)
                                    (declare (ignore u))
@@ -492,7 +470,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system curve-shape sweep-extrude ----------------------------------
 (with-clear-scene
-  (let* ((p-gen (make-procedural-circle-polygon 4.0 16))
+  (let* ((p-gen (make-circle 4.0 16))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 4 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
@@ -500,10 +478,10 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
-(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
+(let ((group (make-group (sweep-extrude (make-circle 0.5 6)
                                         (first (shapes *scene*))
                                         :taper 0.0))))
-  (set-point-colors-by-uv group (lambda (u v) (c-rainbow v)))
+  (set-point-colors-by-uv group (lambda (u v) (declare (ignore u)) (c-rainbow v)))
   (add-shape *scene* group))
 
 ;;; particle-system point-generator-mixin uv-mesh ------------------------------
@@ -527,7 +505,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))
-         (sweep-mesh-group (make-sweep-mesh-group (make-procedural-circle-polygon 0.2 6)
+         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6)
                                                   p-sys
                                                   :taper 0.0 :twist 2pi)))
 ;;    (add-shape *scene* p-gen)
@@ -542,7 +520,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 8 'particle
                                       :life-span (round (rand2 5 10))
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))
-         (sweep-mesh-group (make-sweep-mesh-group (make-procedural-circle-polygon 0.2 6) p-sys
+         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                   :taper 0.0 :twist 0.0)))
     (add-shape *scene* p-sys)
     (add-shape *scene* sweep-mesh-group)
@@ -557,7 +535,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                         :life-span 10
                                         :update-angle (range-float (/ pi 16) (/ pi 32))
                                         :spawn-angle (range-float (/ pi 8) (/ pi 16))))
-           (sweep-mesh-group (make-sweep-mesh-group (make-procedural-circle-polygon 0.2 6) p-sys
+           (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                     :taper 0.0 :twist 0.0)))
       (add-shape *scene* p-gen)
       (add-shape *scene* p-sys)
@@ -596,7 +574,7 @@ z  (let* ((p-gen (import-obj *example-obj-filename*))
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep-extrude
-(let ((group (make-group (sweep-extrude (make-procedural-circle-polygon 0.25 4)
+(let ((group (make-group (sweep-extrude (make-circle 0.25 4)
                                         (first (shapes *scene*))
                                         :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v)
@@ -610,7 +588,7 @@ z  (let* ((p-gen (import-obj *example-obj-filename*))
     (add-shape *scene* polyh)))
 ;;; sweep-extrude circle along polyh faces
 (add-shape *scene*
-           (make-group (sweep-extrude (make-procedural-circle-polygon 0.5 6)
+           (make-group (sweep-extrude (make-circle 0.5 6)
                                       (first (shapes *scene*)))))
 
 ;;;; END ========================================================================
