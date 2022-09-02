@@ -485,7 +485,7 @@
 			 (>= clip-rect-width 0.0)
 			 (>= clip-rect-height 0.0))
 		 
-		#+NIL(gl:scissor clip-rect-x (- fb-height clip-rect-height)
+		(gl:scissor clip-rect-x (- fb-height clip-rect-height)
 			    (- clip-rect-width clip-rect-x) (- clip-rect-height clip-rect-y))
 			  
 		(glBindTexture_foo GL_TEXTURE_2D (draw-cmd-texture-id cmd))
@@ -585,7 +585,9 @@
   (font-render-text *current-font* *draw-list* pos-x pos-y color text))
 
 (defun test-text ()
-  (render-text 100 100 "The quick brown fox jumps over the lazy dog." :color #x0000ffff))
+  (render-text 100 100 "The quick brown fox jumps over the lazy dog." :color #x0000ffff)
+  (render-text 125 125 "The quick brown fox jumps over the lazy dog." :color #xff0000ff)
+  (render-text 150 150 "The quick brown fox jumps over the lazy dog." :color #x00ff00ff))
 
 (defun text-engine-end-frame ()
   (render-draw-lists (list *draw-list*) 0 0 (elt *window-size* 0) (elt *window-size* 1))
