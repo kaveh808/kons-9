@@ -723,5 +723,39 @@ Display shape bounds, face-normals, and axes.
       (add-shapes *scene* (list circle sphere icos))))
 
 #|
+(Demo 21 kernel) freezing shapes ===============================================
+
+Freeze a shape by transforming its points.
+|#
+(progn
+  (defparameter *cube* (make-cube 2.0))
+  (with-clear-scene
+    (add-shapes *scene* (list
+                         (translate-by
+                          (make-group
+                           (list (rotate-by
+                                  (make-group
+                                   (list
+                                    (translate-by
+                                     *cube*
+                                     (p! 2.5 0 0))))
+                                  (p! 0 45 0))))
+                          (p! 0 2 0))))
+    (setf (show-axis *cube*) 3.0)))
+
+#|
+Hints:
+- Press 1 to turn off shaded view so you can see cube axis better.
+- Press 7 to turn off global axes display.
+
+Local freezing: transforms a point-based shape's points by its transform matrix
+and resets the transform.
+|#
+(progn
+  (format t "~%~%Before freeze: ~a~%" (points *cube*))
+  (freeze-transform *cube*)
+  (format t "After freeze: ~a~%" (points *cube*)))
+
+#|
 END ============================================================================
 |#

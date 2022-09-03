@@ -309,7 +309,7 @@
                      :name name
                      :mesh-type mesh-type)))
 
-(defun make-cut-cube-polyhedron (side &key (name nil) (mesh-type 'polyhedron))
+(defun make-cut-cube (side &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* side 0.5))
         (-r (* side -0.5))
         (b (* side 0.3)))

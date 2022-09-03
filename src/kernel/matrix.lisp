@@ -310,6 +310,6 @@
       (p-set! point tx ty tz))))
 
 (defun transform-points! (points matrix)
-  (mapc #'(lambda (p) (transform-point! p matrix)) points)
-  points)
+  (loop for p across points
+        do (transform-point! p matrix)))
 

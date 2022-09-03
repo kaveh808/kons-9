@@ -23,6 +23,10 @@
 (defun make-point-cloud (points)
   (make-instance 'point-cloud :points points))
 
+(defmethod freeze-transform ((p-cloud point-cloud))
+  (transform-points! (points p-cloud) (transform-matrix (transform p-cloud)))
+  (reset-transform (transform p-cloud)))
+
 ;;; point generator functions --------------------------------------------------
 
 (defun make-line-points (p1 p2 num-segments)
