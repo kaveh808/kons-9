@@ -3,6 +3,8 @@
 ;;;;  SBCL Linux port by Joel Boehland (joel.boehland@evocomputing.com)
 ;;;;  SBCL macOS port by mikel evins (mikel@evins.net) based on Joel Boehland's work
 
+;;; glfw for windows from:
+;;; https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip
 #+(and windows x86-64) 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (pushnew "c:/Program Files/glfw-3.3.8/lib/"
