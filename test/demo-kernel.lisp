@@ -287,9 +287,9 @@ Create a robot arm as a hierarchical structure.
   (setf (name *waist-shape*) 'waist-shape)
   (setf (name *torso-shape*) 'torso-shape)
   (setf (name *shoulder-shape*) 'shoulder-shape)
-  (setf (name *upper-arm-shape*) 'arm-shape)
+  (setf (name *upper-arm-shape*) 'upper-arm-shape)
   (setf (name *elbow-shape*) 'elbow-shape)
-  (setf (name *lower-arm-shape*) 'arm-shape)
+  (setf (name *lower-arm-shape*) 'lower-arm-shape)
   (setf (name *wrist-shape*) 'wrist-shape)
   (setf (name *hand-shape*) 'hand-shape)
 
@@ -338,7 +338,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                              :data `((:rotate . ,(p! 0 0 -2)))))
   (add-motion *scene*
               (make-instance 'shape-animator
-                             :name 'shape-animator
+                             :name 'shoulder-animator
                              :shape *shoulder*
                              :setup-fn (lambda (anim) (rotate-to (shape anim) (p! 0 0 0)))
                              :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
@@ -358,8 +358,6 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                              :update-fn (lambda (anim) (rotate-by (shape anim) (anim-data anim :rotate)))
                              :data `((:rotate . ,(p! 0 0 9)))))
   )
-
-
 
 #|
 (Demo 12 kernel) scene shape management =======================================
@@ -388,6 +386,15 @@ Find shapes by name.
 (pprint (find-shape-by-name *scene* 'foobar)) ;no such name -- return nil
 
 #|
+Find shapes using predicate.
+|#
+(pprint (find-shapes *scene* (lambda (s) (= 4 (length (points s)))) :groups nil))
+
+(pprint (find-shapes *scene* (lambda (s) (= 8 (length (points s)))) :groups nil))
+
+(pprint (find-shapes *scene* (lambda (s) (search "ELBOW" (string (name s)))) :groups t))
+
+#|
 Get shape scene paths.
 |#
 (pprint (get-scene-paths *scene* (find-shape-by-name *scene* 'wrist-group)))
@@ -403,6 +410,18 @@ matrices.
 (let ((paths (get-scene-paths *scene* (find-shape-by-name *scene* 'tetra))))
   (pprint (shape-global-matrix *scene* (first paths)))
   (pprint (shape-global-matrix *scene* (second paths))))
+
+#|
+Find motions by name.
+|#
+(pprint (find-motion-by-name *scene* 'elbow-animator))
+
+#|
+Find motions using predicate.
+|#
+(pprint (find-motions *scene* (lambda (m) (eq *wrist* (shape m))) :groups nil))
+
+(pprint (find-motions *scene* (lambda (m) (search "ELBOW" (string (name m)))) :groups t))
 
 #|
 (Demo 13 kernel) hierarchical animation timing using motions ==================

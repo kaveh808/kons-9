@@ -40,7 +40,7 @@
      (:file "src/kernel/animator")
      (:file "src/kernel/scene")
      (:file "src/kernel/scene-draw")
-     (:file "src/kernel/scene-generics")
+     (:file "src/kernel/scene-hierarchy")
      (:file "src/kernel/scene-duplicate")
      (:file "src/kernel/protocol")
      (:file "src/kernel/main")

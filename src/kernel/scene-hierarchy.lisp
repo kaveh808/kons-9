@@ -106,28 +106,29 @@
           (cleanup-nested-path-list (car l))
           l)))
 
-;;;; scene shape generic functions =============================================
+;;;; scene shape hierarchy functions ===========================================
 
 ;;; find-shapes ----------------------------------------------------------------
 
-(defgeneric find-shapes (root test-fn)
+(defgeneric find-shapes (root test-fn &key groups)
   
-  (:method ((scene scene) test-fn)
-    (remove nil
-            (flatten-list (mapcar (lambda (child) (find-shapes child test-fn))
-                                  (shapes scene)))))
+  (:method ((scene scene) test-fn &key (groups t))
+    (remove-duplicates
+     (remove nil
+             (flatten-list (mapcar (lambda (child) (find-shapes child test-fn :groups groups))
+                                   (shapes scene))))))
 
-  (:method ((group group) test-fn)
-    (if (funcall test-fn group)
-        group
-        (remove nil
-                (flatten-list (cons (if (funcall test-fn group)
-                                        group
-                                        nil)
-                                    (mapcar (lambda (child) (find-shapes child test-fn))
-                                            (children group)))))))
+  (:method ((group group) test-fn &key (groups t))
+    (remove-duplicates
+     (remove nil
+             (flatten-list (cons (if (and groups (funcall test-fn group))
+                                     group
+                                     nil)
+                                 (mapcar (lambda (child) (find-shapes child test-fn :groups groups))
+                                         (children group)))))))
 
-  (:method ((scene-item scene-item) test-fn)
+  (:method ((scene-item scene-item) test-fn &key (groups t))
+    (declare (ignore groups))
     (if (funcall test-fn scene-item)
         scene-item
         nil))
@@ -245,28 +246,29 @@
         nil))
   )
 
-;;;; scene motion generic functions =============================================
+;;;; scene motion hierarchy functions ==========================================
 
 ;;; find-motions ----------------------------------------------------------------
 
-(defgeneric find-motions (root test-fn)
+(defgeneric find-motions (root test-fn &key groups)
   
-  (:method ((scene scene) test-fn)
-    (remove nil
-            (flatten-list (mapcar (lambda (child) (find-motions child test-fn))
-                                  (motions scene)))))
+  (:method ((scene scene) test-fn &key (groups t))
+    (remove-duplicates
+     (remove nil
+             (flatten-list (mapcar (lambda (child) (find-motions child test-fn :groups groups))
+                                   (motions scene))))))
 
-  (:method ((group motion-group) test-fn)
-    (if (funcall test-fn group)
-        group
-        (remove nil
-                (flatten-list (cons (if (funcall test-fn group)
-                                        group
-                                        nil)
-                                    (mapcar (lambda (child) (find-motions child test-fn))
-                                            (children group)))))))
+  (:method ((group motion-group) test-fn &key (groups t))
+    (remove-duplicates
+     (remove nil
+             (flatten-list (cons (if (and groups (funcall test-fn group))
+                                     group
+                                     nil)
+                                 (mapcar (lambda (child) (find-motions child test-fn :groups groups))
+                                         (children group)))))))
 
-  (:method ((scene-item scene-item) test-fn)
+  (:method ((scene-item scene-item) test-fn &key (groups t))
+    (declare (ignore groups))
     (if (funcall test-fn scene-item)
         scene-item
         nil))
