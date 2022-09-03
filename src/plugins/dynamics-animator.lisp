@@ -41,7 +41,7 @@
 
 (defmethod field-value ((field noise-force-field) point time)
   (declare (ignore time))
-  (p* (noise-gradient (p-scale point (noise-frequency field)))
+  (p* (noise-gradient (p* point (noise-frequency field)))
       (noise-amplitude field)))
 
 ;;;; dynamics-animator =========================================================
