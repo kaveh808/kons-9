@@ -24,7 +24,7 @@ The SCENE class manages shapes and motions for display and animation
 respectively. For our tests, the global variable *SCENE* is bound to our scene.
 |#
 (with-clear-scene
-  (add-shape *scene* (make-cut-cube-polyhedron 2.0)))
+  (add-shape *scene* (make-cut-cube 2.0)))
 #|
 Click and drag in the window to rotate the camera.
 
