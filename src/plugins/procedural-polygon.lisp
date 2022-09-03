@@ -54,13 +54,6 @@
 ;;;; procedural polygons =======================================================
 
 (def-procedural-polygon
-    circle
-    ((diameter 2.0))
-  ()
-  (diameter)
-  (make-circle-points (diameter poly) (num-segments poly)))
-
-(def-procedural-polygon
     line
     ((p1 (p! 0 0 0))
      (p2 (p! 0 1 0)))
