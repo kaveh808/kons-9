@@ -164,6 +164,7 @@
         curve))
 
 ;;; assumes profile curve has z-axis as normal
+;;; TODO -- optimize, remove coerce of points to list and then array
 (defmethod sweep-extrude-aux ((mesh uv-mesh) profile-points is-closed-profile? path-points is-closed-path?
                               &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))); fix this
@@ -195,13 +196,13 @@
                          (r2-mtx (make-axis-rotation-matrix (* delta twist) tangent p1))
                          (t-mtx (make-translation-matrix (p- p1 p0)))
                          (mtx (matrix-multiply-n t-mtx r1-mtx r2-mtx)))
-                    (transform-points! points mtx)
+                    (transform-point-list! points mtx)
                     (setf prev-tangent tangent)
                     (setf p0 p1)
                     (let ((scaled-points (copy-points points))
                           (s-mtx (make-scale-matrix (p-lerp factor (p! 1 1 1) (p! taper taper taper))
                                                     p1)))
-                      (transform-points! scaled-points s-mtx)		      
+                      (transform-point-list! scaled-points s-mtx)		      
                       (loop :for p2 :in scaled-points
                             :for u :from 0
                             :do (setf (aref (uv-point-array mesh) u v) (p-copy p2)))))))
