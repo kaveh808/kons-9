@@ -34,14 +34,15 @@
           (vector-push-extend p (points polyh))
           (push (incf i) p-refs))
         (vector-push-extend (nreverse p-refs) (faces polyh))))))
-  
-(defmethod polyhedron-bake ((polyh polyhedron))
-  (let ((mtx (transform-matrix (transform polyh))))
-    (dotimes (i (length (points polyh)))
-      (setf (aref (points polyh) i)
-            (transform-point (aref (points polyh) i) mtx))))
-  (reset-transform (transform polyh))
-  polyh)
+
+;; replaced by freeze-transform
+;; (defmethod polyhedron-bake ((polyh polyhedron))
+;;   (let ((mtx (transform-matrix (transform polyh))))
+;;     (dotimes (i (length (points polyh)))
+;;       (setf (aref (points polyh) i)
+;;             (transform-point (aref (points polyh) i) mtx))))
+;;   (reset-transform (transform polyh))
+;;   polyh)
 
 (defmethod face-center ((polyh polyhedron) face)
   (p-center (face-points polyh face)))

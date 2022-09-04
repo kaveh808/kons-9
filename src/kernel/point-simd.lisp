@@ -137,7 +137,7 @@ declarations
       (max (y p1) (y p2))
       (max (z p1) (z p2))))
 
-(defun p-rand-2 (val1 val2)
+(defun p-rand2 (val1 val2)
   (ctypecase val1
     (point (p! (rand2 (x val1) (x val2))
                (rand2 (y val1) (y val2))

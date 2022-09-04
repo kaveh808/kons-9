@@ -35,7 +35,7 @@
   (dotimes (u (u-dim hfield))
     (dotimes (v (v-dim hfield))
       (let ((p (aref (uv-point-array hfield) u v)))
-        (setf (y p) (funcall (height-fn hfield) (x p) (z p)))))))
+        (set-y! p (funcall (height-fn hfield) (x p) (z p)))))))
 
 (defmethod update-heightfield ((hfield heightfield))
   (compute-heights hfield)

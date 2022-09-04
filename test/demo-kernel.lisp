@@ -39,13 +39,15 @@ Press the 'h' key to print available keyboard commands. Try them out.
 (Demo 02 kernel) display customizations ========================================
 |#
 (with-clear-scene
-  (add-shape *scene* (make-cut-cube-polyhedron 2.0)))
+  (add-shape *scene* (make-cut-cube 2.0)))
 #|
 The following commands customize some view settings
 
 For a full list of available options see the DRAWING-SETTINGS class in
 kons-9/src/graphics/opengl/opengl.lisp
 |#
+
+#|
 (set-lines-thin)
 (set-lines-thick)
 (set-theme-bright)
@@ -54,6 +56,7 @@ kons-9/src/graphics/opengl/opengl.lisp
 (set-ground-plane-dark)
 (set-ground-plane-sparse)
 (set-ground-plane-dense)
+|#
 
 #|
 (Demo 03 kernel) point clouds ==================================================
@@ -77,7 +80,7 @@ The POLYGON class represents open or closed paths in 3D space.
   (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -4.0)))
   (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0 -2.0)))
   (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0 0.0)))
-  (add-shape *scene* (translate-to (make-arc-polygon 2.0 16 0 pi) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-arc-polygon 2.0 0 pi 16) (p! 0 0 2.0)))
   (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0 4.0)))
   (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
 
@@ -208,7 +211,7 @@ Press 'a' key to reset the scene back to frame 0.
 This animation translates the shape in the X axis direction.
 |#
 (with-clear-scene
-  (let ((shape (add-shape *scene* (make-cut-cube-polyhedron 2.0))))
+  (let ((shape (add-shape *scene* (make-cut-cube 2.0))))
     (add-motion *scene*
                 (make-instance 'animator
                                :setup-fn (lambda () (translate-to shape (p! 0.0 0 0)))
