@@ -86,36 +86,12 @@
 	((>= val end) 1.0)
 	(t (/ (- val start) (- end start)))))
 
-;;; pseudo random table -- very naive...
-(defparameter *pseudo-random-table-index* 0)
-(defparameter *pseudo-random-table-size* 9973) ;largest prime under 10,000
-(defparameter *pseudo-random-table* nil)
-(defun make-pseudo-random-table ()
-  (setf *pseudo-random-table* (make-array *pseudo-random-table-size* :element-type 'float))
-  (dotimes (i *pseudo-random-table-size*)
-    (setf (aref *pseudo-random-table* i) (random 1.0))))
-(defun pseudo-random (n)
-  (when (null *pseudo-random-table*)
-    (make-pseudo-random-table))
-  (when (= (incf *pseudo-random-table-index*) *pseudo-random-table-size*)
-    (setf *pseudo-random-table-index* 0))
-  (* n (aref *pseudo-random-table* *pseudo-random-table-index*)))
-
-;;; random float between a and b
-(defun rand2-SAV (a b)
-  (if (= a b)				;doesn't like (random 0)
-      a
-      (let ((lo (min a b))
-	    (hi (max a b))
-	    (*random-state* (make-random-state t)))
-	(+ lo (random (coerce (- hi lo) 'float))))))
-
 (defun rand2 (a b)
   (if (= a b)				;doesn't like (random 0)
       a
       (let ((lo (min a b))
 	    (hi (max a b)))
-	(+ lo (pseudo-random (- hi lo))))))
+	(+ lo (random (- hi lo))))))
 
 ;;; random float between -a and a
 (defun rand1 (a &optional (pivot 0))

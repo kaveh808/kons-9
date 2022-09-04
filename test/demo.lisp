@@ -3,7 +3,7 @@
 
 ;;;; start plugins demos =======================================================
 
-(format t "~%heightfields...~%")
+(format t "  heightfields...~%") (finish-output)
 
 ;;; heightfield ---------------------------------------------------------------
 ;;; try using various height functions and color functions
@@ -66,7 +66,7 @@
 
 ;;; procedural-mixin superquadric ----------------------------------------------
 
-(format t "~%superquadrics...~%")
+(format t "  superquadrics...~%") (finish-output)
 
 (with-clear-scene
   (let ((mesh (make-superquadric 16 16 2.0 1 0.1)))
@@ -99,7 +99,7 @@
 
 ;;; parametric-curve -----------------------------------------------------------
 
-(format t "~% parametric-curve...~%")
+(format t "  parametric-curve...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
@@ -126,7 +126,7 @@
 
 ;;; l-system ------------------------------------------------------------------
 
-(format t "~% l-system...~%")
+(format t "  l-system...~%") (finish-output)
 
 ;;; uncomment an l-system to test
 (with-clear-scene
@@ -149,7 +149,7 @@
 
 ;;; particle-system ------------------------------------------------------------
 
-(format t "~% particle-system...~%")
+(format t "  particle-system...~%") (finish-output)
 
 (with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
@@ -177,7 +177,7 @@
 
 ;;; sweep-mesh dependency-node-mixin -------------------------------------------
 
-(format t "~% sweep-mesh...~%")
+(format t "  sweep-mesh...~%") (finish-output)
 
 (with-clear-scene
   (defparameter *profile* (make-circle 0.8 4))
@@ -204,7 +204,7 @@
 
 ;;; dynamics-animator ----------------------------------------------------------
 
-(format t "~% dynamics-animator...~%")
+(format t "  dynamics-animator...~%") (finish-output)
 
 (with-clear-scene
   (let ((shapes '()))
@@ -226,7 +226,7 @@
 
 ;;; obj import -----------------------------------------------------------------
 
-(format t "~% obj import...~%")
+(format t "  obj import...~%") (finish-output)
 
 (defparameter *example-obj-filename* 
   (first (list (asdf:system-relative-pathname "kons-9" "test/data/cow.obj")
@@ -245,7 +245,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle system growth along point-cloud -----------------------------------
 
-(format t "~% particle-system...~%")
+(format t "  particle-system...~%") (finish-output)
 
 (with-clear-scene
   (let* ((shape (generate-point-cloud (triangulate-polyhedron (import-obj *example-obj-filename*))
@@ -261,7 +261,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle system growth along point-cloud & sweep-extrude -------------------
 
-(format t "~% particle-system...~%")
+(format t "  particle-system...~%") (finish-output)
 
 (with-clear-scene
   (let* ((shape
@@ -289,7 +289,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; point-instancer ------------------------------------------------------------
 
-(format t "~% point-instancer...~%")
+(format t "  point-instancer...~%") (finish-output)
 
 (with-clear-scene
   (let ((shape (make-point-instancer (import-obj *example-obj-filename*)
@@ -302,7 +302,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; point-instancer particle-system --------------------------------------------
 
-(format t "~% point-instancer particle-system...~%")
+(format t "  point-instancer particle-system...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
@@ -320,7 +320,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; point-instancer particle-system dependency-node-mixin ----------------------
 
-(format t "~% point-instancer particle-system dependency-node-mixin...~%")
+(format t "  point-instancer particle-system dependency-node-mixin...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
@@ -339,7 +339,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; transform-instancer euler-transform ----------------------------------------
 
-(format t "~% transform-instancer...~%")
+(format t "  transform-instancer...~%") (finish-output)
 
 (progn
   (defparameter *instancer*
@@ -373,7 +373,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; uv-mesh transform-instancer 1 ----------------------------------------------
 
-(format t "~% uv-mesh transform-instancer...~%")
+(format t "  uv-mesh transform-instancer...~%") (finish-output)
 
 (with-clear-scene
   (let* ((path (make-sine-curve 360 1 4 1 32))
@@ -401,7 +401,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system curve-shape force-field ------------------------------------
 
-(format t "~% particle-system 2...~%")
+(format t "  particle-system 2...~%") (finish-output)
 
 (with-clear-scene
   (let* ((curve (make-circle 4.0 16))
@@ -415,7 +415,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system curve-shape sweep-extrude ----------------------------------
 
-(format t "~% particle-system 3...~%")
+(format t "  particle-system 3...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-gen (make-circle 4.0 16))
@@ -434,7 +434,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin uv-mesh ------------------------------
 
-(format t "~% particle-system 4...~%")
+(format t "  particle-system 4...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
@@ -453,7 +453,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin sweep-mesh-group ---------------------
 
-(format t "~% particle-system 5...~%")
+(format t "  particle-system 5...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
@@ -470,7 +470,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin sweep-mesh-group spawning ------------
 
-(format t "~% particle-system 6...~%")
+(format t "  particle-system 6...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 4 4 1 1))
@@ -486,7 +486,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin use polyh face centers ---------------
 
-(format t "~% particle-system 7...~%")
+(format t "  particle-system 7...~%") (finish-output)
 
 (with-clear-scene
   (let ((p-gen (make-icosahedron 2.0)))
@@ -505,7 +505,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin polyhedron ---------------------------
 
-(format t "~% particle-system 8...~%")
+(format t "  particle-system 8...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-gen (import-obj *example-obj-filename*))
@@ -519,7 +519,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; particle-system point-generator-mixin particle-system ----------------------
 
-(format t "~% particle-system 9...~%")
+(format t "  particle-system 9...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-gen (freeze-transform (translate-by (make-superquadric 8 5 2.0 1.0 1.0)
@@ -558,7 +558,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; polyhedron curve-generator-mixin -------------------------------------------
 
-(format t "~% polyhedron curve-generator-mixin...~%")
+(format t "  polyhedron curve-generator-mixin...~%") (finish-output)
 
 (with-clear-scene
   (let ((polyh (make-cut-cube 4.0)))
