@@ -30,7 +30,7 @@ If you wish to do so, please:
 
 - Watch the project.
 - Turn on Notifications so you are aware of the Discussions postings.
-- Read the Introductions thread in Discussions.
+- Read the Introductions thread in [Discussions](https://github.com/kaveh808/kons-9/discussions).
 - Post your own introduction on the thread.
 - Join the Discussions and look at the open Issues.
 
@@ -56,5 +56,3 @@ Type 'h' in the window to see the available key bindings.
 Open `test/demo-kernel.lisp` and start evaluating the blocks of code for the demos. Things should appear in the graphics window.
 
 Have fun.
-
-
