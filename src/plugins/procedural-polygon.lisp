@@ -1,17 +1,5 @@
 (in-package #:kons-9)
 
-(defmacro defclass-kons-9 (name superclasses slot-names-and-initforms &rest class-options)
-  `(defclass ,name ,superclasses
-     ,(mapcar #'(lambda (slot-info)
-                  (let ((slot-name (first slot-info))
-                        (slot-value (second slot-info)))
-                    (list slot-name
-                          :accessor slot-name
-                          :initarg (intern (symbol-name slot-name) "KEYWORD")
-                          :initform slot-value)))
-       slot-names-and-initforms)
-     ,@class-options))
-
 (defmacro def-procedural-polygon (name slot-names-and-initforms class-options
                                   inputs &rest compute-expr)
   `(progn
@@ -29,19 +17,6 @@
                                                                  slot-name)))
                                         (append slot-names-and-initforms '((num-segments ignore)))))))
      ))
-
-;; (pprint (macroexpand-1
-;; '(def-procedural-polygon
-;;     sine-curve
-;;     ((period 360.0)
-;;      (frequency 1.0)
-;;      (x-scale 1.0)
-;;      (y-scale 1.0))
-;;   ((:default-initargs
-;;     :is-closed-polygon? nil))
-;;   (period frequency x-scale y-scale)
-;;   (make-sine-curve-points (period poly) (frequency poly)
-;;                           (x-scale poly) (y-scale poly) (num-segments poly)))))
 
 ;;;; procedural-polygon ========================================================
 

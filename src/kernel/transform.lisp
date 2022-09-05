@@ -202,7 +202,7 @@
 ;;; generalized-transform ======================================================
 
 (defclass generalized-transform (transform)
-  ((operators :accessor operators :initarg :operators :initform (make-array 0 :adjustable t :fill-pointer t))))
+  ((operators :accessor operators :initarg :operators :initform '())))
 
 ;; TODO: reverse mtx-list for correct transform order -- needs testing
 (defmethod transform-matrix ((self generalized-transform) &optional (factor 1.0))

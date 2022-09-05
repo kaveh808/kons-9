@@ -44,6 +44,10 @@
 ;;   (reset-transform (transform polyh))
 ;;   polyh)
 
+(defmethod freeze-transform :after ((polyh polyhedron))
+  (compute-face-normals polyh)
+  (compute-point-normals polyh))  
+
 (defmethod face-center ((polyh polyhedron) face)
   (p-center (face-points polyh face)))
 

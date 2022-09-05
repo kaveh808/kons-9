@@ -1,6 +1,6 @@
 (in-package #:kons-9)
 
-;;;; class hierarchy ====================================================
+;;;; class hierarchy ===========================================================
 
 (defun print-class-hierarchy (class &optional (indent 0))
   (print-spaces indent)
@@ -9,7 +9,21 @@
     (dolist (subclass subclasses)
       (print-class-hierarchy subclass (+ indent 2)))))
 
-;;;; utils ==============================================================
+;;;; defklass macro ============================================================
+
+(defmacro defclass-kons-9 (name superclasses slot-names-and-initforms &rest class-options)
+  `(defclass ,name ,superclasses
+     ,(mapcar #'(lambda (slot-info)
+                  (let ((slot-name (first slot-info))
+                        (slot-value (second slot-info)))
+                    (list slot-name
+                          :accessor slot-name
+                          :initarg (intern (symbol-name slot-name) "KEYWORD")
+                          :initform slot-value)))
+       slot-names-and-initforms)
+     ,@class-options))
+
+;;;; utils =====================================================================
 
 (defun my-debug (x &optional (str ""))
   (format t "DEBUG: ~a~s~%" str x)
@@ -71,7 +85,7 @@
        (when (funcall ,test ,obj)
          ,@body))))
 
-;;;; math ===============================================================
+;;;; math ======================================================================
 
 (defconstant 2pi (* 2 pi))
 (defconstant pi/2 (/ pi 2))
