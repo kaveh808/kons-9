@@ -3,6 +3,9 @@
 ;;;;  SBCL Linux port by Joel Boehland (joel.boehland@evocomputing.com)
 ;;;;  SBCL macOS port by mikel evins (mikel@evins.net) based on Joel Boehland's work
 
+;;; NOTE: Windows 64 version relies on sbcl 2.2.3. Some later sbcl
+;;; versions break loading of some quicklisp components. Further investigation is needed.
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (progn (ql:quickload :cffi)
          ;; glfw for windows from:
