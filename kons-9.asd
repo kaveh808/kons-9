@@ -3,12 +3,12 @@
 ;;;;  SBCL Linux port by Joel Boehland (joel.boehland@evocomputing.com)
 ;;;;  SBCL macOS port by mikel evins (mikel@evins.net) based on Joel Boehland's work
 
-;;; glfw for windows from:
-;;; https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip
-#+(and windows x86-64) 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (pushnew "c:/Program Files/glfw-3.3.8/lib/"
-           cffi:*foreign-library-directories*))
+  (progn (ql:quickload :cffi)
+         ;; glfw for windows from:
+         ;; https://github.com/glfw/glfw/releases/download/3.3.8/glfw-3.3.8.bin.WIN64.zip
+         #+(and windows x86-64) 
+         (pushnew "c:/Program Files/glfw-3.3.8/lib/" cffi:*foreign-library-directories*)))
 
 (asdf:defsystem #:kons-9
     :description "Common Lisp 3D Graphics System"
@@ -18,7 +18,6 @@
     (#:closer-mop
      #:trivial-main-thread
      #:trivial-backtrace
-     #:cffi
      #:cl-opengl
      #:cl-glu
      #:cl-glfw3) 
@@ -64,9 +63,10 @@
 
 #+nil (asdf:load-system :kons-9)
 
-#+nil (trivial-main-thread:call-in-main-thread
-       (lambda ()
-         (sb-int:set-floating-point-modes :traps nil)
-         (kons-9::show-window kons-9::*scene*)))
+#+nil (progn
+        (trivial-main-thread:call-in-main-thread
+         (lambda ()
+           (sb-int:set-floating-point-modes :traps nil)
+           (kons-9::show-window kons-9::*scene*))))
 
 #+nil (in-package :kons-9)
