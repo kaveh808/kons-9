@@ -49,6 +49,7 @@
      (:file "src/plugins/superquadric")
      (:file "src/plugins/sweep-mesh")
      (:file "src/plugins/sweep-mesh-group")
+     (:file "src/plugins/channel")
      (:file "src/plugins/dynamics-animator")
      (:file "src/plugins/procedural-polygon")
      (:file "src/plugins/manager-group")

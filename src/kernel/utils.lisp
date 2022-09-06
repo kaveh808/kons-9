@@ -85,6 +85,13 @@
        (when (funcall ,test ,obj)
          ,@body))))
 
+(defun insert-at (vec i val)
+  (let ((new (make-array (1+ (length vec)))))
+    (setf (aref new i) val)
+    (replace new vec :end1 i)
+    (replace new vec :start1 (1+ i) :start2 i)
+    new))
+
 ;;;; math ======================================================================
 
 (defconstant 2pi (* 2 pi))
