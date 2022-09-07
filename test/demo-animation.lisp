@@ -80,7 +80,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
   (defparameter *cube* (translate-to (make-cube         1.5) (p!    0 0 0)))
   (defparameter *octa* (translate-to (make-octahedron   2.0) (p! -2.5 0  0)))
   (defparameter *icos* (translate-to (make-icosahedron  2.0) (p!  2.5 0 0)))
-  (defparameter *channel* (make-instance 'procedural-channel :value-fn #'in-out-cubic-fn))
+  (defparameter *channel* (make-instance 'procedural-channel :value-fn #'out-elastic-fn))
   (with-clear-scene
     (add-shapes *scene* (list *cube* *octa* *icos*))
     (add-motions *scene*

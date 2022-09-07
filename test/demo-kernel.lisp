@@ -489,7 +489,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
   (set-timing anim-2 2/3 1/3))
 
 #|
-Set the indidual animators' timings to full and half durations.
+Modify the animators' timings.
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
@@ -497,8 +497,8 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
-  (set-timing anim-0 0.0 1.0)
-  (set-timing anim-1 0.0 0.5)
+  (scale-duration anim-0 3.0)           ;duration = 1
+  (offset-start-time anim-1 -1/3)       ;start-time = 0
   (set-timing anim-2 0.5 0.5))
 
 #|

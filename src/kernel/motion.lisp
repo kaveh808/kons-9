@@ -18,6 +18,14 @@
   (setf (duration motion) duration)
   motion)
 
+(defmethod offset-start-time ((motion motion) delta)
+  (incf (start-time motion) delta)
+  motion)
+
+(defmethod scale-duration ((motion motion) factor)
+  (setf (duration motion) (* factor (duration motion)))
+  motion)
+
 (defmethod in-time-interval? ((motion motion) timing)
   (let* ((global-time (current-time (scene motion)))
          (timing-start-time (aref timing 0))
