@@ -100,11 +100,48 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
                                  :update-fn (lambda (anim)
                                               (let ((val (get-value *channel* (local-time anim))))
                                                 (scale-to (shape anim) (p! val val val))))))))
-                
   (setf (end-frame *scene*) 60))
 
+;;;; variant-manager-group test ================================================
 
+;;; http://www.sci.utah.edu/~wald/animrep/hand/hand.obj.tgz
+(progn
+  (defparameter *obj-directory* "~/Downloads/hand")
+  (defparameter *obj-filename* "hand_")
+  (defparameter *obj-start-frame* 0)
+  (defparameter *obj-end-frame* 43)
+  (defparameter *obj-file-padding* 2))
 
+;;; http://www.sci.utah.edu/~wald/animrep/wood-doll/wood-doll.obj.tgz
+(progn
+  (defparameter *obj-directory* "~/Downloads/wooddoll")
+  (defparameter *obj-filename* "wooddoll_")
+  (defparameter *obj-start-frame* 0)
+  (defparameter *obj-end-frame* 28)
+  (defparameter *obj-file-padding* 2))
 
+(defun anim-obj-filename (path filename index padding)
+  (format nil (format nil "~~a/~~a~a.obj" (format nil "~~~a,'0d" padding)) path filename index))
 
+;#| only run if file data is set
 
+(with-clear-scene
+  (flet ((anim-obj-filename (path filename index padding)
+           (format nil (format nil "~~a/~~a~a.obj" (format nil "~~~a,'0d" padding)) path filename index)))
+    (let ((shapes '()))
+      (dotimes (i (1+ (- *obj-end-frame* *obj-start-frame*)))
+        (push (import-obj (anim-obj-filename *obj-directory* *obj-filename*
+                                             (+ i *obj-start-frame*) *obj-file-padding*))
+              shapes))
+      (let ((group (make-instance 'variant-manager-group :children (reverse shapes))))
+        (add-shape *scene* group)
+        (add-motion *scene* 
+                    (make-instance 'animator
+                                   :setup-fn (lambda () (setf (visible-index group) 0))
+                                   :update-fn (lambda () (setf (visible-index group)
+                                                               (current-frame *scene*))))))))
+  (setf (current-frame *scene*) *obj-start-frame*)
+  (setf (start-frame *scene*) *obj-start-frame*)
+  (setf (end-frame *scene*) *obj-end-frame*))
+
+|#

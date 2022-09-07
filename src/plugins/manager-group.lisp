@@ -1,13 +1,13 @@
 (in-package #:kons-9)
 
-;;;; manager-group ======================================================
+;;;; manager-group =============================================================
 
 (defclass manager-group (group dependency-node-mixin)
   ())
 
 (def-procedural-output manager-group children)
 
-;;;; instancer-group ====================================================
+;;;; instancer-group ===========================================================
 
 (defclass instancer-group (manager-group)
   ((instance-shape :accessor instance-shape :initarg :instance-shape :initform nil)))
@@ -18,7 +18,7 @@
 
 (def-procedural-input instancer-group instance-shape)
 
-;;;; point-instancer ====================================================
+;;;; point-instancer ===========================================================
 
 (defclass point-instancer (instancer-group)
   ((point-generator :accessor point-generator :initarg :point-generator :initform nil)))
@@ -39,7 +39,7 @@
 (defun make-point-instancer (p-gen instance-shape)
   (make-instance 'point-instancer :point-generator p-gen :instance-shape instance-shape))
 
-;;;; transform-instancer ================================================
+;;;; transform-instancer =======================================================
 
 (defclass transform-instancer (instancer-group)
   ((instance-transform :accessor instance-transform :initarg :instance-transform :initform nil)
@@ -66,4 +66,16 @@
 
 (defun make-transform-instancer (shape transform steps)
   (make-instance 'transform-instancer :instance-shape shape :instance-transform transform :num-steps steps))
+
+;;;; variant-manager-group =====================================================
+
+(defclass variant-manager-group (manager-group)
+  ((visible-index :accessor visible-index :initarg :visible-index :initform 0)))
+
+(def-procedural-input variant-manager-group visible-index)
+
+(defmethod compute-procedural-node ((self variant-manager-group))
+  (dolist (child (children self))
+    (setf (is-visible? child) nil))
+  (setf (is-visible? (nth (visible-index self) (children self))) t))
 
