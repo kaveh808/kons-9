@@ -55,15 +55,13 @@
 
 (defstruct draw-list
   (cmd-buffer)
+  (vtx-current-idx)
   (idx-buffer)
   (idx-buffer-cap)
+  (idx-buffer-size)
   (vtx-buffer)
   (vtx-buffer-cap)
-  (vtx-current-idx)
-  (vtx-write-ptr)
-  (idx-write-ptr)
-  (clip-rect-stack)
-  (texture-id-stack))
+  (vtx-buffer-size))
 
 #+NOTYET(declaim (inline copy-pointer))
 (defun copy-pointer (pointer)
@@ -74,18 +72,18 @@
   (setf (draw-list-cmd-buffer draw-list) (make-array 500 :adjustable t :fill-pointer 0))
   (setf (draw-list-idx-buffer draw-list) (cffi:foreign-alloc +index-type+ :count 512))
   (setf (draw-list-idx-buffer-cap draw-list) 512)
+  (setf (draw-list-idx-buffer-size draw-list) 0)
   (setf (draw-list-vtx-buffer draw-list) (cffi:foreign-alloc '(:struct standard-draw-list-vertex) :count 512))
   (setf (draw-list-vtx-buffer-cap draw-list) 512)
   (setf (draw-list-vtx-current-idx draw-list) 0)
-  (setf (draw-list-vtx-write-ptr draw-list) (copy-pointer (draw-list-vtx-buffer draw-list)))
-  (setf (draw-list-idx-write-ptr draw-list) (copy-pointer (draw-list-idx-buffer draw-list)))
+  (setf (draw-list-vtx-buffer-size draw-list) 0)
   draw-list)
 
 (defun reinitialize-draw-list (draw-list)
   (setf (fill-pointer (draw-list-cmd-buffer draw-list)) 0)
   (setf (draw-list-vtx-current-idx draw-list) 0)
-  (setf (draw-list-vtx-write-ptr draw-list) (copy-pointer (draw-list-vtx-buffer draw-list)))
-  (setf (draw-list-idx-write-ptr draw-list) (copy-pointer (draw-list-idx-buffer draw-list)))
+  (setf (draw-list-idx-buffer-size draw-list) 0)
+  (setf (draw-list-vtx-buffer-size draw-list) 0)
   draw-list)
 
 (defun add-draw-cmd (draw-list elem-count texture-id clip-rect-x clip-rect-y clip-rect-width clip-rect-height)
@@ -233,6 +231,16 @@
 			  (hori-bearing-y (ash (ft2-types:ft-glyph-metrics-hori-bearing-y metrics) -6))
 			  (width (ash (ft2-types:ft-glyph-metrics-width metrics) -6))
 			  (height (ash (ft2-types:ft-glyph-metrics-height metrics) -6)))
+
+		     ;; hack on macos to deal with framebuffer scale
+		     #+darwin
+		     (setq left (/ left *framebuffer-scale*)
+			   top (/ top *framebuffer-scale*)
+			   width (/ width *framebuffer-scale*)
+			   height (/ height *framebuffer-scale*)
+			   hori-advance (/ hori-advance *framebuffer-scale*)
+			   hori-bearing-x (/ hori-bearing-x *framebuffer-scale*)
+			   hori-bearing-y (/ hori-bearing-y *framebuffer-scale*))
 		     
 		     (cffi:with-foreign-objects ((p-texture :int))
          		(glGenTextures_foo 1 p-texture)
@@ -276,45 +284,53 @@
 
 (cffi:defcfun ("memcpy" memcpy) :void (dest :pointer) (src :pointer) (size :uint64))
 
-(defun maybe-resize-standard-vertex-buffer (buffer current-capacity-in-vertices proposed-index)
-  (if (< proposed-index (1- current-capacity-in-vertices))
-      (values buffer current-capacity-in-vertices)
-      (let* ((new-capacity (* 2 current-capacity-in-vertices))
-	     (new-buffer (cffi:foreign-alloc '(:struct standard-draw-list-vertex) :count new-capacity)))
-	(memcpy new-buffer buffer (* current-capacity-in-vertices
-				     (load-time-value (cffi:foreign-type-size '(:struct standard-draw-list-vertex)))))
-	(cffi:foreign-free buffer)
-	(values new-buffer new-capacity))))
-
-(defun maybe-resize-index-buffer (buffer current-capacity proposed-index)
+(defun maybe-resize-standard-vertex-buffer (buffer buffer-size current-capacity proposed-index)
   (if (< proposed-index (1- current-capacity))
-      (values buffer current-capacity)
+      (values buffer current-capacity nil)
       (let* ((new-capacity (* 2 current-capacity))
-	     (index-type-size (cffi:foreign-type-size +index-type+))
+	     (new-buffer (cffi:foreign-alloc '(:struct standard-draw-list-vertex) :count new-capacity)))
+	(memcpy new-buffer buffer buffer-size)
+	(values new-buffer new-capacity t))))
+
+(defun maybe-resize-index-buffer (buffer buffer-size current-capacity proposed-index)
+  (if (< proposed-index (1- current-capacity))
+      (values buffer current-capacity nil)
+      (let* ((new-capacity (* 2 current-capacity))
 	     (new-buffer (cffi:foreign-alloc +index-type+ :count new-capacity)))
-	(memcpy new-buffer buffer (* current-capacity index-type-size))
-	(cffi:foreign-free buffer)
-	(values new-buffer new-capacity))))
+	(memcpy new-buffer buffer buffer-size)
+	(values new-buffer new-capacity t))))
 
 (defun prim-reserve (draw-list index-count vertex-count)
   (when (and (zerop index-count)
 	     (zerop vertex-count))
     (return-from prim-reserve nil))
-  (let ((proposed-vtx-index (+ (draw-list-vtx-current-idx draw-list) vertex-count)))
-    (multiple-value-bind (buffer capacity)
-	(maybe-resize-standard-vertex-buffer (draw-list-vtx-buffer draw-list)
-					     (draw-list-vtx-buffer-cap draw-list)
-					     proposed-vtx-index)
-      (setf (draw-list-vtx-buffer draw-list) buffer
-	    (draw-list-vtx-buffer-cap draw-list) capacity)))
-  
-  (let ((proposed-idx-index (+ (draw-list-vtx-current-idx draw-list) vertex-count)))
-    (multiple-value-bind (buffer capacity)
-	(maybe-resize-index-buffer (draw-list-idx-buffer draw-list)
-				   (draw-list-idx-buffer-cap draw-list)
-				   proposed-idx-index)
-      (setf (draw-list-idx-buffer draw-list) buffer
-	    (draw-list-idx-buffer-cap draw-list) capacity)))
+  (unless (zerop vertex-count)
+    (let ((proposed-vtx-index (+ (draw-list-vtx-current-idx draw-list) vertex-count))
+	  (old-buffer (draw-list-vtx-buffer draw-list)))
+      (multiple-value-bind (buffer capacity updated?)
+	  (maybe-resize-standard-vertex-buffer (draw-list-vtx-buffer draw-list)
+					       (draw-list-vtx-buffer-size draw-list)
+					       (draw-list-vtx-buffer-cap draw-list)
+					       proposed-vtx-index)
+	(setf (draw-list-vtx-buffer draw-list) buffer
+	      (draw-list-vtx-buffer-cap draw-list) capacity)
+	(when updated?
+	  (cffi:foreign-free old-buffer)))))
+
+  (unless (zerop index-count)
+    (let ((proposed-idx-index (+ (truncate (draw-list-idx-buffer-size draw-list)
+					   (load-time-value (cffi:foreign-type-size +index-type+)))
+				 index-count))
+	  (old-buffer (draw-list-idx-buffer draw-list)))
+      (multiple-value-bind (buffer capacity updated?)
+	  (maybe-resize-index-buffer (draw-list-idx-buffer draw-list)
+				     (draw-list-idx-buffer-size draw-list)
+				     (draw-list-idx-buffer-cap draw-list)
+				     proposed-idx-index)
+	(setf (draw-list-idx-buffer draw-list) buffer
+	      (draw-list-idx-buffer-cap draw-list) capacity)
+	(when updated?
+	  (cffi:foreign-free old-buffer)))))
   t)
 
 (defun prim-rect-uv (draw-list a-x a-y c-x c-y uv-a-x uv-a-y uv-c-x uv-c-y col)
@@ -327,90 +343,92 @@
 	 (uv-b-x uv-c-x)
 	 (uv-b-y uv-a-y)
 	 (uv-d-x uv-a-x)
-	 (uv-d-y uv-c-y)
-	 (idx (draw-list-vtx-current-idx draw-list))
-	 (vtx-write-ptr (draw-list-vtx-write-ptr draw-list))
-	 (vtx-write-ptr-pos vtx-write-ptr)
-	 (vtx-write-ptr-uv)
-	 (vtx-write-ptr-col)
-	 (idx-write-ptr (draw-list-idx-write-ptr draw-list)))
+	 (uv-d-y uv-c-y))
+    (with-slots (vtx-current-idx idx-buffer vtx-buffer idx-buffer-size vtx-buffer-size) draw-list
+      (let* ((vtx-ptr (copy-pointer vtx-buffer))
+	     (vtx-write-ptr (cffi:incf-pointer vtx-ptr vtx-buffer-size))
+	     (vtx-write-ptr-pos)
+	     (vtx-write-ptr-uv)
+	     (vtx-write-ptr-col)
+	     (idx vtx-current-idx)
+	     (idx-ptr (copy-pointer idx-buffer))
+	     (idx-write-ptr (cffi:incf-pointer idx-ptr idx-buffer-size)))
 
-    (flet ((set-vtx-write-ptrs (index)
-	     (setq vtx-write-ptr-pos
-		   (cffi:mem-aptr vtx-write-ptr '(:struct standard-draw-list-vertex) index))
-	     (setq vtx-write-ptr-uv
-		   (cffi:foreign-slot-pointer vtx-write-ptr-pos '(:struct standard-draw-list-vertex) 'uv))
-	     (setq vtx-write-ptr-col
-		   (cffi:foreign-slot-pointer vtx-write-ptr-pos '(:struct standard-draw-list-vertex) 'red)))
+	(flet ((set-vtx-write-ptrs (index)
+		 (setq vtx-write-ptr-pos
+		       (cffi:mem-aptr vtx-write-ptr '(:struct standard-draw-list-vertex) index))
+		 (setq vtx-write-ptr-uv
+		       (cffi:foreign-slot-pointer vtx-write-ptr-pos '(:struct standard-draw-list-vertex) 'uv))
+		 (setq vtx-write-ptr-col
+		       (cffi:foreign-slot-pointer vtx-write-ptr-pos '(:struct standard-draw-list-vertex) 'red)))
 	   
-	   (write-color ()
-	     (setf (cffi:mem-aref vtx-write-ptr-col :unsigned-char 0) (logand #x000000ff (ash col -24))
-		   (cffi:mem-aref vtx-write-ptr-col :unsigned-char 1) (logand #x000000ff (ash col -16))
-		   (cffi:mem-aref vtx-write-ptr-col :unsigned-char 2) (logand #x000000ff (ash col -8))
-		   (cffi:mem-aref vtx-write-ptr-col :unsigned-char 3) (logand #x000000ff (ash col 0)))))
+	       (write-color ()
+		 (setf (cffi:mem-aref vtx-write-ptr-col :unsigned-char 0) (logand #x000000ff (ash col -24))
+		       (cffi:mem-aref vtx-write-ptr-col :unsigned-char 1) (logand #x000000ff (ash col -16))
+		       (cffi:mem-aref vtx-write-ptr-col :unsigned-char 2) (logand #x000000ff (ash col -8))
+		       (cffi:mem-aref vtx-write-ptr-col :unsigned-char 3) (logand #x000000ff (ash col 0)))))
 	     
 		   
-      ;; set up indexes
-      (setf (cffi:mem-aref idx-write-ptr +index-type+ 0) idx)
-      (setf (cffi:mem-aref idx-write-ptr +index-type+ 1) (1+ idx))
-      (setf (cffi:mem-aref idx-write-ptr +index-type+ 2) (+ idx 2))
+	  ;; set up indexes
+	  (setf (cffi:mem-aref idx-write-ptr +index-type+ 0) idx)
+	  (setf (cffi:mem-aref idx-write-ptr +index-type+ 1) (1+ idx))
+	  (setf (cffi:mem-aref idx-write-ptr +index-type+ 2) (+ idx 2))
 
-      (setf (cffi:mem-aref idx-write-ptr +index-type+ 3) idx)
-      (setf (cffi:mem-aref idx-write-ptr +index-type+ 4) (+ idx 2))
-      (setf (cffi:mem-aref idx-write-ptr +index-type+ 5) (+ idx 3))
+	  (setf (cffi:mem-aref idx-write-ptr +index-type+ 3) idx)
+	  (setf (cffi:mem-aref idx-write-ptr +index-type+ 4) (+ idx 2))
+	  (setf (cffi:mem-aref idx-write-ptr +index-type+ 5) (+ idx 3))
 
-      ;; set up vertexes
-      ;; first vertex
-      (set-vtx-write-ptrs 0)
+	  ;; set up vertexes
+	  ;; first vertex
+	  (set-vtx-write-ptrs 0)
 
-      (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) a-x
-	    (cffi:mem-aref vtx-write-ptr-pos :float 1) a-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) a-x
+		(cffi:mem-aref vtx-write-ptr-pos :float 1) a-y)
 
-      (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-a-x
-	    (cffi:mem-aref vtx-write-ptr-uv :float 1) uv-a-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-a-x
+		(cffi:mem-aref vtx-write-ptr-uv :float 1) uv-a-y)
 
-      (write-color)      
+	  (write-color)      
 
-      ;; second vertex
-      (set-vtx-write-ptrs 1)
+	  ;; second vertex
+	  (set-vtx-write-ptrs 1)
         
-      (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) b-x
-	    (cffi:mem-aref vtx-write-ptr-pos :float 1) b-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) b-x
+		(cffi:mem-aref vtx-write-ptr-pos :float 1) b-y)
 
-      (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-b-x
-	    (cffi:mem-aref vtx-write-ptr-uv :float 1) uv-b-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-b-x
+		(cffi:mem-aref vtx-write-ptr-uv :float 1) uv-b-y)
 
-      (write-color)
+	  (write-color)
       
-      ;; third vertex
-      (set-vtx-write-ptrs 2)
+	  ;; third vertex
+	  (set-vtx-write-ptrs 2)
         
-      (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) c-x
-	    (cffi:mem-aref vtx-write-ptr-pos :float 1) c-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) c-x
+		(cffi:mem-aref vtx-write-ptr-pos :float 1) c-y)
 
-      (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-c-x
-	    (cffi:mem-aref vtx-write-ptr-uv :float 1) uv-c-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-c-x
+		(cffi:mem-aref vtx-write-ptr-uv :float 1) uv-c-y)
 
-      (write-color)
+	  (write-color)
 
-      ;; fourth vertex
-      (set-vtx-write-ptrs 3)
+	  ;; fourth vertex
+	  (set-vtx-write-ptrs 3)
         
-      (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) d-x
-	    (cffi:mem-aref vtx-write-ptr-pos :float 1) d-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-pos :float 0) d-x
+		(cffi:mem-aref vtx-write-ptr-pos :float 1) d-y)
 
-      (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-d-x
-	    (cffi:mem-aref vtx-write-ptr-uv :float 1) uv-d-y)
+	  (setf (cffi:mem-aref vtx-write-ptr-uv :float 0) uv-d-x
+		(cffi:mem-aref vtx-write-ptr-uv :float 1) uv-d-y)
 
-      (write-color)
+	  (write-color)
 
-      ;; finally, update counts
-      (cffi:incf-pointer (draw-list-idx-write-ptr draw-list) (* 6 #.(cffi:foreign-type-size +index-type+)))
-      (cffi:incf-pointer (draw-list-vtx-write-ptr draw-list) (* 4 #.(cffi:foreign-type-size '(:struct standard-draw-list-vertex))))
-      (incf (draw-list-vtx-current-idx draw-list) 4)
-      
+	  ;; finally, update counts
+	  (incf idx-buffer-size (* 6 #.(cffi:foreign-type-size +index-type+)))
+	  (incf vtx-buffer-size (* 4 #.(cffi:foreign-type-size '(:struct standard-draw-list-vertex))))
+	  (incf vtx-current-idx 4)      
 
-      (values))))
+	  (values))))))
 
 (defun font-render-char (font draw-list pos-x pos-y col char)
   (with-slots (ascender descender text-height size) font
@@ -576,8 +594,6 @@
   (values))
 
 (defun text-engine-begin-frame ()
-  (gl:clear-color 1 1 1 1)
-  (gl:clear :color-buffer-bit)
   (reinitialize-draw-list *draw-list*)
   (values))
 
