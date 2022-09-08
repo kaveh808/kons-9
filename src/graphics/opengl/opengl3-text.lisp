@@ -11,6 +11,30 @@
 (eval-when (:compile-toplevel :load-toplevel)
   (use-package :ft2))
 
+
+#+NOTYET(declaim (inline clampf))
+(defun clampf (number)
+  "Clamp real number to single-float limits."
+  (declare (type real number))
+  (block nil
+    (when (typep number 'single-float)
+      (return number))
+    (when (< (cl:the double-float #.(/ least-negative-single-float 2.0d0))
+	     number
+	     (cl:the double-float #.(/ least-positive-single-float 2.0d0)))
+      (return 0.0f0))
+    (when (minusp number)
+      (when (> number (cl:the single-float least-negative-single-float))
+        (return least-negative-single-float))
+      (when (< number (cl:the single-float most-negative-single-float))
+        (return most-negative-single-float))
+      (return (coerce number 'single-float)))
+    (when (< number (cl:the single-float least-positive-single-float))
+      (return least-positive-single-float))
+    (when (> number (cl:the single-float most-positive-single-float))
+      (return most-positive-single-float))
+    (coerce number 'single-float)))
+
 (defstruct gl-config
   (gl-version 0)
   (glsl-version #+darwin 150 #-darwin 410)
@@ -86,32 +110,6 @@
 
 	t)));;)
 	    
-	    
-	
-
-#+NOTYET(declaim (inline clampf))
-(defun clampf (number)
-  "Clamp real number to single-float limits."
-  (declare (type real number))
-  (block nil
-    (when (typep number 'single-float)
-      (return number))
-    (when (< (cl:the double-float #.(/ least-negative-single-float 2.0d0))
-	     number
-	     (cl:the double-float #.(/ least-positive-single-float 2.0d0)))
-      (return 0.0f0))
-    (when (minusp number)
-      (when (> number (cl:the single-float least-negative-single-float))
-        (return least-negative-single-float))
-      (when (< number (cl:the single-float most-negative-single-float))
-        (return most-negative-single-float))
-      (return (coerce number 'single-float)))
-    (when (< number (cl:the single-float least-positive-single-float))
-      (return least-positive-single-float))
-    (when (> number (cl:the single-float most-positive-single-float))
-      (return most-positive-single-float))
-    (coerce number 'single-float)))
-
 (defparameter *framebuffer-scale* #+darwin 2 #-darwin 1)
 
 (defconstant +index-type+ :unsigned-short)
