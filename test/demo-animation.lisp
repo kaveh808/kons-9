@@ -123,7 +123,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
 (defun anim-obj-filename (path filename index padding)
   (format nil (format nil "~~a/~~a~a.obj" (format nil "~~~a,'0d" padding)) path filename index))
 
-;#| only run if file data is set
+#| only run if file data is set
 
 (with-clear-scene
   (flet ((anim-obj-filename (path filename index padding)

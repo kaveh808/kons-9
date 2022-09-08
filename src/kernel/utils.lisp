@@ -2,6 +2,9 @@
 
 ;;;; class hierarchy ===========================================================
 
+;;; (print-class-hierarchy (find-class 'item))
+;;; (print-class-hierarchy (find-class 'transform-operator))
+
 (defun print-class-hierarchy (class &optional (indent 0))
   (print-spaces indent)
   (format t "~a : ~a~%" (class-name class) (mapcar #'class-name (closer-mop::class-direct-superclasses class)))

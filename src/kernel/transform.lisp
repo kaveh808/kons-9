@@ -2,7 +2,7 @@
 
 ;;;; transform-operator classes ================================================
 
-(defclass transform-operator ()
+(defclass transform-operator (item)
   ())
 
 (defclass translate-operator (transform-operator)
