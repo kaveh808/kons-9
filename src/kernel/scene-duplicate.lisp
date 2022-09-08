@@ -58,13 +58,13 @@
 (defgeneric copy-instance-data (dst src)
   
   (:method ((dst item) (src item))
-    ;; new name assigned when item created
-    ;; use src + '-1 name?
-    ;; or src + '-copy?
     )
 
   (:method ((dst scene-item) (src scene-item))
     (call-next-method)
+    ;; new name assigned when item created
+    ;; use src + '-1 name?
+    ;; or src + '-copy?
     ;;(setf (scene dst) (scene src)) -- do not duplicate
     )
 

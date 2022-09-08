@@ -2,6 +2,9 @@
 
 ;;;; class hierarchy ===========================================================
 
+;;; (print-class-hierarchy (find-class 'item))
+;;; (print-class-hierarchy (find-class 'transform-operator))
+
 (defun print-class-hierarchy (class &optional (indent 0))
   (print-spaces indent)
   (format t "~a : ~a~%" (class-name class) (mapcar #'class-name (closer-mop::class-direct-superclasses class)))
@@ -84,6 +87,13 @@
      (let ((,obj (aref ,array ,i)))
        (when (funcall ,test ,obj)
          ,@body))))
+
+(defun insert-at (vec i val)
+  (let ((new (make-array (1+ (length vec)))))
+    (setf (aref new i) val)
+    (replace new vec :end1 i)
+    (replace new vec :start1 (1+ i) :start2 i)
+    new))
 
 ;;;; math ======================================================================
 
