@@ -16,7 +16,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
 ;;; cubic-parametric-curve class ===============================================
 
 ;;; this shape is defined by a list of points (vertices)
-(defclass cubic-parametric-curve (polygon)
+(defclass cubic-parametric-curve (curve)
   ((cv0 :accessor cv0 :initarg :cv0 :initform (p! 0 0 0))
    (cv1 :accessor cv1 :initarg :cv1 :initform (p! 0 0 0))
    (cv2 :accessor cv2 :initarg :cv2 :initform (p! 0 0 0))
@@ -24,7 +24,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
    (num-segments :accessor num-segments :initarg :num-segments :initform 16)
    (show-control-hull? :accessor show-control-hull? :initarg :show-control-hull? :initform t))
   (:default-initargs
-   :is-closed-polygon? nil))
+   :is-closed-curve? nil))
 
 (defmethod copy-instance-data ((dst cubic-parametric-curve) (src cubic-parametric-curve))
   (error "COPY-INSTANCE-DATA not implemented for PARAMETRIC-CURVE"))
@@ -72,7 +72,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
 ;;; parametric-curve shape functions ----------------------------------------------------
 
 ;;; just a fun mathematical curve
-(defun make-butterfly-curve-polygon (num-segments)
+(defun make-butterfly-curve (num-segments)
   (let ((points (make-array num-segments))
         (angle-delta (/ (* 12 pi) num-segments)))
     (dotimes (i num-segments)
@@ -83,5 +83,5 @@ NOTE: This won't work with the existing procedural mixin set up, because
               (p! (* (sin angle) radius)
                   (* (cos angle) radius)
                   0))))
-    (make-polygon points)))
+    (make-curve points)))
 

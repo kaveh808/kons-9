@@ -8,7 +8,7 @@
 (defconstant noise-p3 337.0)
 (defconstant noise-phi 0.6180339)
 
-(defvar *noise-pts* (make-array noise-numpts :element-type 'float))
+(defvar *noise-pts* (make-array noise-numpts :element-type 'float :initial-element 0.0))
 
 (defun init-noise ()
   (dotimes (i noise-numpts)

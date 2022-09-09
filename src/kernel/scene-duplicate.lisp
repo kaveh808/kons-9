@@ -82,9 +82,9 @@
     (call-next-method)
     (copy-array-slot points))
 
-  (:method ((dst polygon) (src polygon))
+  (:method ((dst curve) (src curve))
     (call-next-method)
-    (copy-simple-slot is-closed-polygon?))
+    (copy-simple-slot is-closed-curve?))
 
   (:method ((dst polyhedron) (src polyhedron))
     (call-next-method)

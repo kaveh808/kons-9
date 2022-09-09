@@ -71,25 +71,25 @@ classes.
   (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -3 -3 -3) (p! 3 3 3)))))
 
 #|
-(Demo 04 kernel) polygons ======================================================
+(Demo 04 kernel) curves ========================================================
 
-The POLYGON class represents open or closed paths in 3D space.
+The CURVE class represents open or closed paths in 3D space.
 |#
 (with-clear-scene
-  (add-shape *scene* (translate-to (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -6.0)))
-  (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0 0.0)))
-  (add-shape *scene* (translate-to (make-arc-polygon 2.0 0 pi 16) (p! 0 0 2.0)))
-  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0 4.0)))
-  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
+  (add-shape *scene* (translate-to (make-line-curve (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -6.0)))
+  (add-shape *scene* (translate-to (make-rectangle-curve 2 1 4) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-square-curve 1.5) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 2.0 16) (p! 0 0 0.0)))
+  (add-shape *scene* (translate-to (make-arc-curve 2.0 0 90 16) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-sine-curve-curve 360 1 2 1 16) (p! 0 0 4.0)))
+  (add-shape *scene* (translate-to (make-spiral-curve .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
 
 (with-clear-scene
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  6) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  5) (p! 0 0  0.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  4) (p! 0 0  2.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  3) (p! 0 0  4.0))))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  7) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  6) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  5) (p! 0 0  0.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  4) (p! 0 0  2.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  3) (p! 0 0  4.0))))
 
 #|
 (Demo 05 kernel) polyhedral objects ============================================
@@ -717,7 +717,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 Display shape bounds, face-normals, and axes.
 |#
 (with-clear-scene
-    (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
+    (let ((circle (translate-to (make-circle-curve 3.0  7) (p! 0 0 -4.0)))
           (sphere (translate-by (make-cube-sphere 2.0 3) (p! 0 0 4.0)))
           (icos (make-icosahedron 2.0)))
       (setf (show-axis circle) 1.0)

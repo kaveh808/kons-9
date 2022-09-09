@@ -53,7 +53,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
         (list #'in-bounce-fn #'out-bounce-fn #'in-out-bounce-fn)))
 
 (defun make-ease-curve (fn &optional (num-segments 64))
-  (let* ((curve (make-line-polygon (p! 0 0 0) (p! 1 0 0) num-segments))
+  (let* ((curve (make-line-curve (p! 0 0 0) (p! 1 0 0) num-segments))
          (points (points curve)))
     (doarray (i p points)
       (set-y! p (funcall fn (x p))))

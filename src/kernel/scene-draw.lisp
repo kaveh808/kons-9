@@ -38,12 +38,12 @@
       (when *display-points?*
         (draw-points p-cloud))))
 
-  (:method ((poly polygon))
-    (when (is-visible? poly)
+  (:method ((curve curve))
+    (when (is-visible? curve)
       (when *display-wireframe?*
-        (draw-wireframe poly))
+        (draw-wireframe curve))
       (when *display-points?*
-        (draw-points poly))))
+        (draw-points curve))))
 
   (:method ((polyh polyhedron))
     (when (is-visible? polyh)
@@ -80,12 +80,12 @@
 (defmethod draw-points ((p-cloud point-cloud))
   (3d-draw-points (points p-cloud)))
 
-;;; polygon helper methods -----------------------------------------------------
-(defmethod draw-wireframe ((poly polygon))
-  (3d-draw-curve (points poly) (is-closed-polygon? poly)))
+;;; curve helper methods -----------------------------------------------------
+(defmethod draw-wireframe ((curve curve))
+  (3d-draw-curve (points curve) (is-closed-curve? curve)))
 
-;; (defmethod draw-points ((poly polygon))
-;;   (3d-draw-points (points poly)))
+;; (defmethod draw-points ((curve curve))
+;;   (3d-draw-points (points curve)))
 
 ;;; polyhedron helper methods --------------------------------------------------
 
