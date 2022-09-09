@@ -509,6 +509,28 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (setf (duration (first (motions *scene*))) 1.0)
 
 #|
+Modify the animators' timings using the parent motion-group's ordering methods.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(let ((group (first (motions *scene*))))
+  (sequential-order group))
+
+(let ((group (first (motions *scene*))))
+  (parallel-order group))
+
+(let ((group (first (motions *scene*))))
+  (random-order group 0.25 0.5))
+
+(let* ((anims (children (first (motions *scene*))))
+       (anim-0 (nth 0 anims))
+       (anim-1 (nth 1 anims))
+       (anim-2 (nth 2 anims)))
+  (print anim-0)
+  (print anim-1)
+  (print anim-2))
+
+#|
 (Demo 14 kernel) scene motion management ======================================
 
 Continue from (Demo 13 kernel).
@@ -760,5 +782,61 @@ and resets the transform.
   (format t "After freeze: ~a~%" (points *cube*)))
 
 #|
+(Demo 22 kernel) using animation class to instance motions =====================
+
+[TODO -- work in progress.]
+
+We package an animation in an ANIMATION class. This animation can then be
+instanced in a scene by automatically creating new GROUPs and MOTION-GROUPs for
+the shapes and animators.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+
+(with-clear-scene
+  (let* ((shape (scale-to (make-cube 0.5) (p! 2 1 .2)))
+         (animator (make-instance
+                    'shape-animator
+                    :scene *scene*
+                    :shape shape
+                    :setup-fn (lambda (anim)
+                                (rotate-to (shape anim) (p! 0 0 0)))
+                    :update-fn (lambda (anim)
+                                 (rotate-to (shape anim)
+                                            (p! 0 (* 90 (local-time anim)) 0)))))
+         (animation (make-instance 'animation :shape shape :shape-animator animator))
+         (top-shape-group (make-instance 'group))
+         (top-motion-group (make-instance 'motion-group))
+         (points (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))
+    (dotimes (i (length points))
+      (add-animation-to-scene animation top-shape-group top-motion-group :mode :add-as-instance))
+    (scatter-shapes (children top-shape-group) points)
+    (add-shape *scene* top-shape-group)
+    (add-motion *scene* top-motion-group)
+    (setf (end-frame *scene*) 120)))
+
+#|
+Set the timings of the animation instances.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+
+(let ((group (first (motions *scene*))))
+  (sequential-order group))
+
+(let ((group (first (motions *scene*))))
+  (parallel-order group))
+
+(let ((group (first (motions *scene*))))
+  (random-order group 0.25 0.5))
+
+#|
+(let ((motion-group-instances (children (first (motions *scene*)))))
+  (dolist (motion motion-group-instances)
+    (print motion)))
+|#
+
+#|
 END ============================================================================
 |#
+

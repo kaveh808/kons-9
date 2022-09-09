@@ -33,6 +33,10 @@
             (draw-bounds shape)))
       (3d-pop-matrix)))
 
+  (:method ((anim animation))
+    (when (shape anim)
+      (draw (shape anim))))
+  
   (:method ((p-cloud point-cloud))
     (when (is-visible? p-cloud)
       (when *display-points?*

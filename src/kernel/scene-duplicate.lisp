@@ -65,7 +65,7 @@
     ;; new name assigned when item created
     ;; use src + '-1 name?
     ;; or src + '-copy?
-    ;;(setf (scene dst) (scene src)) -- do not duplicate
+    (copy-simple-slot scene)
     )
 
   (:method ((dst shape) (src shape))
@@ -150,6 +150,10 @@
     (copy-simple-slot local-time)
     )
 
+  (:method ((dst motion-group) (src motion-group))
+    (call-next-method)
+    (copy-list-slot children))
+
   (:method ((dst animator) (src animator))
     (call-next-method)
     ;; setup-done? -- do not copy
@@ -161,9 +165,13 @@
     ;; (copy-simple-slot shape) -- do not copy
     (copy-custom-slot data copy-alist))
 
-  (:method ((dst motion-group) (src motion-group))
+  ;; TODO -- test this
+  (:method ((dst animation) (src animation))
     (call-next-method)
-    (copy-list-slot children))
+    (copy-instance-slot shape)
+    (copy-instance-slot shape-animator)
+    (typecase (shape-animator dst)
+      (shape-animator (setf (shape (shape-animator dst)) (shape dst)))))
 
   (:method ((dst scene) (src scene))
     (call-next-method)
