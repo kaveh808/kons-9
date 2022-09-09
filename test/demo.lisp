@@ -105,7 +105,7 @@
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
 
 (with-clear-scene
-  (add-shape *scene* (make-butterfly-curve-polygon 1024)))
+  (add-shape *scene* (make-butterfly-curve 1024)))
 
 ;;; poly-mesh ------------------------------------------------------------------
 (with-clear-scene

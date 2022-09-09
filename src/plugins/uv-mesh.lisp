@@ -228,14 +228,14 @@
 ;;; TODO -- fix coerce to list
 (defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil))
   (sweep-extrude-aux (make-instance 'uv-mesh)
-                     (coerce (points profile) 'list) (is-closed-polygon? profile)
-                     (points path) (is-closed-polygon? path)
+                     (coerce (points profile) 'list) (is-closed-curve? profile)
+                     (points path) (is-closed-curve? path)
                      :twist twist :taper taper :from-end? from-end?))
 
 (defun transform-extrude-uv-mesh (profile transform num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
 				      :v-dim (if v-wrap num-steps (1+ num-steps))
-				      :u-wrap (is-closed-polygon? profile)
+				      :u-wrap (is-closed-curve? profile)
 				      :v-wrap v-wrap
                                       :u-cap u-cap
                                       :v-cap v-cap)))
@@ -250,7 +250,7 @@
 (defun function-extrude-uv-mesh (profile function num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
 				      :v-dim (if v-wrap num-steps (1+ num-steps))
-				      :u-wrap (is-closed-polygon? profile)
+				      :u-wrap (is-closed-curve? profile)
 				      :v-wrap v-wrap
                                       :u-cap u-cap
                                       :v-cap v-cap)))
@@ -265,34 +265,34 @@
 ;;; uv-mesh shape functions ----------------------------------------------------
 
 (defun make-grid-uv-mesh (x-size z-size x-segments z-segments)
-  (sweep-extrude-uv-mesh (make-line-polygon (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
-                         (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
+  (sweep-extrude-uv-mesh (make-line-curve (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
+                         (make-line-curve (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
 
 (defun make-cylinder-uv-mesh (diameter height radial-segments height-segments &key (taper 1.0))
-  (sweep-extrude-uv-mesh (make-circle-polygon diameter radial-segments)
-                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+  (sweep-extrude-uv-mesh (make-circle-curve diameter radial-segments)
+                         (make-line-curve (p! 0 0 0) (p! 0 height 0) height-segments)
                          :taper taper))
 
 (defun make-cone-uv-mesh (diameter height radial-segments height-segments)
   (make-cylinder-uv-mesh diameter height radial-segments height-segments :taper 0.0))
 
 (defun make-rect-prism-uv-mesh (base-side height base-segments height-segments &key (taper 1.0))
-  (sweep-extrude-uv-mesh (make-square-polygon base-side base-segments)
-                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+  (sweep-extrude-uv-mesh (make-square-curve base-side base-segments)
+                         (make-line-curve (p! 0 0 0) (p! 0 height 0) height-segments)
                          :taper taper))
 
 (defun make-pyramid-uv-mesh (base-side height base-segments height-segments)
   (make-rect-prism-uv-mesh base-side height base-segments height-segments :taper 0.0))
 
 (defun make-torus-uv-mesh (inner-diameter outer-diameter inner-segments outer-segments)
-  (sweep-extrude-uv-mesh (make-circle-polygon inner-diameter inner-segments)
-                         (make-circle-polygon outer-diameter outer-segments)))
+  (sweep-extrude-uv-mesh (make-circle-curve inner-diameter inner-segments)
+                         (make-circle-curve outer-diameter outer-segments)))
 
 (defun make-sphere-uv-mesh (diameter latitude-segments longitude-segments)
   (let ((xform (make-euler-transform (p! 0 0 0)
                                      (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0)
                                      (p! 1 1 1))))
-    (transform-extrude-uv-mesh (make-arc-polygon diameter 0 -180 latitude-segments)
+    (transform-extrude-uv-mesh (make-arc-curve diameter 0 -180 latitude-segments)
                                xform
                                longitude-segments
                                :v-wrap t
@@ -301,7 +301,7 @@
 ;;; version using function-extrude-uv-mesh
 (defun make-sphere-uv-mesh-2 (diameter latitude-segments longitude-segments)
   (let ((xform (make-instance 'transform :rotate (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0))))
-    (function-extrude-uv-mesh (make-arc-polygon diameter latitude-segments 0 (- pi))
+    (function-extrude-uv-mesh (make-arc-curve diameter latitude-segments 0 (- pi))
                               (lambda (points f) (transform-points points (transform-matrix xform f)))
                               longitude-segments
                               :v-wrap t

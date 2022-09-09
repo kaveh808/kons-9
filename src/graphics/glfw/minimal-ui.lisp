@@ -52,10 +52,10 @@
   (when (scene view)
     (draw (scene view)))
   (3d-cleanup-render)
-  (when *display-ground-plane?*
-    (draw-ground-plane))
   (when *display-axes?*
     (draw-world-axes))
+  (when *display-ground-plane?*
+    (draw-ground-plane))
 
   ;; display ui layer
   (2d-setup-projection)
@@ -219,6 +219,12 @@
            ;; in glfw3. For now, just set the first scene-view created
            ;; as default and use that for event handling
            (setf *default-scene-view* scene-view)
+
+           ;; assume monitor scale is same in x and y, just use first value
+           ;; also assume we are running on the "primary" monitor
+           (setf (monitor-scale *drawing-settings*)
+                 (first (glfw:get-monitor-content-scale (glfw:get-primary-monitor))))
+           (set-lines-thin)
 
            (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
            (glfw:set-key-callback 'key-callback)
