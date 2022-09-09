@@ -3,8 +3,9 @@
 ;;;; drawing-settings ==========================================================
 
 (defclass drawing-settings ()
-  ((point-size :accessor point-size :initarg :point-size :initform 9.0)
-   (line-thickness :accessor line-thickness :initarg :line-thickness :initform 3.0)
+  ((monitor-scale :accessor monitor-scale :initarg :monitor-scale :initform 1.0)
+   (point-size :accessor point-size :initarg :point-size :initform 3.0)
+   (line-thickness :accessor line-thickness :initarg :line-thickness :initform 1.0)
    (fg-color :accessor fg-color :initarg :fg-color :initform (c! 0 0 0))
    (bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1))
    (sel-color :accessor sel-color :initarg :sel-color :initform (c! 1 0 0))
@@ -19,16 +20,16 @@
    (secondary-line-thickness :accessor secondary-line-thickness :initarg :secondary-line-thickness :initform 1.0)))
 
 (defun set-lines-thin ()
-  (setf (point-size *drawing-settings*) 3.0)
-  (setf (line-thickness *drawing-settings*) 1.0)
-  (setf (axes-thickness *drawing-settings*) 1.0)
-  (setf (secondary-line-thickness *drawing-settings*) 0.5))
+  (setf (point-size *drawing-settings*) (* 3.0 (monitor-scale *drawing-settings*)))
+  (setf (line-thickness *drawing-settings*) (* 1.0 (monitor-scale *drawing-settings*)))
+  (setf (axes-thickness *drawing-settings*) (* 2.0 (monitor-scale *drawing-settings*)))
+  (setf (secondary-line-thickness *drawing-settings*) (* 0.5 (monitor-scale *drawing-settings*))))
 
 (defun set-lines-thick ()
-  (setf (point-size *drawing-settings*) 7.0)
-  (setf (line-thickness *drawing-settings*) 3.0)
-  (setf (axes-thickness *drawing-settings*) 3.0)
-  (setf (secondary-line-thickness *drawing-settings*) 1.0))
+  (setf (point-size *drawing-settings*) (* 6.0 (monitor-scale *drawing-settings*)))
+  (setf (line-thickness *drawing-settings*) (* 2.0 (monitor-scale *drawing-settings*)))
+  (setf (axes-thickness *drawing-settings*) (* 4.0 (monitor-scale *drawing-settings*)))
+  (setf (secondary-line-thickness *drawing-settings*) (* 1.0 (monitor-scale *drawing-settings*))))
 
 (defun set-theme-bright ()
   (setf (fg-color *drawing-settings*) (c! 0 0 0))

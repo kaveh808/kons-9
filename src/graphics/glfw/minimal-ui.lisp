@@ -220,6 +220,12 @@
            ;; as default and use that for event handling
            (setf *default-scene-view* scene-view)
 
+           ;; assume monitor scale is same in x and y, just use first value
+           ;; also assume we are running on the "primary" monitor
+           (setf (monitor-scale *drawing-settings*)
+                 (first (glfw:get-monitor-content-scale (glfw:get-primary-monitor))))
+           (set-lines-thin)
+
            (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
            (glfw:set-key-callback 'key-callback)
            (glfw:set-mouse-button-callback 'mouse-callback)
