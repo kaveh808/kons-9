@@ -52,10 +52,10 @@
   (when (scene view)
     (draw (scene view)))
   (3d-cleanup-render)
-  (when *display-ground-plane?*
-    (draw-ground-plane))
   (when *display-axes?*
     (draw-world-axes))
+  (when *display-ground-plane?*
+    (draw-ground-plane))
 
   ;; display ui layer
   (2d-setup-projection)
