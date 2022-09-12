@@ -7,7 +7,6 @@ main()
     describe_uname
     describe_date
     describe_sbcl
-    describe_ccl
     describe_brew
     describe_macports
     describe_quicklisp
@@ -40,22 +39,6 @@ describe_sbcl()
     printf 'SBCL: %s\n' "${sbcl_description}"
 }
 
-describe_ccl()
-{
-    ccl_pathname=$(find_program ccl ccl64)
-    case "${ccl_pathname}" in
-	:NOT-FOUND)
-	    ccl_version=':NOT-FOUND'
-	    ccl_description=':NOT-FOUND'
-	    ;;
-	*)
-	    ccl_version=$(${ccl_pathname} --version)
-	    ccl_description=$(printf '%s (%s)' "${ccl_pathname}" "${ccl_version}")
-	    ;;
-    esac
-    printf 'CCL: %s\n' "${ccl_description}"
-}
-
 describe_brew()
 {
     brew_pathname=$(find_program brew)
@@ -83,9 +66,6 @@ quicklisp_installed_p()
 	*sbcl*)
 	    "${lisp}" --noinform --eval "${snippet}"
 	    ;;
-	*ccl*)
-	    "${lisp}" --eval "${snippet}"
-	    ;;
 	:NOT-FOUND)
 	    printf 'NIL'
 	    ;;
@@ -95,7 +75,7 @@ quicklisp_installed_p()
 pick_lisp()
 {
     local lisp_candidate
-    for lisp_candidate in ${sbcl_pathname} ${ccl_pathname}; do
+    for lisp_candidate in ${sbcl_pathname}; do
 	if [ ! "${lisp_candiate}" = ":NOT-FOUND" ]; then
 	    printf '%s' "${lisp_candidate}"
 	    return
