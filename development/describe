@@ -5,6 +5,8 @@
 main()
 {
     describe_uname
+    describe_system
+    describe_architecture
     describe_date
     describe_sbcl
     describe_brew
@@ -14,8 +16,38 @@ main()
 
 describe_uname()
 {
-    uname=$(uname -a)
+    uname=$(uname)
     printf 'Uname: %s\n' "${uname}"
+}
+
+describe_system__Linux()
+(
+    if [ -r /etc/os-release ]; then
+	. /etc/os-release
+	printf 'system="%s %s"' "${NAME} ${VERSION}"
+    else
+	printf 'system="Undescriptible Linux"'
+    fi
+)
+
+describe_system()
+{
+    local script
+    case "${uname}" in
+	Linux)
+	    script=$(describe_system__${uname})
+	    eval "${script}"
+	    ;;
+	*)
+	    system='Undescriptible System'
+    esac
+    printf 'System: %s\n' "${system}"
+}
+
+describe_architecture()
+{
+    architecture=$(uname -m)
+    printf 'Architecture: %s\n' "${architecture}"
 }
 
 describe_date()
