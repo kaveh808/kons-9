@@ -20,6 +20,20 @@ describe_uname()
     printf 'Uname: %s\n' "${uname}"
 }
 
+describe_system()
+{
+    local script
+    case "${uname}" in
+	Linux|Darwin)
+	    script=$(describe_system__${uname})
+	    eval "${script}"
+	    ;;
+	*)
+	    system='Undescriptible System'
+    esac
+    printf 'System: %s\n' "${system}"
+}
+
 describe_system__Linux()
 (
     if [ -r /etc/os-release ]; then
@@ -30,18 +44,19 @@ describe_system__Linux()
     fi
 )
 
-describe_system()
+describe_system__Darwin()
 {
-    local script
-    case "${uname}" in
-	Linux)
-	    script=$(describe_system__${uname})
-	    eval "${script}"
-	    ;;
-	*)
-	    system='Undescriptible System'
-    esac
-    printf 'System: %s\n' "${system}"
+    system_profiler SPSoftwareDataType | sed -n\
+      -e '/System Version/{
+s/.*macOS //;
+s/ .*//;
+s/\(^12[.].*\)/\1 (Monterey)/;
+s/\(^11[.].*\)/\1 (BigSur)/;
+s/\(^10[.].*\)/\1 (Catalina)/;
+s/^/macOS /;
+s/\(.*\)/system="\1"/
+p
+}'
 }
 
 describe_architecture()
