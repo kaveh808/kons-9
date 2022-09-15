@@ -21,14 +21,11 @@
     (let ((dup (make-instance (class-name (class-of item)))))
       (copy-instance-data dup item)
       dup))
-
   (:method ((val t))
     (etypecase val
-      (point (p-copy val))))
-
+      (point (p:copy val))))
   (:method ((seq sequence))
     (copy-seq seq))
-
   (:method ((a array))
     (if (and (arrayp a) (equal '(4 4) (array-dimensions a)))
         (matrix-copy a)
@@ -39,7 +36,7 @@
   `(setf (,slot dst) (,slot src)))
 
 (defmacro copy-point-slot (slot)
-  `(setf (,slot dst) (p-copy (,slot src))))
+  `(setf (,slot dst) (p:copy (,slot src))))
 
 (defmacro copy-array-slot (slot)
   `(setf (,slot dst) (map 'vector #'duplicate (,slot src))))

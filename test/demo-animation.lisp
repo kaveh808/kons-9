@@ -56,7 +56,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
   (let* ((curve (make-line-curve (p! 0 0 0) (p! 1 0 0) num-segments))
          (points (points curve)))
     (doarray (i p points)
-      (set-y! p (funcall fn (x p))))
+      (setf (p:y p) (funcall fn (p:x p))))
     curve))
 
 (set-lines-thin)

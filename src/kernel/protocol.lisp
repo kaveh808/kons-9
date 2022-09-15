@@ -42,7 +42,7 @@
 
 (defgeneric source-radial-directions (obj)
   (:method ((obj t)) 
-    (map 'vector #'p-normalize (source-points obj)))
+    (map 'vector #'p:normalize (source-points obj)))
   )
 
 (defgeneric source-closest-point (obj point)
@@ -55,8 +55,7 @@
                  (when (< dist min-dist)
                    (setf min-dist dist)
                    (setf closest-index i))))
-      (aref points closest-index)))
-  )
+      (aref points closest-index))))
 
 ;;;; curve-source-protocol =====================================================
 

@@ -44,8 +44,7 @@
 
 ;;; display the view
 (defmethod draw-scene-view ((view scene-view))
-;  (text-engine-begin-frame)
-  
+;  (text-engine-begin-frame)  
   (3d-setup-buffer)
   (3d-setup-projection)
   (3d-update-light-settings)
@@ -60,9 +59,8 @@
   ;; display ui layer
   (2d-setup-projection)
   (draw-scene-view-ui view)
-
-;  (test-text)
-;  (text-engine-end-frame)
+  ;(test-text)
+  ;(text-engine-end-frame)
   
   (3d-flush-render))
 
@@ -234,7 +232,7 @@
            (setf *window-size* (glfw:get-window-size))
            (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
            (update-window-title glfw:*window*)
-;	   (initial-text-engine-setup)
+	  ; (initial-text-engine-setup)
            (loop until (glfw:window-should-close-p)
 	      do (draw-scene-view *default-scene-view*)
                  do (glfw:swap-buffers)

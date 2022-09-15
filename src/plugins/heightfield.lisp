@@ -24,10 +24,10 @@
          (uv-point-array (make-array (list u-dim v-dim))))
     (dotimes (u u-dim)
       (let* ((fx (/ u (- u-dim 1.0)))
-	     (x (lerp fx (x bounds-lo) (x bounds-hi))))
+	     (x (lerp fx (p:x bounds-lo) (p:x bounds-hi))))
 	(dotimes (v v-dim)
 	  (let* ((fz (/ v (- v-dim 1.0)))
-		 (z (lerp (- 1 fz) (z bounds-lo) (z bounds-hi)))) ;reverse order for correct backface culling: (- 1 fz)
+		 (z (lerp (- 1 fz) (p:z bounds-lo) (p:z bounds-hi)))) ;reverse order for correct backface culling: (- 1 fz)
 	    (setf (aref uv-point-array u v) (p! x 0.0 z))))))
     uv-point-array))
 
@@ -35,7 +35,7 @@
   (dotimes (u (u-dim hfield))
     (dotimes (v (v-dim hfield))
       (let ((p (aref (uv-point-array hfield) u v)))
-        (set-y! p (funcall (height-fn hfield) (x p) (z p)))))))
+        (setf (p:y p) (funcall (height-fn hfield) (p:x p) (p:z p)))))))
 
 (defmethod update-heightfield ((hfield heightfield))
   (compute-heights hfield)

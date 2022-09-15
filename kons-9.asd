@@ -14,18 +14,20 @@
      #:cffi
      #:cl-opengl
      #:cl-glu
-     #:cl-glfw3) 
+     #:cl-glfw3
+     #:origin) 
     :serial t
     :components
     ((:file "src/package")
      (:file "src/kernel/utils")
      (:file "src/kernel/color")
-     (:file "src/kernel/point-simd")
+     (:file "src/kernel/point-origin")
+     ;(:file "src/kernel/point-simd")
      (:file "src/kernel/matrix")
      (:file "src/kernel/noise")
      (:file "src/graphics/opengl/opengl")
      (:file "src/graphics/opengl/ui")
-;     (:file "src/graphics/opengl/text")
+     ;(:file "src/graphics/opengl/text")
      (:file "src/kernel/item")
      (:file "src/kernel/transform")
      (:file "src/kernel/scene-item")

@@ -46,32 +46,32 @@
    (list (list 1.0       0.0       0.0       0.0)
          (list 0.0       1.0       0.0       0.0)
          (list 0.0       0.0       1.0       0.0)
-         (list (x point) (y point) (z point) 1.0))))
+         (list (p:x point) (p:y point) (p:z point) 1.0))))
                           
 (defun make-rotation-matrix (point order &optional (pivot nil))
   (let ((rot-matrix
           (case order
-            (:xyz (matrix-multiply-n (make-x-rotation-matrix (x point))
-                                     (make-y-rotation-matrix (y point))
-                                     (make-z-rotation-matrix (z point))))
-            (:xzy (matrix-multiply-n (make-x-rotation-matrix (x point))
-                                     (make-z-rotation-matrix (z point))
-                                     (make-y-rotation-matrix (y point))))
-            (:yxz (matrix-multiply-n (make-y-rotation-matrix (y point))
-                                     (make-x-rotation-matrix (x point))
-                                     (make-z-rotation-matrix (z point))))
-            (:yzx (matrix-multiply-n (make-y-rotation-matrix (y point))
-                                     (make-z-rotation-matrix (z point))
-                                     (make-x-rotation-matrix (x point))))
-            (:zxy (matrix-multiply-n (make-z-rotation-matrix (y point))
-                                     (make-x-rotation-matrix (x point))
-                                     (make-z-rotation-matrix (z point))))
-            (:zyx (matrix-multiply-n (make-z-rotation-matrix (z point))
-                                     (make-y-rotation-matrix (y point))
-                                     (make-x-rotation-matrix (x point))))
+            (:xyz (matrix-multiply-n (make-x-rotation-matrix (p:x point))
+                                     (make-y-rotation-matrix (p:y point))
+                                     (make-z-rotation-matrix (p:z point))))
+            (:xzy (matrix-multiply-n (make-x-rotation-matrix (p:x point))
+                                     (make-z-rotation-matrix (p:z point))
+                                     (make-y-rotation-matrix (p:y point))))
+            (:yxz (matrix-multiply-n (make-y-rotation-matrix (p:y point))
+                                     (make-x-rotation-matrix (p:x point))
+                                     (make-z-rotation-matrix (p:z point))))
+            (:yzx (matrix-multiply-n (make-y-rotation-matrix (p:y point))
+                                     (make-z-rotation-matrix (p:z point))
+                                     (make-x-rotation-matrix (p:x point))))
+            (:zxy (matrix-multiply-n (make-z-rotation-matrix (p:y point))
+                                     (make-x-rotation-matrix (p:x point))
+                                     (make-z-rotation-matrix (p:z point))))
+            (:zyx (matrix-multiply-n (make-z-rotation-matrix (p:z point))
+                                     (make-y-rotation-matrix (p:y point))
+                                     (make-x-rotation-matrix (p:x point))))
             (otherwise (error "Unknown rotate order ~a in MAKE-ROTATION-MATRIX" order)))))
     (if pivot
-      (matrix-multiply-n (make-translation-matrix (p-negate pivot))
+      (matrix-multiply-n (make-translation-matrix (p:negate pivot))
                          rot-matrix
                          (make-translation-matrix pivot))
       rot-matrix)))
@@ -107,10 +107,10 @@
   (let* ((s (sin angle))
          (c (cos angle))
          (c1 (- 1 c))
-         (norm-axis (p-normalize axis))
-         (x (x norm-axis))
-         (y (y norm-axis))
-         (z (z norm-axis))
+         (norm-axis (p:normalize axis))
+         (x (p:x norm-axis))
+         (y (p:y norm-axis))
+         (z (p:z norm-axis))
          (x2 (* x x))
          (y2 (* y y))
          (z2 (* z z))
@@ -129,8 +129,9 @@
 		       (list (- xyc1 sz)   (+ y2 cy2)    (+ yzc1 sx)   0.0)
 		       (list (+ xzc1 sy)   (- yzc1 sx)   (+ z2 cz2)    0.0)
 		       (list 0.0           0.0           0.0           1.0)))))
+    
     (if pivot
-	(matrix-multiply-n (make-translation-matrix (p-negate pivot))
+	(matrix-multiply-n (make-translation-matrix (p:negate pivot))
 			   rot-matrix
 			   (make-translation-matrix pivot))
 	rot-matrix)))
@@ -138,12 +139,12 @@
 
 (defun make-scale-matrix (point &optional (pivot nil))
   (let ((mtx (make-matrix-with
-	      (list (list (x point) 0.0       0.0       0.0)
-		    (list 0.0       (y point) 0.0       0.0)
-		    (list 0.0       0.0       (z point) 0.0)
+	      (list (list (p:x point) 0.0       0.0       0.0)
+		    (list 0.0       (p:y point) 0.0       0.0)
+		    (list 0.0       0.0       (p:z point) 0.0)
 		    (list 0.0       0.0       0.0       1.0)))))
     (if pivot
-	(matrix-multiply-n (make-translation-matrix (p-negate pivot))
+	(matrix-multiply-n (make-translation-matrix (p:negate pivot))
 			   mtx
 			   (make-translation-matrix pivot))
 	mtx)))
@@ -151,13 +152,13 @@
 (defun make-shear-matrix (point)
   (make-matrix-with
    (list (list 1.0       0.0       0.0      0.0)
-         (list (x point) 1.0       0.0      0.0)
-         (list (y point) (z point) 1.0      0.0)
+         (list (p:x point) 1.0       0.0      0.0)
+         (list (p:y point) (p:z point) 1.0      0.0)
          (list 0.0       0.0       0.0      1.0))))
 
 (defun make-z-alignment-matrix (point)
   (multiple-value-bind (y-angle x-angle)
-      (p-z-alignment-angles (p-normalize point))
+      (p-z-alignment-angles (p:normalize point))
     (let* ((sx (sin x-angle))
 	   (cx (cos x-angle))
 	   (sy (sin y-angle))
@@ -173,24 +174,24 @@
 	     (list 0.0    0.0 0.0    1.0))))))
                   
 (defun make-look-at-from-matrix (from to &optional (up (p! 0 1 0)))
-  (let* ((fwd (p-normalize (p- to from)))
-	 (right (p-normalize (p-cross up fwd)))
-	 (up2 (p-cross fwd right)))
+  (let* ((fwd (p:normalize (p:- to from)))
+	 (right (p:normalize (p:cross up fwd)))
+	 (up2 (p:cross fwd right)))
     (make-matrix-with
-     (list (list (x right) (y right) (z right) 0.0)
-	   (list (x up2) (y up2) (z up2) 0.0)
-	   (list (x fwd) (y fwd) (z fwd) 0.0)
-	   (list (x from) (y from) (z from) 1.0)))))
+     (list (list (p:x right) (p:y right) (p:z right) 0.0)
+	   (list (p:x up2) (p:y up2) (p:z up2) 0.0)
+	   (list (p:x fwd) (p:y fwd) (p:z fwd) 0.0)
+	   (list (p:x from) (p:y from) (p:z from) 1.0)))))
 
 (defun make-look-dir-from-matrix (from dir &optional (up (p! 0 1 0)))
-  (let* ((fwd (p-normalize dir))
-	 (right (p-cross (p-normalize up) fwd))
-	 (up2 (p-cross fwd right)))
+  (let* ((fwd (p:normalize dir))
+	 (right (p:cross (p:normalize up) fwd))
+	 (up2 (p:cross fwd right)))
     (make-matrix-with
-     (list (list (x right) (y right) (z right) 0.0)
-	   (list (x up2) (y up2) (z up2) 0.0)
-	   (list (x fwd) (y fwd) (z fwd) 0.0)
-	   (list (x from) (y from) (z from) 1.0)))))
+     (list (list (p:x right) (p:y right) (p:z right) 0.0)
+	   (list (p:x up2) (p:y up2) (p:z up2) 0.0)
+	   (list (p:x fwd) (p:y fwd) (p:z fwd) 0.0)
+	   (list (p:x from) (p:y from) (p:z from) 1.0)))))
 
 ;;; matrix operations
 
@@ -256,9 +257,9 @@
 ;;; 3dpoint matrix multiplication
 
 (defun transform-point (point matrix)
-  (let* ((x (x point))
-         (y (y point))
-         (z (z point))
+  (let* ((x (p:x point))
+         (y (p:y point))
+         (z (p:z point))
          (w 1.0)
          (tx (+ (* x (aref matrix 0 0))
                 (* y (aref matrix 1 0))
@@ -285,9 +286,9 @@
 
 ;;; destructive version
 (defun transform-point! (point matrix)
-  (let* ((x (x point))
-         (y (y point))
-         (z (z point))
+  (let* ((x (p:x point))
+         (y (p:y point))
+         (z (p:z point))
          (w 1.0)
          (tx (+ (* x (aref matrix 0 0))
                 (* y (aref matrix 1 0))
@@ -307,7 +308,9 @@
                 (* w (aref matrix 3 3)))))
     (if (/= tw 0.0)
       (p-set! point (/ tx tw) (/ ty tw) (/ tz tw))
-      (p-set! point tx ty tz))))
+      (p-set! point tx ty tz))
+    point))
+
 
 (defun transform-points! (points matrix)
   (loop for p across points

@@ -13,11 +13,11 @@
     (warn "Shape ~a does not have any points. Using default bounds values." p-cloud)
     (return-from get-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
   (let* ((points (points p-cloud))
-         (bounds-lo (p-copy (aref points 0)))
-         (bounds-hi (p-copy (aref points 0))))
+         (bounds-lo (p:copy (aref points 0)))
+         (bounds-hi (p:copy (aref points 0))))
     (doarray (i p points)
-       (setf bounds-lo (p-min bounds-lo p))
-       (setf bounds-hi (p-max bounds-hi p)))
+             (p:min! bounds-lo bounds-lo p)
+             (p:max! bounds-hi bounds-hi p))
     (values bounds-lo bounds-hi)))
 
 (defun make-point-cloud (points)
@@ -34,7 +34,7 @@
   (let* ((num-points (1+ num-segments))
          (points (make-array num-points)))
     (dotimes (i num-points)
-      (setf (aref points i) (p-lerp (/ i (coerce num-segments 'single-float)) p1 p2)))
+      (setf (aref points i) (p:lerp p1 p2 (/ i (coerce num-segments 'single-float)))))
     points))
 
 (defun make-rectangle-points (width height &optional (num-segments 1))
@@ -112,22 +112,22 @@
         (i -1))
     (dotimes (ix nx)
       (let* ((fx (tween ix 0 (- nx 1.0)))
-	     (x (lerp fx (x bounds-lo) (x bounds-hi))))
+	     (x (lerp fx (p:x bounds-lo) (p:x bounds-hi))))
         (dotimes (iy ny)
           (let* ((fy (tween iy 0 (- ny 1.0)))
-                 (y (lerp fy (y bounds-lo) (y bounds-hi))))
+                 (y (lerp fy (p:y bounds-lo) (p:y bounds-hi))))
             (dotimes (iz nz)
               (let* ((fz (tween iz 0 (- nz 1.0)))
-                     (z (lerp fz (z bounds-lo) (z bounds-hi))))
+                     (z (lerp fz (p:z bounds-lo) (p:z bounds-hi))))
                 (setf (aref points (incf i)) (p! x y z))))))))
     points))
 
 ;;; TODO - in-place array modification?
 ;;; randomize points
+
 (defmethod randomize-points ((p-cloud point-cloud) delta)
   (setf (points p-cloud)
 	(map 'vector #'(lambda (p)
-                         (let ((offset (p! (rand1 (x delta)) (rand1 (y delta)) (rand1 (z delta)))))
-                           (p+ p offset)))
+                         (let ((offset (p! (rand1 (p:x delta)) (rand1 (p:y delta)) (rand1 (p:z delta)))))
+                           (p:+ p offset)))
              (points p-cloud))))
-
