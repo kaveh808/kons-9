@@ -28,7 +28,7 @@
 					 (setf i2 i))))
 	      (t (progn (setf i1 (1- i))
 			(setf i2 (1+ i))))))
-    (p-normalize (p- (aref points i2) (aref points i1)))))
+    (p:normalize (p:- (aref points i2) (aref points i1)))))
 
 (defun curve-tangents-aux (points &optional (is-closed? nil))
   (let ((tangents (make-array (length points))))

@@ -16,7 +16,7 @@
   self)
 
 (defmethod turtle-forward ((turtle turtle) &optional (distance 1.0))
-  (setf (location turtle) (p+ (location turtle) (p* (heading turtle) distance)))
+  (setf (location turtle) (p:+ (location turtle) (p:scale (heading turtle) distance)))
   (push (location turtle) (first (paths turtle))))
 
 (defmethod turtle-rotate ((turtle turtle) &optional (angle 90.0))

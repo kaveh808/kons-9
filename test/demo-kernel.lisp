@@ -575,7 +575,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                       :shape dodecahedron
                                       :setup-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
                                       :update-fn (lambda (anim)
-                                                   (let ((target-y (y (offset (translate (transform (anim-data anim :target)))))))
+                                                   (let ((target-y (p:y (offset (translate (transform (anim-data anim :target)))))))
                                                      (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
                                       :data `((:target . ,tetrahedron))))))
 
@@ -728,7 +728,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                :scene *scene*
                                :update-fn (lambda ()
                                             (dolist (anim (children motion-group))
-                                              (let ((angle (y (angles (rotate (transform (shape anim)))))))
+                                              (let ((angle (p:y (angles (rotate (transform (shape anim)))))))
                                                 (when (> (abs angle) 45)
                                                   (scale-to (shape anim) 0.5)
                                                   (setf (is-active? anim) nil)))))))))

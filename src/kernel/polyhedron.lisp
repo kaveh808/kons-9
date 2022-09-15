@@ -49,16 +49,16 @@
   (compute-point-normals polyh))  
 
 (defmethod face-center ((polyh polyhedron) face)
-  (p-center (face-points polyh face)))
+  (apply #'p-average (face-points polyh face)))
 
 (defmethod face-centers ((polyh polyhedron))
   (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
 (defun triangle-normal (p0 p1 p2)
-  (p-normalize (p-cross (p-from-to p0 p1) (p-from-to p1 p2))))
+  (p:normalize (p:cross (p:- p1 p0) (p:- p2 p1))))
 
 (defun quad-normal (p0 p1 p2 p3)
-  (p-normalize (p-cross (p-from-to p0 p2) (p-from-to p1 p3))))
+  (p:normalize (p:cross (p:- p2 p0) (p:- p3 p1))))
 
 ;; no checking, asssumes well-formed faces
 (defmethod face-normal ((polyh polyhedron) face)
@@ -90,10 +90,10 @@
     (doarray (f face (faces polyh))
       (dolist (pref face)
         (setf (aref p-normals pref)
-              (p+ (aref p-normals pref)
+              (p:+ (aref p-normals pref)
                   (aref (face-normals polyh) f)))))
     (setf (point-normals polyh)
-          (map 'vector #'p-normalize p-normals))))
+          (map 'vector #'p:normalize p-normals))))
 
 (defmethod compute-point-normals-SAV ((polyh polyhedron))
   (setf (point-normals polyh) (make-array (length (points polyh))
@@ -103,11 +103,11 @@
   (dotimes (f (length (faces polyh)))
     (dolist (pref (aref (faces polyh) f))
       (setf (aref (point-normals polyh) pref)
-            (p+ (aref (point-normals polyh) pref)
+            (p:+ (aref (point-normals polyh) pref)
                 (aref (face-normals polyh) f)))))
   (dotimes (n (length (point-normals polyh)))
     (setf (aref (point-normals polyh) n)
-          (p-normalize (aref (point-normals polyh) n)))))
+          (p:normalize (aref (point-normals polyh) n)))))
 
 (defmethod face-points ((polyh polyhedron) i)
   (mapcar #'(lambda (pref) (aref (points polyh) pref))
@@ -119,7 +119,7 @@
 
 (defmethod reverse-face-normals ((polyh polyhedron))
   (dotimes (i (length (face-normals polyh)))
-    (setf (aref (face-normals polyh) i) (p-negate (aref (face-normals polyh) i))))
+    (setf (aref (face-normals polyh) i) (p:negate (aref (face-normals polyh) i))))
   polyh)
 
 (defmethod allocate-point-colors ((polyh polyhedron))
@@ -200,7 +200,7 @@
 (defun triangle-area (p0 p1 p2)
   (let ((e1 (p-from-to p0 p1))
         (e2 (p-from-to p1 p2)))
-    (/ (* (p-mag e1) (p-mag e2) (p-angle-sine e1 e2)) 2)))
+    (/ (* (p:length e1) (p:length e2) (p-angle-sine e1 e2)) 2)))
 
 ;;; only works for triangles
 (defmethod face-area ((polyh polyhedron) face)
@@ -215,9 +215,9 @@
          (error "POLYHEDRON ~a FACE ~a IS NOT A TRIANGLE" polyh face))))
 
 (defun barycentric-point (p0 p1 p2 a b)
-  (p+ p0
-      (p+ (p* (p-from-to p0 p1) a)
-          (p* (p-from-to p0 p2) b))))
+  (p:+ p0
+       (p:+ (p:scale (p-from-to p0 p1) a)
+            (p:scale (p-from-to p0 p2) b))))
 
 (defun generate-face-barycentric-points (p0 p1 p2 num)
   (let ((barycentric-points '()))

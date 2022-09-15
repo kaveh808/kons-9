@@ -1,5 +1,5 @@
 (in-package #:kons-9)
-
+(declaim (optimize debug))
 ;;;; range attributes ====================================================
 
 (defgeneric range-value (range)
@@ -87,14 +87,14 @@
 (defmethod update-velocity ((ptcl particle))
   (let* ((vel (vel ptcl))
          (rnd (p-rand))
-         (axis (p-normalize (p-cross vel rnd)))
+         (axis (p:normalize (p:cross vel rnd)))
          (mtx (make-axis-rotation-matrix (range-value (update-angle ptcl)) axis))
          (new-vel (transform-point vel mtx)))
     (setf (vel ptcl) new-vel)))
 
 (defmethod update-position ((ptcl particle))
   (setf (pos ptcl)
-        (p+ (pos ptcl)
+        (p:+ (pos ptcl)
             (update-velocity ptcl))))
 
 (defmethod update-particle ((ptcl particle))
@@ -108,10 +108,10 @@
 (defmethod spawn-velocity ((ptcl particle))
   (let* ((vel (vel ptcl))
          (rnd (p-rand))
-         (axis (p-normalize (p-cross vel rnd)))
+         (axis (p:normalize (p:cross vel rnd)))
          (mtx (make-axis-rotation-matrix (range-value (spawn-angle ptcl)) axis))
          (new-vel (transform-point vel mtx)))
-    (p* new-vel (range-value (spawn-velocity-factor ptcl)))))
+    (p:scale new-vel (range-value (spawn-velocity-factor ptcl)))))
 
 (defmethod spawn-particle ((ptcl particle))
   (let ((child (make-instance (type-of ptcl)
@@ -150,7 +150,7 @@
 (defmethod update-position ((ptcl climbing-particle))
   (call-next-method)
   (let* ((pos (source-closest-point (support-point-cloud ptcl) (pos ptcl))))
-    (when (not (p= pos (pos ptcl))) ; avoid duplicate points
+    (when (not (p:= pos (pos ptcl))) ; avoid duplicate points
       (setf (pos ptcl) pos))))
 
 ;;;; dynamic-particle ====================================================
@@ -178,22 +178,22 @@
 (defmethod update-position ((ptcl dynamic-particle))
   (let* ((p0 (pos ptcl))
          (force (if (force-fields ptcl) ;compute force
-                    (reduce #'p+ (mapcar #'(lambda (field) (field-value field p0 (current-time *scene*)))
+                    (reduce #'p:+ (mapcar #'(lambda (field) (field-value field p0 (current-time *scene*)))
                                          (force-fields ptcl)))
                     +origin+))
-         (acc (p/ force (mass ptcl)))   ;compute acceleration
-         (vel (p+ (vel ptcl) acc)) ;compute velocity
-         (pos (p+ p0 (p* vel (time-step ptcl))))) ;compute position
+         (acc (p/ force (mass ptcl)))  ;compute acceleration
+         (vel (p+ (vel ptcl) acc))     ;compute velocity
+         (pos (p:+ p0 (p:scale vel (time-step ptcl))))) ;compute position
     ;; handle collision
     (when (do-collisions? ptcl)
       (let ((elast (elasticity ptcl))
             (friction (friction ptcl))
             (lo (collision-padding ptcl)))
-        (when (< (y pos) lo)
-          (set-y! pos (+ lo (abs (- lo (y pos)))))
-          (set-x! vel (* friction (x vel)))
-          (set-y! vel (* elast (- (y vel))))
-          (set-z! vel (* friction (z vel))))))
+        (when (< (p:y pos) lo)
+          (setf (p:y pos) (+ lo (abs (- lo (p:y pos))))
+                (p:x vel) (* friction (p:x vel))
+                (p:y vel) (* elast (- (p:y vel)))
+                (p:z vel) (* friction (p:z vel))))))
     ;; update state
     (setf (vel ptcl) vel)
     (update-velocity ptcl)              ;do wiggle
@@ -325,7 +325,7 @@
           do (dotimes (i num)
                (add-particle p-sys (apply #'make-instance particle-class
                                           :pos p
-                                          :vel (p* v vel)
+                                          :vel (p:* v vel)
                                           initargs))))
     p-sys))
 

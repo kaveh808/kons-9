@@ -159,7 +159,7 @@
 
 (defun gl-enable-light (light-id dir &optional (color *light-color*))
   (gl:enable light-id)
-  (gl:light light-id :position (vector (x dir) (y dir) (z dir) 0.0))
+  (gl:light light-id :position (vector (p:x dir) (p:y dir) (p:z dir) 0.0))
   (gl:light light-id :ambient (vector 0.25 0.25 0.25 1.0))
   (gl:light light-id :diffuse color)
   (gl:light light-id :specular color))
@@ -254,12 +254,12 @@
     (gl-set-color color)
     (gl:begin :lines)
       (when (and lo hi)
-        (let ((x0 (x lo))
-              (y0 (y lo))
-              (z0 (z lo))
-              (x1 (x hi))
-              (y1 (y hi))
-              (z1 (z hi)))
+        (let ((x0 (p:x lo))
+              (y0 (p:y lo))
+              (z0 (p:z lo))
+              (x1 (p:x hi))
+              (y1 (p:y hi))
+              (z1 (p:z hi)))
           (gl:vertex x0 y0 z0) (gl:vertex x1 y0 z0)
           (gl:vertex x1 y0 z0) (gl:vertex x1 y0 z1)
           (gl:vertex x1 y0 z1) (gl:vertex x0 y0 z1)
@@ -288,7 +288,7 @@
         (gl:begin :line-loop)
         (gl:begin :line-strip))
     (doarray (i p points)
-      (gl:vertex (x p) (y p) (z p)))
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
 (defun 3d-draw-points (points &key (highlight? nil))
@@ -302,7 +302,7 @@
           (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
     (doarray (i p points)
-      (gl:vertex (x p) (y p) (z p)))
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
 (defun 3d-draw-lines (points &key (highlight? nil))
@@ -317,7 +317,7 @@
           (gl:line-width (line-thickness *drawing-settings*))))
     (gl:begin :lines)
     (dolist (p points)
-      (gl:vertex (x p) (y p) (z p)))
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
 (defun 3d-setup-lighting ()
@@ -343,7 +343,7 @@
       (gl:begin :polygon)
       (when (not *do-smooth-shading?*)
         (let ((n (aref face-normals f)))
-          (gl:normal (x n) (y n) (z n))))
+          (gl:normal (p:x n) (p:y n) (p:z n))))
       (dolist (pref (aref faces f))
         (if (> (length point-colors) 0)
             (let ((c (aref point-colors pref)))
@@ -351,9 +351,9 @@
             (gl:color (c-red *shading-color*) (c-green *shading-color*) (c-blue *shading-color*))) ;inefficient...
         (when *do-smooth-shading?*
           (let ((n (aref point-normals pref)))
-            (gl:normal (x n) (y n) (z n))))
+            (gl:normal (p:x n) (p:y n) (p:z n))))
         (let ((p (aref points pref)))
-          (gl:vertex (x p) (y p) (z p))))
+          (gl:vertex (p:x p) (p:y p) (p:z p))))
       (gl:end))))
 
 (defun 3d-draw-highlighted-polygons (points faces face-normals point-normals faces-highlighted)
@@ -375,14 +375,14 @@
         (gl:begin :polygon)
         (when (not *do-smooth-shading?*)
           (let ((n (aref face-normals f)))
-            (gl:normal (x n) (y n) (z n))))
+            (gl:normal (p:x n) (p:y n) (p:z n))))
         (dolist (pref (aref faces f))
           (gl:color (c-red *sel-color*) (c-green *sel-color*) (c-blue *sel-color*))
           (when *do-smooth-shading?*
             (let ((n (aref point-normals pref)))
-              (gl:normal (x n) (y n) (z n))))
+              (gl:normal (p:x n) (p:y n) (p:z n))))
           (let ((p (aref points pref)))
-            (gl:vertex (x p) (y p) (z p))))
+            (gl:vertex (p:x p) (p:y p) (p:z p))))
       (gl:end)))))
 
 (defun 3d-draw-wireframe-polygons (points faces &key (closed? t))
@@ -396,7 +396,7 @@
           (gl:begin :line-strip))
       (dolist (pref (aref faces f))
         (let ((p (aref points pref)))
-          (gl:vertex (x p) (y p) (z p))))
+          (gl:vertex (p:x p) (p:y p) (p:z p))))
       (gl:end))))
 
 ;;; 2d display =================================================================
