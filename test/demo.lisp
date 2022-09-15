@@ -162,7 +162,7 @@
 
 ;;; particle-system force-field collisions
 ;;; TODO -- num of intial particles not working -- always 1
-(with-clear-scene   ;;crashes 
+(with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
                                      (p-rand .2) 2 -1 'dynamic-particle
                                      :life-span 20
@@ -455,7 +455,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 (format t "  particle-system 5...~%") (finish-output)
 
-(with-clear-scene  ;;crash a point by scalar error
+(with-clear-scene
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32))))
