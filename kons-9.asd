@@ -14,7 +14,8 @@
      #:cffi
      #:cl-opengl
      #:cl-glu
-     #:cl-glfw3) 
+     #:cl-glfw3
+     #:cl-vulkan)
     :serial t
     :components
     ((:file "src/package")
