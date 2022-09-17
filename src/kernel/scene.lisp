@@ -21,12 +21,12 @@
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
 
 (defmethod add-selection ((scene scene) (item scene-item))
-  (select item)
+  (setf (is-selected? item) t)
   (pushnew item (selection scene))
   item)
 
 (defmethod remove-selection ((scene scene) (item scene-item))
-  (unselect item)
+  (setf (is-selected? item) nil)
   (setf (selection scene) (remove item (selection scene)))
   item)
 
