@@ -153,7 +153,7 @@
   (setf (scaling (scale self)) (p:* (scaling (scale self)) p)))
 
 (defmethod scale-by ((self angle-axis-transform) (s number))
-  (setf (scaling (scale self)) (p:* (scaling (scale self)) s)))
+  (setf (scaling (scale self)) (p* (scaling (scale self)) s)))
 
 (defmethod translate-to ((self angle-axis-transform) p)
   (setf (offset (translate self)) p))

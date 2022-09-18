@@ -194,7 +194,7 @@
                   (let* ((r1-mtx (make-axis-rotation-matrix (p-angle prev-tangent tangent) ;p:angle barfs if tangents are equal, should tangents be equal?
                                                             (p:cross prev-tangent tangent)
                                                             p1))
-                         (r2-mtx (make-axis-rotation-matrix (* delta twist) tangent (u:fp p1)))
+                         (r2-mtx (make-axis-rotation-matrix (* delta twist) tangent p1))
                          (t-mtx (make-translation-matrix (p:- p1 p0)))
                          (mtx (matrix-multiply-n t-mtx r1-mtx r2-mtx)))
                     (transform-point-list! points mtx)
