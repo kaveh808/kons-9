@@ -1,0 +1,7 @@
+(require :asdf)
+(load "kons-9.asd")
+(format t "~&~%Loading kons-9~%")
+(asdf:oos 'asdf:load-op :kons-9)
+(format t "~&Testing kons-9~%")
+(asdf:oos 'asdf:test-op :kons-9)
+(format t "~&OK~%")
