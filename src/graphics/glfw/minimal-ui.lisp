@@ -23,12 +23,11 @@
   (push (default-command-table view) (command-tables view)))
 
 (defun default-command-table (view)
-  (let ((scene (scene view))
-        (table (make-instance 'command-table
+  (let ((table (make-instance 'command-table
                               :title "Default"
                               :mouse-help-string "Drag: orbit, [option/alt] track left/right and up/down, [control] track in/out.")))
-    (ct-entry :a "Initialize scene" (when scene (init-scene scene)))
-    (ct-entry :n "Clear scene" (when scene (clear-scene scene)))
+    (ct-entry :a "Initialize scene" (when (scene view) (init-scene (scene view))))
+    (ct-entry :n "Clear scene" (when (scene view) (clear-scene (scene view))))
     (ct-entry :grave-accent "Toggle lighting" (setf *do-lighting?* (not *do-lighting?*)))
     (ct-entry :1 "Toggle filled display" (setf *display-filled?* (not *display-filled?*)))
     (ct-entry :2 "Toggle wireframe display" (setf *display-wireframe?* (not *display-wireframe?*)))
@@ -38,8 +37,8 @@
     (ct-entry :6 "Toggle ground plane display" (setf *display-ground-plane?* (not *display-ground-plane?*)))
     (ct-entry :7 "Toggle world axes display" (setf *display-axes?* (not *display-axes?*)))
     (ct-entry :z "Reset camera" (init-view-camera) (3d-update-light-settings))
-    (ct-entry :space "Update scene (hold down for animation)" (update-scene scene))
-    (ct-entry :backspace "Delete selected items" (remove-current-selection scene))
+    (ct-entry :space "Update scene (hold down for animation)" (update-scene (scene view)))
+    (ct-entry :backspace "Delete selected items" (remove-current-selection (scene view)))
     table))
 
 ;;; display the view

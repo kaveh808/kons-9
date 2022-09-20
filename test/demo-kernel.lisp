@@ -108,7 +108,7 @@ The POLYHEDRON class is the basic 3D shape representaion.
 Refine (subdivide) a polyhedron.
 |#
 (with-clear-scene
-  (add-shape *scene* (refine-mesh (make-cube 2.0) 3)))
+  (add-shape *scene* (refine-polyhedron (make-cube 2.0) 3)))
 
 #|
 A cube turned into a sphere.
@@ -126,7 +126,7 @@ Triangulate a polyhedron.
 Generate a point cloud on the surface of a polyhedron.
 |#
 (with-clear-scene
-  (add-shape *scene* (generate-point-cloud (triangulate-polyhedron (make-cube-sphere 4.0 3))
+  (add-shape *scene* (generate-point-cloud (make-cube-sphere 4.0 3)
                                            40)))
 
 #|

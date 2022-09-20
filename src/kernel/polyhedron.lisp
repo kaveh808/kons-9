@@ -160,7 +160,7 @@
             point-lists))
     point-lists))
                 
-(defmethod refine-mesh ((polyh polyhedron) &optional (levels 1))
+(defmethod refine-polyhedron ((polyh polyhedron) &optional (levels 1))
   (if (<= levels 0)
       (merge-points polyh)
       (let ((points '())
@@ -175,7 +175,7 @@
                   (push pref face)
                   (incf pref))
                 (push face faces)))))
-        (refine-mesh (make-polyhedron (coerce points 'vector) (coerce faces 'vector)) (1- levels)))))
+        (refine-polyhedron (make-polyhedron (coerce points 'vector) (coerce faces 'vector)) (1- levels)))))
 
 (defmethod merge-points ((polyh polyhedron))
   (let ((hash (make-hash-table :test 'equal))
@@ -232,12 +232,13 @@
     barycentric-points))
 
 (defmethod generate-point-cloud ((polyh polyhedron) &optional (density 1.0))
-    (when (not (is-triangulated-polyhedron? polyh))
-      (error "POLYHEDRON ~a IS NOT TRIANGULATED" polyh))
-  (let ((points '()))
-    (dotimes (f (length (faces polyh)))
-      (let* ((area (face-area polyh (aref (faces polyh) f)))
-             (face-points (face-points polyh f))
+  (let ((tri-polyh (if (is-triangulated-polyhedron? polyh)
+                       polyh
+                       (triangulate-polyhedron polyh)))
+        (points '()))
+    (dotimes (f (length (faces tri-polyh)))
+      (let* ((area (face-area tri-polyh (aref (faces tri-polyh) f)))
+             (face-points (face-points tri-polyh f))
              (p0 (elt face-points 0))
              (p1 (elt face-points 1))
              (p2 (elt face-points 2))
@@ -411,7 +412,7 @@
                      :mesh-type mesh-type)))
 
 (defun make-cube-sphere (side subdiv-levels &key (name nil) (mesh-type 'polyhedron))
-  (let ((polyh (refine-mesh (make-cube side :name name :mesh-type mesh-type) subdiv-levels))
+  (let ((polyh (refine-polyhedron (make-cube side :name name :mesh-type mesh-type) subdiv-levels))
         (radius (/ side 2)))
     (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
     (compute-face-normals polyh)
