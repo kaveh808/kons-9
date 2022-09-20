@@ -32,11 +32,11 @@
           (get-bounds child)
         (when lo
           (setf bounds-lo (if bounds-lo
-                              (p-min bounds-lo lo)
+                              (p:min bounds-lo lo)
                               lo)))
         (when hi
           (setf bounds-hi (if bounds-hi
-                              (p-max bounds-hi hi)
+                              (p:max bounds-hi hi)
                               hi)))))
     (values bounds-lo bounds-hi)))
 

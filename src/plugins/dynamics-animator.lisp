@@ -57,7 +57,7 @@
    (collision-padding :accessor collision-padding :initarg :collision-padding :initform 0.0)))
 
 (defmethod copy-instance-data :after ((dst dynamics-animator) (src dynamics-animator))
-  (setf (velocity dst) (p-copy (velocity src)))
+  (setf (velocity dst) (p:copy (velocity src)))
   (setf (mass dst) (mass src))
   (setf (elasticity dst) (elasticity src))
   (setf (friction dst) (friction src))

@@ -79,7 +79,7 @@
     (reverse indices)))
 
 (defun point->usd-string (p)
-  (format nil "(~a, ~a, ~a)" (x p) (y p) (z p)))
+  (format nil "(~a, ~a, ~a)" (p:x p) (p:y p) (p:z p)))
 
 (defmethod usd-points ((mesh uv-mesh))
   (let ((points '()))

@@ -57,7 +57,7 @@
     (draw-ground-plane))
 
   ;; display ui layer
-  (2d-setup-projection)
+  (2d-setup-projection (first *window-size*) (second *window-size*))
   (draw-scene-view-ui view)
   ;(test-text)
   ;(text-engine-end-frame)
@@ -240,6 +240,6 @@
 
 (defmacro with-clear-scene (&body body)
   `(progn
-     (clear-scene *scene*)
+     (clear-scene (scene *default-scene-view*))
      ,@body))
 

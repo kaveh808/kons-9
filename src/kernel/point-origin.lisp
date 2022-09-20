@@ -106,8 +106,8 @@
     (values y-angle x-angle)))
 
 (defun angle-2d (p1 p2)
-  (let* ((theta1 (atan (y p1) (x p1)))
-	 (theta2 (atan (y p2) (x p2)))
+  (let* ((theta1 (atan (p:y p1) (p:x p1)))
+	 (theta2 (atan (p:y p2) (p:x p2)))
 	 (dtheta (- theta2 theta1)))
     (loop while (> dtheta pi)
 	  do (setf dtheta (- dtheta (* 2 pi))))

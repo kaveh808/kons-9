@@ -19,6 +19,14 @@
    (ground-plane-color :accessor ground-plane-color :initarg :ground-plane-color :initform (c! .8 .8 .8))
    (secondary-line-thickness :accessor secondary-line-thickness :initarg :secondary-line-thickness :initform 1.0)))
 
+(defparameter *drawing-settings* (make-instance 'drawing-settings))
+
+(defparameter *shading-color* (c! 1 1 1))
+(defparameter *light-color* (c! 2 2 2))
+(defparameter *fg-color* (c! 0 0 0))
+(defparameter *bg-color* (c! 1 1 1))
+(defparameter *sel-color* (c! 1 0 0))
+
 (defun set-lines-thin ()
   (setf (point-size *drawing-settings*) (* 3.0 (monitor-scale *drawing-settings*)))
   (setf (line-thickness *drawing-settings*) (* 1.0 (monitor-scale *drawing-settings*)))
@@ -65,14 +73,6 @@
 (set-ground-plane-dense)
 
 |#
-
-(defparameter *drawing-settings* (make-instance 'drawing-settings))
-
-(defparameter *shading-color* (c! 1 1 1))
-(defparameter *light-color* (c! 2 2 2))
-(defparameter *fg-color* (c! 0 0 0))
-(defparameter *bg-color* (c! 1 1 1))
-(defparameter *sel-color* (c! 1 0 0))
 
 ;;;; utils =====================================================================
 
@@ -401,10 +401,10 @@
 
 ;;; 2d display =================================================================
 
-(defun 2d-setup-projection ()
+(defun 2d-setup-projection (w h)
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (gl:ortho 0.0 (first *window-size*) (second *window-size*) 0.0 -1.0 1.0) ; y=0 at top
+  (gl:ortho 0.0 w h 0.0 -1.0 1.0) ; y=0 at top
   (gl:matrix-mode :modelview)
   (gl:load-identity)
   (gl:disable :depth-test)

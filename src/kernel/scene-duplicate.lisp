@@ -21,9 +21,6 @@
     (let ((dup (make-instance (class-name (class-of item)))))
       (copy-instance-data dup item)
       dup))
-  (:method ((val t))
-    (etypecase val
-      (point (p:copy val))))
   (:method ((seq sequence))
     (copy-seq seq))
   (:method ((a array))

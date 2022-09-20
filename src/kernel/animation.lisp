@@ -7,12 +7,12 @@
    (shape-animator nil)))
 
 (defmethod setup-motion ((anim animation))
-  (when (motion anim)
-    (setup-motion (motion anim))))
+  (when (shape-animator anim)
+    (setup-motion (shape-animator anim))))
 
 (defmethod update-motion ((anim animation) parent-absolute-timing)
-  (when (motion anim)
-    (update-motion (motion anim) parent-absolute-timing)))
+  (when (shape-animator anim)
+    (update-motion (shape-animator anim) parent-absolute-timing)))
 
 (defmethod add-animation-to-scene ((anim animation) group motion-group
                                    &key (mode :add-as-instance)) ; :add-as-duplicate
