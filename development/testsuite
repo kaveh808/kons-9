@@ -1,0 +1,53 @@
+#!/bin/sh
+
+: ${TOPLEVELDIR:=$(git rev-parse --show-toplevel)}
+: ${testsuitesystem:="kons-9/testsuite"}
+: ${testsuiteclean:='no'}
+: ${testsuitelisp:='sbcl'}
+
+testsuite_lisp()
+{
+    case "${testsuitelisp}" in
+	sbcl)
+	    sbcl --noinform --disable-debugger "$@"
+	    ;;
+	ccl|ccl64)
+	    ccl64 "$@"
+	    ;;
+    esac
+}
+
+testsuite_run()
+{
+    if [ $# -eq 0 ]; then
+	set -- 'run-all-tests'
+    fi
+    testsuite_lisp\
+	--eval "(ql:quickload \"${testsuitesystem}\" :silent t)"\
+	--eval "(${testsuitesystem}:$1)"
+}
+
+testsuite_main()
+{
+    local OPTIND OPTION OPTARG
+    OPTIND=1
+
+    while getopts 'CL:' OPTION; do
+	case "${OPTION}" in
+	    C)	testsuiteclean='yes';;
+	    L)	testsuitelisp="${OPTARG}";;
+	esac
+    done
+
+    shift $((OPTIND - 1))
+
+    if [ "${testsuiteclean}" = 'yes' ]; then
+	(cd "${TOPLEVELDIR}" && development/clean)
+    fi
+    
+    testsuite_run "$@"
+}
+
+testsuite_main "$@"
+
+# End of file `testsuite'
