@@ -15,7 +15,8 @@
      #:cl-opengl
      #:cl-glu
      #:cl-glfw3
-     #:origin) 
+     #:origin
+     #:clobber) 
     :serial t
     :components
     ((:file "src/package")
