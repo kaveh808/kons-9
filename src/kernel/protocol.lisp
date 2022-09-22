@@ -26,8 +26,8 @@
   (:method ((obj t)) 
     (error "Method SOURCE-DIRECTIONS not implemented for object ~a" obj))
 
-  (:method ((poly polygon))
-    (curve-tangents poly))
+  (:method ((curve curve))
+    (curve-tangents curve))
 
   (:method ((p-cloud point-cloud))
     ;; arbitrarily return (1 1 1) for use as velocity multiplier
@@ -42,7 +42,7 @@
 
 (defgeneric source-radial-directions (obj)
   (:method ((obj t)) 
-    (map 'vector #'p-normalize (source-points obj)))
+    (map 'vector #'p:normalize (source-points obj)))
   )
 
 (defgeneric source-closest-point (obj point)
@@ -55,14 +55,13 @@
                  (when (< dist min-dist)
                    (setf min-dist dist)
                    (setf closest-index i))))
-      (aref points closest-index)))
-  )
+      (aref points closest-index))))
 
 ;;;; curve-source-protocol =====================================================
 
 (defgeneric provides-curve-source-protocol? (obj)
   (:method ((obj t)) nil)
-  (:method ((poly polygon)) t)
+  (:method ((curve curve)) t)
   (:method ((polyh polyhedron)) t)
   )
 
@@ -70,9 +69,9 @@
   (:method ((obj t)) 
     (error "Method SOURCE-CURVES not implemented for object ~a" obj))
 
-  (:method ((poly polygon))
-    ;; (list (coerce (points poly) 'array))
-    (list (points poly))
+  (:method ((curve curve))
+    ;; (list (coerce (points curve) 'array))
+    (list (points curve))
     )
 
   (:method ((polyh polyhedron))
@@ -86,8 +85,8 @@
   (:method ((obj t)) 
     (error "Method SOURCE-CURVES-CLOSED not implemented for object ~a" obj))
 
-  (:method ((poly polygon))
-    (list (is-closed-polygon? poly)))
+  (:method ((curve curve))
+    (list (is-closed-curve? curve)))
 
   (:method ((polyh polyhedron))
     (make-list (length (faces polyh)) :initial-element t)) ;always closed

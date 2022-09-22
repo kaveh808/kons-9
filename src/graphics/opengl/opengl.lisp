@@ -3,8 +3,9 @@
 ;;;; drawing-settings ==========================================================
 
 (defclass drawing-settings ()
-  ((point-size :accessor point-size :initarg :point-size :initform 9.0)
-   (line-thickness :accessor line-thickness :initarg :line-thickness :initform 3.0)
+  ((monitor-scale :accessor monitor-scale :initarg :monitor-scale :initform 1.0)
+   (point-size :accessor point-size :initarg :point-size :initform 3.0)
+   (line-thickness :accessor line-thickness :initarg :line-thickness :initform 1.0)
    (fg-color :accessor fg-color :initarg :fg-color :initform (c! 0 0 0))
    (bg-color :accessor bg-color :initarg :bg-color :initform (c! 1 1 1))
    (sel-color :accessor sel-color :initarg :sel-color :initform (c! 1 0 0))
@@ -18,17 +19,25 @@
    (ground-plane-color :accessor ground-plane-color :initarg :ground-plane-color :initform (c! .8 .8 .8))
    (secondary-line-thickness :accessor secondary-line-thickness :initarg :secondary-line-thickness :initform 1.0)))
 
+(defparameter *drawing-settings* (make-instance 'drawing-settings))
+
+(defparameter *shading-color* (c! 1 1 1))
+(defparameter *light-color* (c! 2 2 2))
+(defparameter *fg-color* (c! 0 0 0))
+(defparameter *bg-color* (c! 1 1 1))
+(defparameter *sel-color* (c! 1 0 0))
+
 (defun set-lines-thin ()
-  (setf (point-size *drawing-settings*) 3.0)
-  (setf (line-thickness *drawing-settings*) 1.0)
-  (setf (axes-thickness *drawing-settings*) 1.0)
-  (setf (secondary-line-thickness *drawing-settings*) 0.5))
+  (setf (point-size *drawing-settings*) (* 3.0 (monitor-scale *drawing-settings*)))
+  (setf (line-thickness *drawing-settings*) (* 1.0 (monitor-scale *drawing-settings*)))
+  (setf (axes-thickness *drawing-settings*) (* 3.0 (monitor-scale *drawing-settings*)))
+  (setf (secondary-line-thickness *drawing-settings*) (* 0.5 (monitor-scale *drawing-settings*))))
 
 (defun set-lines-thick ()
-  (setf (point-size *drawing-settings*) 7.0)
-  (setf (line-thickness *drawing-settings*) 3.0)
-  (setf (axes-thickness *drawing-settings*) 3.0)
-  (setf (secondary-line-thickness *drawing-settings*) 1.0))
+  (setf (point-size *drawing-settings*) (* 6.0 (monitor-scale *drawing-settings*)))
+  (setf (line-thickness *drawing-settings*) (* 2.0 (monitor-scale *drawing-settings*)))
+  (setf (axes-thickness *drawing-settings*) (* 5.0 (monitor-scale *drawing-settings*)))
+  (setf (secondary-line-thickness *drawing-settings*) (* 1.0 (monitor-scale *drawing-settings*))))
 
 (defun set-theme-bright ()
   (setf (fg-color *drawing-settings*) (c! 0 0 0))
@@ -65,14 +74,6 @@
 
 |#
 
-(defparameter *drawing-settings* (make-instance 'drawing-settings))
-
-(defparameter *shading-color* (c! 1 1 1))
-(defparameter *light-color* (c! 2 2 2))
-(defparameter *fg-color* (c! 0 0 0))
-(defparameter *bg-color* (c! 1 1 1))
-(defparameter *sel-color* (c! 1 0 0))
-
 ;;;; utils =====================================================================
 
 (defmacro with-gl-enable (flag &body body)
@@ -105,14 +106,14 @@
     (gl:line-width (axes-thickness *drawing-settings*))
     (gl:begin :lines)
     (gl:color 1.0 0.0 0.0)
-    (gl:vertex 0.0  0.0  0.0)
-    (gl:vertex size 0.0  0.0)
+    (gl:vertex 0.0  0.001  0.0)
+    (gl:vertex size 0.001 0.0)
     (gl:color 0.0 1.0 0.0)
-    (gl:vertex 0.0 0.0  0.0 )
+    (gl:vertex 0.0 0.0 0.0 )
     (gl:vertex 0.0 size 0.0 )
     (gl:color 0.0 0.0 1.0)
-    (gl:vertex 0.0  0.0  0.0)
-    (gl:vertex 0.0  0.0 size)
+    (gl:vertex 0.0  0.001  0.0)
+    (gl:vertex 0.0  0.001 size)
     (gl:end)))
 
 (defun draw-ground-plane ()
@@ -158,7 +159,7 @@
 
 (defun gl-enable-light (light-id dir &optional (color *light-color*))
   (gl:enable light-id)
-  (gl:light light-id :position (vector (x dir) (y dir) (z dir) 0.0))
+  (gl:light light-id :position (vector (p:x dir) (p:y dir) (p:z dir) 0.0))
   (gl:light light-id :ambient (vector 0.25 0.25 0.25 1.0))
   (gl:light light-id :diffuse color)
   (gl:light light-id :specular color))
@@ -253,12 +254,12 @@
     (gl-set-color color)
     (gl:begin :lines)
       (when (and lo hi)
-        (let ((x0 (x lo))
-              (y0 (y lo))
-              (z0 (z lo))
-              (x1 (x hi))
-              (y1 (y hi))
-              (z1 (z hi)))
+        (let ((x0 (p:x lo))
+              (y0 (p:y lo))
+              (z0 (p:z lo))
+              (x1 (p:x hi))
+              (y1 (p:y hi))
+              (z1 (p:z hi)))
           (gl:vertex x0 y0 z0) (gl:vertex x1 y0 z0)
           (gl:vertex x1 y0 z0) (gl:vertex x1 y0 z1)
           (gl:vertex x1 y0 z1) (gl:vertex x0 y0 z1)
@@ -287,7 +288,7 @@
         (gl:begin :line-loop)
         (gl:begin :line-strip))
     (doarray (i p points)
-      (gl:vertex (x p) (y p) (z p)))
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
 (defun 3d-draw-points (points &key (highlight? nil))
@@ -301,7 +302,7 @@
           (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
     (doarray (i p points)
-      (gl:vertex (x p) (y p) (z p)))
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
 (defun 3d-draw-lines (points &key (highlight? nil))
@@ -316,7 +317,7 @@
           (gl:line-width (line-thickness *drawing-settings*))))
     (gl:begin :lines)
     (dolist (p points)
-      (gl:vertex (x p) (y p) (z p)))
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
 (defun 3d-setup-lighting ()
@@ -342,7 +343,7 @@
       (gl:begin :polygon)
       (when (not *do-smooth-shading?*)
         (let ((n (aref face-normals f)))
-          (gl:normal (x n) (y n) (z n))))
+          (gl:normal (p:x n) (p:y n) (p:z n))))
       (dolist (pref (aref faces f))
         (if (> (length point-colors) 0)
             (let ((c (aref point-colors pref)))
@@ -350,9 +351,9 @@
             (gl:color (c-red *shading-color*) (c-green *shading-color*) (c-blue *shading-color*))) ;inefficient...
         (when *do-smooth-shading?*
           (let ((n (aref point-normals pref)))
-            (gl:normal (x n) (y n) (z n))))
+            (gl:normal (p:x n) (p:y n) (p:z n))))
         (let ((p (aref points pref)))
-          (gl:vertex (x p) (y p) (z p))))
+          (gl:vertex (p:x p) (p:y p) (p:z p))))
       (gl:end))))
 
 (defun 3d-draw-highlighted-polygons (points faces face-normals point-normals faces-highlighted)
@@ -374,14 +375,14 @@
         (gl:begin :polygon)
         (when (not *do-smooth-shading?*)
           (let ((n (aref face-normals f)))
-            (gl:normal (x n) (y n) (z n))))
+            (gl:normal (p:x n) (p:y n) (p:z n))))
         (dolist (pref (aref faces f))
           (gl:color (c-red *sel-color*) (c-green *sel-color*) (c-blue *sel-color*))
           (when *do-smooth-shading?*
             (let ((n (aref point-normals pref)))
-              (gl:normal (x n) (y n) (z n))))
+              (gl:normal (p:x n) (p:y n) (p:z n))))
           (let ((p (aref points pref)))
-            (gl:vertex (x p) (y p) (z p))))
+            (gl:vertex (p:x p) (p:y p) (p:z p))))
       (gl:end)))))
 
 (defun 3d-draw-wireframe-polygons (points faces &key (closed? t))
@@ -395,15 +396,15 @@
           (gl:begin :line-strip))
       (dolist (pref (aref faces f))
         (let ((p (aref points pref)))
-          (gl:vertex (x p) (y p) (z p))))
+          (gl:vertex (p:x p) (p:y p) (p:z p))))
       (gl:end))))
 
 ;;; 2d display =================================================================
 
-(defun 2d-setup-projection ()
+(defun 2d-setup-projection (w h)
   (gl:matrix-mode :projection)
   (gl:load-identity)
-  (gl:ortho 0.0 (first *window-size*) (second *window-size*) 0.0 -1.0 1.0) ; y=0 at top
+  (gl:ortho 0.0 w h 0.0 -1.0 1.0) ; y=0 at top
   (gl:matrix-mode :modelview)
   (gl:load-identity)
   (gl:disable :depth-test)

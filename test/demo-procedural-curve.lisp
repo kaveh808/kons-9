@@ -11,7 +11,7 @@ if an input slot changes.
 |#
 
 #|
-(Demo 01 procedural-polygon) line ==============================================
+(Demo 01 procedural-curve) line ================================================
 |#
 (progn
   (defparameter *line* (make-line (p! 0 0 0) (p! 0 1 1) 2))
@@ -25,7 +25,7 @@ Modify slots and shape will change.
   (setf (p2 *line*) (p! 2 1 0)))
 
 #|
-(Demo 02 procedural-polygon) rectangle =========================================
+(Demo 02 procedural-curve) rectangle ===========================================
 |#
 (progn
   (defparameter *rectangle* (make-rectangle 4.0 2.0 2))
@@ -39,7 +39,7 @@ Modify slots and shape will change.
   (setf (width *rectangle*) 8.0))
 
 #|
-(Demo 03 procedural-polygon) square ============================================
+(Demo 03 procedural-curve) square ==============================================
 |#
 (progn
   (defparameter *square* (make-square 4.0 8))
@@ -53,7 +53,7 @@ Modify slots and shape will change.
   (setf (side *square*) 2.0))
 
 #|
-(Demo 04 procedural-polygon) circle ============================================
+(Demo 04 procedural-curve) circle ==============================================
 |#
 (progn
   (defparameter *circle* (make-circle 4.0 8))
@@ -67,7 +67,7 @@ Modify slots and shape will change.
   (setf (diameter *circle*) 2.0))
 
 #|
-(Demo 05 procedural-polygon) arc ===============================================
+(Demo 05 procedural-curve) arc =================================================
 |#
 (progn
   (defparameter *arc* (make-arc 4.0 0.0 90.0 8))
@@ -81,7 +81,7 @@ Modify slots and shape will change.
   (setf (end-angle *arc*) 270.0))
 
 #|
-(Demo 06 procedural-polygon) spiral ============================================
+(Demo 06 procedural-curve) spiral ==============================================
 |#
 (progn
   (defparameter *spiral* (make-spiral  0.0 2.0 2.0 2.0 32))
@@ -95,7 +95,7 @@ Modify slots and shape will change.
   (setf (end-diameter *spiral*) 4.0))
 
 #|
-(Demo 07 procedural-polygon) sine-curve ========================================
+(Demo 07 procedural-curve) sine-curve ==========================================
 |#
 (progn
   (defparameter *sine-curve* (make-sine-curve 720 2 4 2 64))

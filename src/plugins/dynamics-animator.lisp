@@ -28,10 +28,10 @@
 (defmethod field-value ((field attractor-force-field) point time)
   (declare (ignore time))
   (let ((dist (p-dist point (location field)))
-        (dir (p-normalize (p-from-to point (location field)))))
+        (dir (p:normalize (p-from-to point (location field)))))
     (if (= 0.0 dist)
         (p! 0 0 0)
-        (p* dir (/ (magnitude field) (* dist dist))))))
+        (p:scale dir (/ (magnitude field) (* dist dist))))))
 
 ;;;; noise-force-field =========================================================
 
@@ -41,8 +41,8 @@
 
 (defmethod field-value ((field noise-force-field) point time)
   (declare (ignore time))
-  (p* (noise-gradient (p* point (noise-frequency field)))
-      (noise-amplitude field)))
+  (p:scale (noise-gradient (p:scale point (noise-frequency field)))
+           (noise-amplitude field)))
 
 ;;;; dynamics-animator =========================================================
 
@@ -57,7 +57,7 @@
    (collision-padding :accessor collision-padding :initarg :collision-padding :initform 0.0)))
 
 (defmethod copy-instance-data :after ((dst dynamics-animator) (src dynamics-animator))
-  (setf (velocity dst) (p-copy (velocity src)))
+  (setf (velocity dst) (p:copy (velocity src)))
   (setf (mass dst) (mass src))
   (setf (elasticity dst) (elasticity src))
   (setf (friction dst) (friction src))
@@ -73,25 +73,23 @@
     (error "DYNAMICS-ANIMATOR ~a HAS NO SHAPE.~%" anim)
     (let* ((p0 (offset (translate (transform (shape anim)))))
            (force (if (force-fields anim) ;compute force
-                      (reduce #'p+ (mapcar #'(lambda (field) (field-value field p0
+                      (reduce #'p:+ (mapcar #'(lambda (field) (field-value field p0
                                                                           (current-time *scene*)))
                                           (force-fields anim)))
                       +origin+))
 	   (acc (p/ force (mass anim)))	;compute acceleration
 	   (vel (p+ (velocity anim) acc)) ;compute velocity
-	   (pos (p+ p0 (p* vel (time-step anim))))) ;compute position
+	   (pos (p:+ p0 (p:scale vel (time-step anim))))) ;compute position
 
       (when (do-collisions? anim)	; handle collision
 	(let ((elast (elasticity anim))
               (friction (friction anim))
 	      (lo (collision-padding anim)))
-	  (when (< (y pos) lo)
-	    (set-y! pos (+ lo (abs (- lo (y pos)))))
-	    (set-x! vel (* friction (x vel)))
-            (set-y! vel (* elast (- (y vel))))
-            (set-z! vel (* friction (z vel))))))
-      
+	  (when (< (p:y pos) lo)
+	    (setf (p:y pos) (+ lo (abs (- lo (p:y pos))))
+	          (p:x vel) (* friction (p:x vel))
+                  (p:y vel) (* elast (- (p:y vel)))
+                  (p:z vel) (* friction (p:z vel))))))
       ;; update state
       (setf (velocity anim) vel)
       (translate-to (shape anim) pos))))
-

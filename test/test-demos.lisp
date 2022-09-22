@@ -9,8 +9,9 @@ functions and the like.
 |#
 
 (let ((demo-files '("demo-kernel"
-                    "demo-procedural-polygon"
+                    "demo-procedural-curve"
                     "demo-uv-mesh"
+                    "demo-animation"
                     "demo")))
   (dolist (filename demo-files)
     (format t "Testing file ~a...~%" filename)

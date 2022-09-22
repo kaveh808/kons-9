@@ -15,7 +15,7 @@
 
 (defmethod write-usd ((scene scene) &optional (stream t) (indent 0))
   (write-usd-header scene stream)
-  (mapc #'(lambda (s) (write-usd s stream)) (shapes scene)))
+  (mapc #'(lambda (s) (write-usd s stream (+ indent 2))) (shapes scene)))
 
 (defmethod write-usd-header ((scene scene) &optional (stream t))
   (format stream "#usda 1.0~%")
@@ -37,14 +37,14 @@
   (format-pad indent stream "    uniform token[] xformOpOrder = [\"xformOp:transform\"]~%~%"))
 
 (defmethod write-usd ((shape shape) &optional (stream t) (indent 0))
-  (declare (ignore stream))
+  (declare (ignore stream indent))
   ;; do nothing for now
   )
 
 (defmethod write-usd :after ((shape shape) &optional (stream t) (indent 0))
   (format-pad indent stream "}~%"))
 
-(defmethod write-usd ((poly polygon) &optional (stream t) (indent 0))
+(defmethod write-usd ((curve curve) &optional (stream t) (indent 0))
   (declare (ignore stream indent))
   ;; do nothing for now
   )
@@ -79,7 +79,7 @@
     (reverse indices)))
 
 (defun point->usd-string (p)
-  (format nil "(~a, ~a, ~a)" (x p) (y p) (z p)))
+  (format nil "(~a, ~a, ~a)" (p:x p) (p:y p) (p:z p)))
 
 (defmethod usd-points ((mesh uv-mesh))
   (let ((points '()))

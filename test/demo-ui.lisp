@@ -34,7 +34,7 @@ Press 'p'. The title bar will update.
 
 Press 'h' to see the available commands.
 
-Make some polygons.
+Make some curves.
 
 Press 'tab' to go back to the default command table. The title bar will update.
 
@@ -60,19 +60,19 @@ Press 'tab' to go back to the default command table. The title bar will update.
 
 (defun create-command-table ()
   (let ((table (make-instance `command-table :title "Create")))
-    (ct-subtable :p "Polygon" (polygon-command-table))
+    (ct-subtable :p "Curve" (curve-command-table))
     (ct-subtable :y "Polyhedron" (polyhedron-command-table))
     table))
 
-(defun polygon-command-table ()
-  (let ((table (make-instance `command-table :title "Polygon")))
-    (ct-make-shape :l "line polygon" (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8))
-    (ct-make-shape :r "rectangle polygon" (make-rectangle-polygon 2 1 4))
-    (ct-make-shape :s "square polygon" (make-square-polygon 1.5))
-    (ct-make-shape :c "circle polygon" (make-circle-polygon 2.0 16))
-    (ct-make-shape :a "arc polygon" (make-arc-polygon 2.0 16 0 pi))
-    (ct-make-shape :n "sine curve polygon" (make-sine-curve-polygon 360 1 2 1 16))
-    (ct-make-shape :p "spiral polygon" (make-spiral-polygon .2 2.0 -1.0 4 64))
+(defun curve-command-table ()
+  (let ((table (make-instance `command-table :title "Curve")))
+    (ct-make-shape :l "line curve" (make-line-curve (p! 0 0 0) (p! 2 2 2) 8))
+    (ct-make-shape :r "rectangle curve" (make-rectangle-curve 2 1 4))
+    (ct-make-shape :s "square curve" (make-square-curve 1.5))
+    (ct-make-shape :c "circle curve" (make-circle-curve 2.0 16))
+    (ct-make-shape :a "arc curve" (make-arc-curve 2.0 16 0 pi))
+    (ct-make-shape :n "sine curve curve" (make-sine-curve-curve 360 1 2 1 16))
+    (ct-make-shape :p "spiral curve" (make-spiral-curve .2 2.0 -1.0 4 64))
     table))
 
 (defun polyhedron-command-table ()

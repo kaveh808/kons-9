@@ -2,14 +2,14 @@
 
 ;;;; transform-operator classes ================================================
 
-(defclass transform-operator ()
+(defclass transform-operator (item)
   ())
 
 (defclass translate-operator (transform-operator)
   ((offset :accessor offset :initarg :offset :initform (p! 0.0 0.0 0.0))))
 
 (defmethod transform-matrix ((self translate-operator) &optional (factor 1.0))
-  (make-translation-matrix (p-lerp factor (p! 0.0 0.0 0.0) (offset self))))
+  (make-translation-matrix (p:lerp (p! 0.0 0.0 0.0) (offset self) factor)))
 
 (defclass euler-rotate-operator (transform-operator)
   ((angles :accessor angles :initarg :angles :initform (p! 0.0 0.0 0.0)) ;degrees
@@ -19,7 +19,7 @@
 
 
 (defmethod transform-matrix ((self euler-rotate-operator) &optional (factor 1.0))
-  (make-rotation-matrix (p-radians (p-lerp factor (p! 0.0 0.0 0.0) (angles self))) ;convert to radians
+  (make-rotation-matrix (p:radians (p:lerp (p! 0.0 0.0 0.0) (angles self) factor)) ;convert to radians
                         (rotate-order self)
                         (pivot self)))
 
@@ -39,7 +39,7 @@
    (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))
 
 (defmethod transform-matrix ((self scale-operator) &optional (factor 1.0))
-  (make-scale-matrix (p-lerp factor (p! 1.0 1.0 1.0) (scaling self))
+  (make-scale-matrix (p:lerp (p! 1.0 1.0 1.0) (scaling self) factor)
                      (pivot self)))
 
 ;;; transform ==================================================================
@@ -48,6 +48,7 @@
 (defclass transform (item)
   ;; :trs :tsr :rts :rst :str :srt
   ((operator-order :accessor operator-order :initarg :operator-order :initform :srt)))
+
 
 ;;; euler-transform ============================================================
 
@@ -85,10 +86,10 @@
   (setf (angles (rotate self)) p))
 
 (defmethod scale-to ((self euler-transform) p)
-  (setf (scaling (scale self)) p))
+  (setf (scaling (scale self)) p)) 
 
 (defmethod scale-to ((self euler-transform) (s number))
-  (setf (scaling (scale self)) (p! s s s)))
+    (setf (scaling (scale self)) (p! s s s)))
 
 (defun make-euler-transform (translate rotate scale)
   (let ((xform (make-instance 'euler-transform)))
@@ -103,18 +104,18 @@
   (setf (scaling (scale self)) (p! 1.0 1.0 1.0)))
 
 (defmethod partial-translate ((self euler-transform) factor)
-  (p* (offset (translate self)) factor))
+  (p:scale (offset (translate self)) factor))
 
 (defmethod partial-rotate ((self euler-transform) factor)
-  (p* (angles (rotate self)) factor))
+  (p:scale (angles (rotate self)) factor))
 
 (defmethod partial-scale ((self euler-transform) factor)
-  (p-lerp factor (p! 1.0 1.0 1.0) (scaling (scale self))))
+  (p:lerp (p! 1.0 1.0 1.0) (scaling (scale self)) factor))
 
 (defmethod partial-copy ((dst euler-transform) (src euler-transform) factor)
-  (setf (offset (translate dst)) (partial-translate src factor))
-  (setf (angles (rotate dst)) (partial-rotate src factor))
-  (setf (scaling (scale dst)) (partial-scale src factor)))
+  (setf (offset (translate dst)) (partial-translate src factor)
+        (angles (rotate dst))    (partial-rotate src factor)
+        (scaling (scale dst))     (partial-scale src factor)))
 
 (defmethod print-object ((self euler-transform) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -141,14 +142,15 @@
       (:srt (matrix-multiply-n s-mtx r-mtx t-mtx))
       (otherwise (error "Unknown operator order ~a in TRANSFORM-MATRIX" (operator-order self))))))
 
+
 (defmethod translate-by ((self angle-axis-transform) point-or-number)
-  (setf (offset (translate self)) (p+ (offset (translate self)) point-or-number)))
+  (setf (offset (translate self)) (p:+ (offset (translate self)) point-or-number)))
 
 (defmethod rotate-by ((self angle-axis-transform) a)
   (setf (angle (rotate self)) (+ (angle (rotate self)) a)))
 
 (defmethod scale-by ((self angle-axis-transform) p)
-  (setf (scaling (scale self)) (p* (scaling (scale self)) p)))
+  (setf (scaling (scale self)) (p:* (scaling (scale self)) p)))
 
 (defmethod scale-by ((self angle-axis-transform) (s number))
   (setf (scaling (scale self)) (p* (scaling (scale self)) s)))
@@ -180,13 +182,13 @@
   (setf (scaling (scale self)) (p! 1.0 1.0 1.0)))
 
 (defmethod partial-translate ((self angle-axis-transform) factor)
-  (p* (offset (translate self)) factor))
+  (p:scale    (offset (translate self)) factor))
 
 (defmethod partial-rotate ((self angle-axis-transform) factor)
   (* (angle (rotate self)) factor))
 
 (defmethod partial-scale ((self angle-axis-transform) factor)
-  (p-lerp factor (p! 1.0 1.0 1.0) (scaling (scale self))))
+  (p:lerp (p! 1.0 1.0 1.0) (scaling (scale self)) factor))
 
 (defmethod partial-copy ((dst angle-axis-transform) (src angle-axis-transform) factor)
   (setf (offset (translate dst)) (partial-translate src factor))
@@ -211,5 +213,4 @@
                                         (operators self)))))
         (apply #'matrix-multiply-n mtx-list))
       (make-id-matrix)))
-
 

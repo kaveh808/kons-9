@@ -8,7 +8,7 @@
 (defconstant noise-p3 337.0)
 (defconstant noise-phi 0.6180339)
 
-(defvar *noise-pts* (make-array noise-numpts :element-type 'float))
+(defvar *noise-pts* (make-array noise-numpts :element-type 'float :initial-element 0.0))
 
 (defun init-noise ()
   (dotimes (i noise-numpts)
@@ -17,9 +17,9 @@
 (init-noise)
 
 (defun noise (p)
-  (let* ((x (x p))
-         (y (y p))
-         (z (z p))
+  (let* ((x (p:x p))
+         (y (p:y p))
+         (z (p:z p))
 
          (xi (floor x))
          (yi (floor y))
@@ -95,20 +95,20 @@
   (let ((sum 0.0)
         (scale 1.0))
     (dotimes (i n-octaves)
-      (incf sum (/ (noise (p* p scale)) (* scale 2)))
+      (incf sum (/ (noise (p:scale p scale)) (* scale 2)))
       (setf scale (* scale 2)))
     sum))
 
 (defun noise-gradient (p &optional (delta 0.01))
-  (let* ((x (x p))
-         (y (y p))
-         (z (z p))
+  (let* ((x (p:x p))
+         (y (p:y p))
+         (z (p:z p))
          (dx (- (noise (p! (+ x delta) y z)) (noise (p! (- x delta) y z))))
          (dy (- (noise (p! x (+ y delta) z)) (noise (p! x (- y delta) z))))
          (dz (- (noise (p! x y (+ z delta))) (noise (p! x y (- z delta))))))
     (p! dx dy dz)))
 
 (defun color-noise (p &optional (delta 0.01))
-  (let ((pn (p-normalize (noise-gradient p delta))))
-    (c! (abs (x pn)) (abs (y pn)) (abs (z pn)))))
+  (let ((pn (p:normalize (noise-gradient p delta))))
+    (c! (abs (p:x pn)) (abs (p:y pn)) (abs (p:z pn)))))
 

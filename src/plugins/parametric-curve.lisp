@@ -16,7 +16,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
 ;;; cubic-parametric-curve class ===============================================
 
 ;;; this shape is defined by a list of points (vertices)
-(defclass cubic-parametric-curve (polygon)
+(defclass cubic-parametric-curve (curve)
   ((cv0 :accessor cv0 :initarg :cv0 :initform (p! 0 0 0))
    (cv1 :accessor cv1 :initarg :cv1 :initform (p! 0 0 0))
    (cv2 :accessor cv2 :initarg :cv2 :initform (p! 0 0 0))
@@ -24,7 +24,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
    (num-segments :accessor num-segments :initarg :num-segments :initform 16)
    (show-control-hull? :accessor show-control-hull? :initarg :show-control-hull? :initform t))
   (:default-initargs
-   :is-closed-polygon? nil))
+   :is-closed-curve? nil))
 
 (defmethod copy-instance-data ((dst cubic-parametric-curve) (src cubic-parametric-curve))
   (error "COPY-INSTANCE-DATA not implemented for PARAMETRIC-CURVE"))
@@ -50,18 +50,18 @@ NOTE: This won't work with the existing procedural mixin set up, because
     (setf (points curve) (make-array (1+ num-segs)))
     (dotimes (i (1+ num-segs))
       (let* ((u (tween i 0.0 num-segs))) ;0-1 range
-        (setf (aref (points curve) i) (p! (+ (* (x cv0) (expt (- 1.0 u) 3))
-                                             (* (x cv1) 3 u (expt (- 1.0 u) 2))
-                                             (* (x cv2) 3 u u (- 1.0 u))
-                                             (* (x cv3) (expt u 3)))
-                                          (+ (* (y cv0) (expt (- 1.0 u) 3))
-                                             (* (y cv1) 3 u (expt (- 1.0 u) 2))
-                                             (* (y cv2) 3 u u (- 1.0 u))
-                                             (* (y cv3) (expt u 3)))
-                                          (+ (* (z cv0) (expt (- 1.0 u) 3))
-                                             (* (z cv1) 3 u (expt (- 1.0 u) 2))
-                                             (* (z cv2) 3 u u (- 1.0 u))
-                                             (* (z cv3) (expt u 3)))))))
+        (setf (aref (points curve) i) (p! (+ (* (p:x cv0) (expt (- 1.0 u) 3))
+                                             (* (p:x cv1) 3 u (expt (- 1.0 u) 2))
+                                             (* (p:x cv2) 3 u u (- 1.0 u))
+                                             (* (p:x cv3) (expt u 3)))
+                                          (+ (* (p:y cv0) (expt (- 1.0 u) 3))
+                                             (* (p:y cv1) 3 u (expt (- 1.0 u) 2))
+                                             (* (p:y cv2) 3 u u (- 1.0 u))
+                                             (* (p:y cv3) (expt u 3)))
+                                          (+ (* (p:z cv0) (expt (- 1.0 u) 3))
+                                             (* (p:z cv1) 3 u (expt (- 1.0 u) 2))
+                                             (* (p:z cv2) 3 u u (- 1.0 u))
+                                             (* (p:z cv3) (expt u 3)))))))
     curve))
 
 (defun make-bezier-curve (cv0 cv1 cv2 cv3 &optional (num-segments 16))
@@ -72,7 +72,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
 ;;; parametric-curve shape functions ----------------------------------------------------
 
 ;;; just a fun mathematical curve
-(defun make-butterfly-curve-polygon (num-segments)
+(defun make-butterfly-curve (num-segments)
   (let ((points (make-array num-segments))
         (angle-delta (/ (* 12 pi) num-segments)))
     (dotimes (i num-segments)
@@ -83,5 +83,5 @@ NOTE: This won't work with the existing procedural mixin set up, because
               (p! (* (sin angle) radius)
                   (* (cos angle) radius)
                   0))))
-    (make-polygon points)))
+    (make-curve points)))
 

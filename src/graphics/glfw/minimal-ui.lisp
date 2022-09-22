@@ -119,20 +119,22 @@
   (when (scene view)
     (draw (scene view)))
   (3d-cleanup-render)
-  (when *display-ground-plane?*
-    (draw-ground-plane))
   (when *display-axes?*
     (draw-world-axes))
+  (when *display-ground-plane?*
+    (draw-ground-plane))
 
   ;; display ui layer
-  (2d-setup-projection)
+
+  (2d-setup-projection (first *window-size*) (second *window-size*))
+  (draw-scene-view-ui view)
 
   (progn
     (text-engine-begin-frame)
-  (draw-scene-view-ui view)
-;    (test-text)
+    (test-text)
     (text-engine-end-frame)
     )
+
   (3d-flush-render))
 
 (defmethod draw-scene-view-ui ((view scene-view))
@@ -333,9 +335,9 @@
   ;; Normally this is called by run function in kernel/main.lisp
 
   (handler-bind ((error
-                  (lambda (condition)
-                    (trivial-backtrace:print-backtrace condition)
-                    (return-from show-window))))
+                   (lambda (condition)
+                     (trivial-backtrace:print-backtrace condition)
+                     (return-from show-window))))
     (sb-int:with-float-traps-masked
         (:invalid
          :inexact
@@ -349,29 +351,35 @@
 
         (let ((scene-view (make-instance 'scene-view :scene scene)))
 
-           ;; Hack! Need to figure out how to tie a scene-view to a window
-           ;; in glfw3. For now, just set the first scene-view created
-           ;; as default and use that for event handling
-           (setf *default-scene-view* scene-view)
+          ;; Hack! Need to figure out how to tie a scene-view to a window
+          ;; in glfw3. For now, just set the first scene-view created
+          ;; as default and use that for event handling
+          (setf *default-scene-view* scene-view)
 
-           (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
-           (glfw:set-key-callback 'key-callback)
-           (glfw:set-mouse-button-callback 'mouse-callback)
-           (glfw:set-cursor-position-callback 'cursor-position-callback)
-           (glfw:set-window-position-callback 'window-position-callback)
-           (glfw:set-window-size-callback 'window-size-callback)
-           (setf *window-size* (glfw:get-window-size))
-;;           (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
-           (update-gl-3d-viewport)
-           (update-window-title glfw:*window*)
-	   (initial-text-engine-setup)
-           (loop until (glfw:window-should-close-p)
-                 do (draw-scene-view *default-scene-view*)
-                 do (glfw:swap-buffers)
-                 do (glfw:poll-events)))))))
+          ;; assume monitor scale is same in x and y, just use first value
+          ;; also assume we are running on the "primary" monitor
+          (setf (monitor-scale *drawing-settings*)
+                (first (glfw:get-monitor-content-scale (glfw:get-primary-monitor))))
+          (set-lines-thin)
+
+          (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
+          (glfw:set-key-callback 'key-callback)
+          (glfw:set-mouse-button-callback 'mouse-callback)
+          (glfw:set-cursor-position-callback 'cursor-position-callback)
+          (glfw:set-window-position-callback 'window-position-callback)
+          (glfw:set-window-size-callback 'window-size-callback)
+          (setf *window-size* (glfw:get-window-size))
+          ;;           (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
+          (update-gl-3d-viewport)
+          (update-window-title glfw:*window*)
+          (initial-text-engine-setup)
+          (loop until (glfw:window-should-close-p)
+                do (draw-scene-view *default-scene-view*)
+                do (glfw:swap-buffers)
+                do (glfw:poll-events)))))))
 
 (defmacro with-clear-scene (&body body)
   `(progn
-     (clear-scene *scene*)
+     (clear-scene (scene *default-scene-view*))
      ,@body))
 

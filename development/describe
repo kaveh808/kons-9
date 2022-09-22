@@ -1,0 +1,172 @@
+#!/bin/sh
+
+# Describe workstation setup to ease information sharing with developers
+
+main()
+{
+    describe_uname
+    describe_system
+    describe_architecture
+    describe_date
+    describe_sbcl
+    describe_brew
+    describe_macports
+    describe_quicklisp
+}
+
+describe_uname()
+{
+    uname=$(uname)
+    printf 'Uname: %s\n' "${uname}"
+}
+
+describe_system()
+{
+    local script
+    case "${uname}" in
+	Linux|Darwin)
+	    script=$(describe_system__${uname})
+	    eval "${script}"
+	    ;;
+	*)
+	    system='Undescriptible System'
+    esac
+    printf 'System: %s\n' "${system}"
+}
+
+describe_system__Linux()
+(
+    if [ -r /etc/os-release ]; then
+	. /etc/os-release
+	printf 'system="%s %s"' "${NAME} ${VERSION}"
+    else
+	printf 'system="Undescriptible Linux"'
+    fi
+)
+
+describe_system__Darwin()
+{
+    system_profiler SPSoftwareDataType | sed -n\
+      -e '/System Version/{
+s/.*macOS //;
+s/ .*//;
+s/\(^12[.].*\)/\1 (Monterey)/;
+s/\(^11[.].*\)/\1 (BigSur)/;
+s/\(^10[.].*\)/\1 (Catalina)/;
+s/^/macOS /;
+s/\(.*\)/system="\1"/
+p
+}'
+}
+
+describe_architecture()
+{
+    architecture=$(uname -m)
+    printf 'Architecture: %s\n' "${architecture}"
+}
+
+describe_date()
+{
+    date=$(date)
+    printf 'Date: %s\n' "${date}"
+}
+
+describe_sbcl()
+{
+    sbcl_pathname=$(find_program sbcl)
+    case "${sbcl_pathname}" in
+	:NOT-FOUND)
+	    sbcl_version=':NOT-FOUND'
+	    ;;
+	*)
+	    sbcl_version=$(${sbcl_pathname} --version)
+	    sbcl_description=$(printf '%s (%s)' "${sbcl_pathname}" "${sbcl_version}")
+	    ;;
+    esac
+    printf 'SBCL: %s\n' "${sbcl_description}"
+}
+
+describe_brew()
+{
+    brew_pathname=$(find_program brew)
+    printf 'Brew: %s\n' "${brew_pathname}"
+}
+
+describe_macports()
+{
+    macports_pathname=$(find_program port)
+    printf 'MacPorts: %s\n' "${macports_pathname}"
+}
+
+describe_quicklisp()
+{
+    quicklisp_installed_p=$(quicklisp_installed_p)
+    printf 'QuickLisp: %s\n' "${quicklisp_installed_p}"
+}
+
+quicklisp_installed_p()
+{
+    local snippet lisp
+    snippet="(progn (write (and (member :quicklisp *features*) t)) (quit))"
+    lisp=$(pick_lisp)
+    case "${lisp}" in
+	*sbcl*)
+	    "${lisp}" --noinform --eval "${snippet}"
+	    ;;
+	:NOT-FOUND)
+	    printf 'NIL'
+	    ;;
+    esac
+}
+
+pick_lisp()
+{
+    local lisp_candidate
+    for lisp_candidate in ${sbcl_pathname}; do
+	if [ ! "${lisp_candiate}" = ":NOT-FOUND" ]; then
+	    printf '%s' "${lisp_candidate}"
+	    return
+	fi
+    done
+    printf ':NOT-FOUND'
+}
+
+find_program_1()
+{
+    local needle program IFS
+
+    needle="$1"
+    program=':NOT-FOUND'
+    IFS=':'
+
+    set -- ${PATH}
+    
+    while [ "${program}" = ':NOT-FOUND' ]; do
+	if [ $# -eq 0 ]; then
+	    break
+	fi
+	if [ -x "$1/${needle}" ]; then
+	    program="$1/${needle}"
+	fi
+	shift
+    done
+    printf '%s' "${program}"
+}
+
+find_program()
+{
+    local needle program
+
+    program=':NOT-FOUND'
+    while [ "${program}" = ':NOT-FOUND' ]; do
+	if [ $# -eq 0 ]; then
+	    break
+	fi
+	program=$(find_program_1 "$1")
+	shift
+    done
+    printf '%s' "${program}"
+}
+
+
+main "$@"

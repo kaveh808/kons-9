@@ -71,25 +71,25 @@ classes.
   (add-shape *scene* (make-point-cloud (make-random-points 500 (p! -3 -3 -3) (p! 3 3 3)))))
 
 #|
-(Demo 04 kernel) polygons ======================================================
+(Demo 04 kernel) curves ========================================================
 
-The POLYGON class represents open or closed paths in 3D space.
+The CURVE class represents open or closed paths in 3D space.
 |#
 (with-clear-scene
-  (add-shape *scene* (translate-to (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -6.0)))
-  (add-shape *scene* (translate-to (make-rectangle-polygon 2 1 4) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-square-polygon 1.5) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 2.0 16) (p! 0 0 0.0)))
-  (add-shape *scene* (translate-to (make-arc-polygon 2.0 0 pi 16) (p! 0 0 2.0)))
-  (add-shape *scene* (translate-to (make-sine-curve-polygon 360 1 2 1 16) (p! 0 0 4.0)))
-  (add-shape *scene* (translate-to (make-spiral-polygon .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
+  (add-shape *scene* (translate-to (make-line-curve (p! 0 0 0) (p! 2 2 2) 8) (p! 0 0 -6.0)))
+  (add-shape *scene* (translate-to (make-rectangle-curve 2 1 4) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-square-curve 1.5) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 2.0 16) (p! 0 0 0.0)))
+  (add-shape *scene* (translate-to (make-arc-curve 2.0 0 90 16) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-sine-curve-curve 360 1 2 1 16) (p! 0 0 4.0)))
+  (add-shape *scene* (translate-to (make-spiral-curve .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
 
 (with-clear-scene
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  6) (p! 0 0 -2.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  5) (p! 0 0  0.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  4) (p! 0 0  2.0)))
-  (add-shape *scene* (translate-to (make-circle-polygon 3.0  3) (p! 0 0  4.0))))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  7) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  6) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  5) (p! 0 0  0.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  4) (p! 0 0  2.0)))
+  (add-shape *scene* (translate-to (make-circle-curve 3.0  3) (p! 0 0  4.0))))
 
 #|
 (Demo 05 kernel) polyhedral objects ============================================
@@ -489,7 +489,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
   (set-timing anim-2 2/3 1/3))
 
 #|
-Set the indidual animators' timings to full and half durations.
+Modify the animators' timings.
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
@@ -497,8 +497,8 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
-  (set-timing anim-0 0.0 1.0)
-  (set-timing anim-1 0.0 0.5)
+  (scale-duration anim-0 3.0)           ;duration = 1
+  (offset-start-time anim-1 -1/3)       ;start-time = 0
   (set-timing anim-2 0.5 0.5))
 
 #|
@@ -507,6 +507,28 @@ Set the motion group's duration to be full scene duration.
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
 (setf (duration (first (motions *scene*))) 1.0)
+
+#|
+Modify the animators' timings using the parent motion-group's ordering methods.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+(let ((group (first (motions *scene*))))
+  (sequential-order group))
+
+(let ((group (first (motions *scene*))))
+  (parallel-order group))
+
+(let ((group (first (motions *scene*))))
+  (random-order group 0.25 0.5))
+
+(let* ((anims (children (first (motions *scene*))))
+       (anim-0 (nth 0 anims))
+       (anim-1 (nth 1 anims))
+       (anim-2 (nth 2 anims)))
+  (print anim-0)
+  (print anim-1)
+  (print anim-2))
 
 #|
 (Demo 14 kernel) scene motion management ======================================
@@ -553,7 +575,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                       :shape dodecahedron
                                       :setup-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
                                       :update-fn (lambda (anim)
-                                                   (let ((target-y (y (offset (translate (transform (anim-data anim :target)))))))
+                                                   (let ((target-y (p:y (offset (translate (transform (anim-data anim :target)))))))
                                                      (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
                                       :data `((:target . ,tetrahedron))))))
 
@@ -706,7 +728,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                :scene *scene*
                                :update-fn (lambda ()
                                             (dolist (anim (children motion-group))
-                                              (let ((angle (y (angles (rotate (transform (shape anim)))))))
+                                              (let ((angle (p:y (angles (rotate (transform (shape anim)))))))
                                                 (when (> (abs angle) 45)
                                                   (scale-to (shape anim) 0.5)
                                                   (setf (is-active? anim) nil)))))))))
@@ -717,7 +739,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 Display shape bounds, face-normals, and axes.
 |#
 (with-clear-scene
-    (let ((circle (translate-to (make-circle-polygon 3.0  7) (p! 0 0 -4.0)))
+    (let ((circle (translate-to (make-circle-curve 3.0  7) (p! 0 0 -4.0)))
           (sphere (translate-by (make-cube-sphere 2.0 3) (p! 0 0 4.0)))
           (icos (make-icosahedron 2.0)))
       (setf (show-axis circle) 1.0)
@@ -760,5 +782,61 @@ and resets the transform.
   (format t "After freeze: ~a~%" (points *cube*)))
 
 #|
+(Demo 22 kernel) using animation class to instance motions =====================
+
+[TODO -- work in progress.]
+
+We package an animation in an ANIMATION class. This animation can then be
+instanced in a scene by automatically creating new GROUPs and MOTION-GROUPs for
+the shapes and animators.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+
+(with-clear-scene
+  (let* ((shape (scale-to (make-cube 0.5) (p! 2 1 .2)))
+         (animator (make-instance
+                    'shape-animator
+                    :scene *scene*
+                    :shape shape
+                    :setup-fn (lambda (anim)
+                                (rotate-to (shape anim) (p! 0 0 0)))
+                    :update-fn (lambda (anim)
+                                 (rotate-to (shape anim)
+                                            (p! 0 (* 90 (local-time anim)) 0)))))
+         (animation (make-instance 'animation :shape shape :shape-animator animator))
+         (top-shape-group (make-instance 'group))
+         (top-motion-group (make-instance 'motion-group))
+         (points (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))
+    (dotimes (i (length points))
+      (add-animation-to-scene animation top-shape-group top-motion-group :mode :add-as-instance))
+    (scatter-shapes (children top-shape-group) points)
+    (add-shape *scene* top-shape-group)
+    (add-motion *scene* top-motion-group)
+    (setf (end-frame *scene*) 120)))
+
+#|
+Set the timings of the animation instances.
+
+Hold down space key to play animation. Press 'a' key to go back to frame 0.
+|#
+
+(let ((group (first (motions *scene*))))
+  (sequential-order group))
+
+(let ((group (first (motions *scene*))))
+  (parallel-order group))
+
+(let ((group (first (motions *scene*))))
+  (random-order group 0.25 0.5))
+
+#|
+(let ((motion-group-instances (children (first (motions *scene*)))))
+  (dolist (motion motion-group-instances)
+    (print motion)))
+|#
+
+#|
 END ============================================================================
 |#
+

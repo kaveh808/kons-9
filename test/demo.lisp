@@ -1,7 +1,7 @@
 (in-package #:kons-9)
 
-
 ;;;; start plugins demos =======================================================
+
 
 (format t "  heightfields...~%") (finish-output)
 
@@ -21,7 +21,7 @@
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (let* ((p (p! x 0 z))
-                                                (mag (p-mag (p* p .25))))
+                                                (mag (p:length (p:scale p .25))))
                                            (if (= mag 0.0)
                                                10.0
                                                (/ 1.0 mag)))))))
@@ -30,16 +30,16 @@
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
                                        (lambda (x z)
                                          (let* ((p (p! x 0 z))
-                                                (mag (max 0.001 (p-mag (p* p 4)))))
+                                                (mag (max 0.001 (p:length (p:scale p 4.0)))))
                                            (* 3 (/ (sin mag) mag)))))))
 
 ;;; rainbow color based on height
 (let ((mesh (first (shapes *scene*))))
-  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (y p) -.25 1.0) 0.0 1.0)))))
+  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:y p) -.25 1.0) 0.0 1.0)))))
 
 ;;; rainbow color based on XZ distance from origin
 (let ((mesh (first (shapes *scene*))))
-  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0)))))
+  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0)))))
 
 ;;; 3D color noise
 (let ((mesh (first (shapes *scene*))))
@@ -48,12 +48,12 @@
 ;;; animated heightfield -------------------------------------------------------
 (with-clear-scene
   (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5) nil)))
-    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p-mag (p! (x p) 0 (z p))) 0 8) 0.0 1.0))))
+    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0))))
     (add-shape *scene* mesh)
     (macrolet ((my-height-fn (scale)
                  `(lambda (x z)
                     (let* ((p (p! x 0 z))
-                           (mag (max 0.001 (p-mag (p* p ,scale)))))
+                           (mag (max 0.001 (p:length (p:scale p ,scale)))))
                       (* 3 (/ (sin mag) mag))))))
       (add-motion *scene*
                     (make-instance 'animator
@@ -89,13 +89,13 @@
                                             (setf (e1 mesh) 1.0)
                                             (setf (e2 mesh) 1.0))
                                  :update-fn (lambda ()
-                                              (let ((p (p-normalize
+                                              (let ((p (p:normalize
                                                         (noise-gradient
                                                          (p! (+ (current-time *scene*) 0.123)
                                                              (+ (current-time *scene*) 0.347)
                                                              (+ (current-time *scene*) 0.965))))))
-                                              (setf (e1 mesh) (* (abs (x p)) 2.0))
-                                              (setf (e2 mesh) (* (abs (y p)) 2.0))))))))
+                                              (setf (e1 mesh) (* (abs (p:x p)) 2.0))
+                                              (setf (e2 mesh) (* (abs (p:y p)) 2.0))))))))
 
 ;;; parametric-curve -----------------------------------------------------------
 
@@ -105,7 +105,7 @@
   (add-shape *scene* (make-bezier-curve (p! -2 0 0) (p! -1 2 0) (p! 1 1 0) (p! 2 0 0))))
 
 (with-clear-scene
-  (add-shape *scene* (make-butterfly-curve-polygon 1024)))
+  (add-shape *scene* (make-butterfly-curve 1024)))
 
 ;;; poly-mesh ------------------------------------------------------------------
 (with-clear-scene
@@ -119,7 +119,7 @@
   (select-edge (first (shapes *scene*)) 11)
   (select-edge (first (shapes *scene*)) 10))
 ;;; select faces
-(progn
+(progn   ;;Fixme?  selected faces shouldn't change due to lighting or shading
   (select-face (first (shapes *scene*)) 2)
   (select-face (first (shapes *scene*)) 5))
 
@@ -386,7 +386,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (setf (num-steps (first (shapes *scene*))) 4)
 
 ;;; uv-mesh transform-instancer 2 ----------------------------------------------
-(with-clear-scene
+(with-clear-scene 
   (let* ((path (make-sine-curve 360 1 4 1 32))
          (prof (make-circle 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0))))
@@ -440,7 +440,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (add-shape *scene* p-gen)
+    (add-shape *scene* p-gen)       
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
@@ -547,7 +547,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; for automated testing
 (update-scene *scene* 5)
 
-;;; do sweep-extrude
+;;; do sweep-extrude  
 (let ((group (make-group (sweep-extrude (make-circle 0.25 4)
                                         (first (shapes *scene*))
                                         :taper 0.0))))

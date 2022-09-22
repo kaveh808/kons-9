@@ -33,7 +33,7 @@ Some functions which generate basic shapes.
 A transform extrude transforms a profile POLYGON and sweeps out a UV-MESH.
 |#
 (with-clear-scene
-  (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-polygon 2 2 2)
+  (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-curve 2 2 2)
                                                 (make-euler-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
                                                 16)))
 
@@ -43,7 +43,7 @@ A transform extrude transforms a profile POLYGON and sweeps out a UV-MESH.
 Another example of a transform extrude.
 |#
 (with-clear-scene
-  (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+  (add-shape *scene* (transform-extrude-uv-mesh (make-circle-curve 2.0 16)
                                                 (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
                                                 40)))
 
@@ -56,7 +56,7 @@ A transform extrude with a rotate pivot.
   (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
     (setf (pivot (rotate xform)) (p! 1 0 0))
 ;;    (setf (operator-order xform) :trs) ;comment out to test effect of operator order
-    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-curve 2.0 16)
                                                   xform
                                                   40))))
 
@@ -68,7 +68,7 @@ A transform extrude with a scale pivot.
 (with-clear-scene
   (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
     (setf (pivot (scale xform)) (p! 1 2 0))
-    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-curve 2.0 16)
                                                   xform
                                                   40))))
 
@@ -85,19 +85,19 @@ Using a GENERALIZED-TRANSFORM. Should exactly match (Demo 05 uv-mesh).
                                     (make-instance 'scale-operator
                                                    :scaling (p! 2 .2 1)
                                                    :pivot (p! 1 2 0))))))
-    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-polygon 2.0 16)
+    (add-shape *scene* (transform-extrude-uv-mesh (make-circle-curve 2.0 16)
                                                   xform
                                                   40))))
 
 #|
 (Demo 07 uv-mesh) sweep-extrude-uv-mesh ========================================
 
-A sweep extrude operation creates a UV-MESH by sweeping a profile POLYGON along
-a path POLYGON. The profile and path can be open or closed.
+A sweep extrude operation creates a UV-MESH by sweeping a profile CURVE along
+a path CURVE. The profile and path can be open or closed.
 |#
-(with-clear-scene
-  (let* ((path (make-sine-curve-polygon 360 1 4 2 64))
-         (prof (make-circle-polygon 1.0 4))
+(with-clear-scene 
+  (let* ((path (make-sine-curve-curve 360 1 4 2 64))
+         (prof (make-circle-curve 1.0 4))
          (mesh (sweep-extrude-uv-mesh prof path :twist (* 2 pi) :taper 0.0)))
     (add-shape *scene* mesh)))
 #|
@@ -109,17 +109,17 @@ Assign point colors to the UV-MESH by uv.
 Assign point colors to the UV-MESH by xyz.
 |#
 (set-point-colors-by-xyz (first (shapes *scene*))
-                         (lambda (p) (c-rainbow (clamp (tween (y p) -2 2) 0.0 1.0))))
+                         (lambda (p) (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))
 
 #|
 (Demo 08 uv-mesh) function-extrude-uv-mesh ====================================
 
-A function extrude operation sweeps out a profile POLYGON using a function to
+A function extrude operation sweeps out a profile CURVE using a function to
 allow for more general procedural modeling.
 |#
 (with-clear-scene
   (add-shape *scene* (function-extrude-uv-mesh
-                      (make-circle-polygon 2.0 16)
+                      (make-circle-curve 2.0 16)
                       (lambda (points factor)
                        (map 'vector (lambda (p)
                                       (p+ (p-jitter p (* .2 factor)) (p! 0 0 (* 4 factor))))
@@ -133,7 +133,7 @@ Another example of a function extrude.
 |#
 (with-clear-scene
   (add-shape *scene* (function-extrude-uv-mesh
-                      (make-circle-polygon 2.0 16)
+                      (make-circle-curve 2.0 16)
                       (lambda (points factor)
                        (map 'vector (lambda (p)
                                       (p+ (p* p (sin (* pi factor)))

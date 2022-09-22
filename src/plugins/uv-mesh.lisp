@@ -154,11 +154,11 @@
 					 (setf i2 i))))
 	      (t (progn (setf i1 (1- i))
 			(setf i2 (1+ i))))))
-    (p-normalize (p- (nth i2 points) (nth i1 points)))))
+    (p:normalize (p:- (nth i2 points) (nth i1 points)))))
 
 (defun curve-remove-consecutive-duplicates (curve)
     (if (and curve (> (length curve) 1))
-        (if (p= (car curve) (cadr curve))
+        (if (p:= (car curve) (cadr curve))
             (curve-remove-consecutive-duplicates (cons (car curve) (cddr curve)))
             (cons (car curve) (curve-remove-consecutive-duplicates (cdr curve))))
         curve))
@@ -167,7 +167,8 @@
 ;;; TODO -- optimize, remove coerce of points to list and then array
 (defmethod sweep-extrude-aux ((mesh uv-mesh) profile-points is-closed-profile? path-points is-closed-path?
                               &key (twist 0.0) (taper 1.0) (from-end? nil))
-  (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))); fix this
+  (declare (optimize debug))
+  (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))) ; fix this
     (when (or (< (length profile-points) 2)
               (< (length unique-path-points) 2))
       (return-from sweep-extrude-aux (make-instance 'uv-mesh))) ;return empty mesh -- throw error?
@@ -188,24 +189,24 @@
             :for v :from 0
             :do (let* ((factor (tween v 0.0 (- (v-dim mesh) 1)))
                        (tangent (curve-tangent v path-points-2 (v-wrap mesh))))
-                  (when (p= tangent +origin+) ;heuristic to avoid null tangent in P0-P1-P0 case
+                  (when (p:= tangent +origin+) ;heuristic to avoid null tangent in P0-P1-P0 case
                     (setf tangent prev-tangent))
-                  (let* ((r1-mtx (make-axis-rotation-matrix (p-angle prev-tangent tangent)
-                                                            (p-cross prev-tangent tangent)
+                  (let* ((r1-mtx (make-axis-rotation-matrix (p-angle prev-tangent tangent) ;p:angle barfs if tangents are equal, should tangents be equal?
+                                                            (p:cross prev-tangent tangent)
                                                             p1))
                          (r2-mtx (make-axis-rotation-matrix (* delta twist) tangent p1))
-                         (t-mtx (make-translation-matrix (p- p1 p0)))
+                         (t-mtx (make-translation-matrix (p:- p1 p0)))
                          (mtx (matrix-multiply-n t-mtx r1-mtx r2-mtx)))
                     (transform-point-list! points mtx)
                     (setf prev-tangent tangent)
                     (setf p0 p1)
                     (let ((scaled-points (copy-points points))
-                          (s-mtx (make-scale-matrix (p-lerp factor (p! 1 1 1) (p! taper taper taper))
+                          (s-mtx (make-scale-matrix (p:lerp (p! 1 1 1) (p! taper taper taper) factor)
                                                     p1)))
                       (transform-point-list! scaled-points s-mtx)		      
                       (loop :for p2 :in scaled-points
                             :for u :from 0
-                            :do (setf (aref (uv-point-array mesh) u v) (p-copy p2)))))))
+                            :do (setf (aref (uv-point-array mesh) u v) (p:copy p2)))))))
       (compute-polyhedron-data mesh))))
 
 ;;; TODO -- cleanup
@@ -227,15 +228,16 @@
 
 ;;; TODO -- fix coerce to list
 (defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil))
+  (declare (optimize debug))
   (sweep-extrude-aux (make-instance 'uv-mesh)
-                     (coerce (points profile) 'list) (is-closed-polygon? profile)
-                     (points path) (is-closed-polygon? path)
-                     :twist twist :taper taper :from-end? from-end?))
+                        (coerce (points profile) 'list) (is-closed-curve? profile)
+                        (points path) (is-closed-curve? path)
+                        :twist twist :taper taper :from-end? from-end?))
 
 (defun transform-extrude-uv-mesh (profile transform num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
 				      :v-dim (if v-wrap num-steps (1+ num-steps))
-				      :u-wrap (is-closed-polygon? profile)
+				      :u-wrap (is-closed-curve? profile)
 				      :v-wrap v-wrap
                                       :u-cap u-cap
                                       :v-cap v-cap)))
@@ -250,7 +252,7 @@
 (defun function-extrude-uv-mesh (profile function num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))
 				      :v-dim (if v-wrap num-steps (1+ num-steps))
-				      :u-wrap (is-closed-polygon? profile)
+				      :u-wrap (is-closed-curve? profile)
 				      :v-wrap v-wrap
                                       :u-cap u-cap
                                       :v-cap v-cap)))
@@ -265,34 +267,34 @@
 ;;; uv-mesh shape functions ----------------------------------------------------
 
 (defun make-grid-uv-mesh (x-size z-size x-segments z-segments)
-  (sweep-extrude-uv-mesh (make-line-polygon (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
-                         (make-line-polygon (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
+  (sweep-extrude-uv-mesh (make-line-curve (p! (/ x-size 2) 0 0) (p! (- (/ x-size 2)) 0 0) x-segments)
+                         (make-line-curve (p! 0 0 (- (/ z-size 2))) (p! 0 0 (/ z-size 2)) z-segments)))
 
 (defun make-cylinder-uv-mesh (diameter height radial-segments height-segments &key (taper 1.0))
-  (sweep-extrude-uv-mesh (make-circle-polygon diameter radial-segments)
-                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+  (sweep-extrude-uv-mesh (make-circle-curve diameter radial-segments)
+                         (make-line-curve (p! 0 0 0) (p! 0 height 0) height-segments)
                          :taper taper))
 
 (defun make-cone-uv-mesh (diameter height radial-segments height-segments)
   (make-cylinder-uv-mesh diameter height radial-segments height-segments :taper 0.0))
 
 (defun make-rect-prism-uv-mesh (base-side height base-segments height-segments &key (taper 1.0))
-  (sweep-extrude-uv-mesh (make-square-polygon base-side base-segments)
-                         (make-line-polygon (p! 0 0 0) (p! 0 height 0) height-segments)
+  (sweep-extrude-uv-mesh (make-square-curve base-side base-segments)
+                         (make-line-curve (p! 0 0 0) (p! 0 height 0) height-segments)
                          :taper taper))
 
 (defun make-pyramid-uv-mesh (base-side height base-segments height-segments)
   (make-rect-prism-uv-mesh base-side height base-segments height-segments :taper 0.0))
 
 (defun make-torus-uv-mesh (inner-diameter outer-diameter inner-segments outer-segments)
-  (sweep-extrude-uv-mesh (make-circle-polygon inner-diameter inner-segments)
-                         (make-circle-polygon outer-diameter outer-segments)))
+  (sweep-extrude-uv-mesh (make-circle-curve inner-diameter inner-segments)
+                         (make-circle-curve outer-diameter outer-segments)))
 
 (defun make-sphere-uv-mesh (diameter latitude-segments longitude-segments)
   (let ((xform (make-euler-transform (p! 0 0 0)
                                      (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0)
                                      (p! 1 1 1))))
-    (transform-extrude-uv-mesh (make-arc-polygon diameter 0 -180 latitude-segments)
+    (transform-extrude-uv-mesh (make-arc-curve diameter 0 -180 latitude-segments)
                                xform
                                longitude-segments
                                :v-wrap t
@@ -301,7 +303,7 @@
 ;;; version using function-extrude-uv-mesh
 (defun make-sphere-uv-mesh-2 (diameter latitude-segments longitude-segments)
   (let ((xform (make-instance 'transform :rotate (p! 0 (* 360 (/ (1- longitude-segments) longitude-segments)) 0))))
-    (function-extrude-uv-mesh (make-arc-polygon diameter latitude-segments 0 (- pi))
+    (function-extrude-uv-mesh (make-arc-curve diameter latitude-segments 0 (- pi))
                               (lambda (points f) (transform-points points (transform-matrix xform f)))
                               longitude-segments
                               :v-wrap t

@@ -1,5 +1,5 @@
 (in-package #:kons-9)
-
+(declaim (optimize debug))
 ;;;; shape =====================================================================
 
 (defclass shape (scene-item)
@@ -9,6 +9,7 @@
    (show-bounds? :accessor show-bounds? :initarg :show-bounds? :initform nil)))
 
 ;;; utility methods for transforming shapes
+
 (defmethod translate-by ((self shape) p)
   (translate-by (transform self) p)
   self)
@@ -33,6 +34,10 @@
   (scale-to (transform self) p)
   self)
 
+(defmethod scale-by ((self shape) (s number))
+  (scale-by (transform self) s)
+  self)
+
 (defmethod reset-transform ((self shape))
   (reset-transform (transform self))
   self)
@@ -46,15 +51,15 @@
       (get-bounds self)
     (when (and bounds-lo bounds-hi)
       (let ((center (p-average bounds-lo bounds-hi)))
-        (translate-to self (p-negate (p* center (scaling (scale (transform self))))))))))
+        (translate-to self (p:negate (p:* center (scaling (scale (transform self))))))))))
 
 (defmethod scale-to-size ((self shape) max-size)
   (multiple-value-bind (bounds-lo bounds-hi)
       (get-bounds self)
     (when (and bounds-lo bounds-hi)
-      (let* ((size (max (abs (- (x bounds-hi) (x bounds-lo)))
-                        (abs (- (y bounds-hi) (y bounds-lo)))
-                        (abs (- (z bounds-hi) (z bounds-lo)))))
+      (let* ((size (max (abs (- (p:x bounds-hi) (p:x bounds-lo)))
+                        (abs (- (p:y bounds-hi) (p:y bounds-lo)))
+                        (abs (- (p:z bounds-hi) (p:z bounds-lo)))))
              (scale (if (= size 0)
                         1.0
                         (/ max-size size))))
