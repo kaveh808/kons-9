@@ -4,6 +4,7 @@
 
 (defclass drawing-settings ()
   ((monitor-scale :accessor monitor-scale :initarg :monitor-scale :initform 1.0)
+   (default-font :accessor default-font :initarg :default-font :initform (asdf:system-relative-pathname "kons-9" "data/font/DejaVuSansMono.ttf"))
    (point-size :accessor point-size :initarg :point-size :initform 3.0)
    (line-thickness :accessor line-thickness :initarg :line-thickness :initform 1.0)
    (fg-color :accessor fg-color :initarg :fg-color :initform (c! 0 0 0))

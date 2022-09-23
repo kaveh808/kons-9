@@ -88,8 +88,8 @@
   (gl:tex-env :texture-env :gl-texture-env-mode last-tex-env-mode))
 
 (defun render-draw-lists (draw-lists display-pos-x display-pos-y display-size-x display-size-y)
-  (let ((fb-width (* display-size-x *framebuffer-scale*))
-	(fb-height (* display-size-y *framebuffer-scale*)))
+  (let ((fb-width (* display-size-x (monitor-scale *drawing-settings*)))
+	(fb-height (* display-size-y (monitor-scale *drawing-settings*))))
     
     (when (or (zerop fb-width) (zerop fb-height))
       (return-from render-draw-lists nil))
@@ -106,8 +106,8 @@
 
       (let ((clip-off-x display-pos-x)
 	    (clip-off-y display-pos-y)
-	    (clip-scale-x *framebuffer-scale*)
-	    (clip-scale-y *framebuffer-scale*))
+	    (clip-scale-x (monitor-scale *drawing-settings*))
+	    (clip-scale-y (monitor-scale *drawing-settings*)))
 	(unwind-protect (loop for draw-list in draw-lists
 			   do (render-draw-list draw-list fb-width fb-height clip-off-x clip-off-y clip-scale-x clip-scale-y))
 

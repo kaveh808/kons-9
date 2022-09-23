@@ -1,7 +1,5 @@
 (in-package :kons-9)
 
-(defparameter *framebuffer-scale* #+darwin 2 #-darwin 1) ;; as we know this is a false assumption.
-
 ;; these maybe be able to be gotten rid of at some point
 ;; I recall having a problem with the :texture-2d enum in cl-opengl not being right
 ;; maybe I'm trippin'
@@ -66,10 +64,7 @@
 (defconstant GL_STREAM_DRAW #x88E0)
 (defconstant GL_FRONT_AND_BACK #x0408)
 
-(defun ensure-font (&optional (pathname #+darwin #p"/System/Volumes/Data/Users/awolven/Library/Fonts/DejaVuSansMono.ttf"
-                                        #+linux #p"/usr/share/fonts/TTF/DejaVuSansMono.ttf"
-                                        #+windows #p"c:/Windows/Fonts/DejaVuSansMono.ttf")
-		      (ppem 12))
+(defun ensure-font (&optional (pathname (default-font *drawing-settings*)) (ppem 12))
   (multiple-value-bind (grayscale edge-size glyph-max-width glyph-max-height sprites) (pack-font pathname ppem)
 
     (let* ((texture)

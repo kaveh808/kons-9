@@ -302,8 +302,8 @@
 					  (load-time-value (cffi:foreign-slot-offset '(:struct standard-draw-list-vertex) 'red))))))))))
 
 (defun render-draw-lists (draw-lists display-pos-x display-pos-y display-size-x display-size-y)
-  (let ((fb-width (* display-size-x *framebuffer-scale*))
-	(fb-height (* display-size-y *framebuffer-scale*)))
+  (let ((fb-width (* display-size-x (monitor-scale *drawing-settings*)))
+	(fb-height (* display-size-y (monitor-scale *drawing-settings*))))
     
     (when (or (zerop fb-width) (zerop fb-height))
       (return-from render-draw-lists nil))
@@ -337,8 +337,8 @@
 	(let ((vertex-array-object (elt (gl:gen-vertex-arrays 1) 0))
 	      (clip-off-x display-pos-x)
 	      (clip-off-y display-pos-y)
-	      (clip-scale-x *framebuffer-scale*)
-	      (clip-scale-y *framebuffer-scale*))
+	      (clip-scale-x (monitor-scale *drawing-settings*))
+	      (clip-scale-y (monitor-scale *drawing-settings*)))
 	  
 	  (unwind-protect (loop for draw-list in draw-lists
 			     do (setup-render-state draw-list fb-width fb-height

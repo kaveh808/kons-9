@@ -127,11 +127,11 @@
   ;; display ui layer
 
   (2d-setup-projection (first *window-size*) (second *window-size*))
-  (draw-scene-view-ui view)
 
   (progn
     (text-engine-begin-frame)
-    (test-text)
+    (draw-scene-view-ui view)
+;    (test-text)
     (text-engine-end-frame)
     )
 

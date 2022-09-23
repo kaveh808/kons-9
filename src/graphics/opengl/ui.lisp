@@ -706,7 +706,7 @@
     (draw-rect-border (+ x x-offset) (+ y y-offset) w *ui-button-item-height*)
     ;; title
     (render-text (+ (ui-centered-text-x (title view) w) x x-offset)
-                 (+ 16 y y-offset) (title view) :color #x000000ff)))
+                 (+ 16 y y-offset) (title view))))
 
   
 (defmethod draw-ui-view ((view ui-view) &optional x-offset y-offset)
@@ -735,38 +735,38 @@
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (text view) :color #x000000ff))))
+        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (text view)))))
 
   (:method ((view ui-outliner-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (effective-text view) :color #x000000ff))))
+        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (effective-text view)))))
 
   (:method ((view ui-button-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view) :color #x000000ff)
+        (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
         (render-text (+ (ui-centered-text-x (text view) (ui-w view)) x x-offset)
-                     (+ 16 y y-offset) (text view) :color #x000000ff))))
+                     (+ 16 y y-offset) (text view)))))
 
   (:method ((view ui-menu-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view) :color #x000000ff)
-        (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view) :color #x000000ff))))
+        (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
+        (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view)))))
 
   (:method ((view ui-check-box-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view) :color #x000000ff)
+        (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view))
         (draw-rect-border (+ x x-offset 4) (+ y y-offset 4)
                           (- *ui-button-item-height* 8) (- *ui-button-item-height* 8))
         (when (is-pushed? view)
@@ -781,7 +781,7 @@
           view
         (let ((local-x (+ 5 x x-offset))
               (local-y (+ y y-offset)))
-          (render-text local-x (+ 16 local-y) (text view) :color #x000000ff)
+          (render-text local-x (+ 16 local-y) (text view))
           (draw-cursor (+ local-x (* *ui-font-width* (cursor-position view))) local-y)))))
 
   (:method :after ((view ui-group) &optional (x-offset 0) (y-offset 0))
