@@ -2,62 +2,65 @@
 
 ;;;; macros ====================================================================
 
-(defmacro ct-subtable (key title c-table-fn)
+(defmacro ct-subtable (key-binding title c-table-fn)
   `(add-entry table
-              ,key
+              ,key-binding
               (lambda () (push ,c-table-fn (command-tables *default-scene-view*)))
               (strcat "Show " ,title " menu")))
 
-(defmacro ct-make-shape (key help expr)
+(defmacro ct-make-shape (key-binding help expr)
   `(add-entry table
-              ,key
+              ,key-binding
               (lambda () (add-shape *scene* ,expr))
               (strcat "Create " ,help)))
 
-(defmacro ct-entry (key help &rest expr)
+(defmacro ct-entry (key-binding help &rest expr)
   `(add-entry table
-              ,key
+              ,key-binding
               (lambda () ,@expr)
               ,help))
 
 
 ;;;; command-table =============================================================
 
-(defclass command-table-entry ()
-  ((key :accessor key :initarg :key :initform nil)
-   (command-fn :accessor command-fn :initarg :command-fn :initform nil)
-   (help-string :accessor help-string :initarg :help-string :initform nil)))
+(defclass-kons-9 command-table-entry ()
+  ((key-binding nil)
+   (command-fn nil)
+   (help-string nil)))
 
-(defun make-command-table-entry (key func doc)
-  (make-instance 'command-table-entry :key key :command-fn func :help-string doc))
+(defun make-command-table-entry (key-binding func doc)
+  (make-instance 'command-table-entry :key-binding key-binding :command-fn func :help-string doc))
 
 ;;;; command-table =============================================================
 
-(defclass command-table ()
-  ((title :accessor title :initarg :title :initform nil)
-   (entries :accessor entries :initarg :entries :initform (make-array 0 :adjustable t :fill-pointer t))
-   (mouse-help-string :accessor mouse-help-string :initarg :mouse-help-string :initform nil)))
+(defclass-kons-9 command-table ()
+  ((title nil)
+   (entries (make-array 0 :adjustable t :fill-pointer t))
+   (mouse-help-string "Drag: orbit, [option/alt] track left/right and up/down, [control] track in/out.")))
+
 
 (defmethod initialize-instance :after ((table command-table) &rest initargs)
   (declare (ignore initargs))
-  (add-entry table
-             :h
-             (lambda () (print-command-table-help table))
-             "Print this help message."))
+  ;; (add-entry table
+  ;;            :h
+  ;;            (lambda () (print-command-table-help table))
+  ;;            "Print this help message."))
+  )
 
-(defmethod add-entry ((table command-table) key func doc)
-  (vector-push-extend (make-instance 'command-table-entry :key key :command-fn func :help-string doc)
+(defmethod add-entry ((table command-table) key-binding func doc)
+  (vector-push-extend (make-instance 'command-table-entry
+                                     :key-binding key-binding :command-fn func :help-string doc)
                       (entries table)))
-  
+
 (defmethod do-command ((table command-table) key-press)
-  (let* ((entry (find key-press (entries table) :test 'eq :key #'key))
+  (let* ((entry (find key-press (entries table) :test 'eq :key #'key-binding))
          (command-fn (if entry (command-fn entry) nil)))
     (when command-fn
       (funcall command-fn))))
 
 (defmethod print-command-table-help ((table command-table))
-  (format t "~%~a table key commands:~%" (title table))
+  (format t "~%~a table key-binding commands:~%" (title table))
   (when (mouse-help-string table)
     (format t "Mouse: ~a~%" (mouse-help-string table)))
   (loop for entry across (entries table)
-        do (format t "~a: ~a~%" (string-downcase (key entry)) (help-string entry))))
+        do (format t "~a: ~a~%" (string-downcase (key-binding entry)) (help-string entry))))
