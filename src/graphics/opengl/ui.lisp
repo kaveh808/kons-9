@@ -16,7 +16,7 @@
 (defparameter *ui-keyboard-focus* nil)
 
 ;;; TODO -- temporary, query font later
-(defparameter *ui-font-width* 7)
+(defparameter *ui-font-width* 7.3)
 
 
 ;;;; uitils ====================================================================
@@ -79,7 +79,8 @@
   ((text "Label")
    (text-padding 10))
   (:default-initargs
-   :draw-border? nil))
+   :draw-border? nil
+   :ui-h *ui-button-item-height*))
 
 ;;;; ui-data-item ==============================================================
 
@@ -101,12 +102,14 @@
   ((key-text ""))
   (:default-initargs
    :draw-border? t
+   :bg-color (c! 0.7 0.7 0.7 0.8)
    :is-active? t))
 
 ;;;; ui-check-box-item =========================================================
 
 (defclass-kons-9 ui-check-box-item (ui-label-item)
-  ((is-pushed? nil))
+  ((is-pushed? nil)
+   (check-bg-color (c! 0.7 0.7 0.7 0.8)))
   (:default-initargs
    :draw-border? nil
    :is-active? t))
@@ -121,6 +124,7 @@
   ((cursor-position 0))
   (:default-initargs
    :draw-border? t
+   :bg-color (c! 1 1 1 1)
    :is-active? t
    :can-have-keyboard-focus? t))
 
@@ -130,9 +134,43 @@
                                     (min (length (text view))
                                          (floor (/ (first (local-coords view x y)) *ui-font-width*))))))
 
-;;; TODO -- edit text...
-(defmethod do-key-input ((view ui-text-box-item) key mod-keys)
-  (print (list key mod-keys)))
+;;; TODO ++ edit text
+;;; TODO ++ handle char input properly
+;;; TODO ++ do not insert modifier key text
+;;; TODO ++ draw cursor when is *ui-keyboard-focus*
+;;; TODO -- mark region (shift-click, drag, double click, etc)
+;;; TODO -- arrow keys
+
+(defun insert-string (string insert position)
+  (concatenate 'string
+               (subseq string 0 position)
+               insert
+               (if (< position (length string))
+                   (subseq string position (length string))
+                   "")))
+  
+(defmethod do-char-input ((view ui-text-box-item) char)
+  (setf (text view) (insert-string (text view) (string char) (cursor-position view)))
+  (incf (cursor-position view)))
+
+(defmethod do-paste-input ((view ui-text-box-item) string)
+  (setf (text view) (insert-string (text view) string (cursor-position view)))
+  (incf (cursor-position view) (length string)))
+
+(defmethod do-copy-input ((view ui-text-box-item))
+  (text view))
+
+(defmethod do-cut-input ((view ui-text-box-item))
+  (let ((result (text view)))
+    (setf (text view) "")
+    result))
+
+(defmethod do-backspace-input ((view ui-text-box-item))
+  (when (> (cursor-position view) 0)
+    (setf (text view) (concatenate 'string
+                                   (subseq (text view) 0 (1- (cursor-position view)))
+                                   (subseq (text view) (cursor-position view) (length (text view)))))
+    (decf (cursor-position view))))
 
 ;;;; ui-menu-item ==============================================================
 
@@ -143,6 +181,7 @@
 
 (defclass-kons-9 ui-group (ui-view)
   ((layout :fit-children) ; :fit-children, :vertical, :horizontal
+   (justification :center) ; :center :left/top :right/bottom
    (spacing *ui-default-spacing*)
    (padding *ui-default-padding*)
    (title nil)
@@ -152,6 +191,11 @@
   (setf (ui-parent child) view)
   (vector-push-extend child (children view))
   child)
+
+(defmethod ui-add-children ((view ui-group) children)
+  (dolist (child children)
+    (ui-add-child view child))
+  view)
 
 ;;; TODO -- move to utils.lisp
 (defun insert-into-array (vector value position)
@@ -180,49 +224,80 @@
   view)
 
 (defmethod update-layout-fit-children ((view ui-group))
-  (let ((children (children view)))
+  (with-accessors ((title title) (padding padding) (children children))
+      view
     (if (= (length children) 0)
         (progn
-          (setf (ui-w view) (padding view))
-          (setf (ui-h view) (padding view)))
+          (setf (ui-w view) padding)
+          (setf (ui-h view) padding))
         (let* ((x (reduce 'min children :key 'ui-x))
                (y (reduce 'min children :key 'ui-y))
                (w (reduce 'max (map 'vector (lambda (child) (+ (ui-x child) (ui-w child))) children)))
                (h (reduce 'max (map 'vector (lambda (child) (+ (ui-y child) (ui-h child))) children)))
-               (dx (- x (padding view)))
-               (dy (- y (padding view))))
-          (setf (ui-w view) (+ dx w (padding view)))
-          (setf (ui-h view) (+ dy h (padding view)))
+               (dx (- x padding))
+               (dy (- y padding)))
+          (setf (ui-w view) (+ dx w padding))
+          (setf (ui-h view) (+ dy h padding))
           (loop for child across children
                 do (incf (ui-x child) dx)
                    (incf (ui-y child) dy))))))
 
 (defmethod update-layout-horizontal ((view ui-group))
-  ;; TODO
-  )
-
-(defmethod update-layout-vertical ((view ui-group))
-  (let ((children (children view)))
+  (with-accessors ((title title) (padding padding) (spacing spacing) (justification justification)
+                   (children children))
+      view
     (if (= (length children) 0)
         (progn
-          (setf (ui-w view) (padding view))
-          (setf (ui-h view) (padding view)))
-        (let* ((title-w (if (title view) (+ (ui-text-width (title view)) *ui-default-padding*) 0))
-               (title-h (if (title view) *ui-button-item-height* 0))
-               (width (max (+ (reduce 'max children :key 'ui-w)
-                              (* (padding view) 2))
+          (setf (ui-w view) padding)
+          (setf (ui-h view) padding))
+        (let* ((title-w (if title (+ (ui-text-width title) *ui-default-padding*) 0))
+               (title-h (if title *ui-button-item-height* 0))
+               (width (max (+ (reduce '+ children :key 'ui-w)
+                              (* spacing (1- (length children)))
+                              (* padding 2))
                            title-w))
-               (height (+ (reduce '+ children :key 'ui-h)
-                          (* (spacing view) (1- (length children)))
-                          (* (padding view) 2)
+               (height (+ (reduce 'max children :key 'ui-h)
+                          (* padding 2)
                           title-h))
-               (y (+ (padding view) title-h)))
+               (x padding))
           (setf (ui-w view) width)
           (setf (ui-h view) height)
           (loop for child across children
-                do (setf (ui-x child) (padding view))
+                do (setf (ui-y child) (case justification
+                                        (:left/top padding)
+                                        (:right/bottom (- (ui-h view) (ui-h child) padding))
+                                        (:center (/ (- (ui-h view) (ui-h child)) 2))))
+                   (setf (ui-x child) x)
+                   (incf x (+ (ui-w child) spacing))))))
+  view)
+
+(defmethod update-layout-vertical ((view ui-group))
+  (with-accessors ((title title) (padding padding) (spacing spacing) (justification justification)
+                   (children children))
+      view
+    (if (= (length children) 0)
+        (progn
+          (setf (ui-w view) padding)
+          (setf (ui-h view) padding))
+        (let* ((title-w (if title (+ (ui-text-width title) *ui-default-padding*) 0))
+               (title-h (if title *ui-button-item-height* 0))
+               (width (max (+ (reduce 'max children :key 'ui-w)
+                              (* padding 2))
+                           title-w))
+               (height (+ (reduce '+ children :key 'ui-h)
+                          (* spacing (1- (length children)))
+                          (* padding 2)
+                          title-h))
+               (y (+ padding title-h)))
+          (setf (ui-w view) width)
+          (setf (ui-h view) height)
+          (loop for child across children
+                do (setf (ui-x child) (case justification
+                                        (:left/top padding)
+                                        (:right/bottom (- (ui-w view) (ui-w child) padding))
+                                        (:center (/ (- (ui-w view) (ui-w child)) 2))))
                    (setf (ui-y child) y)
-                   (incf y (+ (ui-h child) (spacing view)))))))
+                   (incf y (+ (ui-h child) spacing))))))
   view)
 
 ;;;; ui-message-box ===========================================================
@@ -231,7 +306,7 @@
   ()
   (:default-initargs
    :is-visible? t
-   :bg-color (c! 1 1 1 0.8)
+   :bg-color (c! 0.8 0.8 0.8 0.8)
    :layout :fit-children))
 
 ;;; TODO -- center pane in parent view
@@ -276,7 +351,7 @@
   ()
   (:default-initargs
    :is-visible? t
-   :bg-color (c! 1 1 1 0.8)
+   :bg-color (c! 0.8 0.8 0.8 0.8)
    :layout :fit-children))
 
 ;;; TODO -- center pane in parent view
@@ -285,59 +360,51 @@
 ;;; TODO -- place buttons intelligently
 ;;; TODO -- specify OK function
 (defun make-dialog-box (contents &optional (ok-button-text "OK") (cancel-button-text "Cancel"))
-  (let ((box (make-instance 'ui-dialog-box
-                            :ui-x 200
-                            :ui-y 200
-                            :ui-w 500
-                            :ui-h 300
-                            :layout :fit-children))
-        (contents-group (make-instance 'ui-group
-                                       :ui-x 20
-                                       :ui-y 20
-                                       :ui-w 460
-                                       :ui-h 220
-                                       :layout :vertical
-                                       :spacing 5
-                                       :padding 0
-                                       :draw-border? t ;for debugging
-                                       )))
-    (dolist (view contents)
-      (ui-add-child contents-group view))
+  (let* ((box (make-instance 'ui-dialog-box
+                             :ui-x 20
+                             :ui-y 20
+                             :layout :vertical
+                             :title "Dialog Box Test"))
+         (contents-group (make-instance 'ui-group
+                                        :layout :vertical
+                                        :spacing 5
+                                        :padding 0
+                                        :draw-border? t ;for debugging
+                                        ))
+         (buttons-group (make-instance 'ui-group
+                                        :layout :horizontal
+                                        :spacing 5
+                                        :padding 10
+                                        :draw-border? t ;for debugging
+                                        ))
+         (cancel-button (make-instance 'ui-button-item
+                                       :ui-w 80
+                                       :text cancel-button-text
+                                       :on-click-fn (lambda () (setf (is-visible? box) nil))
+                                       ))
+         (ok-button (make-instance 'ui-button-item
+                                   :ui-w 80
+                                   :text ok-button-text
+                                   :on-click-fn (lambda () (setf (is-visible? box) nil))
+                                   ))
+         )
+    (ui-add-children contents-group contents)
+    (ui-add-children buttons-group (list cancel-button ok-button))
     (ui-add-child box (update-layout contents-group))
-    (ui-add-child box (make-instance 'ui-button-item
-                                      :ui-x 250
-                                      :ui-y 260
-                                      :ui-w 80
-                                      :ui-h *ui-button-item-height*
-                                      :text cancel-button-text
-                                      :on-click-fn (lambda () (setf (is-visible? box) nil))
-                                      ))
-    (ui-add-child box (make-instance 'ui-button-item
-                                      :ui-x 350
-                                      :ui-y 260
-                                      :ui-w 80
-                                      :ui-h *ui-button-item-height*
-                                      :text ok-button-text
-                                      :on-click-fn (lambda () (setf (is-visible? box) nil))
-                                      ))
+    (ui-add-child box (update-layout buttons-group))
     (update-layout box)))
 
 #|
 (setf (ui-contents *default-scene-view*)
       (list (make-dialog-box (list (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
-                                                                 :ui-h *ui-button-item-height*
                                                                  :text "Label 1")
                                    (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
-                                                                 :ui-h *ui-button-item-height*
                                                                  :text "Label 2")
                                    (make-instance 'ui-button-item :ui-w *ui-popup-menu-width*
-                                                                  :ui-h *ui-button-item-height*
                                                                   :text "My Button")
                                    (make-instance 'ui-check-box-item :ui-w *ui-popup-menu-width*
-                                                                     :ui-h *ui-button-item-height*
                                                                      :text "Check Box")
                                    (make-instance 'ui-text-box-item :ui-w *ui-popup-menu-width*
-                                                                    :ui-h *ui-button-item-height*
                                                                     :text "Text Box")
                                    ))))
 |#
@@ -584,7 +651,7 @@
                     (text (cond ((and named-p
                                       (typep (cdr tmp) 'sequence)
                                       (> (length (cdr tmp)) 1)
-                                      (not (typep (cdr tmp) 'point)))
+                                      (not (typep (cdr tmp) '(simple-array single-float (3))))) ;POINT
                                  (format nil "~a: ~s..." (car tmp) (elt (cdr tmp) 0)))
                                 (named-p
                                  (format nil "~a: ~s" (car tmp) (cdr tmp)))
@@ -696,17 +763,17 @@
     (gl:end)))
 
 (defmethod draw-title-bar ((view ui-group) &optional x-offset y-offset)
-  (gl:color 0.8 0.8 0.8 0.75)
+  (gl:color 0.4 0.4 0.4 0.8)
   (with-accessors ((fg fg-color) (x ui-x) (y ui-y) (w ui-w))
       view
     ;; fill
     (draw-rect-fill (+ x x-offset) (+ y y-offset) w *ui-button-item-height*)
     ;; border
-        (gl:color (c-red fg) (c-green fg) (c-blue fg) (c-alpha fg))
+    (gl:color (c-red fg) (c-green fg) (c-blue fg) (c-alpha fg))
     (draw-rect-border (+ x x-offset) (+ y y-offset) w *ui-button-item-height*)
     ;; title
     (render-text (+ (ui-centered-text-x (title view) w) x x-offset)
-                 (+ 16 y y-offset) (title view))))
+                 (+ 16 y y-offset) (title view) :color #xffffffff)))
 
   
 (defmethod draw-ui-view ((view ui-view) &optional x-offset y-offset)
@@ -764,9 +831,14 @@
   (:method ((view ui-check-box-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
-      (with-accessors ((x ui-x) (y ui-y))
+      (with-accessors ((x ui-x) (y ui-y) (cbg check-bg-color) (fg fg-color))
           view
         (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view))
+        (when (> (c-alpha cbg) 0)
+          (gl:color (c-red cbg) (c-green cbg) (c-blue cbg) (c-alpha cbg))
+          (draw-rect-fill (+ x x-offset 4) (+ y y-offset 4)
+                          (- *ui-button-item-height* 8) (- *ui-button-item-height* 8)))
+        (gl:color (c-red fg) (c-green fg) (c-blue fg) (c-alpha fg))
         (draw-rect-border (+ x x-offset 4) (+ y y-offset 4)
                           (- *ui-button-item-height* 8) (- *ui-button-item-height* 8))
         (when (is-pushed? view)
@@ -782,7 +854,8 @@
         (let ((local-x (+ 5 x x-offset))
               (local-y (+ y y-offset)))
           (render-text local-x (+ 16 local-y) (text view))
-          (draw-cursor (+ local-x (* *ui-font-width* (cursor-position view))) local-y)))))
+          (when (eq view *ui-keyboard-focus*)
+            (draw-cursor (+ local-x (* *ui-font-width* (cursor-position view))) local-y))))))
 
   (:method :after ((view ui-group) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)

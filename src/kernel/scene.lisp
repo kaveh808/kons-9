@@ -37,7 +37,7 @@
 
 (defmethod clear-selection ((scene scene))
   (dolist (item (selection scene))
-    (unselect item))
+    (setf (is-selected? item) nil))
   (setf (selection scene) '()))
 
 (defmethod add-shape ((scene scene) (shape shape))

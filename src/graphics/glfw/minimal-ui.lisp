@@ -42,6 +42,14 @@
   view)
 |#
 
+;;;; user input ================================================================
+;;;; temporary until text box ui working
+
+(defun get-user-string-input (prompt)
+  (format t "~%~a: " prompt)
+  (finish-output t)
+  (read-line t))
+
 ;;;; scene-view ================================================================
 
 (defclass-kons-9 scene-view ()
@@ -56,19 +64,21 @@
   (push (scene-command-table view) (command-tables view)))
 
 (defun scene-command-table (view)
-  (let ((scene (scene view))
-        (table (make-instance 'command-table :title "Scene")))
-    (ct-entry :a "Initialize scene" (when scene (init-scene scene)))
-    (ct-entry :n "Clear scene" (when scene (clear-scene scene)))
+  (let ((table (make-instance 'command-table :title "Scene")))
+    (ct-entry :n "New scene" (print (scene view)) (when (scene view) (clear-scene (scene view))))
+    ;; TODO -- need to specify pathname -- replace with dialog and text box
+    (ct-entry :o "Open scene" (load-scene (get-user-string-input "Open scene -- filename")))
+    (ct-entry :s "Save scene" (save-scene (scene view) (get-user-string-input "Save scene -- filename")))
+    (ct-entry :a "Initialize scene" (when (scene view) (init-scene (scene view))))
     (ct-entry :z "Reset camera" (init-view-camera) (3d-update-light-settings))
-;;    (ct-entry :v "View Selection" (init-view-camera) (3d-update-light-settings))
-    (ct-entry :i "Inspect selection" (hide-menu view) (show-ui-inspector (or (selection scene) scene)))
-    (ct-entry :s "Shape hierarchy" (hide-menu view) (show-ui-shape-hierarchy scene))
-    (ct-entry :m "Motion hierarchy" (hide-menu view) (show-ui-motion-hierarchy scene))
-    (ct-entry :backspace "Delete selection" (remove-current-selection scene))
+;;    (ct-entry :v "View Selection" ... TODO -- TBD
+    (ct-entry :i "Inspect selection" (hide-menu view) (show-ui-inspector (or (selection (scene view)) (scene view))))
+    (ct-entry :p "Shape hierarchy" (hide-menu view) (show-ui-shape-hierarchy (scene view)))
+    (ct-entry :m "Motion hierarchy" (hide-menu view) (show-ui-motion-hierarchy (scene view)))
+    (ct-entry :backspace "Delete selection" (remove-current-selection (scene view)))
     (ct-subtable :d "Display" (display-command-table))
     (ct-subtable :c "Create" (create-command-table))
-    (ct-entry :space "Update scene (hold down for animation)" (update-scene scene))
+    (ct-entry :space "Update scene (hold down for animation)" (update-scene (scene view)))
     table))
 
 (defun display-command-table ()
@@ -87,20 +97,20 @@
 
 (defun create-command-table ()
   (let ((table (make-instance `command-table :title "Create")))
-;;    (ct-subtable :c "Create Curve" (curve-command-table))
+    (ct-subtable :c "Create Curve" (curve-command-table))
     (ct-subtable :p "Create Polyhedron" (polyhedron-command-table))
     table))
 
-;; (defun curve-command-table ()
-;;   (let ((table (make-instance `command-table :title "Create Curve")))
-;;     (ct-make-shape :l "line polygon" (make-line-polygon (p! 0 0 0) (p! 2 2 2) 8))
-;;     (ct-make-shape :r "rectangle polygon" (make-rectangle-polygon 2 1 4))
-;;     (ct-make-shape :s "square polygon" (make-square-polygon 1.5))
-;;     (ct-make-shape :c "circle polygon" (make-circle-polygon 2.0 16))
-;;     (ct-make-shape :a "arc polygon" (make-arc-polygon 2.0 16 0 pi))
-;;     (ct-make-shape :n "sine curve polygon" (make-sine-curve-polygon 360 1 2 1 16))
-;;     (ct-make-shape :p "spiral polygon" (make-spiral-polygon .2 2.0 -1.0 4 64))
-;;     table))
+(defun curve-command-table ()
+  (let ((table (make-instance `command-table :title "Create Curve")))
+    (ct-make-shape :l "line curve" (make-line-curve (p! 0 0 0) (p! 2 2 2) 4))
+    (ct-make-shape :r "rectangle curve" (make-rectangle-curve 2 1 4))
+    (ct-make-shape :s "square curve" (make-square-curve 1.5))
+    (ct-make-shape :c "circle curve" (make-circle-curve 2.0 16))
+    (ct-make-shape :a "arc curve" (make-arc-curve 2.0 0 90 8))
+    (ct-make-shape :n "sine curve" (make-sine-curve-curve 360 1 2 1 16))
+    (ct-make-shape :p "spiral curve" (make-spiral-curve .2 2.0 -1.0 4 64))
+    table))
 
 (defun polyhedron-command-table ()
   (let ((table (make-instance `command-table :title "Create Polyhedron")))
@@ -175,7 +185,7 @@
   (setf (command-tables self) (last (command-tables self)))) ;pop all but original table
 
 (defmethod key-down ((self scene-view) key mod-keys)
-  ;; (format t "key-down self: ~a, key: ~a~%" self key)
+  ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
   (cond ((eq :tab key)
          (cond ((and (menu self) (is-visible? (menu self)))
@@ -185,12 +195,21 @@
                (t
                 (show-menu self))))
         (*ui-keyboard-focus*
-         ;(and *current-highlighted-ui-item* (can-have-keyboard-focus? *current-highlighted-ui-item*))
-         (do-key-input *ui-keyboard-focus* key mod-keys))
+         (cond ((and (eq :v key) (member :super mod-keys))
+                (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
+               ((and (eq :c key) (member :super mod-keys))
+                (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
+               ((and (eq :x key) (member :super mod-keys))
+                (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
+               ((eq :backspace key)
+                (do-backspace-input *ui-keyboard-focus*))
+               ))
+;;;(and *current-highlighted-ui-item* (can-have-keyboard-focus? *current-highlighted-ui-item*))
+;;;         (do-key-input *ui-keyboard-focus* key mod-keys))
         ((eq :left key)
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
-        (t
+        ((and (menu self) (is-visible? (menu self)))
          (do-command (car (command-tables self)) key))))
 
 (defmethod key-up ((self scene-view) key)
@@ -225,6 +244,12 @@
          (when *default-scene-view*
            (key-up *default-scene-view* key))))
   (update-window-title window))
+
+(glfw:def-char-callback char-callback (window char)
+  ;; (format t "char-callback: w: ~a, k: ~a~%" window char)
+  ;; (finish-output)
+  (when (and *default-scene-view* *ui-keyboard-focus*)
+    (do-char-input *ui-keyboard-focus* char)))
 
 (glfw:def-mouse-button-callback mouse-callback (window button action mod-keys)
   ;; (format t "mouse-btn-callback: w: ~a, b: ~a, a: ~a, mk: ~a ~%"
@@ -364,6 +389,7 @@
 
           (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
           (glfw:set-key-callback 'key-callback)
+          (glfw:set-char-callback 'char-callback)
           (glfw:set-mouse-button-callback 'mouse-callback)
           (glfw:set-cursor-position-callback 'cursor-position-callback)
           (glfw:set-window-position-callback 'window-position-callback)

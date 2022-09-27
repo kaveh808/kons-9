@@ -45,6 +45,7 @@
      (:file "src/kernel/scene-hierarchy")
      (:file "src/kernel/scene-duplicate")
      (:file "src/kernel/protocol")
+     (:file "src/kernel/clobber")
      (:file "src/kernel/main")
      (:file "src/plugins/parametric-curve")
      (:file "src/plugins/uv-mesh")
