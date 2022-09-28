@@ -11,7 +11,7 @@
 (defmacro ct-make-shape (key-binding help expr)
   `(add-entry table
               ,key-binding
-              (lambda () (add-shape *scene* ,expr))
+              (lambda () (execute (add-shape *scene* ,expr))) ;do transaction
               (strcat "Create " ,help)))
 
 (defmacro ct-entry (key-binding help &rest expr)

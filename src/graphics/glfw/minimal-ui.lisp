@@ -66,11 +66,11 @@
 (defun scene-command-table (view)
   (let ((table (make-instance 'command-table :title "Scene")))
     (ct-entry :n "New scene" (print (scene view)) (when (scene view) (clear-scene (scene view))))
-    ;; TODO -- need to specify pathname -- replace with dialog and text box
-    (ct-entry :o "Open scene" (load-scene (get-user-string-input "Open scene -- filename")))
-    (ct-entry :s "Save scene" (save-scene (scene view) (get-user-string-input "Save scene -- filename")))
+    (ct-entry :o "Open scene" (hide-menu view) (show-open-scene-dialog))
+    (ct-entry :s "Save scene" (hide-menu view) (show-save-scene-dialog))
     (ct-entry :a "Initialize scene" (when (scene view) (init-scene (scene view))))
     (ct-entry :z "Reset camera" (init-view-camera) (3d-update-light-settings))
+;    (ct-entry :l "Select shape" (hide-menu view) (show-ui-select-shape-hierarchy (scene view)))
 ;;    (ct-entry :v "View Selection" ... TODO -- TBD
     (ct-entry :i "Inspect selection" (hide-menu view) (show-ui-inspector (or (selection (scene view)) (scene view))))
     (ct-entry :p "Shape hierarchy" (hide-menu view) (show-ui-shape-hierarchy (scene view)))
@@ -283,10 +283,10 @@
       (when (not (eq ui-item *current-highlighted-ui-item*)) ;new highlighted item
         (setf *current-highlighted-ui-item* ui-item)))))
 
-(defun do-action-ui-item-under-mouse (ui-view x y)
+(defun do-action-ui-item-under-mouse (ui-view x y button modifiers)
   (let ((ui-item (find-ui-at-point ui-view x y)))
     (when (and ui-item (is-active? ui-item))
-      (do-action ui-item x y))))
+      (do-action ui-item x y button modifiers))))
 
 (defun mouse-moved (x y dx dy)
   (declare (ignore dx dy))
@@ -299,15 +299,14 @@
           (highlight-ui-item-under-mouse ui-view x y)))))
 
 (defun mouse-click (x y button modifiers)
-  (declare (ignore button modifiers))
   ;; clear keyboard focus
   (setf *ui-keyboard-focus* nil)
   ;; menu takes priority over other ui components in view
   (let ((menu (menu *default-scene-view*)))
     (if (and menu (is-visible? menu))
-        (do-action-ui-item-under-mouse menu x y)
+        (do-action-ui-item-under-mouse menu x y button modifiers)
         (dolist (ui-view (ui-contents *default-scene-view*))
-          (do-action-ui-item-under-mouse ui-view x y)))))
+          (do-action-ui-item-under-mouse ui-view x y button modifiers)))))
 
 (defun mouse-dragged (x y dx dy)
   (declare (ignore x y))

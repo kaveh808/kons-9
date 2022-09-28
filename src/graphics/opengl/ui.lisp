@@ -44,8 +44,6 @@
   
 ;;;; ui-view ===================================================================
 
-;;; TODO -- use *drawing-settings* fg and bg colors
-;;; TODO -- pass modifiers and mouse button info to on-click-fn
 (defclass-kons-9 ui-view (ui-rect)
   ((ui-parent nil)
    (bg-color (c! 0 0 0 0))
@@ -68,10 +66,10 @@
   (let ((world-coords (world-coords view)))
     (list (- x (first world-coords)) (- y (second world-coords)))))
          
-(defmethod do-action ((view ui-view) x y)
-  (declare (ignore x y))
+(defmethod do-action ((view ui-view) x y button modifiers)
+  (declare (ignore x y button))
   (when (on-click-fn view)
-    (funcall (on-click-fn view))))
+    (funcall (on-click-fn view) modifiers)))
 
 ;;;; ui-label-item =============================================================
 
@@ -81,6 +79,9 @@
   (:default-initargs
    :draw-border? nil
    :ui-h *ui-button-item-height*))
+
+(defmethod set-width-for-text ((view ui-view))
+  (setf (ui-w view) (+ (ui-text-width (text view)) (* 2 (text-padding view)))))
 
 ;;;; ui-data-item ==============================================================
 
@@ -105,6 +106,9 @@
    :bg-color (c! 0.7 0.7 0.7 0.8)
    :is-active? t))
 
+(defmethod set-width-for-text ((view ui-button-item))
+  (setf (ui-w view) (max 80 (+ (ui-text-width (text view)) (* 2 (text-padding view))))))
+
 ;;;; ui-check-box-item =========================================================
 
 (defclass-kons-9 ui-check-box-item (ui-label-item)
@@ -114,8 +118,11 @@
    :draw-border? nil
    :is-active? t))
 
-(defmethod do-action :before ((view ui-check-box-item) x y)
-  (declare (ignore x y))
+(defmethod set-width-for-text ((view ui-check-box-item))
+  (setf (ui-w view) (+ (ui-text-width (text view)) (* 2 (text-padding view)) 30)))
+
+(defmethod do-action :before ((view ui-check-box-item) x y button modifiers)
+  (declare (ignore x y button modifiers))
   (setf (is-pushed? view) (not (is-pushed? view))))
 
 ;;;; ui-text-box-item ==========================================================
@@ -128,7 +135,8 @@
    :is-active? t
    :can-have-keyboard-focus? t))
 
-(defmethod do-action ((view ui-text-box-item) x y)
+(defmethod do-action ((view ui-text-box-item) x y button modifiers)
+  (declare (ignore button modifiers))
   (setf *ui-keyboard-focus* view)
   (setf (cursor-position view) (max 0
                                     (min (length (text view))
@@ -180,7 +188,7 @@
 ;;;; ui-group ==============================================================
 
 (defclass-kons-9 ui-group (ui-view)
-  ((layout :fit-children) ; :fit-children, :vertical, :horizontal
+  ((layout :vertical) ; :fit-children, :vertical, :horizontal
    (justification :center) ; :center :left/top :right/bottom
    (spacing *ui-default-spacing*)
    (padding *ui-default-padding*)
@@ -306,39 +314,23 @@
   ()
   (:default-initargs
    :is-visible? t
-   :bg-color (c! 0.8 0.8 0.8 0.8)
-   :layout :fit-children))
+   :bg-color (c! 0.8 0.8 0.8 0.8)))
 
-;;; TODO -- center pane in parent view
 (defun make-message-box (message-text &optional (ok-button-text "OK"))
-  (let* ((message-text-width (ui-text-width message-text))
-         (width (+ message-text-width (* 2 *ui-default-spacing*)))
-         (height (+ (* 2 *ui-button-item-height*) (* 3 *ui-default-spacing*)))
-         (ok-button-text-width (ui-text-width ok-button-text))
-         (ok-button-width (max 80 (+ ok-button-text-width (* 2 *ui-default-spacing*))))
-         (box (make-instance 'ui-message-box
+  (let* ((box (make-instance 'ui-message-box
                              :ui-x 200
                              :ui-y 200
-                             :ui-w (max width ok-button-width)
-                             :ui-h height)))
-    (ui-add-child box (make-instance 'ui-label-item
-                                      :ui-x *ui-default-spacing*
-                                      :ui-y *ui-default-spacing*
-                                      :ui-w message-text-width
-                                      :ui-h *ui-button-item-height*
-                                      :text message-text
-                                      :draw-border? nil
-                                      :text-padding 0
-                                      ))
-    (ui-add-child box (make-instance 'ui-button-item
-                                      :ui-x (floor (* 0.5 (- (ui-w box) ok-button-width)))
-                                      :ui-y (+ *ui-button-item-height* (* 2 *ui-default-spacing*))
-                                      :ui-w ok-button-width
-                                      :ui-h *ui-button-item-height*
-                                      :text ok-button-text
-                                      :on-click-fn (lambda () (setf (is-visible? box) nil))
-                                      ))
-    box))
+                             :spacing 10
+                             :padding 10))
+         (message (make-instance 'ui-label-item :text message-text))
+         (button (make-instance 'ui-button-item :text ok-button-text
+                                                :on-click-fn (lambda (modifiers)
+                                                               (declare (ignore modifiers))
+                                                               (setf (is-visible? box) nil)))))
+    (set-width-for-text message)
+    (set-width-for-text button)
+    (ui-add-children box (list message button))
+    (update-layout box)))
 
 #|
 (setf (ui-contents *default-scene-view*)
@@ -351,19 +343,12 @@
   ()
   (:default-initargs
    :is-visible? t
-   :bg-color (c! 0.8 0.8 0.8 0.8)
-   :layout :fit-children))
+   :bg-color (c! 0.8 0.8 0.8 0.8)))
 
-;;; TODO -- center pane in parent view
-;;; TODO -- make vertical group from contents ?
-;;; TODO -- adjust pane size to fit contents
-;;; TODO -- place buttons intelligently
-;;; TODO -- specify OK function
 (defun make-dialog-box (contents &optional (ok-button-text "OK") (cancel-button-text "Cancel"))
   (let* ((box (make-instance 'ui-dialog-box
                              :ui-x 20
                              :ui-y 20
-                             :layout :vertical
                              :title "Dialog Box Test"))
          (contents-group (make-instance 'ui-group
                                         :layout :vertical
@@ -380,12 +365,16 @@
          (cancel-button (make-instance 'ui-button-item
                                        :ui-w 80
                                        :text cancel-button-text
-                                       :on-click-fn (lambda () (setf (is-visible? box) nil))
+                                       :on-click-fn (lambda (modifiers)
+                                                      (declare (ignore modifiers))
+                                                      (setf (is-visible? box) nil))
                                        ))
          (ok-button (make-instance 'ui-button-item
                                    :ui-w 80
                                    :text ok-button-text
-                                   :on-click-fn (lambda () (setf (is-visible? box) nil))
+                                   :on-click-fn (lambda (modifiers)
+                                                  (declare (ignore modifiers))
+                                                  (setf (is-visible? box) nil))
                                    ))
          )
     (ui-add-children contents-group contents)
@@ -408,6 +397,67 @@
                                                                     :text "Text Box")
                                    ))))
 |#
+
+(defun make-text-input-dialog-box (title ok-action-fn &optional (ok-button-text "OK") (cancel-button-text "Cancel"))
+  (let* ((box (make-instance 'ui-dialog-box
+                             :ui-x 20
+                             :ui-y 20
+                             :title title))
+         (contents-group (make-instance 'ui-group
+                                        :layout :vertical
+                                        :spacing 5
+                                        :padding 0
+                                        :draw-border? t ;for debugging
+                                        ))
+         (text-box (make-instance 'ui-text-box-item :ui-w 400 :text ""))
+         (buttons-group (make-instance 'ui-group
+                                        :layout :horizontal
+                                        :spacing 5
+                                        :padding 10
+                                        :draw-border? t ;for debugging
+                                        ))
+         (cancel-button (make-instance 'ui-button-item
+                                       :ui-w 80
+                                       :text cancel-button-text
+                                       :on-click-fn (lambda (modifiers)
+                                                      (declare (ignore modifiers))
+                                                      (setf (is-visible? box) nil))
+                                       ))
+         (ok-button (make-instance 'ui-button-item
+                                   :ui-w 80
+                                   :text ok-button-text
+                                   :on-click-fn (lambda (modifiers)
+                                                  (declare (ignore modifiers))
+                                                  (setf (is-visible? box) nil)
+                                                  (funcall ok-action-fn (text text-box)))
+                                   ))
+         )
+    (ui-add-child contents-group text-box)
+    (ui-add-children buttons-group (list cancel-button ok-button))
+    (ui-add-child box (update-layout contents-group))
+    (ui-add-child box (update-layout buttons-group))
+    (update-layout box)))
+
+(defun show-open-scene-dialog ()
+  (setf (ui-contents *default-scene-view*)
+        (list (make-text-input-dialog-box "Open Scene File"
+                                          (lambda (str)
+                                            (load-scene str))))))
+
+(defun show-save-scene-dialog ()
+  (setf (ui-contents *default-scene-view*)
+        (list (make-text-input-dialog-box "Save Scene File"
+                                          (lambda (str)
+                                            (save-scene (scene *default-scene-view*) str))))))
+
+#|
+(setf (ui-contents *default-scene-view*)
+      (list (make-text-input-dialog-box "Save Scene File" (lambda (str) (save-scene *scene* str)))))
+
+(setf (ui-contents *default-scene-view*)
+      (list (make-text-input-dialog-box "Open Scene File" (lambda (str) (load-scene str)))))
+|#
+
 
 ;;;; ui-popup-menu =============================================================
 
@@ -439,7 +489,9 @@
                                                :text (string (help-string entry))
                                                :key-text (key-binding-string (key-binding entry))
                                                :is-active? t
-                                               :on-click-fn (command-fn entry))
+                                               :on-click-fn (lambda (modifiers)
+                                                              (declare (ignore modifiers))
+                                                              (funcall (command-fn entry))))
                   (children view))))))
   (update-layout view))
 
@@ -490,7 +542,9 @@
                                                :data entry
                                                :text text
                                                :is-active? t
-                                               :on-click-fn (lambda () (show-ui-inspector tmp)))
+                                               :on-click-fn (lambda (modifiers)
+                                                              (declare (ignore modifiers))
+                                                              (show-ui-inspector tmp)))
                   (children view))))))
   (update-layout view))
 
@@ -509,14 +563,30 @@
   ((show-children? nil)
    (outliner-children '())))
 
+;;; xxx
+;;; TODO -- inspector align left
+;;; TODO -- outliner title with alt hint
+;;; TODO -- Menu: File [New, Open, Save]
+;;;               Edit [Select, Delete, Group, Ungroup]
+;;;               Create [...]
+;;;               Transform [Trans, Rot, Scale]
+;;;               Display [...]
+;;; TODO -- how to add contextual items?
 (defmethod initialize-instance :after ((view ui-outliner-item)  &rest initargs)
   (declare (ignore initargs))
-  (setf (on-click-fn view) (lambda ()
-                             ;; TODO -- option click to select -- pass x,y, key-mods
-                             (when (has-children-method? (data view))
-                               (toggle-show-children view)
-                               (when (ui-parent view)
-                                 (update-parent-contents view))))))
+  (setf (on-click-fn view) (lambda (modifiers)
+                             (if (member :alt modifiers)
+                                 (progn
+                                   (toggle-selection (scene *default-scene-view*)
+                                                     (data view))
+                                   (setf (bg-color view) (if (is-selected? (data view))
+                                                             (c! 0.8 0.2 0.2 0.5)
+                                                             (c! 0 0 0 0))))
+
+                                 (when (has-children-method? (data view))
+                                   (toggle-show-children view)
+                                   (when (ui-parent view)
+                                     (update-parent-contents view)))))))
   
 (defmethod toggle-show-children ((view ui-outliner-item))
   (setf (show-children? view) (not (show-children? view))))
@@ -598,10 +668,6 @@
                                               :text text
                                               :is-active? t
                                               ))))))
-                                              ;; :on-click-fn (lambda ()
-                                              ;;                (toggle-selection (scene *default-scene-view*)
-                                              ;;                                  tmp)
-                                              ;;                (update-state view))))))))
   (update-layout view))
 
 (defun show-ui-outliner-viewer (roots)
@@ -668,7 +734,8 @@
                                              :data (if named-p (cdr tmp) tmp)
                                              :text text
                                              :is-active? t
-                                             :on-click-fn (lambda ()
+                                             :on-click-fn (lambda (modifiers)
+                                                            (declare (ignore modifiers))
                                                             (show-ui-inspector (if named-p (cdr tmp) tmp))))
                 (children view))))
     (update-layout view)))
