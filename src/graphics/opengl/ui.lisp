@@ -35,6 +35,16 @@
    (ui-w 0.0)
    (ui-h 0.0)))
 
+(defmethod ui-set-position ((rect ui-rect) x y)
+  (setf (ui-x rect) x)
+  (setf (ui-y rect) y)
+  rect)
+  
+(defmethod ui-set-size ((rect ui-rect) w h)
+  (setf (ui-w rect) w)
+  (setf (ui-h rect) h)
+  rect)
+  
 (defmethod ui-set-rect ((rect ui-rect) x y w h)
   (setf (ui-x rect) x)
   (setf (ui-y rect) y)
@@ -51,8 +61,9 @@
    (is-visible? t)
    (draw-border? t)
    (is-active? nil)
-   (on-click-fn nil)
+   (on-click-fn nil)                    ;(fn modifiers)
    (highlight? nil)
+   (help-string "")
    (can-have-keyboard-focus? nil)))
 
 (defmethod world-coords ((view ui-view) &optional (accum-coords '(0 0)))
@@ -65,7 +76,8 @@
 (defmethod local-coords ((view ui-view) x y)
   (let ((world-coords (world-coords view)))
     (list (- x (first world-coords)) (- y (second world-coords)))))
-         
+
+;;; entry point for all UI actions
 (defmethod do-action ((view ui-view) x y button modifiers)
   (declare (ignore x y button))
   (when (on-click-fn view)
@@ -236,8 +248,8 @@
       view
     (if (= (length children) 0)
         (progn
-          (setf (ui-w view) padding)
-          (setf (ui-h view) padding))
+          (setf (ui-w view) (if title (+ (ui-text-width title) *ui-default-padding*) *ui-button-item-width*))
+          (setf (ui-h view) *ui-button-item-height*))
         (let* ((x (reduce 'min children :key 'ui-x))
                (y (reduce 'min children :key 'ui-y))
                (w (reduce 'max (map 'vector (lambda (child) (+ (ui-x child) (ui-w child))) children)))
@@ -256,8 +268,8 @@
       view
     (if (= (length children) 0)
         (progn
-          (setf (ui-w view) padding)
-          (setf (ui-h view) padding))
+          (setf (ui-w view) (if title (+ (ui-text-width title) *ui-default-padding*) *ui-button-item-width*))
+          (setf (ui-h view) *ui-button-item-height*))
         (let* ((title-w (if title (+ (ui-text-width title) *ui-default-padding*) 0))
                (title-h (if title *ui-button-item-height* 0))
                (width (max (+ (reduce '+ children :key 'ui-w)
@@ -285,8 +297,8 @@
       view
     (if (= (length children) 0)
         (progn
-          (setf (ui-w view) padding)
-          (setf (ui-h view) padding))
+          (setf (ui-w view) (if title (+ (ui-text-width title) *ui-default-padding*) *ui-button-item-width*))
+          (setf (ui-h view) *ui-button-item-height*))
         (let* ((title-w (if title (+ (ui-text-width title) *ui-default-padding*) 0))
                (title-h (if title *ui-button-item-height* 0))
                (width (max (+ (reduce 'max children :key 'ui-w)
@@ -458,7 +470,64 @@
       (list (make-text-input-dialog-box "Open Scene File" (lambda (str) (load-scene str)))))
 |#
 
+;;; xxx
+;;; TODO ++ inspector align left
+;;; TODO -- outliner title with alt hint
+;;; TODO xx menubar?
+;;; TODO -- Menu: File [New, Open, Save, Quit]
+;;;               Edit [Select, Delete, Duplicate, Group, Ungroup, Find]
+;;;               Create [...]
+;;;               Transform [Translate X, ..., Rotate X, ..., Scale Uniform, Scale X, ...] -- alt for dialogs
+;;;               Display [...]
+;;; TODO -- how to add contextual items? -- SHIFT TAB for contextual menu?
+;;; TODO ++ status bar
+;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
+;;;      -- works but not with hierarchy display
+;;; TODO -- inspector shows multiple scenes
 
+;;;; ui-status-bar =============================================================
+
+(defclass-kons-9 ui-status-bar (ui-group)
+  ((scene-view nil))
+  (:default-initargs
+   :is-visible? t
+   :bg-color (c! 1 1 1 0.5)))
+
+(defun make-status-bar ()
+  (let* ((status-bar (make-instance 'ui-status-bar :ui-x 0 :ui-h *ui-button-item-height*)))
+    (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 1"))
+    (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 2"))
+    (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 3"))
+    (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 4"))
+    status-bar))
+
+(defmethod update-status-bar ((view ui-status-bar) &key (view-width nil) (view-height nil)
+                                                     (str0 nil) (str1 nil) (str2 nil) (str3 nil))
+  (when view-height
+    (setf (ui-y view) (- view-height (ui-h view))))
+  (when view-width
+    (setf (ui-w view) view-width)
+    (update-layout view))
+  (when str0
+    (setf (text (aref (children view) 0)) str0))
+  (when str1
+    (setf (text (aref (children view) 1)) str1))
+  (when str2
+    (setf (text (aref (children view) 2)) str2))
+  (when str3
+    (setf (text (aref (children view) 3)) str3))
+  view)
+
+;;; custom layout
+(defmethod update-layout ((view ui-status-bar))
+  (let ((w (* 0.125 (ui-w view)))       ;1/8 increment
+        (h (ui-h view)))
+    (ui-set-rect (aref (children view) 0) (* 0 w) 0 w h)
+    (ui-set-rect (aref (children view) 1) (* 3 w) 0 w h)
+    (ui-set-rect (aref (children view) 2) (* 5 w) 0 w h)
+    (ui-set-rect (aref (children view) 3) (* 6.5 w) 0 w h)
+    view))
+                        
 ;;;; ui-popup-menu =============================================================
 
 (defclass-kons-9 ui-popup-menu (ui-group)
@@ -483,22 +552,25 @@
                                              (* 2 *ui-default-spacing*)))
                                 (entries table)))))
         (loop for entry across (entries table)
-              do (vector-push-extend
-                  (make-instance 'ui-menu-item :ui-w width
-                                               :ui-h *ui-button-item-height* 
-                                               :text (string (help-string entry))
-                                               :key-text (key-binding-string (key-binding entry))
-                                               :is-active? t
-                                               :on-click-fn (lambda (modifiers)
-                                                              (declare (ignore modifiers))
-                                                              (funcall (command-fn entry))))
-                  (children view))))))
+              do (let ((tmp entry))     ;TODO -- without this all entries get fn of last entry???
+                   (vector-push-extend
+                    (make-instance 'ui-menu-item :ui-w width
+                                                 :ui-h *ui-button-item-height* 
+                                                 :text (string (help-string entry))
+                                                 :key-text (key-binding-string (key-binding entry))
+                                                 :is-active? t
+                                                 :help-string (format nil "Mouse: ~a. Tab: Exit menu."
+                                                                      (string (help-string entry)))
+                                                 :on-click-fn (lambda (modifiers)
+                                                                (declare (ignore modifiers))
+                                                                (funcall (command-fn tmp))))
+                    (children view)))))))
   (update-layout view))
 
 ;;;; TODO
 ;;;; draw-view -- :before bg, :after border
 ;;;; change text slot to caption slot
-;;;; make-outliner obj children-fn
+;;;; make-outliner obj children-fn name-fn
 ;;;; ui-3d-view (ui-group) -- root-node
 ;;;; -- scene-view
 ;;;; app-window -- outliner, 3d-view, inspector/aspect, timeline
@@ -544,7 +616,7 @@
                                                :is-active? t
                                                :on-click-fn (lambda (modifiers)
                                                               (declare (ignore modifiers))
-                                                              (show-ui-inspector tmp)))
+                                                              (show-ui-content (make-ui-inspector tmp))))
                   (children view))))))
   (update-layout view))
 
@@ -563,49 +635,82 @@
   ((show-children? nil)
    (outliner-children '())))
 
-;;; xxx
-;;; TODO -- inspector align left
-;;; TODO -- outliner title with alt hint
-;;; TODO -- Menu: File [New, Open, Save]
-;;;               Edit [Select, Delete, Group, Ungroup]
-;;;               Create [...]
-;;;               Transform [Trans, Rot, Scale]
-;;;               Display [...]
-;;; TODO -- how to add contextual items?
 (defmethod initialize-instance :after ((view ui-outliner-item)  &rest initargs)
   (declare (ignore initargs))
   (setf (on-click-fn view) (lambda (modifiers)
-                             (if (member :alt modifiers)
-                                 (progn
-                                   (toggle-selection (scene *default-scene-view*)
-                                                     (data view))
-                                   (setf (bg-color view) (if (is-selected? (data view))
-                                                             (c! 0.8 0.2 0.2 0.5)
-                                                             (c! 0 0 0 0))))
-
-                                 (when (has-children-method? (data view))
-                                   (toggle-show-children view)
-                                   (when (ui-parent view)
-                                     (update-parent-contents view)))))))
+                             (cond ((member :alt modifiers)
+                                    (when (has-children-method? (data view))
+                                      (toggle-show-children view)
+                                      (when (ui-parent view)
+                                        (update-parent-contents view))))
+                                   (t
+                                    (toggle-selection (scene *default-scene-view*)
+                                                      (data view))
+                                    (setf (bg-color view) (if (is-selected? (data view))
+                                                              (c! 0.8 0.2 0.2 0.5)
+                                                              (c! 0 0 0 0))))))))
   
 (defmethod toggle-show-children ((view ui-outliner-item))
   (setf (show-children? view) (not (show-children? view))))
 
-(defmethod effective-text ((view ui-outliner-item))
+(defmethod outliner-item-text ((view ui-outliner-item))
   (strcat (if (has-children-method? (data view))
               (if (show-children? view) "- " "+ ")
               "  ")
           (text view)))
 
+(defmethod update-parent-contents ((view ui-outliner-item))
+  (when (ui-parent view)
+    (if (show-children? view)
+        (add-parent-contents view)
+        (remove-parent-contents view))
+    (update-layout (ui-parent view))))
+
+(defmethod add-parent-contents ((view ui-outliner-item))
+  (let ((i (position view (children (ui-parent view)))))
+    (loop for child in (children (data view))
+          do (let* ((text (format nil "~a" (printable-data child)))
+                    (item (make-instance 'ui-outliner-item
+                                         :ui-w (+ (ui-text-width text) (* 4 *ui-default-spacing*))
+                                         :ui-h *ui-button-item-height*
+                                         :bg-color (if (is-selected? child)
+                                                       (c! 0.8 0.2 0.2 0.5)
+                                                       (c! 0 0 0 0))
+                                         :text-padding (+ 20 (text-padding view))
+                                         :data child
+                                         :text text
+                                         :is-active? t
+                                         :help-string (format nil "Mouse: select ~a, [alt] show/hide children"
+                                                              (name child)))))
+               (setf (text item) (outliner-item-text item))
+               (ui-add-child-at (ui-parent view) item (incf i))
+               (push item (outliner-children view))))))
+
+(defmethod remove-parent-contents ((view ui-outliner-item))
+  (loop for child in (outliner-children view)
+        do (remove-parent-contents child)
+           (ui-remove-child (ui-parent view) child))
+  (setf (outliner-children view) '()))
+
 ;;;; ui-outliner-viewer ========================================================
 
 (defclass-kons-9 ui-outliner-viewer (ui-sequence-viewer)
-  ((roots nil))
+;  ((roots nil))
+  ((data-object nil)
+   (data-accessor-fn nil))
   (:default-initargs
    :bg-color (c! 1 1 1 0.5)
    :layout :vertical
+   :justification :left/top
    :spacing 0
    :padding 0))
+
+(defmethod viewer-data ((view ui-outliner-viewer))
+  (if (data-object view)
+      (if (data-accessor-fn view)
+          (funcall (data-accessor-fn view) (data-object view))
+          (data-object view))
+      nil))
 
 ;; (defmethod create-data ((view ui-outliner-viewer))
 ;;   (setf (data view) nil)
@@ -619,66 +724,44 @@
 ;;     (dolist (child (children node))
 ;;       (create-data-aux view child))))
 
-(defmethod update-parent-contents ((view ui-outliner-item))
-  (when (ui-parent view)
-    (if (show-children? view)
-        (add-parent-contents view)
-        (remove-parent-contents view))
-    (update-layout (ui-parent view))))
-
-(defmethod add-parent-contents ((view ui-outliner-item))
-  (let ((i (position view (children (ui-parent view)))))
-    (loop for child in (children (data view))
-          do (let* ((text (format nil "~s" child))
-                    (item (make-instance 'ui-outliner-item
-                                         :ui-w (+ (ui-text-width text) (* 4 *ui-default-spacing*))
-                                         :ui-h *ui-button-item-height*
-                                         :bg-color (if (is-selected? child)
-                                                       (c! 0.8 0.2 0.2 0.5)
-                                                       (c! 0 0 0 0))
-                                         :text-padding (+ 20 (text-padding view))
-                                         :data child
-                                         :text text
-                                         :is-active? t)))
-               (ui-add-child-at (ui-parent view) item (incf i))
-               (push item (outliner-children view))))))
-
-(defmethod remove-parent-contents ((view ui-outliner-item))
-  (loop for child in (outliner-children view)
-        do (remove-parent-contents child)
-           (ui-remove-child (ui-parent view) child))
-  (setf (outliner-children view) '()))
-
+;;; TODO -- keep track of show status so we can update intelligently when called from update-scene-ui
+;;;      -- otherwise hierarchy display does not work
 (defmethod create-contents ((view ui-outliner-viewer))
   (setf (fill-pointer (children view)) 0)
 ;  (create-data view)
-  (let ((data (roots view)))
+  (let ((data (viewer-data view)))
     (when data
       (loop for entry across (coerce data 'vector)
-            do (let ((tmp entry) ; TODO -- necessary otherwise all on-click-fn's use final entry???
-                     (text (format nil "~s" entry)))
-                 (ui-add-child view
-                               (make-instance 'ui-outliner-item
-                                              :ui-w (+ (ui-text-width text) (* 4 *ui-default-spacing*))
-                                              :ui-h *ui-button-item-height*
-                                              :bg-color (if (is-selected? entry)
-                                                            (c! 0.8 0.2 0.2 0.5)
-                                                            (c! 0 0 0 0))
-                                              :data entry
-                                              :text text
-                                              :is-active? t
-                                              ))))))
+            do (let* (;(tmp entry) ; TODO -- necessary otherwise all on-click-fn's use final entry???
+                      (text (format nil "~a" (printable-data entry)))
+                      (item (make-instance 'ui-outliner-item
+                                           :ui-h *ui-button-item-height*
+                                           :bg-color (if (is-selected? entry)
+                                                         (c! 0.8 0.2 0.2 0.5)
+                                                         (c! 0 0 0 0))
+                                           :data entry
+                                           :text text
+                                           :is-active? t
+                                           :help-string (format nil "Mouse: select ~a, [alt] show/hide children"
+                                                                (name entry)))))
+                 (setf (text item) (outliner-item-text item))
+                 (setf (ui-w item) (+ (ui-text-width (text item)) (* 4 *ui-default-spacing*)))
+                 (ui-add-child view item)))))
   (update-layout view))
 
-(defun show-ui-outliner-viewer (roots)
-  (setf (ui-contents *default-scene-view*)
-        (list (create-contents (make-instance 'ui-outliner-viewer :ui-x 20 :ui-y 20 :roots roots)))))
+(defun make-ui-outliner-viewer (title obj &optional (accessor-fn nil))
+  (create-contents (make-instance 'ui-outliner-viewer
+                                  :ui-x 20 :ui-y 20 :title title :data-object obj :data-accessor-fn accessor-fn)))
 
-(defun show-ui-shape-hierarchy (scene)
-  (show-ui-outliner-viewer (shapes scene)))
+;; (defun show-ui-outliner-viewer (roots)
+;;   (setf (ui-contents *default-scene-view*)
+;;         (list (create-contents (make-instance 'ui-outliner-viewer :ui-x 20 :ui-y 20 :roots roots)))))
 
-(defun show-ui-motion-hierarchy (scene)
-  (show-ui-outliner-viewer (motions scene)))
+;; (defun show-ui-shape-hierarchy (scene)
+;;   (show-ui-outliner-viewer (shapes scene)))
+
+;; (defun show-ui-motion-hierarchy (scene)
+;;   (show-ui-outliner-viewer (motions scene)))
 
 #|
 (setf (ui-contents *default-scene-view*)
@@ -693,6 +776,7 @@
   (:default-initargs
    :bg-color (c! 1 1 1 0.5)
    :layout :vertical
+   :justification :left/top
    :spacing 0
    :padding 0))
 
@@ -734,15 +818,15 @@
                                              :data (if named-p (cdr tmp) tmp)
                                              :text text
                                              :is-active? t
+                                             :help-string (format nil "Mouse: inspect ~a" (if named-p (cdr tmp) tmp))
                                              :on-click-fn (lambda (modifiers)
                                                             (declare (ignore modifiers))
-                                                            (show-ui-inspector (if named-p (cdr tmp) tmp))))
+                                                            (show-ui-content (make-ui-inspector (if named-p (cdr tmp) tmp)))))
                 (children view))))
     (update-layout view)))
 
-(defun show-ui-inspector (obj)
-  (setf (ui-contents *default-scene-view*)
-        (list (create-contents (make-instance 'ui-inspector :ui-x 20 :ui-y 20 :obj obj)))))
+(defun make-ui-inspector (obj)
+  (create-contents (make-instance 'ui-inspector :ui-x 20 :ui-y 20 :obj obj)))
 
 #|
 (show-ui-inspector *scene*)
@@ -876,7 +960,7 @@
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (effective-text view)))))
+        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (text view)))))
 
   (:method ((view ui-button-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
