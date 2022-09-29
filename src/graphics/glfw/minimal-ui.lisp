@@ -380,6 +380,7 @@
   (update-gl-3d-viewport)
   (draw-scene-view *default-scene-view*)      ; redraw while being resized
   (glfw:swap-buffers)
+  (update-scene-ui)
   (update-status-bar (status-bar *default-scene-view*) :view-width w :view-height h)
   (update-window-title window))
 

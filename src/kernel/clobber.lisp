@@ -142,7 +142,9 @@
     result))
 
 (defmacro execute (expr)
-  `(execute-transaction ',(first expr) ,@(rest expr)))
+  `(if *transaction-log*
+     (execute-transaction ',(first expr) ,@(rest expr))
+     (funcall ',(first expr) ,@(rest expr))))
 
 (defun start-transaction-log (filename)
   (let ((result nil))
