@@ -50,6 +50,31 @@
 (defun indent-padding (num)
   (format nil "~v{~a~:*~}" num '(#\space)))
 
+(defun is-whitespace-char? (char)
+  (or (eq char #\space) (not (graphic-char-p char))))
+
+(defun remove-extra-spaces (str)
+  (string-trim '(#\space #\newline #\tab)
+               (with-output-to-string (out)
+                 (let ((skip? nil))
+                   (loop for c across str
+                         do (cond ((and skip? (is-whitespace-char? c))
+                                   nil)
+                                  ((not (is-whitespace-char? c))
+                                   (write-char c out)
+                                   (setf skip? nil))
+                                  ((is-whitespace-char? c)
+                                   (write-char #\space out)
+                                   (setf skip? t))))))))
+
+(defun string-trim-to-length (str len &optional (ellipses "..."))
+  (cond ((< (length str) len)
+         str)
+        (ellipses
+         (strcat (subseq str 0 (- len (length ellipses))) ellipses))
+        (t
+         (subseq str 0 len))))
+                  
 (defun array->list (array)
   (map 'list #'identity array))
 

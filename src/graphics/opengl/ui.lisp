@@ -483,7 +483,8 @@
 ;;; TODO ++ status bar
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
 ;;;      -- works but not with hierarchy display
-;;; TODO -- inspector shows multiple scenes
+;;; TODO -- delete shapes in hierarchy
+;;; TODO -- inspector sizing issues
 
 ;;;; ui-status-bar =============================================================
 
@@ -579,7 +580,6 @@
 ;;;; left-arrow to go to previous inspector
 ;;;; arrow and Enter menu/command-table navigation
 ;;;; base command-table -- Display, Inspect Selection, View Selection, Reset Camera, Init Scene, Play Animation, Create
-;;;; -- Display -- Dark Theme, Bright Theme
 
 #| DONE
 ;;;; store parent for ui-view
@@ -590,6 +590,7 @@
 ;;;; group title
 ;;;; ui-sequence-viewer seq -- necessary?
 ;;;; ui-inspector obj -- vertical group of horizontal groups of slot-name, slot-value
+;;;; Display -- Dark Theme, Bright Theme
 
 |#
 
@@ -780,17 +781,18 @@
    :spacing 0
    :padding 0))
 
-(defun ui-cleanup-inspector-description (text)
-  (string-trim '(#\space) (substitute #\space #\newline text)))
+(defun ui-cleanup-inspector-string (text)
+  (string-trim-to-length (remove-extra-spaces text) 60))
 
 ;;;; TODO -- truncate long entries using "..."
 ;;;; TODO -- limit size of inspector to window
 ;;;; TODO -- SBCL inspect limits display of sequences to 10 items
 
 (defmethod create-contents ((view ui-inspector))
+  (setf (fill-pointer (children view)) 0)
   (multiple-value-bind (description named-p elements)
       (sb-impl::inspected-parts (obj view))
-    (setf (title view) (ui-cleanup-inspector-description description))
+    (setf (title view) (ui-cleanup-inspector-string description))
     (setf (data view) (if (typep elements 'sequence)
                           (coerce elements 'vector)
                           (vector (obj view))))
@@ -798,20 +800,21 @@
           for i from 0
           ;; TODO -- tmp necessary otherwise all on-click-fn's use final entry???
           do (let* ((tmp entry)
-                    (text (cond ((and named-p
-                                      (typep (cdr tmp) 'sequence)
-                                      (> (length (cdr tmp)) 1)
-                                      (not (typep (cdr tmp) '(simple-array single-float (3))))) ;POINT
-                                 (format nil "~a: ~s..." (car tmp) (elt (cdr tmp) 0)))
-                                (named-p
-                                 (format nil "~a: ~s" (car tmp) (cdr tmp)))
-                                ((> (length (data view)) 1)
-                                 (format nil "~a: ~s" i tmp))
-                                (t
-                                 (format nil "~s" tmp)))))
+                    (text (ui-cleanup-inspector-string
+                           (cond ((and named-p
+                                       (typep (cdr tmp) 'sequence)
+                                       (> (length (cdr tmp)) 1)
+                                       (not (typep (cdr tmp) '(simple-array single-float (3))))) ;POINT
+                                  (format nil "~a: ~s..." (car tmp) (elt (cdr tmp) 0)))
+                                 (named-p
+                                  (format nil "~a: ~s" (car tmp) (cdr tmp)))
+                                 ((> (length (data view)) 1)
+                                  (format nil "~a: ~s" i tmp))
+                                 (t
+                                  (format nil "~s" tmp))))))
 
 ;;;               (print (list (type-of (cdr tmp)) (format nil "~s" (cdr tmp))))
-               
+
                (vector-push-extend
                 (make-instance 'ui-data-item :ui-w (+ (ui-text-width text) (* 4 *ui-default-spacing*))
                                              :ui-h *ui-button-item-height* 
