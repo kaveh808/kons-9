@@ -38,7 +38,6 @@
    (entries (make-array 0 :adjustable t :fill-pointer t))
    (mouse-help-string "Drag: orbit, [option/alt] track left/right and up/down, [control] track in/out.")))
 
-
 (defmethod initialize-instance :after ((table command-table) &rest initargs)
   (declare (ignore initargs))
   ;; (add-entry table

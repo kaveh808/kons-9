@@ -195,7 +195,9 @@
 ;;;; ui-menu-item ==============================================================
 
 (defclass-kons-9 ui-menu-item (ui-button-item)
-  ())
+  ()
+  (:default-initargs
+   :bg-color (c! 0.8 0.8 0.8 0.25)))
 
 ;;;; ui-group ==============================================================
 
@@ -217,15 +219,6 @@
     (ui-add-child view child))
   view)
 
-;;; TODO -- move to utils.lisp
-(defun insert-into-array (vector value position)
-  (vector-push-extend value vector) ; ensure that the array is large enough
-  ;; shift the end of the array right
-  (loop for i from (1- (length vector)) downto (1+ position) do
-      (setf (aref vector i) (aref vector (1- i))))
-  (setf (aref vector position) value) ; insert value into the right place
-  vector)
-
 (defmethod ui-add-child-at ((view ui-group) (child ui-view) index)
   (setf (ui-parent child) view)
   (insert-into-array (children view) child index)
@@ -233,8 +226,14 @@
 
 (defmethod ui-remove-child ((view ui-group) (child ui-view))
   (setf (ui-parent child) nil)
-  (delete child (children view))
+  (setf (children view) (delete child (children view)))
   child)
+
+(defmethod ui-clear-children ((view ui-group))
+  (loop for child across (children view)
+        do (setf (ui-parent child) nil))
+  (setf (fill-pointer (children view)) 0)
+  view)
 
 (defmethod update-layout ((view ui-group))
   (ecase (layout view)
@@ -567,7 +566,7 @@
                                                    :text (string (help-string entry))
                                                    :key-text (key-binding-string (key-binding entry))
                                                    :is-active? t
-                                                   :help-string (format nil "Mouse: ~a. Tab: Exit menu."
+                                                   :help-string (format nil "Mouse: ~a. TAB: hide menu."
                                                                         (string (help-string entry)))
                                                    :on-click-fn (lambda (modifiers)
                                                                   (declare (ignore modifiers))
@@ -576,9 +575,9 @@
   (update-layout view))
 
 ;;;; TODO xxx
-;;-- app table bindings in effect even if menu not visible
+;;++ app table bindings in effect even if menu not visible
 ;;++ two-line status bar
-;;  -- mouse action, key action
+;;  ++ mouse action, key action
 ;;-- context menu
 ;;  -- transform
 ;;  -- register/generate entries
@@ -702,7 +701,7 @@
                                          :data child
                                          :text text
                                          :is-active? t
-                                         :help-string (format nil "Mouse: select ~a, [alt] show/hide children"
+                                         :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
                                                               (name child)))))
                (setf (text item) (outliner-item-text item))
                (ui-add-child-at (ui-parent view) item (incf i))
@@ -832,17 +831,20 @@
                                  ((> (length (data view)) 1)
                                   (format nil "~a: ~s" i tmp))
                                  (t
-                                  (format nil "~s" tmp))))))
+                                  (format nil "~s" tmp)))))
+                    (datum (if named-p (cdr tmp) tmp)))
 
 ;;;               (print (list (type-of (cdr tmp)) (format nil "~s" (cdr tmp))))
 
                (vector-push-extend
                 (make-instance 'ui-data-item :ui-w (+ (ui-text-width text) (* 4 *ui-default-spacing*))
                                              :ui-h *ui-button-item-height* 
-                                             :data (if named-p (cdr tmp) tmp)
+                                             :data datum
                                              :text text
                                              :is-active? t
-                                             :help-string (format nil "Mouse: inspect ~a" (if named-p (cdr tmp) tmp))
+                                             :help-string (format nil "Mouse: inspect ~a. UP/DOWN ARROW: scroll inspector. ESC: close inspector."
+                                                                  (ui-cleanup-inspector-string
+                                                                   (format nil "~a" datum)))
                                              :on-click-fn (lambda (modifiers)
                                                             (declare (ignore modifiers))
                                                             (show-ui-content (make-ui-inspector (if named-p (cdr tmp) tmp)))))

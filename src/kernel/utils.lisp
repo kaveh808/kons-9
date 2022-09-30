@@ -120,6 +120,15 @@
     (replace new vec :start1 (1+ i) :start2 i)
     new))
 
+;;; destructive version, assumes adjustable array
+(defun insert-into-array (vector value position)
+  (vector-push-extend value vector) ; ensure that the array is large enough
+  ;; shift the end of the array right
+  (loop for i from (1- (length vector)) downto (1+ position) do
+      (setf (aref vector i) (aref vector (1- i))))
+  (setf (aref vector position) value) ; insert value into the right place
+  vector)
+
 ;;;; math ======================================================================
 
 (defconstant 2pi (* 2 pi))

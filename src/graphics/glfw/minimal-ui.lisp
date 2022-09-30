@@ -55,7 +55,9 @@
 (defclass-kons-9 scene-view ()
   ((scene nil)
    (status-bar nil)
-   (ui-contents '())
+   (ui-contents (make-instance 'ui-group :layout :vertical :justification :right/bottom
+                                         :draw-border? nil :padding 0 :spacing 10))
+   (ui-contents-scroll 0)               ;offset in y
    (menu nil)
    (command-tables '())))
 
@@ -66,15 +68,24 @@
   (push (app-command-table view) (command-tables view)))
 
 (defun show-ui-content (view)
-  (setf (ui-contents *default-scene-view*) (list view))
-  (update-ui-content-position view))
+  (let ((contents (ui-contents *default-scene-view*)))
+    (ui-add-child contents view)
+    (update-layout contents)
+    (let ((delta-y (- (+ (ui-y contents) (ui-h contents))
+                      (- (second *window-size*) (ui-h (status-bar *default-scene-view*))))))
+      (when (> delta-y 0)
+        (decf (ui-contents-scroll *default-scene-view*) delta-y)))
+    (update-ui-content-position)))
 
-(defun update-ui-content-position (view)
+(defun update-ui-content-position ()
+  (let ((view (ui-contents *default-scene-view*)))
   ;; (case location
   ;;   (:top-left
   ;;    (ui-set-position view 20 20))
   ;;   (:top-right
-     (ui-set-position view (- (first *window-size*) (ui-w view) 20) 20))
+    (ui-set-position view
+                     (- (first *window-size*) (ui-w view) 20)
+                     (+ 20 (ui-contents-scroll *default-scene-view*)))))
     ;; (:bottom-left
     ;;  (ui-set-position view 20 (- (second *window-size*) (ui-h view) 20)))
     ;; (:bottom-right
@@ -237,8 +248,7 @@
         (make-popup-menu view)
         (setf (is-visible? (menu view)) t))
       (draw-view (menu view))))
-  (dolist (ui-item (ui-contents view))
-    (draw-view ui-item)))
+  (draw-view (ui-contents view)))
 
 (defmethod make-popup-menu ((view scene-view))
   (when (command-tables view)
@@ -270,17 +280,17 @@
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
-  (cond ((eq :space key)
+  (cond ((eq :space key)                ;play animation
          (update-scene (scene self)))
-        ((eq :tab key)
+        ((eq :tab key)                  ;hide/show menu
          (cond ((and (menu self) (is-visible? (menu self)))
                 (hide-menu self))
                (t
                 (show-menu self))))
-        ((eq :escape key)
-         (cond ((ui-contents self)
-                (setf (ui-contents self) nil))))
-        (*ui-keyboard-focus*
+        ((eq :escape key)               ;hide inspectors
+         (ui-clear-children (ui-contents self))
+         (setf (ui-contents-scroll self) 0))
+        (*ui-keyboard-focus*            ;handle text box input
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
                ((and (eq :c key) (member :super mod-keys))
@@ -290,14 +300,19 @@
                ((eq :backspace key)
                 (do-backspace-input *ui-keyboard-focus*))
                ))
-;;;(and *current-highlighted-ui-item* (can-have-keyboard-focus? *current-highlighted-ui-item*))
-;;;         (do-key-input *ui-keyboard-focus* key mod-keys))
-        ((eq :left key)
+        ((eq :left key)                 ;go to previous menu
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
-        ((and (menu self) (is-visible? (menu self)))
+        ((or (eq :up key) (eq :down key)) ;scroll inspectors
+         (incf (ui-contents-scroll self) (if (eq :up key) -10 10))
+         (update-ui-content-position))
+        ((and (menu self) (is-visible? (menu self))) ;do menu selection
          (do-command (car (command-tables self)) key)
-         (update-scene-ui))))
+         (update-scene-ui))
+        ((= (length (command-tables self)) 1) ;do menu selection for top menu even if hidden
+         (do-command (car (command-tables self)) key)
+         (show-menu self))))
+;         (update-scene-ui))))
 
 (defmethod key-up ((self scene-view) key)
   )
@@ -390,10 +405,16 @@
   (let ((menu (menu *default-scene-view*)))
     (if (and menu (is-visible? menu))
         (when (not (highlight-ui-item-under-mouse menu x y))
-          (dolist (ui-view (ui-contents *default-scene-view*))
-            (highlight-ui-item-under-mouse ui-view x y)))
-        (dolist (ui-view (ui-contents *default-scene-view*))
-          (highlight-ui-item-under-mouse ui-view x y)))))        
+          (highlight-ui-item-under-mouse (ui-contents *default-scene-view*) x y))
+        (highlight-ui-item-under-mouse (ui-contents *default-scene-view*) x y))))
+
+  ;; (let ((menu (menu *default-scene-view*)))
+  ;;   (if (and menu (is-visible? menu))
+  ;;       (when (not (highlight-ui-item-under-mouse menu x y))
+  ;;         (dolist (ui-view (ui-contents *default-scene-view*))
+  ;;           (highlight-ui-item-under-mouse ui-view x y)))
+  ;;       (dolist (ui-view (ui-contents *default-scene-view*))
+  ;;         (highlight-ui-item-under-mouse ui-view x y)))))        
 
 (defun mouse-click (x y button modifiers)
   ;; clear keyboard focus
@@ -402,10 +423,17 @@
   (let ((menu (menu *default-scene-view*)))
     (if (and menu (is-visible? menu))
         (when (not (do-action-ui-item-under-mouse menu x y button modifiers))
-          (dolist (ui-view (ui-contents *default-scene-view*))
-            (do-action-ui-item-under-mouse ui-view x y button modifiers)))
-        (dolist (ui-view (ui-contents *default-scene-view*))
-          (do-action-ui-item-under-mouse ui-view x y button modifiers)))))
+          (do-action-ui-item-under-mouse (ui-contents *default-scene-view*) x y button modifiers))
+        (do-action-ui-item-under-mouse (ui-contents *default-scene-view*) x y button modifiers))))
+
+
+  ;; (let ((menu (menu *default-scene-view*)))
+  ;;   (if (and menu (is-visible? menu))
+  ;;       (when (not (do-action-ui-item-under-mouse menu x y button modifiers))
+  ;;         (dolist (ui-view (ui-contents *default-scene-view*))
+  ;;           (do-action-ui-item-under-mouse ui-view x y button modifiers)))
+  ;;       (dolist (ui-view (ui-contents *default-scene-view*))
+  ;;         (do-action-ui-item-under-mouse ui-view x y button modifiers)))))
 
 (defun mouse-dragged (x y dx dy)
   (declare (ignore x y))
@@ -455,12 +483,22 @@
   (window-resized window w h))
 
 (defun update-scene-ui ()
-  (dolist (view (ui-contents *default-scene-view*))
-    (create-contents view)
-    (update-ui-content-position view)))
+  (loop for view across (children (ui-contents *default-scene-view*))
+        do (create-contents view))
+  (update-layout (ui-contents *default-scene-view*))
+  (update-ui-content-position))
 
 (defun update-status-bar-for-scene ()
-  (let ((scene (scene *default-scene-view*)))
+  (let ((scene (scene *default-scene-view*))
+        (menu-str (format nil "TAB: hide menu. LEFT ARROW: previous menu."))
+        ;; (menu-str (format nil "Menu: ~A TAB: hide menu. LEFT ARROW: previous menu."
+        ;;                   (apply #'strcat
+        ;;                          (mapcar (lambda (table)
+        ;;                                    (strcat (title table) " > "))
+        ;;                                  (reverse (butlast (command-tables *default-scene-view*)))))))
+        (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
+                           "UP/DOWN ARROW: scroll inspector. ESC: close inspector."
+                           "")))
     (update-status-bar (status-bar *default-scene-view*)
                        :str0 (format nil "Current Frame: ~a [~a-~a]"
                                      (current-frame scene) (start-frame scene) (end-frame scene))
@@ -474,13 +512,9 @@
                        :str4 (cond (*current-highlighted-ui-item*
                                     (help-string *current-highlighted-ui-item*))
                                    ((= 1 (length (command-tables *default-scene-view*)))
-                                    "Mouse: orbit, [alt] pan, [ctrl] in/out")
+                                    "Mouse: orbit, [ALT] pan, [CTRL] in/out. TAB: show/hide menu.")
                                    (t
-                                    (format nil "Menu: ~A [tab to reset, left arrow to go back]"
-                                            (apply #'strcat
-                                                   (mapcar (lambda (table)
-                                                             (strcat (title table) " > "))
-                                                           (reverse (butlast (command-tables *default-scene-view*))))))))
+                                    (strcat menu-str " " inspector-str)))
                        )))
 
 (defun show-window (scene)
