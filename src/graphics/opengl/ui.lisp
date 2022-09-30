@@ -474,11 +474,13 @@
 ;;; TODO ++ inspector align left
 ;;; TODO -- outliner title with alt hint
 ;;; TODO xx menubar?
-;;; TODO -- Menu: File [New, Open, Save, Quit]
+;;; TODO -- Menu: Scene [New, Open, Save, Quit]
 ;;;               Edit [Select, Delete, Duplicate, Group, Ungroup, Find]
 ;;;               Create [...]
 ;;;               Transform [Translate X, ..., Rotate X, ..., Scale Uniform, Scale X, ...] -- alt for dialogs
+;;;               View [Inspect, Shapes, Motions]
 ;;;               Display [...]
+;;;               Contextual [...]
 ;;; TODO -- how to add contextual items? -- SHIFT TAB for contextual menu?
 ;;; TODO ++ status bar
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
@@ -495,15 +497,16 @@
    :bg-color (c! 1 1 1 0.5)))
 
 (defun make-status-bar ()
-  (let* ((status-bar (make-instance 'ui-status-bar :ui-x 0 :ui-h *ui-button-item-height*)))
+  (let* ((status-bar (make-instance 'ui-status-bar :ui-x 0 :ui-h (* 2 *ui-button-item-height*))))
     (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 1"))
     (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 2"))
     (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 3"))
     (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 4"))
+    (ui-add-child status-bar (make-instance 'ui-label-item :text "Status Bar Item 5"))
     status-bar))
 
 (defmethod update-status-bar ((view ui-status-bar) &key (view-width nil) (view-height nil)
-                                                     (str0 nil) (str1 nil) (str2 nil) (str3 nil))
+                                                     (str0 nil) (str1 nil) (str2 nil) (str3 nil) (str4 nil))
   (when view-height
     (setf (ui-y view) (- view-height (ui-h view))))
   (when view-width
@@ -517,16 +520,19 @@
     (setf (text (aref (children view) 2)) str2))
   (when str3
     (setf (text (aref (children view) 3)) str3))
+  (when str4
+    (setf (text (aref (children view) 4)) str4))
   view)
 
 ;;; custom layout
 (defmethod update-layout ((view ui-status-bar))
-  (let ((w (* 0.125 (ui-w view)))       ;1/8 increment
-        (h (ui-h view)))
+  (let ((w (* 0.25 (ui-w view)))
+        (h (* 0.5  (ui-h view))))
     (ui-set-rect (aref (children view) 0) (* 0 w) 0 w h)
-    (ui-set-rect (aref (children view) 1) (* 3 w) 0 w h)
-    (ui-set-rect (aref (children view) 2) (* 5 w) 0 w h)
-    (ui-set-rect (aref (children view) 3) (* 6.5 w) 0 w h)
+    (ui-set-rect (aref (children view) 1) (* 1 w) 0 w h)
+    (ui-set-rect (aref (children view) 2) (* 2 w) 0 w h)
+    (ui-set-rect (aref (children view) 3) (* 3 w) 0 w h)
+    (ui-set-rect (aref (children view) 4)    0    h (ui-w view) h)
     view))
                         
 ;;;; ui-popup-menu =============================================================
@@ -545,30 +551,45 @@
   (let ((table (command-table view)))
     (when table
       (setf (title view) (title table))
-      (let ((width (reduce 'max
-                           (map 'vector (lambda (entry)
-                                          (+ (ui-text-width (string (help-string entry)))
-                                             (ui-text-width (key-binding-string (key-binding entry)))
-                                             30
-                                             (* 2 *ui-default-spacing*)))
-                                (entries table)))))
-        (loop for entry across (entries table)
-              do (let ((tmp entry))     ;TODO -- without this all entries get fn of last entry???
-                   (vector-push-extend
-                    (make-instance 'ui-menu-item :ui-w width
-                                                 :ui-h *ui-button-item-height* 
-                                                 :text (string (help-string entry))
-                                                 :key-text (key-binding-string (key-binding entry))
-                                                 :is-active? t
-                                                 :help-string (format nil "Mouse: ~a. Tab: Exit menu."
-                                                                      (string (help-string entry)))
-                                                 :on-click-fn (lambda (modifiers)
-                                                                (declare (ignore modifiers))
-                                                                (funcall (command-fn tmp))))
-                    (children view)))))))
+      (when (> (length (entries table)) 0)
+        (let ((width (reduce 'max
+                             (map 'vector (lambda (entry)
+                                            (+ (ui-text-width (string (help-string entry)))
+                                               (ui-text-width (key-binding-string (key-binding entry)))
+                                               30
+                                               (* 2 *ui-default-spacing*)))
+                                  (entries table)))))
+          (loop for entry across (entries table)
+                do (let ((tmp entry))     ;TODO -- without this all entries get fn of last entry???
+                     (vector-push-extend
+                      (make-instance 'ui-menu-item :ui-w width
+                                                   :ui-h *ui-button-item-height* 
+                                                   :text (string (help-string entry))
+                                                   :key-text (key-binding-string (key-binding entry))
+                                                   :is-active? t
+                                                   :help-string (format nil "Mouse: ~a. Tab: Exit menu."
+                                                                        (string (help-string entry)))
+                                                   :on-click-fn (lambda (modifiers)
+                                                                  (declare (ignore modifiers))
+                                                                  (funcall (command-fn tmp))))
+                      (children view))))))))
   (update-layout view))
 
-;;;; TODO
+;;;; TODO xxx
+;;-- app table bindings in effect even if menu not visible
+;;++ two-line status bar
+;;  -- mouse action, key action
+;;-- context menu
+;;  -- transform
+;;  -- register/generate entries
+;;-- register new command tables from plugins
+;;  -- procedural-curve
+;;  -- uv-mesh
+;;  -- heightfield
+;;-- auto-generate procedural-curve create and edit dialogs
+;;-- application class?
+;;-- multiple visible inspectors? esc closes one under mouse?
+
 ;;;; draw-view -- :before bg, :after border
 ;;;; change text slot to caption slot
 ;;;; make-outliner obj children-fn name-fn

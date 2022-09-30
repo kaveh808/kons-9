@@ -107,3 +107,8 @@
   (vector (coerce (/ (start-frame scene) (fps scene)) 'float)
           (coerce (/ (- (end-frame scene) (start-frame scene)) (fps scene)) 'float)))
 
+(defmethod num-shapes ((scene scene))
+  (length (find-shapes scene #'identity)))
+
+(defmethod num-motions ((scene scene))
+  (length (find-motions scene #'identity)))

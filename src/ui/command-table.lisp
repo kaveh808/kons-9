@@ -6,7 +6,7 @@
   `(add-entry table
               ,key-binding
               (lambda () (push ,c-table-fn (command-tables *default-scene-view*)))
-              (strcat "Show " ,title " menu")))
+              (strcat ,title " Menu")))
 
 (defmacro ct-make-shape (key-binding help expr)
   `(add-entry table
