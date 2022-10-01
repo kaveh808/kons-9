@@ -42,13 +42,43 @@
   view)
 |#
 
-;;;; user input ================================================================
-;;;; temporary until text box ui working
+;;;; command table utils =======================================================
 
-(defun get-user-string-input (prompt)
-  (format t "~%~a: " prompt)
-  (finish-output t)
-  (read-line t))
+(defun make-active-command-table (table)
+  (push table (command-tables *default-scene-view*))
+  (dolist (entry-data (dynamic-command-table-entries *default-scene-view*))
+    (apply #'add-dynamic-command-table-entry entry-data)))
+
+(defun active-command-table ()
+  (car (command-tables *default-scene-view*)))
+
+(defun register-dynamic-command-table-entry (view table-title context-fn key-binding command-fn doc)
+  (push (list table-title context-fn key-binding command-fn doc)
+        (dynamic-command-table-entries view)))
+
+(defun add-dynamic-command-table-entry (table-title context-fn key-binding command-fn doc)
+  (let ((table (active-command-table)))
+    (when (and table
+               (equalp (title table) table-title)
+               (funcall context-fn))
+      (add-entry table key-binding command-fn doc))))
+
+(defun register-dynamic-command-table-entries (view)
+  (register-dynamic-command-table-entry
+   view
+   "Create"
+   (lambda () t)
+   :u
+   (lambda () (make-active-command-table (uv-mesh-command-table)))
+   "UV Mesh")
+  (register-dynamic-command-table-entry
+   view
+   "Context"
+   (lambda () (find-if (lambda (item) (subtypep (type-of item) 'shape)) (selection (scene view))))
+   :h
+   (lambda () (make-active-command-table (transform-command-table view)))
+   "Transform Selection")
+  )
 
 ;;;; scene-view ================================================================
 
@@ -59,13 +89,16 @@
                                          :draw-border? nil :padding 0 :spacing 10))
    (ui-contents-scroll 0)               ;offset in y
    (menu nil)
-   (command-tables '())))
+   (command-tables '())
+   (dynamic-command-table-entries '())
+   ))
 
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera)
   (setf (status-bar view) (make-status-bar))
-  (push (app-command-table view) (command-tables view)))
+  (push (app-command-table view) (command-tables view))
+  (register-dynamic-command-table-entries view))
 
 (defun show-ui-content (view)
   (let ((contents (ui-contents *default-scene-view*)))
@@ -178,8 +211,6 @@
 
 (defun context-command-table (view)
   (let ((table (make-instance 'command-table :title "Context")))
-    (when (selection (scene view))
-      (ct-subtable :T "Transform" (transform-command-table view)))
     table))
 
 (defun transform-command-table (view)
@@ -300,6 +331,9 @@
                ((eq :backspace key)
                 (do-backspace-input *ui-keyboard-focus*))
                ))
+        ((and (or (member :shift mod-keys) (member :alt mod-keys))
+              (or (eq :left key) (eq :right key) (eq :up key) (eq :down key))) ;temporary translate 
+         (translate-selection key mod-keys))
         ((eq :left key)                 ;go to previous menu
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
@@ -315,6 +349,29 @@
 ;         (update-scene-ui))))
 
 (defmethod key-up ((self scene-view) key)
+  )
+
+;;; temporary for testing until we have direct manipulation
+(defun translate-selection (key mod-keys)
+  (let ((selected-shapes (remove-if-not (lambda (item) (subtypep (type-of item) 'shape))
+                                        (selection (scene *default-scene-view*))))
+        (dx (cond ((member :alt mod-keys)
+                   (cond ((eq :left key) -0.1)
+                         ((eq :right key) 0.1)
+                         (t 0.0)))
+                  (t 0.0)))
+        (dy (cond ((member :shift mod-keys)
+                   (cond ((eq :down key) -0.1)
+                         ((eq :up key) 0.1)
+                         (t 0.0)))
+                  (t 0.0)))
+        (dz (cond ((member :alt mod-keys)
+                   (cond ((eq :down key) -0.1)
+                         ((eq :up key) 0.1)
+                         (t 0.0)))
+                  (t 0.0))))
+    (dolist (shape selected-shapes)
+      (translate-by shape (p! dx dy dz))))
   )
 
 ;;XXX This doesn't work on wayland. I think wayland expects clients
@@ -442,7 +499,7 @@
          (if (>= (abs dx) (abs dy))
              (incf *cam-side-dist* (* 0.1 dx))
              (incf *cam-up-dist* (* -0.1 dy))))
-        ((eq :control *current-mouse-modifier*)
+        ((eq :shift *current-mouse-modifier*)
          (incf *cam-fwd-dist* (* 0.1 dx)))
         (t
          (incf *cam-x-rot* dy)
@@ -496,6 +553,7 @@
         ;;                          (mapcar (lambda (table)
         ;;                                    (strcat (title table) " > "))
         ;;                                  (reverse (butlast (command-tables *default-scene-view*)))))))
+        (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
         (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
                            "UP/DOWN ARROW: scroll inspector. ESC: close inspector."
                            "")))
@@ -511,8 +569,8 @@
                                      (floor *current-mouse-pos-x*) (floor *current-mouse-pos-y*))
                        :str4 (cond (*current-highlighted-ui-item*
                                     (help-string *current-highlighted-ui-item*))
-                                   ((= 1 (length (command-tables *default-scene-view*)))
-                                    "Mouse: orbit, [ALT] pan, [CTRL] in/out. TAB: show/hide menu.")
+                                   ((not (menu *default-scene-view*))
+                                    (strcat mouse-str " " inspector-str))
                                    (t
                                     (strcat menu-str " " inspector-str)))
                        )))
@@ -538,7 +596,7 @@
         ;;   (setf *default-scene-view* (scene-view app-view))
 
         (let ((scene-view (make-instance 'scene-view :scene scene)))
-
+          
           ;; Hack! Need to figure out how to tie a scene-view to a window
           ;; in glfw3. For now, just set the first scene-view created
           ;; as default and use that for event handling

@@ -471,9 +471,9 @@
 
 ;;; xxx
 ;;; TODO ++ inspector align left
-;;; TODO -- outliner title with alt hint
+;;; TODO ++ outliner title with alt hint
 ;;; TODO xx menubar?
-;;; TODO -- Menu: Scene [New, Open, Save, Quit]
+;;; TODO ++ Menu: Scene [New, Open, Save, Quit]
 ;;;               Edit [Select, Delete, Duplicate, Group, Ungroup, Find]
 ;;;               Create [...]
 ;;;               Transform [Translate X, ..., Rotate X, ..., Scale Uniform, Scale X, ...] -- alt for dialogs
@@ -482,10 +482,10 @@
 ;;;               Contextual [...]
 ;;; TODO -- how to add contextual items? -- SHIFT TAB for contextual menu?
 ;;; TODO ++ status bar
+;;; TODO -- delete shapes in hierarchy
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
 ;;;      -- works but not with hierarchy display
-;;; TODO -- delete shapes in hierarchy
-;;; TODO -- inspector sizing issues
+;;; TODO ++ inspector sizing issues
 
 ;;;; ui-status-bar =============================================================
 

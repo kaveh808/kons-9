@@ -251,7 +251,7 @@
 
 (defun 3d-draw-bounds (lo hi color)
   (with-gl-disable :lighting
-    (gl:line-width (line-thickness *drawing-settings*))
+    (gl:line-width (* 2 (line-thickness *drawing-settings*))) ;otherwise not visible for cubes etc.
     (gl-set-color color)
     (gl:begin :lines)
       (when (and lo hi)
