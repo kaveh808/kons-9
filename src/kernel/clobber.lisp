@@ -164,8 +164,10 @@
   (stop-transaction-log))
 
 (defun load-scene (filename)
-  (setf *scene* (start-transaction-log filename))
-  (setf (scene *default-scene-view*) *scene*))
+  (start-transaction-log filename))
+
+;; (setf *scene* (start-transaction-log filename))
+;;   (setf (scene *default-scene-view*) *scene*))
 
 #|
 testing

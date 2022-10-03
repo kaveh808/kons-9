@@ -398,11 +398,11 @@ Find shapes using predicate.
 (pprint (find-shapes *scene* (lambda (s) (search "ELBOW" (string (name s)))) :groups t))
 
 #|
-Get shape scene paths.
+Get shape paths.
 |#
-(pprint (get-scene-paths *scene* (find-shape-by-name *scene* 'wrist-group)))
+(pprint (get-shape-paths *scene* (find-shape-by-name *scene* 'wrist-group)))
 
-(pprint (get-scene-paths *scene* (find-shape-by-name *scene* 'tetra))) ;two paths
+(pprint (get-shape-paths *scene* (find-shape-by-name *scene* 'tetra))) ;two paths
 
 #|
 Compute shape global matrices of shape scene paths.
@@ -410,7 +410,7 @@ Compute shape global matrices of shape scene paths.
 Animate the scene and evaluate the expression below again to see updated
 matrices.
 |#
-(let ((paths (get-scene-paths *scene* (find-shape-by-name *scene* 'tetra))))
+(let ((paths (get-shape-paths *scene* (find-shape-by-name *scene* 'tetra))))
   (pprint (shape-global-matrix *scene* (first paths)))
   (pprint (shape-global-matrix *scene* (second paths))))
 

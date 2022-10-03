@@ -13,6 +13,10 @@
   (push s (children self))
   self)
 
+(defmethod remove-child ((self group) (s shape))
+  (setf (children self) (remove s (children self)))
+  self)
+
 (defmethod set-children ((self group) shapes)
   (setf (children self) shapes)
   self)

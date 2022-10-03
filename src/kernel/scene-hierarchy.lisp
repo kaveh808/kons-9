@@ -180,19 +180,19 @@
   )
 |#
 
-;;; get-scene-paths ------------------------------------------------------------
+;;; get-shape-paths ------------------------------------------------------------
 
-(defmethod get-scene-paths ((scene scene) (item scene-item))
-  (get-scene-paths-aux scene item))
+(defmethod get-shape-paths ((scene scene) (item scene-item))
+  (get-shape-paths-aux scene item))
 
-(defgeneric get-scene-paths-aux (obj item)
+(defgeneric get-shape-paths-aux (obj item)
   
   (:method ((scene scene) item)
     (if (eq scene item)
         '()
         (let ((paths ()))
           (dolist (child (shapes scene))
-            (let ((path (get-scene-paths-aux child item)))
+            (let ((path (get-shape-paths-aux child item)))
               (when path
                 (push path paths))))
           (cleanup-nested-path-list paths))))
@@ -202,7 +202,7 @@
         (list (name item))
         (let ((result ()))
           (dolist (child (children group))
-            (let ((path (get-scene-paths-aux child item)))
+            (let ((path (get-shape-paths-aux child item)))
               (when path
                 (push (mapcar (lambda (p) (cons (name group) (flatten-list p))) path) result))))
           result)))
@@ -246,6 +246,15 @@
         nil))
   )
 
+;;; remove-shape-path ----------------------------------------------------------
+
+;; TODO -- cf remove-selection
+;; (defmethod remove-shape-path ((scene scene) shape-path)
+;;   (let ((item (scene-path-item shape-path))
+;;         (parent (scene-path-parent-item shape-path)))
+;;     (when (and item parent)
+;;       (remove-child parent item))))      
+                  
 ;;;; scene motion hierarchy functions ==========================================
 
 ;;; find-motions ----------------------------------------------------------------

@@ -17,6 +17,12 @@
           (format nil ", frame bounds: ~a ~a, current: ~a "
                   (start-frame self) (end-frame self) (current-frame self))))
 
+(defmethod initialize-instance :after ((scene scene)  &rest initargs)
+  (declare (ignore initargs))
+  ;; set scene for shapes and motions
+  (map-shape-hierarchy scene (lambda (item) (setf (scene item) scene)))
+  (map-motion-hierarchy scene (lambda (item) (setf (scene item) scene))))
+
 (defmethod current-time ((scene scene))
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
 
@@ -25,9 +31,22 @@
   (pushnew item (selection scene))
   item)
 
+;; TODO
+;; (defmethod seleted-shapes ((scene scene))
+;;   (find-if (lambda (item) (subtypep (type-of item) 'shape)) (selection scene)))
+;; (defmethod seleted-motions ((scene scene))
+;;   (find-if (lambda (item) (subtypep (type-of item) 'motion)) (selection scene)))
+
+;; TODO -- TBD... cf remove-shape-path, remove-shape
+;; -- keep list of scene paths in selection instead of scene-items?
+;;    -- ability to delete instance and not actual item?
+;; -- redo scene to have single shape-root and motion-root groups?
+;; -- implement scene-item-group mixin and use in group and motion-group?
 (defmethod remove-selection ((scene scene) (item scene-item))
   (setf (is-selected? item) nil)
   (setf (selection scene) (remove item (selection scene)))
+;;  (dolist (path (get-shape-paths scene item))
+;;    (remove-shape-path scene path))
   item)
 
 (defmethod toggle-selection ((scene scene) (item scene-item))

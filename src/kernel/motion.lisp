@@ -67,6 +67,10 @@
   (setf (children self) motions)
   self)
 
+(defmethod remove-child ((self motion-group) (m motion))
+  (setf (children self) (remove m (children self)))
+  self)
+
 (defmethod remove-all-children ((self motion-group))
   (setf (children self) '())
   self)

@@ -104,11 +104,17 @@
   (let ((contents (ui-contents *default-scene-view*)))
     (ui-add-child contents view)
     (update-layout contents)
+    ;; scroll if going of bottom of view
     (let ((delta-y (- (+ (ui-y contents) (ui-h contents))
                       (- (second *window-size*) (ui-h (status-bar *default-scene-view*))))))
       (when (> delta-y 0)
         (decf (ui-contents-scroll *default-scene-view*) delta-y)))
     (update-ui-content-position)))
+
+(defun hide-ui-content (view)
+  (let ((contents (ui-contents *default-scene-view*)))
+    (ui-remove-child contents view)
+    (update-layout contents)))
 
 (defun update-ui-content-position ()
   (let ((view (ui-contents *default-scene-view*)))
@@ -131,25 +137,42 @@
     (ct-subtable :S "Scene" (scene-command-table view))
     (ct-subtable :E "Edit" (edit-command-table view))
     (ct-subtable :C "Create" (create-command-table view))
-    (ct-subtable :V "View" (view-command-table view))
+    (ct-subtable :I "Inspect" (inspect-command-table view))
     (ct-subtable :D "Display" (display-command-table view))
     (ct-subtable :X "Context" (context-command-table view))
     table))
 
 (defun scene-command-table (view)
   (let ((table (make-instance 'command-table :title "Scene")))
-    (ct-entry :N "New Scene" (clear-scene (scene view)))
-    (ct-entry :O "Open Scene" (hide-menu view) (show-open-scene-dialog))
+    (ct-entry :N "New Scene" (clear-scene (scene view)) (ui-clear-children (ui-contents view)))
+    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
     (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
     (ct-entry :I "Initialize Scene" (init-scene (scene view)))
     (ct-entry :Q "Quit Scene" (glfw:set-window-should-close))
 ;    (ct-entry :space "Update scene (hold down for animation)" (update-scene (scene view)))
     table))
 
+(defun show-open-scene-dialog ()
+  (show-ui-content
+   (make-text-input-dialog-box "Open Scene File"
+                               (lambda (str)
+                                 (let ((scene (load-scene str)))
+                                   (setf *scene* scene)
+                                   (setf (scene *default-scene-view*) *scene*))))))
+
+(defun show-save-scene-dialog ()
+  (show-ui-content
+   (make-text-input-dialog-box "Save Scene File"
+                               (lambda (str)
+                                 (save-scene (scene *default-scene-view*) str)))))
+
 (defun edit-command-table (view)
   (let ((table (make-instance 'command-table :title "Edit")))
-    (ct-entry :S "Select (TBD)")
+;;    (ct-entry :S "Select (TBD)")
     (ct-entry :backspace "Delete" (remove-current-selection (scene view)))
+    ;; TODO -- handle selected motions...
+    ;; (ct-entry :S "Show" (dolist (shape (selection (scene view))) (setf (is-visible? shape) t)))
+    ;; (ct-entry :H "Hide" (dolist (shape (selection (scene view))) (setf (is-visible? shape) nil)))
     (ct-entry :D "Duplicate (TBD)")
     (ct-entry :G "Group (TBD)")
     (ct-entry :U "Ungroup (TBD)")
@@ -184,8 +207,8 @@
     (ct-make-shape :S "Sphere" (make-cube-sphere 4.0 3))
     table))
 
-(defun view-command-table (view)
-  (let ((table (make-instance `command-table :title "View")))
+(defun inspect-command-table (view)
+  (let ((table (make-instance `command-table :title "Inspect")))
     (ct-entry :R "Reset Camera" (init-view-camera) (3d-update-light-settings))
     (ct-entry :F "Frame Selection")
     (ct-entry :I "Inspector" (show-ui-content (make-ui-inspector (or (selection (scene view))

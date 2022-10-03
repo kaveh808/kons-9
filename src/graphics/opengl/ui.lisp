@@ -209,6 +209,10 @@
    (title nil)
    (children (make-array 0 :adjustable t :fill-pointer 0))))
 
+(defmethod create-contents ((view ui-group))
+  ;; subclass responsibility
+  view)
+
 (defmethod ui-add-child ((view ui-group) (child ui-view))
   (setf (ui-parent child) view)
   (vector-push-extend child (children view))
@@ -432,34 +436,24 @@
                                        :text cancel-button-text
                                        :on-click-fn (lambda (modifiers)
                                                       (declare (ignore modifiers))
-                                                      (setf (is-visible? box) nil))
+                                                      (hide-ui-content box))
+;;                                                      (setf (is-visible? box) nil))
                                        ))
          (ok-button (make-instance 'ui-button-item
                                    :ui-w 80
                                    :text ok-button-text
                                    :on-click-fn (lambda (modifiers)
                                                   (declare (ignore modifiers))
-                                                  (setf (is-visible? box) nil)
-                                                  (funcall ok-action-fn (text text-box)))
-                                   ))
+;;                                                  (setf (is-visible? box) nil)
+                                                  (funcall ok-action-fn (text text-box))
+                                                  (hide-ui-content box))
+                    ))
          )
     (ui-add-child contents-group text-box)
     (ui-add-children buttons-group (list cancel-button ok-button))
     (ui-add-child box (update-layout contents-group))
     (ui-add-child box (update-layout buttons-group))
     (update-layout box)))
-
-(defun show-open-scene-dialog ()
-  (setf (ui-contents *default-scene-view*)
-        (list (make-text-input-dialog-box "Open Scene File"
-                                          (lambda (str)
-                                            (load-scene str))))))
-
-(defun show-save-scene-dialog ()
-  (setf (ui-contents *default-scene-view*)
-        (list (make-text-input-dialog-box "Save Scene File"
-                                          (lambda (str)
-                                            (save-scene (scene *default-scene-view*) str))))))
 
 #|
 (setf (ui-contents *default-scene-view*)
@@ -469,7 +463,6 @@
       (list (make-text-input-dialog-box "Open Scene File" (lambda (str) (load-scene str)))))
 |#
 
-;;; xxx
 ;;; TODO ++ inspector align left
 ;;; TODO ++ outliner title with alt hint
 ;;; TODO xx menubar?
@@ -480,8 +473,9 @@
 ;;;               View [Inspect, Shapes, Motions]
 ;;;               Display [...]
 ;;;               Contextual [...]
-;;; TODO -- how to add contextual items? -- SHIFT TAB for contextual menu?
 ;;; TODO ++ status bar
+;;; xxx
+;;; TODO -- how to add contextual items?
 ;;; TODO -- delete shapes in hierarchy
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
 ;;;      -- works but not with hierarchy display
@@ -665,7 +659,7 @@
                                       (when (ui-parent view)
                                         (update-parent-contents view))))
                                    (t
-                                    (toggle-selection (scene *default-scene-view*)
+                                    (toggle-selection (scene (data view))
                                                       (data view))
                                     (setf (bg-color view) (if (is-selected? (data view))
                                                               (c! 0.8 0.2 0.2 0.5)
@@ -768,7 +762,17 @@
                  (setf (text item) (outliner-item-text item))
                  (setf (ui-w item) (+ (ui-text-width (text item)) (* 4 *ui-default-spacing*)))
                  (ui-add-child view item)))))
-  (update-layout view))
+  (update-layout view)
+  (resize-contents view))
+
+(defmethod resize-contents ((view ui-outliner-viewer))
+  (when (eq :vertical (layout view))
+    (let ((width (ui-w view))
+          (x (padding view)))
+      (loop for child across (children view)
+            do (setf (ui-x child) x)
+            do (setf (ui-w child) width))))
+  view)
 
 (defun make-ui-outliner-viewer (title obj &optional (accessor-fn nil))
   (create-contents (make-instance 'ui-outliner-viewer
