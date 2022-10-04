@@ -171,8 +171,8 @@
 ;;    (ct-entry :S "Select (TBD)")
     (ct-entry :backspace "Delete" (remove-current-selection (scene view)))
     ;; TODO -- handle selected motions...
-    ;; (ct-entry :S "Show" (dolist (shape (selection (scene view))) (setf (is-visible? shape) t)))
-    ;; (ct-entry :H "Hide" (dolist (shape (selection (scene view))) (setf (is-visible? shape) nil)))
+    (ct-entry :S "Show" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) t)))
+    (ct-entry :H "Hide" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) nil)))
     (ct-entry :D "Duplicate (TBD)")
     (ct-entry :G "Group (TBD)")
     (ct-entry :U "Ungroup (TBD)")

@@ -11,6 +11,8 @@
 
 (defmethod add-child ((self group) (s shape))
   (push s (children self))
+  (when (scene self)
+    (set-shape-scene (scene self) s))
   self)
 
 (defmethod remove-child ((self group) (s shape))
@@ -52,6 +54,7 @@
   (dolist (child (children group))
     (set-point-colors-by-point-and-normal child color-fn)))
 
+;;;; TODO
 ;;;; find a better place for these functions -- modeling.lisp?
 ;;;; shapes is a list, points is a vector -- confusing?
 

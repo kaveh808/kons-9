@@ -653,6 +653,7 @@
 (defmethod initialize-instance :after ((view ui-outliner-item)  &rest initargs)
   (declare (ignore initargs))
   (setf (on-click-fn view) (lambda (modifiers)
+                             (print (list view modifiers))
                              (cond ((member :alt modifiers)
                                     (when (has-children-method? (data view))
                                       (toggle-show-children view)
@@ -675,6 +676,7 @@
           (text view)))
 
 (defmethod update-parent-contents ((view ui-outliner-item))
+  (print 'update-parent-contents)
   (when (ui-parent view)
     (if (show-children? view)
         (add-parent-contents view)
@@ -682,6 +684,7 @@
     (update-layout (ui-parent view))))
 
 (defmethod add-parent-contents ((view ui-outliner-item))
+  (print 'add-parent-contents)
   (let ((i (position view (children (ui-parent view)))))
     (loop for child in (children (data view))
           do (let* ((text (format nil "~a" (printable-data child)))
@@ -697,6 +700,9 @@
                                          :is-active? t
                                          :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
                                                               (name child)))))
+
+               (print text)
+               
                (setf (text item) (outliner-item-text item))
                (ui-add-child-at (ui-parent view) item (incf i))
                (push item (outliner-children view))))))
@@ -712,13 +718,26 @@
 (defclass-kons-9 ui-outliner-viewer (ui-sequence-viewer)
 ;  ((roots nil))
   ((data-object nil)
-   (data-accessor-fn nil))
+   (data-accessor-fn nil)
+   (items-show-children '()))
   (:default-initargs
    :bg-color (c! 1 1 1 0.5)
    :layout :vertical
    :justification :left/top
    :spacing 0
    :padding 0))
+
+(defmethod item-show-child? ((view ui-outliner-viewer) item)
+  (let ((data (assoc item (items-show-children view))))
+    (if data
+        (cdr data)
+        nil)))
+
+(defmethod set-item-show-child ((view ui-outliner-viewer) item show?)
+  (let ((data (assoc item (items-show-children view))))
+    (if data
+	(rplacd data show?)
+        (push (cons item show?) (items-show-children view)))))
 
 (defmethod viewer-data ((view ui-outliner-viewer))
   (if (data-object view)
@@ -727,23 +746,12 @@
           (data-object view))
       nil))
 
-;; (defmethod create-data ((view ui-outliner-viewer))
-;;   (setf (data view) nil)
-;;   (dolist (node (roots view))
-;;     (create-data-aux view node))
-;;   (setf (data view) (reverse (data view))))
-
-;; (defmethod create-data-aux ((view ui-outliner-viewer) node)
-;;   (setf (data view) (cons node (data view)))
-;;   (when (compute-applicable-methods #'children (list node))
-;;     (dolist (child (children node))
-;;       (create-data-aux view child))))
-
-;;; TODO -- keep track of show status so we can update intelligently when called from update-scene-ui
-;;;      -- otherwise hierarchy display does not work
 (defmethod create-contents ((view ui-outliner-viewer))
+  ;; create-contents gets called on every update, but we want to preserve our state
+  ;; TODO -- this means the outliner does not reflect scene changes (add/delete items)
+  (when (> (length (children view)) 0)
+    (return-from create-contents view))
   (setf (fill-pointer (children view)) 0)
-;  (create-data view)
   (let ((data (viewer-data view)))
     (when data
       (loop for entry across (coerce data 'vector)

@@ -32,10 +32,11 @@
   item)
 
 ;; TODO
-;; (defmethod seleted-shapes ((scene scene))
-;;   (find-if (lambda (item) (subtypep (type-of item) 'shape)) (selection scene)))
-;; (defmethod seleted-motions ((scene scene))
-;;   (find-if (lambda (item) (subtypep (type-of item) 'motion)) (selection scene)))
+(defmethod selected-shapes ((scene scene))
+  (remove-if-not (lambda (item) (subtypep (type-of item) 'shape)) (selection scene)))
+
+(defmethod selected-motions ((scene scene))
+  (remove-if-not (lambda (item) (subtypep (type-of item) 'motion)) (selection scene)))
 
 ;; TODO -- TBD... cf remove-shape-path, remove-shape
 ;; -- keep list of scene paths in selection instead of scene-items?
@@ -61,8 +62,16 @@
 
 (defmethod add-shape ((scene scene) (shape shape))
   (push shape (shapes scene))
+  (set-shape-scene scene shape)
+  shape)
+
+(defmethod set-shape-scene ((scene scene) (shape shape))
   (setf (scene shape) scene)
   shape)
+
+(defmethod set-shape-scene :after ((scene scene) (group group))
+  (dolist (child (children group))
+    (set-shape-scene scene child)))
 
 (defmethod add-shapes ((scene scene) shapes)
   (mapcar #'(lambda (s) (add-shape scene s)) shapes))
