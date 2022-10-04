@@ -653,7 +653,6 @@
 (defmethod initialize-instance :after ((view ui-outliner-item)  &rest initargs)
   (declare (ignore initargs))
   (setf (on-click-fn view) (lambda (modifiers)
-                             (print (list view modifiers))
                              (cond ((member :alt modifiers)
                                     (when (has-children-method? (data view))
                                       (toggle-show-children view)
@@ -676,7 +675,6 @@
           (text view)))
 
 (defmethod update-parent-contents ((view ui-outliner-item))
-  (print 'update-parent-contents)
   (when (ui-parent view)
     (if (show-children? view)
         (add-parent-contents view)
@@ -684,7 +682,6 @@
     (update-layout (ui-parent view))))
 
 (defmethod add-parent-contents ((view ui-outliner-item))
-  (print 'add-parent-contents)
   (let ((i (position view (children (ui-parent view)))))
     (loop for child in (children (data view))
           do (let* ((text (format nil "~a" (printable-data child)))
@@ -700,9 +697,6 @@
                                          :is-active? t
                                          :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
                                                               (name child)))))
-
-               (print text)
-               
                (setf (text item) (outliner-item-text item))
                (ui-add-child-at (ui-parent view) item (incf i))
                (push item (outliner-children view))))))
