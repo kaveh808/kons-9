@@ -52,32 +52,25 @@
 (defun active-command-table ()
   (car (command-tables *default-scene-view*)))
 
-(defun register-dynamic-command-table-entry (view table-title context-fn key-binding command-fn doc)
-  (push (list table-title context-fn key-binding command-fn doc)
+(defun register-dynamic-command-table-entry (view table-title key-binding doc command-fn context-fn)
+  (push (list table-title key-binding doc command-fn context-fn)
         (dynamic-command-table-entries view)))
 
-(defun add-dynamic-command-table-entry (table-title context-fn key-binding command-fn doc)
+(defun add-dynamic-command-table-entry (table-title key-binding doc command-fn context-fn)
   (let ((table (active-command-table)))
     (when (and table
                (equalp (title table) table-title)
                (funcall context-fn))
       (add-entry table key-binding command-fn doc))))
 
+;; TODO -- implement plugin class with registration method?
 (defun register-dynamic-command-table-entries (view)
-  (register-dynamic-command-table-entry
-   view
-   "Create"
-   (lambda () t)
-   :u
-   (lambda () (make-active-command-table (uv-mesh-command-table)))
-   "UV Mesh")
-  (register-dynamic-command-table-entry
-   view
-   "Context"
-   (lambda () (find-if (lambda (item) (subtypep (type-of item) 'shape)) (selection (scene view))))
-   :h
-   (lambda () (make-active-command-table (transform-command-table view)))
-   "Transform Selection")
+  (register-dynamic-command-table-entry view "Create" :u "UV Mesh"
+                                        (lambda () (make-active-command-table (uv-mesh-command-table)))
+                                        (lambda () t))
+  (register-dynamic-command-table-entry view "Context" :t "Transform Selection"
+                                        (lambda () (make-active-command-table (transform-command-table view)))
+                                        (lambda () (selected-shapes (scene view))))
   )
 
 ;;;; scene-view ================================================================
@@ -488,14 +481,6 @@
           (highlight-ui-item-under-mouse (ui-contents *default-scene-view*) x y))
         (highlight-ui-item-under-mouse (ui-contents *default-scene-view*) x y))))
 
-  ;; (let ((menu (menu *default-scene-view*)))
-  ;;   (if (and menu (is-visible? menu))
-  ;;       (when (not (highlight-ui-item-under-mouse menu x y))
-  ;;         (dolist (ui-view (ui-contents *default-scene-view*))
-  ;;           (highlight-ui-item-under-mouse ui-view x y)))
-  ;;       (dolist (ui-view (ui-contents *default-scene-view*))
-  ;;         (highlight-ui-item-under-mouse ui-view x y)))))        
-
 (defun mouse-click (x y button modifiers)
   ;; clear keyboard focus
   (setf *ui-keyboard-focus* nil)
@@ -505,15 +490,6 @@
         (when (not (do-action-ui-item-under-mouse menu x y button modifiers))
           (do-action-ui-item-under-mouse (ui-contents *default-scene-view*) x y button modifiers))
         (do-action-ui-item-under-mouse (ui-contents *default-scene-view*) x y button modifiers))))
-
-
-  ;; (let ((menu (menu *default-scene-view*)))
-  ;;   (if (and menu (is-visible? menu))
-  ;;       (when (not (do-action-ui-item-under-mouse menu x y button modifiers))
-  ;;         (dolist (ui-view (ui-contents *default-scene-view*))
-  ;;           (do-action-ui-item-under-mouse ui-view x y button modifiers)))
-  ;;       (dolist (ui-view (ui-contents *default-scene-view*))
-  ;;         (do-action-ui-item-under-mouse ui-view x y button modifiers)))))
 
 (defun mouse-dragged (x y dx dy)
   (declare (ignore x y))

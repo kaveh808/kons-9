@@ -478,8 +478,8 @@
 ;;; TODO -- how to add contextual items?
 ;;; TODO -- delete shapes in hierarchy
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
-;;;      -- works but not with hierarchy display
 ;;; TODO ++ inspector sizing issues
+;;; TODO -- global key bindings (eg. space, backspace) -- register properly and avoid shadowing with c-t
 
 ;;;; ui-status-bar =============================================================
 
