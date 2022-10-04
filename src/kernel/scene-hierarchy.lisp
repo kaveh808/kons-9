@@ -249,12 +249,13 @@
 ;;; remove-shape-path ----------------------------------------------------------
 
 ;; TODO -- cf remove-selection
+;; -- what to do if item has no parent? -- replace scene shapes with root shape group?
 ;; (defmethod remove-shape-path ((scene scene) shape-path)
 ;;   (let ((item (scene-path-item shape-path))
 ;;         (parent (scene-path-parent-item shape-path)))
 ;;     (when (and item parent)
 ;;       (remove-child parent item))))      
-                  
+
 ;;;; scene motion hierarchy functions ==========================================
 
 ;;; find-motions ----------------------------------------------------------------

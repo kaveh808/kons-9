@@ -39,6 +39,7 @@
   (remove-if-not (lambda (item) (subtypep (type-of item) 'motion)) (selection scene)))
 
 ;; TODO -- TBD... cf remove-shape-path, remove-shape
+;; -- difference between delete-item and remove-shape-path
 ;; -- keep list of scene paths in selection instead of scene-items?
 ;;    -- ability to delete instance and not actual item?
 ;; -- redo scene to have single shape-root and motion-root groups?
