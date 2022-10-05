@@ -1,10 +1,10 @@
 (in-package :kons-9)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (ql:quickload :font)
-  (ql:quickload :cl-paths-ttf)
-  (ql:quickload :font-zpb-ttf)
-  )
+;; (eval-when (:compile-toplevel :load-toplevel :execute)
+;;   (ql:quickload :font)
+;;   (ql:quickload :cl-paths-ttf)
+;;   (ql:quickload :font-zpb-ttf)
+;;   )
 
 (defconstant +index-type+ :unsigned-short)
 

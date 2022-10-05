@@ -15,6 +15,9 @@
    #:cl-opengl
    #:cl-glu
    #:cl-glfw3
+   #:cl-paths-ttf                       ;for font libraries
+   #:zpb-ttf                            ;for font libraries
+   #:cl-vectors                         ;for font libraries
    #:origin
    #:clobber) 
   :serial t
@@ -49,6 +52,17 @@
    (:file "src/kernel/clobber")
    (:file "src/kernel/main")
    (:file "src/ui/command-table")
+   ;; font libraries -- tmp until we use 3b-bmfont
+   (:module "lib/JMC-font-libs/font-master"
+    :components ((:file "glyph")
+                 (:file "font")
+                 (:file "glyph-doc")
+                 (:file "documentation")))
+   (:module "lib/JMC-font-libs/font-zpb-ttf-master"
+    :depends-on ("lib/JMC-font-libs/font-master") ; #:zpb-ttf "cl-vectors")
+    :components ((:file "package")
+                 (:file "glyph-zpb-ttf")
+                 (:file "font-zpb-ttf")))
    ;; user interface
    (:file "src/graphics/glfw/minimal-ui")
    (:file "src/graphics/opengl/text-common")
