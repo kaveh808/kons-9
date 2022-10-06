@@ -15,7 +15,7 @@
 
 (defmethod write-usd ((scene scene) &optional (stream t) (indent 0))
   (write-usd-header scene stream)
-  (mapc #'(lambda (s) (write-usd s stream (+ indent 2))) (shapes scene)))
+  (write-usd (shape-root scene) stream (+ indent 2)))
 
 (defmethod write-usd-header ((scene scene) &optional (stream t))
   (format stream "#usda 1.0~%")
@@ -49,7 +49,7 @@
   ;; do nothing for now
   )
 
-(defmethod write-usd ((group group) &optional (stream t) (indent 0))
+(defmethod write-usd ((group shape-group) &optional (stream t) (indent 0))
   (dolist (shape (children group))
     (write-usd shape stream (+ indent 4))))
 

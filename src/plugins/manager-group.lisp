@@ -2,7 +2,7 @@
 
 ;;;; manager-group =============================================================
 
-(defclass manager-group (group dependency-node-mixin)
+(defclass manager-group (shape-group dependency-node-mixin)
   ())
 
 (def-procedural-output manager-group children)
@@ -34,7 +34,7 @@
   (remove-all-children self)
   (let ((points (source-points (point-generator self))))
     (dotimes (i (length points))
-      (add-child self (translate-to (make-group (list (instance-shape self))) (aref points i))))))
+      (add-child self (translate-to (make-shape-group (list (instance-shape self))) (aref points i))))))
 
 (defun make-point-instancer (p-gen instance-shape)
   (make-instance 'point-instancer :point-generator p-gen :instance-shape instance-shape))
@@ -58,7 +58,7 @@
       (let* ((factor (if (= 1 steps)
                          1.0
                          (tween i 0.0 (1- steps))))
-             (instance-group (make-group (list (instance-shape self)))))
+             (instance-group (make-shape-group (list (instance-shape self)))))
         ;; make group transform same type as the instance-transform
         (setf (transform instance-group) (make-instance (type-of (instance-transform self))))
         (partial-copy (transform instance-group) (instance-transform self) factor)

@@ -206,8 +206,8 @@
     (ct-entry :F "Frame Selection")
     (ct-entry :I "Inspector" (show-ui-content (make-ui-inspector (or (selection (scene view))
                                                                      (scene view)))))
-    (ct-entry :S "Shapes" (show-ui-content (make-ui-outliner-viewer "Shapes" (scene view) #'shapes)))
-    (ct-entry :M "Motions" (show-ui-content (make-ui-outliner-viewer "Motions" (scene view) #'motions)))
+    (ct-entry :S "Shapes" (show-ui-content (make-ui-outliner-viewer "Shapes" (shape-root (scene view)))))
+    (ct-entry :M "Motions" (show-ui-content (make-ui-outliner-viewer "Motions" (motion-root (scene view)))))
     table))
 
 (defun display-command-table (view)

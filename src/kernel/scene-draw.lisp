@@ -5,9 +5,9 @@
 (defgeneric draw (obj)
   
   (:method ((scene scene))
-    (mapc #'draw (shapes scene)))
+    (draw (shape-root scene)))
 
-  (:method ((group group))
+  (:method ((group shape-group))
     (when (is-visible? group)
       (mapc #'draw (children group))))
 

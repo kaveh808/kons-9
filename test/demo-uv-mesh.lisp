@@ -103,12 +103,12 @@ a path CURVE. The profile and path can be open or closed.
 #|
 Assign point colors to the UV-MESH by uv.
 |#
-(set-point-colors-by-uv (first (shapes *scene*))
+(set-point-colors-by-uv (first (children (shape-root *scene*)))
                         (lambda (u v) (declare (ignore u)) (c-rainbow v)))
 #|
 Assign point colors to the UV-MESH by xyz.
 |#
-(set-point-colors-by-xyz (first (shapes *scene*))
+(set-point-colors-by-xyz (first (children (shape-root *scene*)))
                          (lambda (p) (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))
 
 #|

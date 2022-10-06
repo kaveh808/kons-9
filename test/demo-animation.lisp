@@ -35,7 +35,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
                                                                    (lerp (local-time anim) 0 1440)))))))))
 (setf (end-frame *scene*) 42)
 
-(setf (duration (first (motions *scene*))) 0.5)
+(setf (duration (first (children (motion-root *scene*)))) 0.5)
 
 ;;;; easing function visualizations ============================================
 
@@ -65,14 +65,14 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
   (let ((x -1.2)
         (y -1.5))
     (add-shape *scene*
-               (make-group (mapcar (lambda (list)
-                                     (incf x 1.2)
-                                     (setf y -1.5)
-                                     (make-group (mapcar (lambda (fn)
-                                                           (incf y 1.5)
-                                                           (translate-to (make-ease-curve fn) (p! x y 0)))
-                                                         list)))
-                                   *easing-fns*)))))
+               (make-shape-group (mapcar (lambda (list)
+                                           (incf x 1.2)
+                                           (setf y -1.5)
+                                     (make-shape-group (mapcar (lambda (fn)
+                                                                 (incf y 1.5)
+                                                                 (translate-to (make-ease-curve fn) (p! x y 0)))
+                                                               list)))
+                                         *easing-fns*)))))
 
 ;;;; easing function test ======================================================
 

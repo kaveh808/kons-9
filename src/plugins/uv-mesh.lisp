@@ -46,7 +46,7 @@
             (setf (aref (point-colors mesh) (uv-mesh-1d-ref mesh  u v))
                   (funcall color-fn u0 v0))))))))
 
-(defmethod set-point-colors-by-uv ((group group) color-fn)
+(defmethod set-point-colors-by-uv ((group shape-group) color-fn)
   (dolist (child (children group))
     (set-point-colors-by-uv child color-fn)))
 

@@ -132,7 +132,7 @@ Generate a point cloud on the surface of a polyhedron.
 #|
 (Demo 06 kernel) transforms and hierarchies ====================================
 
-Hierarchies are implemented by SHAPE and GROUP classes, both of which have
+Hierarchies are implemented by SHAPE and SHAPE-GROUP classes, both of which have
 a TRANSFORM.
 
 Create a hierarchy and turn on shape axis display.
@@ -141,8 +141,8 @@ Create a hierarchy and turn on shape axis display.
   (defparameter *icosahedron* (make-icosahedron 1.0))
   (defparameter *cube* (make-cube 1.0))
   (defparameter *tetrahedron* (make-tetrahedron 1.0))
-  (defparameter *group-1* (make-group (list *cube* *tetrahedron*)))
-  (defparameter *group-2* (make-group (list *group-1* *icosahedron*)))
+  (defparameter *group-1* (make-shape-group (list *cube* *tetrahedron*)))
+  (defparameter *group-2* (make-shape-group (list *group-1* *icosahedron*)))
   (add-shape *scene* *group-2*)
   (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
   (translate-by *tetrahedron* (p! 0.0 1.5 0.0))
@@ -177,9 +177,9 @@ Moving the octahedron translates both instances.
 (translate-by *octahedron* (p! 0.0 0.0 -.5))
 
 #|
-(Demo 07 kernel) groups ========================================================
+(Demo 07 kernel) shape-groups ==================================================
 
-Create a group by creating shapes at specified points.
+Create a shape-group by creating shapes at specified points.
 |#
 (with-clear-scene
   (add-shape *scene* (scatter-shapes-in-group (lambda () (make-cube 0.5))
@@ -281,11 +281,11 @@ Create a robot arm as a hierarchical structure.
   (defparameter *wrist-shape* (make-cube-sphere 1.0 2))
   (defparameter *hand-shape* (make-box 1.5 1.2 0.4))
 
-  (defparameter *wrist* (make-group (list *wrist-shape* *hand-shape*)))
-  (defparameter *elbow* (make-group (list *elbow-shape* *lower-arm-shape* *wrist*)))
-  (defparameter *shoulder* (make-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
-  (defparameter *torso* (make-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
-  (defparameter *waist* (make-group (list *waist-shape* *torso-shape* *shoulder*)))
+  (defparameter *wrist* (make-shape-group (list *wrist-shape* *hand-shape*)))
+  (defparameter *elbow* (make-shape-group (list *elbow-shape* *lower-arm-shape* *wrist*)))
+  (defparameter *shoulder* (make-shape-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
+  (defparameter *torso* (make-shape-group (list *shoulder-shape* *upper-arm-shape* *elbow*)))
+  (defparameter *waist* (make-shape-group (list *waist-shape* *torso-shape* *shoulder*)))
 
   (setf (name *waist-shape*) 'waist-shape)
   (setf (name *torso-shape*) 'torso-shape)
@@ -468,19 +468,19 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 (setf (end-frame *scene*) 42)
 
 #|
-Set the motion group's duration to 0.5. The shapes now rotate 90 degrees over
+Set the motion-group's duration to 0.5. The shapes now rotate 90 degrees over
 half of scene duration (21 frames).
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
-(setf (duration (first (motions *scene*))) 0.5)
+(setf (duration (first (children (motion-root *scene*)))) 0.5)
 
 #|
 Set the indidual animators' timings so they run sequentially.
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
-(let* ((anims (children (first (motions *scene*))))
+(let* ((anims (children (first (children (motion-root *scene*)))))
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
@@ -493,7 +493,7 @@ Modify the animators' timings.
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
-(let* ((anims (children (first (motions *scene*))))
+(let* ((anims (children (first (children (motion-root *scene*)))))
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
@@ -502,27 +502,27 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
   (set-timing anim-2 0.5 0.5))
 
 #|
-Set the motion group's duration to be full scene duration.
+Set the motion-group's duration to be full scene duration.
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
-(setf (duration (first (motions *scene*))) 1.0)
+(setf (duration (first (children (motion-root *scene*)))) 1.0)
 
 #|
 Modify the animators' timings using the parent motion-group's ordering methods.
 
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
-(let ((group (first (motions *scene*))))
+(let ((group (first (children (motion-root *scene*)))))
   (sequential-order group))
 
-(let ((group (first (motions *scene*))))
+(let ((group (first (children (motion-root *scene*)))))
   (parallel-order group))
 
-(let ((group (first (motions *scene*))))
+(let ((group (first (children (motion-root *scene*)))))
   (random-order group 0.25 0.5))
 
-(let* ((anims (children (first (motions *scene*))))
+(let* ((anims (children (first (children (motion-root *scene*)))))
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
@@ -586,8 +586,8 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
   (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
          (cube (make-cube 1.0 :name 'cube))
          (tetrahedron (make-tetrahedron 1.0 :name 'tetrahedron))
-         (group-1 (make-group (list cube tetrahedron) :name 'group-1))
-         (group-2 (make-group (list group-1 icosahedron) :name 'group-2)))
+         (group-1 (make-shape-group (list cube tetrahedron) :name 'group-1))
+         (group-2 (make-shape-group (list group-1 icosahedron) :name 'group-2)))
     (translate-by tetrahedron (p! 0.0 1.5 0.0))
     (translate-by cube (p! 0.0 -1.5 0.0))
     (translate-by group-1 (p! 1.5 0.0 0.0))
@@ -625,8 +625,8 @@ Duplicate group-1 (and add to parent of original)
   (let* ((icosahedron (make-icosahedron 1.0 :name 'icosahedron))
          (cube (make-cube 1.0 :name 'cube))
          (tetrahedron (make-tetrahedron 1.0 :name 'tetrahedron))
-         (group-1 (make-group (list cube tetrahedron) :name 'group-1))
-         (group-2 (make-group (list group-1 icosahedron) :name 'group-2)))
+         (group-1 (make-shape-group (list cube tetrahedron) :name 'group-1))
+         (group-2 (make-shape-group (list group-1 icosahedron) :name 'group-2)))
     (translate-by tetrahedron (p! 0.0 1.5 0.0))
     (translate-by cube (p! 0.0 -1.5 0.0))
     (translate-by group-1 (p! 1.5 0.0 0.0))
@@ -757,9 +757,9 @@ Freeze a shape by transforming its points.
   (with-clear-scene
     (add-shapes *scene* (list
                          (translate-by
-                          (make-group
+                          (make-shape-group
                            (list (rotate-by
-                                  (make-group
+                                  (make-shape-group
                                    (list
                                     (translate-by
                                      *cube*
@@ -805,7 +805,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                  (rotate-to (shape anim)
                                             (p! 0 (* 90 (local-time anim)) 0)))))
          (animation (make-instance 'animation :shape shape :shape-animator animator))
-         (top-shape-group (make-instance 'group))
+         (top-shape-group (make-instance 'shape-group))
          (top-motion-group (make-instance 'motion-group))
          (points (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))
     (dotimes (i (length points))
@@ -821,13 +821,13 @@ Set the timings of the animation instances.
 Hold down space key to play animation. Press 'a' key to go back to frame 0.
 |#
 
-(let ((group (first (motions *scene*))))
+(let ((group (first (children (motion-root *scene*)))))
   (sequential-order group))
 
-(let ((group (first (motions *scene*))))
+(let ((group (first (children (motion-root *scene*)))))
   (parallel-order group))
 
-(let ((group (first (motions *scene*))))
+(let ((group (first (children (motion-root *scene*)))))
   (random-order group 0.25 0.5))
 
 #|

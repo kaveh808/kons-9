@@ -17,7 +17,7 @@
 (defmethod add-animation-to-scene ((anim animation) group motion-group
                                    &key (mode :add-as-instance)) ; :add-as-duplicate
   (cond ((eq :add-as-instance mode)
-         (let* ((instance-shape-group (make-group (list (shape anim))))
+         (let* ((instance-shape-group (make-shape-group (list (shape anim))))
                 (anim-dup (duplicate (shape-animator anim)))
                 (instance-motion-group (make-motion-group (list anim-dup))))
            (setf (shape anim-dup) instance-shape-group)
