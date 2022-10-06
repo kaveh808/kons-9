@@ -733,11 +733,12 @@
 	(rplacd data show?)
         (push (cons item show?) (items-show-children view)))))
 
+;;; returns a list
 (defmethod viewer-data ((view ui-outliner-viewer))
   (if (data-object view)
       (if (data-accessor-fn view)
           (funcall (data-accessor-fn view) (data-object view))
-          (data-object view))
+          (list (data-object view)))
       nil))
 
 (defmethod create-contents ((view ui-outliner-viewer))
