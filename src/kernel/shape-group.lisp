@@ -10,12 +10,15 @@
   (strcat (call-next-method) (format nil ", ~a children" (length (children self)))))
 
 (defun make-shape-group (shapes &key (name nil))
-  (make-instance 'shape-group :name name :children shapes))
+  (let ((group (make-instance 'shape-group :name name)))
+    (dolist (shape shapes)
+      (add-child group shape))
+    group))
 
-(defmethod get-bounds ((self shape-group))
+(defmethod get-bounds ((group shape-group))
   (let ((bounds-lo nil)
         (bounds-hi nil))
-    (dolist (child (children self))
+    (do-children (child group)
       (multiple-value-bind (lo hi)
           (get-bounds child)
         (when lo
@@ -29,11 +32,11 @@
     (values bounds-lo bounds-hi)))
 
 (defmethod set-point-colors-by-xyz ((group shape-group) color-fn)
-  (dolist (child (children group))
+  (do-children (child group)
     (set-point-colors-by-xyz child color-fn)))
 
 (defmethod set-point-colors-by-point-and-normal ((group shape-group) color-fn)
-  (dolist (child (children group))
+  (do-children (child group)
     (set-point-colors-by-point-and-normal child color-fn)))
 
 ;;;; TODO
@@ -41,9 +44,10 @@
 ;;;; shapes is a list, points is a vector -- confusing?
 
 (defun scatter-shapes-in-group (shape-fn points)
-  (make-instance 'shape-group :children (mapcar (lambda (p)
-                                            (translate-to (funcall shape-fn) p))
-                                          (coerce points 'list))))
+  (let ((shapes (mapcar (lambda (p)
+                          (translate-to (funcall shape-fn) p))
+                        (coerce points 'list))))
+    (make-shape-group shapes)))
 
 (defun scatter-shapes (shapes points)
   (if (= (length shapes) (length points))

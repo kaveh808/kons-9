@@ -324,11 +324,14 @@
   (setf (menu self) nil)
   (setf (command-tables self) (last (command-tables self)))) ;pop all but original table
 
+;;; TODO -- register global key bindings: esc, space, tab, [, etc
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
   (cond ((eq :space key)                ;play animation
          (update-scene (scene self)))
+        ((eq :left-bracket key)         ;init scene
+         (init-scene (scene self)))
         ((eq :tab key)                  ;hide/show menu
          (cond ((and (menu self) (is-visible? (menu self)))
                 (hide-menu self))

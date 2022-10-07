@@ -9,23 +9,23 @@
 (defmethod print-shape-hierarchy ((scene scene) &key (names-only t) (indent 0))
   (print-spaces indent)
   (format t "~%~a~%" scene)
-  (dolist (scene-item (children (shape-root scene)))
+  (do-children (scene-item (shape-root scene))
     (print-hierarchy scene-item :names-only names-only :indent (+ indent 2))))
 
 (defmethod print-motion-hierarchy ((scene scene) &key (names-only t) (indent 0))
   (print-spaces indent)
   (format t "~%~a~%" scene)
-  (dolist (scene-item (children (motion-root scene)))
+  (do-children (scene-item (motion-root scene))
     (print-hierarchy scene-item :names-only names-only :indent (+ indent 2))))
 
 (defgeneric print-hierarchy (obj &key names-only indent)
 
   (:method :after ((group shape-group) &key (names-only t) (indent 0))
-    (dolist (child (children group))
+    (do-children (child group)
       (print-hierarchy child :names-only names-only :indent (+ indent 2))))
 
   (:method :after ((group motion-group) &key (names-only t) (indent 0))
-    (dolist (child (children group))
+    (do-children (child group)
       (print-hierarchy child :names-only names-only :indent (+ indent 2))))
 
   (:method ((scene-item scene-item) &key (names-only t) (indent 0))
@@ -53,7 +53,7 @@
 
   ;; TODO -- replace with group-mixin
   (:method :after ((group shape-group) func &key (test nil))
-    (dolist (child (children group))
+    (do-children (child group)
       (map-hierarchy child func :test test))
     group)
 
@@ -64,7 +64,7 @@
 
   ;; TODO -- replace with group-mixin
   (:method :after ((group motion-group) func &key (test nil))
-    (dolist (child (children group))
+    (do-children (child group)
       (map-hierarchy child func :test test))
     group)
   )
@@ -116,7 +116,7 @@
     (remove-duplicates
      (remove nil
              (flatten-list (mapcar (lambda (child) (find-shapes child test-fn :groups groups))
-                                   (children (shape-root scene)))))))
+                                   (coerce (children (shape-root scene)) 'list))))))
 
   (:method ((group shape-group) test-fn &key (groups t))
     (remove-duplicates
@@ -125,7 +125,7 @@
                                      group
                                      nil)
                                  (mapcar (lambda (child) (find-shapes child test-fn :groups groups))
-                                         (children group)))))))
+                                         (coerce (children group) 'list)))))))
 
   (:method ((scene-item scene-item) test-fn &key (groups t))
     (declare (ignore groups))
@@ -191,7 +191,7 @@
     (if (eq scene item)
         '()
         (let ((paths ()))
-          (dolist (child (children (shape-root scene)))
+          (do-children (child (shape-root scene))
             (let ((path (get-shape-paths-aux child item)))
               (when path
                 (push path paths))))
@@ -201,7 +201,7 @@
     (if (eq group item)
         (list (name item))
         (let ((result ()))
-          (dolist (child (children group))
+          (do-children (child group)
             (let ((path (get-shape-paths-aux child item)))
               (when path
                 (push (mapcar (lambda (p) (cons (name group) (flatten-list p))) path) result))))
@@ -266,7 +266,7 @@
     (remove-duplicates
      (remove nil
              (flatten-list (mapcar (lambda (child) (find-motions child test-fn :groups groups))
-                                   (children (motion-root scene)))))))
+                                   (children-as-list (motion-root scene)))))))
 
   (:method ((group motion-group) test-fn &key (groups t))
     (remove-duplicates
@@ -275,7 +275,7 @@
                                      group
                                      nil)
                                  (mapcar (lambda (child) (find-motions child test-fn :groups groups))
-                                         (children group)))))))
+                                         (children-as-list group)))))))
 
   (:method ((scene-item scene-item) test-fn &key (groups t))
     (declare (ignore groups))
@@ -341,7 +341,7 @@
     (if (eq scene item)
         ()
         (let ((paths ()))
-          (dolist (child (children (motion-root scene)))
+          (do-children (child (motion-root scene))
             (let ((path (get-motion-paths-aux child item)))
               (when path
                 (push path paths))))
@@ -351,7 +351,7 @@
     (if (eq group item)
         (list (name item))
         (let ((result ()))
-          (dolist (child (children group))
+          (do-children (child group)
             (let ((path (get-motion-paths-aux child item)))
               (when path
                 (push (mapcar (lambda (p) (cons (name group) (flatten-list p))) path) result))))

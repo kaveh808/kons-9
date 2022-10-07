@@ -53,8 +53,9 @@
                             (* sv r)
                             (* cv su r)))))))))))
 
-(defmethod make-superquadric (u-dim v-dim diameter e1 e2)
-  (make-instance 'superquadric :u-dim u-dim
+(defmethod make-superquadric (u-dim v-dim diameter e1 e2 &key (name nil))
+  (make-instance 'superquadric :name name
+                               :u-dim u-dim
                                :v-dim v-dim
                                :u-wrap t
                                :v-wrap nil

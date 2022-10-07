@@ -47,7 +47,7 @@
                   (funcall color-fn u0 v0))))))))
 
 (defmethod set-point-colors-by-uv ((group shape-group) color-fn)
-  (dolist (child (children group))
+  (do-children (child group)
     (set-point-colors-by-uv child color-fn)))
 
 (defun index+1 (index dim wrap?)

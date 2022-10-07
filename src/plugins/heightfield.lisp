@@ -5,8 +5,9 @@
 (defclass heightfield (uv-mesh)
   ((height-fn :accessor height-fn :initarg :height-fn :initform nil)))
 
-(defmethod make-heightfield (x-segments z-segments bounds-lo bounds-hi &optional (height-fn nil))
-  (let ((hfield (make-instance 'heightfield :u-dim (1+ z-segments)
+(defmethod make-heightfield (x-segments z-segments bounds-lo bounds-hi &key (name nil) (height-fn nil))
+  (let ((hfield (make-instance 'heightfield :name name
+                                            :u-dim (1+ z-segments)
                                             :v-dim (1+ x-segments)
                                             :u-wrap nil
                                             :v-wrap nil

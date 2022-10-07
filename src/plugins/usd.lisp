@@ -50,7 +50,7 @@
   )
 
 (defmethod write-usd ((group shape-group) &optional (stream t) (indent 0))
-  (dolist (shape (children group))
+  (do-children (shape group)
     (write-usd shape stream (+ indent 4))))
 
 (defmethod write-usd ((mesh uv-mesh) &optional (stream t) (indent 0))

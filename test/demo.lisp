@@ -9,46 +9,52 @@
 ;;; try using various height functions and color functions
 (with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       (lambda (x z)
-                                         (* 4 (noise (p! x 0 z)))))))
+                                       :name 'hfield
+                                       :height-fn (lambda (x z)
+                                                    (* 4 (noise (p! x 0 z)))))))
 
 (with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       (lambda (x z)
-                                         (* 4 (turbulence (p! x 0 z) 4))))))
+                                       :name 'hfield
+                                       :height-fn (lambda (x z)
+                                                    (* 4 (turbulence (p! x 0 z) 4))))))
 
 (with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       (lambda (x z)
-                                         (let* ((p (p! x 0 z))
-                                                (mag (p:length (p:scale p .25))))
-                                           (if (= mag 0.0)
-                                               10.0
-                                               (/ 1.0 mag)))))))
+                                       :name 'hfield
+                                       :height-fn (lambda (x z)
+                                                    (let* ((p (p! x 0 z))
+                                                           (mag (p:length (p:scale p .25))))
+                                                      (if (= mag 0.0)
+                                                          10.0
+                                                          (/ 1.0 mag)))))))
 
 (with-clear-scene
   (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       (lambda (x z)
-                                         (let* ((p (p! x 0 z))
-                                                (mag (max 0.001 (p:length (p:scale p 4.0)))))
-                                           (* 3 (/ (sin mag) mag)))))))
+                                       :name 'hfield
+                                       :height-fn (lambda (x z)
+                                                    (let* ((p (p! x 0 z))
+                                                           (mag (max 0.001 (p:length (p:scale p 4.0)))))
+                                                      (* 3 (/ (sin mag) mag)))))))
 
 ;;; rainbow color based on height
-(let ((mesh (first (children (shape-root *scene*)))))
+(let ((mesh (find-shape-by-name *scene* 'hfield)))
   (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:y p) -.25 1.0) 0.0 1.0)))))
 
 ;;; rainbow color based on XZ distance from origin
-(let ((mesh (first (children (shape-root *scene*)))))
+(let ((mesh (find-shape-by-name *scene* 'hfield)))
   (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0)))))
 
 ;;; 3D color noise
-(let ((mesh (first (children (shape-root *scene*)))))
+(let ((mesh (find-shape-by-name *scene* 'hfield)))
   (set-point-colors-by-xyz mesh (lambda (p) (color-noise p))))
 
 ;;; animated heightfield -------------------------------------------------------
 (with-clear-scene
-  (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5) nil)))
-    (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0))))
+  (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5))))
+    (set-point-colors-by-xyz mesh
+                             (lambda (p)
+                               (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0))))
     (add-shape *scene* mesh)
     (macrolet ((my-height-fn (scale)
                  `(lambda (x z)
@@ -69,14 +75,14 @@
 (format t "  superquadrics...~%") (finish-output)
 
 (with-clear-scene
-  (let ((mesh (make-superquadric 16 16 2.0 1 0.1)))
+  (let ((mesh (make-superquadric 16 16 2.0 1 0.1 :name 'superquadric)))
     (add-shape *scene* mesh)
     (translate-by mesh (p! 0 1 0))))
 
 ;;; modify slots and shape will change due to prcedural-mixin setup
-(setf (e1 (first (children (shape-root *scene*)))) 0.5)
+(setf (e1 (find-shape-by-name *scene* 'superquadric)) 0.5)
 
-(setf (u-dim (first (children (shape-root *scene*)))) 32)
+(setf (u-dim (find-shape-by-name *scene* 'superquadric)) 32)
 
 ;;; animated superquadric
 (with-clear-scene
@@ -109,19 +115,19 @@
 
 ;;; poly-mesh ------------------------------------------------------------------
 (with-clear-scene
-  (add-shape *scene* (translate-by (make-cube 2.0 :mesh-type 'poly-mesh) (p! 0 1 0))))
+  (add-shape *scene* (translate-by (make-cube 2.0 :name 'cube :mesh-type 'poly-mesh) (p! 0 1 0))))
 ;;; select vertices
 (progn
-  (select-vertex (first (children (shape-root *scene*))) 7)
-  (select-vertex (first (children (shape-root *scene*))) 6))
+  (select-vertex (find-shape-by-name *scene* 'cube) 7)
+  (select-vertex (find-shape-by-name *scene* 'cube) 6))
 ;;; select edges
 (progn
-  (select-edge (first (children (shape-root *scene*))) 11)
-  (select-edge (first (children (shape-root *scene*))) 10))
+  (select-edge (find-shape-by-name *scene* 'cube) 11)
+  (select-edge (find-shape-by-name *scene* 'cube) 10))
 ;;; select faces
-(progn   ;;Fixme?  selected faces shouldn't change due to lighting or shading
-  (select-face (first (children (shape-root *scene*))) 2)
-  (select-face (first (children (shape-root *scene*))) 5))
+(progn   ;;TODO --  selected faces shouldn't change due to lighting or shading
+  (select-face (find-shape-by-name *scene* 'cube) 2)
+  (select-face (find-shape-by-name *scene* 'cube) 5))
 
 
 ;;; l-system ------------------------------------------------------------------
@@ -138,12 +144,13 @@
           ;; (make-dragon-curve-l-system)
            (make-fractal-plant-l-system)
           ))
+    (setf (name l-sys) 'l-system)
     (add-shape *scene* l-sys)
     (add-motion *scene* l-sys)
     (update-scene *scene* 5)
     ;; resize shape to convenient size and center shape at origin
-    (scale-to-size (first (children (shape-root *scene*))) 5.0)
-    (center-at-origin (first (children (shape-root *scene*))))))
+    (scale-to-size (find-shape-by-name *scene* 'l-system) 5.0)
+    (center-at-origin (find-shape-by-name *scene* 'l-system))))
 ;;; WARNING -- press space key in 3D view to generate new l-system levels hangs for some of these
 ;;; need to investigate
 
@@ -272,6 +279,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :support-point-cloud cloud
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10))))
+    (setf (name p-sys) 'p-system)
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
@@ -280,7 +288,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; BUG -- the group contains at least one degenerate uv-mesh (16x16) with no points, causing
 ;;; a crash in set-point-colors-by-uv (added sanity check in that method)
 (let ((group (make-shape-group (sweep-extrude (make-circle 0.1 8)
-                                              (first (children (shape-root *scene*)))
+                                              (find-shape-by-name *scene* 'p-system)
                                               :taper 1.0 :twist 0.0 :from-end? nil))))
   (set-point-colors-by-uv group (lambda (u v)
                                   (declare (ignore u v))
@@ -294,11 +302,14 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (with-clear-scene
   (let ((shape (make-point-instancer (import-obj *example-obj-filename*)
                                      (make-octahedron .2))))
+    (setf (name shape) 'point-instancer)
     (add-shape *scene* shape)))
 ;;; change inputs and shape regenerates
-(setf (instance-shape (first (children (shape-root *scene*)))) (make-icosahedron .2))
+(setf (instance-shape (find-shape-by-name *scene* 'point-instancer))
+      (make-icosahedron .2))
 
-(setf (point-generator (first (children (shape-root *scene*)))) (make-sine-curve 360.0 1.0 4.0 4.0 64))
+(setf (point-generator (find-shape-by-name *scene* 'point-instancer))
+      (make-sine-curve 360.0 1.0 4.0 4.0 64))
 
 ;;; point-instancer particle-system --------------------------------------------
 
@@ -309,12 +320,13 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       (p! 0 .2 0) 10 -1 'particle
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10))))
-;    (setf (draw-live-points-only? p-sys) nil)
+                                        ;    (setf (draw-live-points-only? p-sys) nil)
+    (setf (name p-sys) 'p-system)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; instance shapes along particle system points
-(add-shape *scene* (make-point-instancer (first (children (shape-root *scene*)))
+(add-shape *scene* (make-point-instancer (find-shape-by-name *scene* 'p-system)
                                          (make-octahedron .2)))
 ;;; hold down space key in 3D view to run animation with point-instancer updating
 
@@ -380,10 +392,10 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
          (prof (make-circle 0.6 4))
          (mesh (first (sweep-extrude prof path :twist (* 2 pi) :taper 0.0)))
          (transform (make-euler-transform (p! 0 0 0) (p! 0 (* 360 7/8) 0) (p! 1 1 1))))
-    (add-shape *scene* (make-transform-instancer mesh transform 8))))
+    (add-shape *scene* (make-transform-instancer mesh transform 8 :name 'xform-instancer))))
 
 ;;; change inputs and shape regenerates
-(setf (num-steps (first (children (shape-root *scene*)))) 4)
+(setf (num-steps (find-shape-by-name *scene* 'xform-instancer)) 4)
 
 ;;; uv-mesh transform-instancer 2 ----------------------------------------------
 (with-clear-scene 
@@ -421,14 +433,15 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
   (let* ((p-gen (make-circle 4.0 16))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 4 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
+    (setf (name p-sys) 'p-system)
     (add-shape *scene* p-gen)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
 (let ((group (make-shape-group (sweep-extrude (make-circle 0.5 6)
-                                        (first (children (shape-root *scene*)))
-                                        :taper 0.0))))
+                                              (find-shape-by-name *scene* 'p-system)
+                                              :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v) (declare (ignore u)) (c-rainbow v)))
   (add-shape *scene* group))
 
@@ -440,14 +453,15 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
   (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
+    (setf (name p-sys) 'p-system)
     (add-shape *scene* p-gen)       
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 ;;; do sweep along paths
 (let ((group (make-shape-group (sweep-extrude (make-circle 0.2 6)
-                                        (first (children (shape-root *scene*)))
-                                        :taper 0.0))))
+                                              (find-shape-by-name *scene* 'p-system)
+                                              :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v) (declare (ignore u)) (c-rainbow v)))
   (add-shape *scene* group))
 
@@ -527,6 +541,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
          (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
+    (setf (name p-sys) 'p-system-1)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
@@ -537,9 +552,10 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 ;;; make new particle-system generate from paths of existing particle-system
 (progn
   (clear-motions *scene*)             ;remove exsting particle animator
-  (let* ((p-gen (first (children (shape-root *scene*))))
+  (let* ((p-gen (find-shape-by-name *scene* 'p-system-1))
          (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
+    (setf (name p-sys) 'p-system-2)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
@@ -549,7 +565,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 ;;; do sweep-extrude  
 (let ((group (make-shape-group (sweep-extrude (make-circle 0.25 4)
-                                              (first (children (shape-root *scene*)))
+                                              (find-shape-by-name *scene* 'p-system-2)
                                               :taper 0.0))))
   (set-point-colors-by-uv group (lambda (u v)
                                   (declare (ignore u))
@@ -561,11 +577,11 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (format t "  polyhedron curve-generator-mixin...~%") (finish-output)
 
 (with-clear-scene
-  (let ((polyh (make-cut-cube 4.0)))
+  (let ((polyh (make-cut-cube 4.0 :name 'cube)))
     (add-shape *scene* polyh)))
 ;;; sweep-extrude circle along polyh faces
 (add-shape *scene*
            (make-shape-group (sweep-extrude (make-circle 0.5 6)
-                                      (first (children (shape-root *scene*))))))
+                                            (find-shape-by-name *scene* 'cube))))
 
 ;;;; END ========================================================================

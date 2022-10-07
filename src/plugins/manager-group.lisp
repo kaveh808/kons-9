@@ -64,8 +64,10 @@
         (partial-copy (transform instance-group) (instance-transform self) factor)
         (add-child self instance-group)))))
 
-(defun make-transform-instancer (shape transform steps)
-  (make-instance 'transform-instancer :instance-shape shape :instance-transform transform :num-steps steps))
+(defun make-transform-instancer (shape transform steps &key (name nil))
+  (make-instance 'transform-instancer
+                 :name name
+                 :instance-shape shape :instance-transform transform :num-steps steps))
 
 ;;;; variant-manager-group =====================================================
 
@@ -75,7 +77,7 @@
 (def-procedural-input variant-manager-group visible-index)
 
 (defmethod compute-procedural-node ((self variant-manager-group))
-  (dolist (child (children self))
+  (do-children (child self)
     (setf (is-visible? child) nil))
-  (setf (is-visible? (nth (visible-index self) (children self))) t))
+  (setf (is-visible? (aref (children self) (visible-index self))) t))
 

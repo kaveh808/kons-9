@@ -15,9 +15,9 @@
   (let* ((points (points p-cloud))
          (bounds-lo (p:copy (aref points 0)))
          (bounds-hi (p:copy (aref points 0))))
-    (doarray (i p points)
-             (p:min! bounds-lo bounds-lo p)
-             (p:max! bounds-hi bounds-hi p))
+    (do-array (i p points)
+      (p:min! bounds-lo bounds-lo p)
+      (p:max! bounds-hi bounds-hi p))
     (values bounds-lo bounds-hi)))
 
 (defun make-point-cloud (points)

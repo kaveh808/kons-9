@@ -19,10 +19,8 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
           (make-instance 'generalized-transform
                          :operators (list xform-op-precess xform-op-offset xform-op-tilt xform-op-spin)))
     (add-motion *scene*
-     (make-instance 'motion-group
-                    :name 'top-motion-group
-                    :scene *scene*
-                    :children (list
+                (set-children (make-instance 'motion-group :name 'top-motion-group)
+                              (list
                                (make-instance
                                 'shape-animator :scene *scene* :shape top
                                                 :update-fn (lambda (anim)
@@ -35,7 +33,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
                                                                    (lerp (local-time anim) 0 1440)))))))))
 (setf (end-frame *scene*) 42)
 
-(setf (duration (first (children (motion-root *scene*)))) 0.5)
+(setf (duration (find-motion-by-name *scene* 'top-motion-group)) 0.5)
 
 ;;;; easing function visualizations ============================================
 
@@ -55,7 +53,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
 (defun make-ease-curve (fn &optional (num-segments 64))
   (let* ((curve (make-line-curve (p! 0 0 0) (p! 1 0 0) num-segments))
          (points (points curve)))
-    (doarray (i p points)
+    (do-array (i p points)
       (setf (p:y p) (funcall fn (p:x p))))
     curve))
 
@@ -123,6 +121,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
 (defun anim-obj-filename (path filename index padding)
   (format nil (format nil "~~a/~~a~a.obj" (format nil "~~~a,'0d" padding)) path filename index))
 
+;;; TODO -- not tested since change to array children slot
 #| only run if file data is set
 
 (with-clear-scene
@@ -133,7 +132,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
         (push (import-obj (anim-obj-filename *obj-directory* *obj-filename*
                                              (+ i *obj-start-frame*) *obj-file-padding*))
               shapes))
-      (let ((group (make-instance 'variant-manager-group :children (reverse shapes))))
+      (let ((group (set-children (make-instance 'variant-manager-group) (reverse shapes))))
         (add-shape *scene* group)
         (add-motion *scene* 
                     (make-instance 'animator

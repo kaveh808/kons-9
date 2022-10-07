@@ -102,12 +102,12 @@
             (push b result))))
     (nreverse result)))
 
-(defmacro doarray ((i obj array) &rest body)
+(defmacro do-array ((i obj array) &rest body)
   `(dotimes (,i (length ,array))
      (let ((,obj (aref ,array ,i)))
        ,@body)))
 
-(defmacro doarray-if ((i obj test array) &rest body)
+(defmacro do-array-if ((i obj test array) &rest body)
   `(dotimes (,i (length ,array))
      (let ((,obj (aref ,array ,i)))
        (when (funcall ,test ,obj)

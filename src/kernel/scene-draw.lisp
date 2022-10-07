@@ -9,7 +9,8 @@
 
   (:method ((group shape-group))
     (when (is-visible? group)
-      (mapc #'draw (children group))))
+      (do-children (child group)
+        (draw child))))
 
   ;; push matrix and do transform operations before drawing
   (:method :before ((shape shape))

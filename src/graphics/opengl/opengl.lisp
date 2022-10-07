@@ -288,7 +288,7 @@
     (if is-closed?
         (gl:begin :line-loop)
         (gl:begin :line-strip))
-    (doarray (i p points)
+    (do-array (i p points)
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
@@ -302,7 +302,7 @@
           (gl-set-fg-color)
           (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
-    (doarray (i p points)
+    (do-array (i p points)
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 

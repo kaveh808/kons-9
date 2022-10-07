@@ -206,7 +206,7 @@ is initialized, and will call its update function every frame.
 To play animation, hold down space key. Notice the frame counter updating in the
 window title bar. By default the scene starts at frame 0 and ends at frame 240.
 
-Press 'a' key to reset the scene back to frame 0.
+Press '[' key to reset the scene back to frame 0.
 
 This animation translates the shape in the X axis direction.
 |#
@@ -222,7 +222,7 @@ This animation translates the shape in the X axis direction.
 
 Animate all the leaf shapes in a group by the same amount.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
@@ -248,7 +248,7 @@ list. It also takes a SHAPE to animate.
 
 Here each shape is rotated by a different random amount around the Y axis.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
@@ -329,7 +329,7 @@ You can turn off shading to see axes better (press 1 key).
 #|
 Animate each joined by a specified number of degrees per frame.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (progn
   (add-motion *scene*
@@ -434,7 +434,7 @@ within their timing range between zero and one.
 
 The shapes rotate 90 degrees over duration of scene timeline (240 frames).
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 
 (with-clear-scene
@@ -444,26 +444,24 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
         (counter -1))
     (add-motion
      *scene*
-     (make-instance 'motion-group
-                    :name 'top-motion-group
-                    :scene *scene*
-                    :children (mapcar (lambda (shape)
-                                        (make-instance
-                                         'shape-animator
-                                         :name (concat-syms 'animator- (incf counter))
-                                         :scene *scene*
-                                         :shape shape
-                                         :setup-fn (lambda (anim)
-                                                     (rotate-to (shape anim) (p! 0 0 0)))
-                                         :update-fn (lambda (anim)
-                                                      (rotate-to (shape anim)
-                                                                 (p! 0 (* 90 (local-time anim)) 0)))))
-                                      (children group))))))
+     (make-motion-group (mapcar (lambda (shape)
+                                  (make-instance
+                                   'shape-animator
+                                   :name (concat-syms 'animator- (incf counter))
+                                   :scene *scene*
+                                   :shape shape
+                                   :setup-fn (lambda (anim)
+                                               (rotate-to (shape anim) (p! 0 0 0)))
+                                   :update-fn (lambda (anim)
+                                                (rotate-to (shape anim)
+                                                           (p! 0 (* 90 (local-time anim)) 0)))))
+                                (children-as-list group))
+                        :name 'top-motion-group))))
 
 #|
 Set the scene end frame. The shapes now rotate 90 degrees over 42 frames.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (setf (end-frame *scene*) 42)
 
@@ -471,16 +469,16 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 Set the motion-group's duration to 0.5. The shapes now rotate 90 degrees over
 half of scene duration (21 frames).
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
-(setf (duration (first (children (motion-root *scene*)))) 0.5)
+(setf (duration (find-motion-by-name *scene* 'top-motion-group)) 0.5)
 
 #|
 Set the indidual animators' timings so they run sequentially.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
-(let* ((anims (children (first (children (motion-root *scene*)))))
+(let* ((anims (children-as-list (find-motion-by-name *scene* 'top-motion-group)))
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
@@ -491,9 +489,9 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 #|
 Modify the animators' timings.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
-(let* ((anims (children (first (children (motion-root *scene*)))))
+(let* ((anims (children-as-list (find-motion-by-name *scene* 'top-motion-group)))
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
@@ -504,25 +502,25 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 #|
 Set the motion-group's duration to be full scene duration.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
-(setf (duration (first (children (motion-root *scene*)))) 1.0)
+(setf (duration (find-motion-by-name *scene* 'top-motion-group)) 1.0)
 
 #|
 Modify the animators' timings using the parent motion-group's ordering methods.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
-(let ((group (first (children (motion-root *scene*)))))
+(let ((group (find-motion-by-name *scene* 'top-motion-group)))
   (sequential-order group))
 
-(let ((group (first (children (motion-root *scene*)))))
+(let ((group (find-motion-by-name *scene* 'top-motion-group)))
   (parallel-order group))
 
-(let ((group (first (children (motion-root *scene*)))))
+(let ((group (find-motion-by-name *scene* 'top-motion-group)))
   (random-order group 0.25 0.5))
 
-(let* ((anims (children (first (children (motion-root *scene*)))))
+(let* ((anims (children-as-list (find-motion-by-name *scene* 'top-motion-group)))
        (anim-0 (nth 0 anims))
        (anim-1 (nth 1 anims))
        (anim-2 (nth 2 anims)))
@@ -555,9 +553,9 @@ Get animator motion paths.
 (Demo 15 kernel) creating constraints with animators ==========================
 
 The dodecahedron moves in Y as the negative of the Y the tetrahedron.
-We use ADD-MOTION-AT-END so the second animator runs after the first one.
+The second animator runs after the first one.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (with-clear-scene
   (let ((tetrahedron (translate-to (make-tetrahedron 2.0) (p! -1.5 0 0)))
@@ -570,14 +568,14 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                :update-fn (lambda (anim)
                                             (translate-to (shape anim)
                                                           (p! -1.5 (sin (current-time (scene anim))) 0)))))
-    (add-motion-at-end *scene*
-                       (make-instance 'shape-animator
-                                      :shape dodecahedron
-                                      :setup-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
-                                      :update-fn (lambda (anim)
-                                                   (let ((target-y (p:y (offset (translate (transform (anim-data anim :target)))))))
-                                                     (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
-                                      :data `((:target . ,tetrahedron))))))
+    (add-motion *scene*
+                (make-instance 'shape-animator
+                               :shape dodecahedron
+                               :setup-fn (lambda (anim) (translate-to (shape anim) (p! 1.5 0 0)))
+                               :update-fn (lambda (anim)
+                                            (let ((target-y (p:y (offset (translate (transform (anim-data anim :target)))))))
+                                              (translate-to (shape anim) (p! 1.5 (- target-y) 0))))
+                               :data `((:target . ,tetrahedron))))))
 
 #|
 (Demo 16 kernel) object duplication ===========================================
@@ -661,27 +659,25 @@ Toggle group-1 visibility.
         (counter -1))
     (add-motion
      *scene*
-     (make-instance 'motion-group
-                    :name 'top-motion-group
-                    :scene *scene*
-                    :children (mapcar (lambda (shape)
-                                        (make-instance
-                                         'shape-animator
-                                         :name (concat-syms 'animator- (incf counter))
-                                         :scene *scene*
-                                         :shape shape
-                                         :setup-fn (lambda (anim)
-                                                     (rotate-to (shape anim) (p! 0 0 0)))
-                                         :update-fn (lambda (anim)
-                                                      (rotate-to (shape anim)
-                                                                 (p! 0 (* 90 (local-time anim)) 0)))))
-                                      (children group)))))
+     (make-motion-group (mapcar (lambda (shape)
+                                  (make-instance
+                                   'shape-animator
+                                   :name (concat-syms 'animator- (incf counter))
+                                   :scene *scene*
+                                   :shape shape
+                                   :setup-fn (lambda (anim)
+                                               (rotate-to (shape anim) (p! 0 0 0)))
+                                   :update-fn (lambda (anim)
+                                                (rotate-to (shape anim)
+                                                           (p! 0 (* 90 (local-time anim)) 0)))))
+                                (children-as-list group))
+                        :name 'top-motion-group)))
   (setf (end-frame *scene*) 42))
 
 #|
 Toggle second animator.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (setf (is-active? (find-motion-by-name *scene* 'animator-1)) nil)
 
@@ -690,7 +686,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 #|
 Toggle parent motion.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (setf (is-active? (find-motion-by-name *scene* 'top-motion-group)) nil)
 
@@ -701,7 +697,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 
 Use an animator to stop rotations and scale shapes past a certain angle.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 (with-clear-scene
   (let ((group (add-shape *scene* (scatter-shapes-in-group
@@ -727,7 +723,7 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                 (make-instance 'animator
                                :scene *scene*
                                :update-fn (lambda ()
-                                            (dolist (anim (children motion-group))
+                                            (do-children (anim motion-group)
                                               (let ((angle (p:y (angles (rotate (transform (shape anim)))))))
                                                 (when (> (abs angle) 45)
                                                   (scale-to (shape anim) 0.5)
@@ -790,7 +786,7 @@ We package an animation in an ANIMATION class. This animation can then be
 instanced in a scene by automatically creating new GROUPs and MOTION-GROUPs for
 the shapes and animators.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 
 (with-clear-scene
@@ -806,11 +802,11 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
                                             (p! 0 (* 90 (local-time anim)) 0)))))
          (animation (make-instance 'animation :shape shape :shape-animator animator))
          (top-shape-group (make-instance 'shape-group))
-         (top-motion-group (make-instance 'motion-group))
+         (top-motion-group (make-instance 'motion-group :name 'top-motion-group))
          (points (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))
     (dotimes (i (length points))
       (add-animation-to-scene animation top-shape-group top-motion-group :mode :add-as-instance))
-    (scatter-shapes (children top-shape-group) points)
+    (scatter-shapes (children-as-list top-shape-group) points)
     (add-shape *scene* top-shape-group)
     (add-motion *scene* top-motion-group)
     (setf (end-frame *scene*) 120)))
@@ -818,16 +814,16 @@ Hold down space key to play animation. Press 'a' key to go back to frame 0.
 #|
 Set the timings of the animation instances.
 
-Hold down space key to play animation. Press 'a' key to go back to frame 0.
+Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 
-(let ((group (first (children (motion-root *scene*)))))
+(let ((group (find-motion-by-name *scene* 'top-motion-group)))
   (sequential-order group))
 
-(let ((group (first (children (motion-root *scene*)))))
+(let ((group (find-motion-by-name *scene* 'top-motion-group)))
   (parallel-order group))
 
-(let ((group (first (children (motion-root *scene*)))))
+(let ((group (find-motion-by-name *scene* 'top-motion-group)))
   (random-order group 0.25 0.5))
 
 #|

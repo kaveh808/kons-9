@@ -584,16 +584,13 @@
 ;;-- multiple visible inspectors? esc closes one under mouse?
 
 ;;;; draw-view -- :before bg, :after border
-;;;; change text slot to caption slot
 ;;;; make-outliner obj children-fn name-fn
 ;;;; ui-3d-view (ui-group) -- root-node
 ;;;; -- scene-view
 ;;;; app-window -- outliner, 3d-view, inspector/aspect, timeline
 ;;;; clip to view when drawing
 ;;;; text-box -- validate-fn
-;;;; left-arrow to go to previous inspector
 ;;;; arrow and Enter menu/command-table navigation
-;;;; base command-table -- Display, Inspect Selection, View Selection, Reset Camera, Init Scene, Play Animation, Create
 
 #| DONE
 ;;;; store parent for ui-view
@@ -605,6 +602,7 @@
 ;;;; ui-sequence-viewer seq -- necessary?
 ;;;; ui-inspector obj -- vertical group of horizontal groups of slot-name, slot-value
 ;;;; Display -- Dark Theme, Bright Theme
+;;;; left-arrow to go to previous menu
 
 |#
 

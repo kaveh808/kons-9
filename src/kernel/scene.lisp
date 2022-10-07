@@ -69,7 +69,7 @@
   item)
 
 (defmethod set-item-scene :after ((scene scene) (group group-mixin))
-  (dolist (child (children group))
+  (do-children (child group)
     (set-item-scene scene child)))
 
 (defmethod add-shapes ((scene scene) shapes)
@@ -84,10 +84,6 @@
 
 (defmethod add-motion ((scene scene) (motion motion))
   (add-child (motion-root scene) motion)
-  motion)
-
-(defmethod add-motion-at-end ((scene scene) (motion motion))
-  (add-child-at-end (motion-root scene) motion)
   motion)
 
 (defmethod add-motions ((scene scene) motions)
@@ -125,8 +121,8 @@
     (when (< (current-frame scene) (end-frame scene))
       (incf (current-frame scene))
       (let ((timing (compute-motion-absolute-timing scene nil)))
-        (mapc (lambda (m) (update-motion m timing))
-              (children (motion-root scene)))))))
+        (do-children (child (motion-root scene))
+          (update-motion child timing))))))
 
 (defmethod compute-motion-absolute-timing ((scene scene) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
