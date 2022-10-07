@@ -35,6 +35,12 @@
    (ui-w 0.0)
    (ui-h 0.0)))
 
+(defmethod ui-right ((rect ui-rect))
+  (+ (ui-x rect) (ui-w rect)))
+
+(defmethod ui-bottom ((rect ui-rect))
+  (+ (ui-y rect) (ui-h rect)))
+
 (defmethod ui-set-position ((rect ui-rect) x y)
   (setf (ui-x rect) x)
   (setf (ui-y rect) y)
@@ -300,7 +306,9 @@
       view
     (if (= (length children) 0)
         (progn
-          (setf (ui-w view) (if title (+ (ui-text-width title) *ui-default-padding*) *ui-button-item-width*))
+          (setf (ui-w view) (if title
+                                (+ (ui-text-width title) *ui-default-padding*)
+                                *ui-button-item-width*))
           (setf (ui-h view) *ui-button-item-height*))
         (let* ((title-w (if title (+ (ui-text-width title) *ui-default-padding*) 0))
                (title-h (if title *ui-button-item-height* 0))
@@ -475,10 +483,11 @@
 ;;;               Contextual [...]
 ;;; TODO ++ status bar
 ;;; xxx
-;;; TODO -- how to add contextual items?
+;;; TODO -- how to add contextual items from plugins?
+;;;         -- plugin class -- register method adds UI elements -- eg. Create, Context, Edit, ...
 ;;; TODO -- delete shapes in hierarchy
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
-;;; TODO ++ inspector sizing issues
+;;; TODO -- inspector/outliner text sizing issues
 ;;; TODO -- global key bindings (eg. space, backspace) -- register properly and avoid shadowing with c-t
 
 ;;;; ui-status-bar =============================================================
@@ -677,14 +686,17 @@
     (if (show-children? view)
         (add-parent-contents view)
         (remove-parent-contents view))
-    (update-layout (ui-parent view))))
+    (update-layout (ui-parent view))
+    (resize-contents (ui-parent view))))
 
 (defmethod add-parent-contents ((view ui-outliner-item))
   (let ((i (position view (children (ui-parent view)))))
-    (loop for child in (children (data view))
+    (loop for child across (children (data view))
           do (let* ((text (format nil "~a" (printable-data child)))
                     (item (make-instance 'ui-outliner-item
-                                         :ui-w (+ (ui-text-width text) (* 4 *ui-default-spacing*))
+                                         :ui-w (+ (ui-text-width text)
+                                                  (* 4 *ui-default-spacing*)
+                                                  (+ 20 (text-padding view)))
                                          :ui-h *ui-button-item-height*
                                          :bg-color (if (is-selected? child)
                                                        (c! 0.8 0.2 0.2 0.5)
@@ -695,7 +707,6 @@
                                          :is-active? t
                                          :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
                                                               (name child)))))
-               (setf (text item) (outliner-item-text item))
                (ui-add-child-at (ui-parent view) item (incf i))
                (push item (outliner-children view))))))
 
@@ -760,8 +771,7 @@
                                            :is-active? t
                                            :help-string (format nil "Mouse: select ~a, [alt] show/hide children"
                                                                 (name entry)))))
-                 (setf (text item) (outliner-item-text item))
-                 (setf (ui-w item) (+ (ui-text-width (text item)) (* 4 *ui-default-spacing*)))
+                 (setf (ui-w item) (+ (ui-text-width (outliner-item-text item)) (* 4 *ui-default-spacing*)))
                  (ui-add-child view item)))))
   (update-layout view)
   (resize-contents view))
@@ -991,7 +1001,7 @@
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (text view)))))
+        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (outliner-item-text view)))))
 
   (:method ((view ui-button-item) &optional (x-offset 0) (y-offset 0))
     (when (is-visible? view)
