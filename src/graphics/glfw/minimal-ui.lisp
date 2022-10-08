@@ -44,17 +44,27 @@
 
 ;;;; command table utils =======================================================
 
+(defparameter *dynamic-command-table-entries* (make-array 0 :adjustable t :fill-pointer 0))
+
+(defun register-dynamic-command-table-entry (table-title key-binding doc command-fn context-fn)
+  (vector-push-extend (list table-title key-binding doc command-fn context-fn)
+                      *dynamic-command-table-entries*))
+
+;; TODO -- implement plugin class with registration method?
+(defun register-dynamic-command-table-entries ()
+  (register-dynamic-command-table-entry
+   "Context" :T "Transform Selection"
+   (lambda () (make-active-command-table (transform-command-table *default-scene-view*)))
+   (lambda () (selected-shapes (scene *default-scene-view*))))
+  )
+
 (defun make-active-command-table (table)
   (push table (command-tables *default-scene-view*))
-  (dolist (entry-data (dynamic-command-table-entries *default-scene-view*))
+  (do-array (i entry-data *dynamic-command-table-entries*)
     (apply #'add-dynamic-command-table-entry entry-data)))
 
 (defun active-command-table ()
   (car (command-tables *default-scene-view*)))
-
-(defun register-dynamic-command-table-entry (view table-title key-binding doc command-fn context-fn)
-  (push (list table-title key-binding doc command-fn context-fn)
-        (dynamic-command-table-entries view)))
 
 (defun add-dynamic-command-table-entry (table-title key-binding doc command-fn context-fn)
   (let ((table (active-command-table)))
@@ -62,16 +72,6 @@
                (equalp (title table) table-title)
                (funcall context-fn))
       (add-entry table key-binding command-fn doc))))
-
-;; TODO -- implement plugin class with registration method?
-(defun register-dynamic-command-table-entries (view)
-  (register-dynamic-command-table-entry view "Create" :u "UV Mesh"
-                                        (lambda () (make-active-command-table (uv-mesh-command-table)))
-                                        (lambda () t))
-  (register-dynamic-command-table-entry view "Context" :t "Transform Selection"
-                                        (lambda () (make-active-command-table (transform-command-table view)))
-                                        (lambda () (selected-shapes (scene view))))
-  )
 
 ;;;; scene-view ================================================================
 
@@ -83,7 +83,6 @@
    (ui-contents-scroll 0)               ;offset in y
    (menu nil)
    (command-tables '())
-   (dynamic-command-table-entries '())
    ))
 
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
@@ -91,7 +90,7 @@
   (init-view-camera)
   (setf (status-bar view) (make-status-bar))
   (push (app-command-table view) (command-tables view))
-  (register-dynamic-command-table-entries view))
+  (register-dynamic-command-table-entries))
 
 (defun show-ui-content (view)
   (let ((contents (ui-contents *default-scene-view*)))

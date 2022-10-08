@@ -43,3 +43,35 @@
   (compute-face-normals hfield)
   (compute-point-normals hfield))
 
+;;;; gui =======================================================================
+
+(defun heightfield-command-table ()
+  (let ((table (make-instance `command-table :title "Create Heightfield")))
+    (ct-make-shape :A "Heightfield 1"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (* 4 (noise (p! x 0 z))))))
+    (ct-make-shape :B "Heightfield 2"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (* 4 (turbulence (p! x 0 z) 4)))))
+    (ct-make-shape :C "Heightfield 3"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (let* ((p (p! x 0 z))
+                                                         (mag (p:length (p:scale p .25))))
+                                                    (if (= mag 0.0)
+                                                        10.0
+                                                        (/ 1.0 mag))))))
+    (ct-make-shape :D "Heightfield 4"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (let* ((p (p! x 0 z))
+                                                         (mag (max 0.001 (p:length (p:scale p 4.0)))))
+                                                    (* 3 (/ (sin mag) mag))))))
+    table))
+
+(register-dynamic-command-table-entry "Create" :H "Create Heightfield Menu"
+                                      (lambda () (make-active-command-table (heightfield-command-table)))
+                                      (lambda () t))
+

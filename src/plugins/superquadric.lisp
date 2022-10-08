@@ -62,3 +62,14 @@
                                :diameter diameter
                                :e1 e1
                                :e2 e2))
+
+;;;; gui =======================================================================
+
+(defun superquadric-command-table ()
+  (let ((table (make-instance `command-table :title "Create Superquadric")))
+    (ct-make-shape :S "Superquadric" (make-superquadric 16 16 2.0 0.2 0.2))
+    table))
+
+(register-dynamic-command-table-entry "Create" :S "Create Superquadric Menu"
+                                      (lambda () (make-active-command-table (superquadric-command-table)))
+                                      (lambda () t))
