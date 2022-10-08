@@ -18,72 +18,175 @@ We hope you find the system enjoyable and useful.
 |#
 
 #|
-(UI Demo 1) 3D navigation and display ==========================================
+(Demo 01 UI) status bar ========================================================
 
-This is a proof of concept for command tables, which allow for hierarchical key bindings.
+The status bar at the bottom of the window displays two lines of information. The
+first line is information about the scene, and the second line shows the current
+mouse and key bindings.
 
-Evaluate all the code below. 
+Evaluate the code below. This animation translates the shape in the X axis
+direction.
 
-Press 'h' and notice a new 'c' command is available.
+To play animation, hold down SPACE key. Notice the frame counter updating in the
+status bar. By default the scene starts at frame 0 and ends at frame 240.
 
-Press 'c'. The title bar will change to indicate the current command table.
+Press '[' key to initialize the scene back to frame 0.
+|#
+(with-clear-scene
+  (let ((shape (add-shape *scene* (make-cut-cube 2.0))))
+    (add-motion *scene*
+                (make-instance 'animator
+                               :setup-fn (lambda () (translate-to shape (p! 0.0 0 0)))
+                               :update-fn (lambda () (translate-by shape (p! 0.1 0 0)))))))
 
-Press 'h' to see the available commands.
+#|
+(Demo 02 UI) menus =============================================================
 
-Press 'p'. The title bar will update.
+The status bar indicates that the TAB key shows and hides menus.
 
-Press 'h' to see the available commands.
+Menus in kons-9 appear at the top left of the window. Press TAB to show the main
+kons-9 menu.
 
-Make some curves.
+Menus consist of a title in gray and a number of menu items. Menu items
+highlight when moused over.  Each menu item has a keyboard shortcut which
+triggers it. The keyboard shortcuts are simple key presses, not requiring any
+modifier (e.g. COMMAND or SHIFT) keys.
 
-Press 'tab' to go back to the default command table. The title bar will update.
+Click on the "Display Menu" (or press the 'd' key).
 
-Press 'n' to clear the window.
+The "Display" menu appears. To go back to the previous menu, press the
+LEFT-ARROW key. Then press 'd' again to return to the "Display" menu.
 
-Press '1' to turn off filled display (so you can better see the polyhedra you will make).
+If necessary, evaluate the code below (from Demo 01) so there is some geometry in
+the scene.
 
-Press 'c'. The title bar will change to indicate the current command table.
+Now try out the various menu items by clicking on them or using the keyboard
+shortcuts. Note that the menu keyboard shortcuts are only active when the
+menu is visible. A given key will have different effects when different
+menus are active.
 
-Press 'h' to see the available commands.
+As before, play the animation using the SPACE key, and initialize the scene
+using the '[' key. Note that the SPACE and '[' keys are examples of global key
+bindings. They are always available no matter what menu is currently active.
 
-Press 'y'. The title bar will update.
+You can click and navigate in the scene as usual when a menu is visble.
+|#
+(with-clear-scene
+  (let ((shape (add-shape *scene* (make-cut-cube 2.0))))
+    (add-motion *scene*
+                (make-instance 'animator
+                               :setup-fn (lambda () (translate-to shape (p! 0.0 0 0)))
+                               :update-fn (lambda () (translate-by shape (p! 0.1 0 0)))))))
 
-Press 'h' to see the available commands.
+#|
+(Demo 03 UI) inspectors ========================================================
 
-Make some polyhedra.
+[NOTE: As of this writing inspectors do not automatically update to reflect
+changes in the scene.]
 
-Press 'tab' to go back to the default command table. The title bar will update.
+Continuing from the previous demo:
+
+Press the left arrow key to go back to the kons-9 menu.
+
+Click "Scene Menu" or press 's'.
+
+Click "New Scene" or press 'n'.
+
+The existing scene is cleared.
+
+(To exit the system at any time, click on "Quit Scene" or press 'q'.)
+
+Do the following:
+
+Left arrow.
+
+"Create Menu"
+
+"Create Curve Menu"
+
+"Create Circle Curve"
+
+Note that you can do the above three steps by pressing 'c' three times. This
+is an example of key shortcuts changing based on the current menu.
+
+Left arrow.
+
+"Create Polyhedron Menu"
+
+"Create Octahendron"
+
+Press TAB to hide the menu.
+
+Press TAB again to show kons-9 menu.
+
+"Inspect Menu"
+
+"Shapes"
+
+A shape inspector appears at the top right of the window. It shows the root
+node of the scene shape hierarchy, called SHAPES.
+
+Click on SHAPES. The node is selected.
+
+Click on SHAPES again. The node is deselected.
+
+Alt-click on SHAPES. The inspector expands to show the child shapes.
+
+Click on the inspector entries to select and deselect the shapes.
+
+Press ESCAPE to hide the inspector.
+
+Press TAB to hide the menu.
 |#
 
-(let ((table (car (command-tables *default-scene-view*))))
-  (ct-subtable :c "Create" (create-command-table)))
+#|
+(Demo 04 UI) multiple inspectors ===============================================
 
-(defun create-command-table ()
-  (let ((table (make-instance `command-table :title "Create")))
-    (ct-subtable :p "Curve" (curve-command-table))
-    (ct-subtable :y "Polyhedron" (polyhedron-command-table))
-    table))
+Press TAB, S, N to trigger "New Scene".
 
-(defun curve-command-table ()
-  (let ((table (make-instance `command-table :title "Curve")))
-    (ct-make-shape :l "line curve" (make-line-curve (p! 0 0 0) (p! 2 2 2) 8))
-    (ct-make-shape :r "rectangle curve" (make-rectangle-curve 2 1 4))
-    (ct-make-shape :s "square curve" (make-square-curve 1.5))
-    (ct-make-shape :c "circle curve" (make-circle-curve 2.0 16))
-    (ct-make-shape :a "arc curve" (make-arc-curve 2.0 16 0 pi))
-    (ct-make-shape :n "sine curve curve" (make-sine-curve-curve 360 1 2 1 16))
-    (ct-make-shape :p "spiral curve" (make-spiral-curve .2 2.0 -1.0 4 64))
-    table))
+Press TAB to hide the menu.
 
-(defun polyhedron-command-table ()
-  (let ((table (make-instance `command-table :title "Polyhedron")))
-    (ct-make-shape :t "tetrahedron" (make-tetrahedron 2.0))
-    (ct-make-shape :c "cube" (make-cube 2.0))
-    (ct-make-shape :o "octahedron" (make-octahedron 2.0))
-    (ct-make-shape :d "dodecahedron" (make-dodecahedron 2.0))
-    (ct-make-shape :i "icosahedron" (make-icosahedron 2.0))
-    (ct-make-shape :s "cube" (make-cube-sphere 4.0 3))
-    table))
+Evaluate the code below.
+
+Hold down space key to play animation. Press '[' key to go back to frame 0.
+
+Press TAB, I, S, M.
+
+Two inspectors appear: one for the scene shapes and one for the scene motions.
+
+Alt-click on the entries to expand them.
+
+Use the UP and DOWN ARROW keys to scroll the inspectors.
+
+Press SHIFT left-arrow to hide the last inspector.
+
+Press SHIFT left-arrow again to hide the remaining inspector.
+
+Press I to show the Lisp data inspector. This is base on the SBCL "inspect"
+utility. It will inspect the current selection or the scene if there is nothing
+selected.
+
+Click on various entries to display more inspectors.
+
+Press SHIFT left-arrow to hide inspectors.
+
+Press ESCAPE to hide all inspectors.
+|#
+(with-clear-scene
+  (let ((group (add-shape *scene* (scatter-shapes-in-group
+                                   (lambda () (make-cube 0.5))
+                                   (make-grid-points 3 3 3 (p! -2 -2 -2) (p! 2 2 2))))))
+    (map-hierarchy group
+      (lambda (shape)
+        (add-motion *scene*
+                      (make-instance 'shape-animator
+                                     :shape shape
+                                     :setup-fn (lambda (anim)
+                                                (rotate-to (shape anim) (p! 0 0 0)))
+                                     :update-fn (lambda (anim)
+                                                  (rotate-by (shape anim) (anim-data anim :rotate)))
+                                     :data `((:rotate . ,(p! 0 (rand1 10) 0))))))
+      :test #'is-leaf?)))
 
 #|
 END ============================================================================

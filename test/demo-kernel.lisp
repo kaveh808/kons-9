@@ -30,9 +30,7 @@ Click and drag in the window to rotate the camera.
 
 Press OPTION/ALT and track to move the camera sideways and up and down.
 
-Press CONTROL and drag to move the camera in and out. 
-
-Press the 'h' key to print available keyboard commands. Try them out.
+Press SHIFT and drag to move the camera in and out. 
 |#
 
 #|
@@ -204,7 +202,8 @@ scene. The animator will call its setup function (if it has one) when the scene
 is initialized, and will call its update function every frame.
 
 To play animation, hold down space key. Notice the frame counter updating in the
-window title bar. By default the scene starts at frame 0 and ends at frame 240.
+status bar at the bottom of the window. By default the scene starts at frame 0
+and ends at frame 240.
 
 Press '[' key to reset the scene back to frame 0.
 

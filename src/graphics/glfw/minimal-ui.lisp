@@ -337,9 +337,13 @@
                 (hide-menu self))
                (t
                 (show-menu self))))
-        ((eq :escape key)               ;hide inspectors
+        ((eq :escape key)               ;hide all inspectors
          (ui-clear-children (ui-contents self))
          (setf (ui-contents-scroll self) 0))
+        ((and (member :shift mod-keys) (eq :left key)) ;hide last inspector
+         (ui-remove-last-child (ui-contents self))
+         (when (= 0 (length (children (ui-contents self))))
+           (setf (ui-contents-scroll self) 0)))
         (*ui-keyboard-focus*            ;handle text box input
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))

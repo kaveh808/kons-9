@@ -239,6 +239,11 @@
   (setf (children view) (delete child (children view)))
   child)
 
+(defmethod ui-remove-last-child ((view ui-group))
+  (if (> (length (children view)) 0)
+      (ui-remove-child view (aref (children view) (1- (length (children view)))))
+      view))
+
 (defmethod ui-clear-children ((view ui-group))
   (loop for child across (children view)
         do (setf (ui-parent child) nil))
@@ -482,12 +487,12 @@
 ;;;               Display [...]
 ;;;               Contextual [...]
 ;;; TODO ++ status bar
+;;; TODO ++ inspector/outliner text sizing issues
 ;;; xxx
 ;;; TODO -- how to add contextual items from plugins?
 ;;;         -- plugin class -- register method adds UI elements -- eg. Create, Context, Edit, ...
 ;;; TODO -- delete shapes in hierarchy
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
-;;; TODO -- inspector/outliner text sizing issues
 ;;; TODO -- global key bindings (eg. space, backspace) -- register properly and avoid shadowing with c-t
 
 ;;;; ui-status-bar =============================================================
