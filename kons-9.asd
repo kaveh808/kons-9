@@ -14,7 +14,9 @@
      #:cffi
      #:cl-opengl
      #:cl-glu
-     #:cl-glfw3) 
+     #:cl-glfw3
+     #:cl-freetype2
+     #:font-discovery) 
     :serial t
     :components
     ((:file "src/package")

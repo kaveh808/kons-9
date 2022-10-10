@@ -5,13 +5,6 @@
   (pushnew :gl-polygon-mode *features*)
   (pushnew :gl-clip-origin *features*))
 
-(eval-when (:compile-toplevel :load-toplevel)
-  (ql:quickload :cl-freetype2))
-
-(eval-when (:compile-toplevel :load-toplevel)
-  (use-package :ft2))
-
-
 #+NOTYET(declaim (inline clampf))
 (defun clampf (number)
   "Clamp real number to single-float limits."
@@ -371,7 +364,10 @@
   (loop for i from from to to
      collect i))
 
-(defun ensure-font (&optional (pathname #+darwin "/System/Library/Fonts/Monaco.ttf" #+linux "/usr/share/fonts/TTF/DejaVuSansMono.ttf") (size 12))
+(defun default-font ()
+  (org.shirakumo.font-discovery:file (org.shirakumo.font-discovery:find-font :family "DejaVuSansMono")))
+
+(defun ensure-font (&optional (pathname (default-font)) (size 12))
   (let ((last-texture (gl:get-integer :texture-binding-2d)))
     (with-open-face (face pathname)
       (ft2:set-pixel-sizes face 0 (* *framebuffer-scale* size))
