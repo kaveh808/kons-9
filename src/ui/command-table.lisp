@@ -41,8 +41,12 @@
   (vector-push-extend (make-command-table-entry key-binding func doc)
                       (entries table)))
 
+;;; return t if command executed, else nil
 (defmethod do-command ((table command-table) key-press)
   (let* ((entry (find key-press (entries table) :test 'eq :key #'key-binding))
          (command-fn (if entry (command-fn entry) nil)))
-    (when command-fn
-      (funcall command-fn))))
+    (if command-fn
+        (progn
+          (funcall command-fn)
+          t)
+        nil)))

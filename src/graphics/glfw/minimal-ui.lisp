@@ -366,9 +366,8 @@
          (do-command (car (command-tables self)) key)
          (update-scene-ui))
         ((= (length (command-tables self)) 1) ;do menu selection for top menu even if hidden
-         (do-command (car (command-tables self)) key)
-         (show-menu self))))
-;         (update-scene-ui))))
+         (when (do-command (car (command-tables self)) key)
+           (show-menu self)))))
 
 (defmethod key-up ((self scene-view) key)
   )
