@@ -75,7 +75,8 @@
 (defmethod draw-bounds ((shape shape) &optional (color (c! 0 1 1)))
   (multiple-value-bind (lo hi)
       (get-bounds shape)
-    (3d-draw-bounds lo hi color)))
+    (when (and lo hi)
+      (3d-draw-bounds lo hi color))))
 
 (defmethod draw-selected ((shape shape))
   (draw-bounds shape (c! 1 0 0)))

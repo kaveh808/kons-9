@@ -659,17 +659,20 @@
   (compute-applicable-methods #'children (list obj)))
 
 (defclass-kons-9 ui-outliner-item (ui-data-item)
-  ((show-children? nil)
+  ((show-children? t)                   ;show hierarchy by default
    (outliner-children '())))
 
 (defmethod initialize-instance :after ((view ui-outliner-item)  &rest initargs)
   (declare (ignore initargs))
   (setf (on-click-fn view) (lambda (modifiers)
-                             (cond ((member :alt modifiers)
-                                    (when (has-children-method? (data view))
-                                      (toggle-show-children view)
-                                      (when (ui-parent view)
-                                        (update-parent-contents view))))
+                             (declare (ignore modifiers))
+                             (cond
+                               ;; disable show/hide of children until update and delete are implemented
+                               ;; ((member :alt modifiers)
+                               ;;      (when (has-children-method? (data view))
+                               ;;        (toggle-show-children view)
+                               ;;        (when (ui-parent view)
+                               ;;          (update-parent-contents view))))
                                    (t
                                     (toggle-selection (scene (data view))
                                                       (data view))
@@ -694,7 +697,7 @@
     (update-layout (ui-parent view))
     (resize-contents (ui-parent view))))
 
-(defmethod add-parent-contents ((view ui-outliner-item))
+(defmethod add-parent-contents ((view ui-outliner-item) &key (recurse? nil))
   (let ((i (position view (children (ui-parent view)))))
     (loop for child across (children (data view))
           do (let* ((text (format nil "~a" (printable-data child)))
@@ -713,7 +716,11 @@
                                          :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
                                                               (name child)))))
                (ui-add-child-at (ui-parent view) item (incf i))
-               (push item (outliner-children view))))))
+               (push item (outliner-children view)))))
+  (when recurse?
+    (dolist (item (outliner-children view))
+      (when (and (has-children-method? (data item)) (show-children? item))
+      (add-parent-contents item :recurse? recurse?)))))
 
 (defmethod remove-parent-contents ((view ui-outliner-item))
   (loop for child in (outliner-children view)
@@ -758,8 +765,8 @@
 (defmethod create-contents ((view ui-outliner-viewer))
   ;; create-contents gets called on every update, but we want to preserve our state
   ;; TODO -- this means the outliner does not reflect scene changes (add/delete items)
-  (when (> (length (children view)) 0)
-    (return-from create-contents view))
+  ;; (when (> (length (children view)) 0)
+  ;;   (return-from create-contents view))
   (setf (fill-pointer (children view)) 0)
   (let ((data (viewer-data view)))
     (when data
@@ -777,7 +784,10 @@
                                            :help-string (format nil "Mouse: select ~a, [alt] show/hide children"
                                                                 (name entry)))))
                  (setf (ui-w item) (+ (ui-text-width (outliner-item-text item)) (* 4 *ui-default-spacing*)))
-                 (ui-add-child view item)))))
+                 (ui-add-child view item)
+                 ;; show children if any
+                 (when (and (has-children-method? (data item)) (show-children? item))
+                   (add-parent-contents item :recurse? t))))))
   (update-layout view)
   (resize-contents view))
 

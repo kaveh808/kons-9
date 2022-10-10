@@ -26,6 +26,9 @@
 (defmethod printable-data ((self group-mixin))
   (strcat (call-next-method) (format nil ", ~a children" (length (children self)))))
 
+(defmethod num-children ((group group-mixin))
+  (length (children group)))
+
 (defmethod children-as-list ((group group-mixin))
   (coerce (children group) 'list))
 

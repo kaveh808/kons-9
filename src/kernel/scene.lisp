@@ -106,7 +106,7 @@
   (setf (selection scene) '())
   (clear-shapes scene)
   (clear-motions scene)
-    (setf (current-frame scene) 0))
+  (setf (current-frame scene) 0))
 
 (defmethod init-scene ((scene scene))
   (setf (current-frame scene) (start-frame scene))

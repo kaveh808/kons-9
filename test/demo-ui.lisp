@@ -126,12 +126,6 @@ Press TAB again to show kons-9 menu.
 A shape inspector appears at the top right of the window. It shows the root
 node of the scene shape hierarchy, called SHAPES.
 
-Click on SHAPES. The node is selected.
-
-Click on SHAPES again. The node is deselected.
-
-Alt-click on SHAPES. The inspector expands to show the child shapes.
-
 Click on the inspector entries to select and deselect the shapes.
 
 Press ESCAPE to hide the inspector.
@@ -153,8 +147,6 @@ Hold down space key to play animation. Press '[' key to go back to frame 0.
 Press TAB, I, S, M.
 
 Two inspectors appear: one for the scene shapes and one for the scene motions.
-
-Alt-click on the entries to expand them.
 
 Use the UP and DOWN ARROW keys to scroll the inspectors.
 
