@@ -39,8 +39,8 @@
                     (p:min! bounds-lo bounds-lo xform-p)
                     (p:max! bounds-hi bounds-hi xform-p)))
                 (values bounds-lo bounds-hi))
-              (get-local-bounds p-cloud)))
-        (get-local-bounds p-cloud))))
+              (get-bounds p-cloud)))
+        (get-bounds p-cloud))))
 
 (defun make-point-cloud (points)
   (make-instance 'point-cloud :points points))

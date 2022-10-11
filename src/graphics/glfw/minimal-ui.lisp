@@ -608,8 +608,9 @@
 
           ;; assume monitor scale is same in x and y, just use first value
           ;; also assume we are running on the "primary" monitor
+          ;; use FLOOR due to bug encountered with user's 4K monitor setting of 1.1458334
           (setf (monitor-scale *drawing-settings*)
-                (first (glfw:get-monitor-content-scale (glfw:get-primary-monitor))))
+                (floor (first (glfw:get-monitor-content-scale (glfw:get-primary-monitor)))))
           (set-lines-thin)
 
           (setf %gl:*gl-get-proc-address* #'glfw:get-proc-address)
