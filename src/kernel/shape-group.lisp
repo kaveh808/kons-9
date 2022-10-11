@@ -21,14 +21,16 @@
     (do-children (child group)
       (multiple-value-bind (lo hi)
           (get-bounds child)
-        (when lo
-          (setf bounds-lo (if bounds-lo
-                              (p:min bounds-lo lo)
-                              lo)))
-        (when hi
-          (setf bounds-hi (if bounds-hi
-                              (p:max bounds-hi hi)
-                              hi)))))
+        (when (and lo hi)
+          (let* ((matrix (transform-matrix (transform child)))
+                 (xform-lo (transform-point lo matrix))
+                 (xform-hi (transform-point hi matrix)))
+            (setf bounds-lo (if bounds-lo
+                                (p:min bounds-lo xform-lo)
+                                xform-lo))
+            (setf bounds-hi (if bounds-hi
+                                (p:max bounds-hi xform-hi)
+                                xform-hi))))))
     (values bounds-lo bounds-hi)))
 
 (defmethod set-point-colors-by-xyz ((group shape-group) color-fn)

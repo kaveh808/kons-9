@@ -213,7 +213,7 @@
         nil))
   )
 
-;;; shape-global-matrix --------------------------------------------------------
+;;; shape-path matrix ----------------------------------------------------------
 
 (defmethod shape-global-matrix ((scene scene) shape-path)
   (let ((matrix-list (get-shape-matrix-list scene shape-path)))

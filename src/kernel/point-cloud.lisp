@@ -20,6 +20,28 @@
       (p:max! bounds-hi bounds-hi p))
     (values bounds-lo bounds-hi)))
 
+;;; TODO -- not tested
+(defmethod get-global-bounds ((p-cloud point-cloud))
+  (when (= 0 (length (points p-cloud)))
+    (warn "Shape ~a does not have any points. Using default bounds values." p-cloud)
+    (return-from get-global-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
+  (let* ((points (points p-cloud))
+         (bounds-lo (p:copy (aref points 0)))
+         (bounds-hi (p:copy (aref points 0))))
+    (if (scene p-cloud)
+        (let* ((paths (get-shape-paths (scene p-cloud) p-cloud))
+               (path (first paths))
+               (matrix (if path (shape-global-matrix (scene p-cloud) path) nil)))
+          (if matrix
+              (progn
+                (do-array (i p points)
+                  (let ((xform-p (transform-point p matrix)))
+                    (p:min! bounds-lo bounds-lo xform-p)
+                    (p:max! bounds-hi bounds-hi xform-p)))
+                (values bounds-lo bounds-hi))
+              (get-local-bounds p-cloud)))
+        (get-local-bounds p-cloud))))
+
 (defun make-point-cloud (points)
   (make-instance 'point-cloud :points points))
 
