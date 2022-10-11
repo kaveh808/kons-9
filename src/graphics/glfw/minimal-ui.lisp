@@ -632,8 +632,11 @@
                 do (glfw:swap-buffers)
                 do (glfw:poll-events)))))))
 
+;;; does not return a useful value
 (defmacro with-clear-scene (&body body)
   `(progn
      (clear-scene (scene *default-scene-view*))
-     ,@body))
+     ,@body
+     (update-scene-ui)))
+
 
