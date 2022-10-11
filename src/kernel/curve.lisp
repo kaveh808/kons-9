@@ -32,7 +32,7 @@
 
 (defun curve-tangents-aux (points &optional (is-closed? nil))
   (let ((tangents (make-array (length points))))
-    (doarray (i p points)
+    (do-array (i p points)
       (declare (ignore p))
       (setf (aref tangents i) (curve-point-tangent i points is-closed?)))
     tangents))

@@ -53,11 +53,23 @@
                             (* sv r)
                             (* cv su r)))))))))))
 
-(defmethod make-superquadric (u-dim v-dim diameter e1 e2)
-  (make-instance 'superquadric :u-dim u-dim
+(defmethod make-superquadric (u-dim v-dim diameter e1 e2 &key (name nil))
+  (make-instance 'superquadric :name name
+                               :u-dim u-dim
                                :v-dim v-dim
                                :u-wrap t
                                :v-wrap nil
                                :diameter diameter
                                :e1 e1
                                :e2 e2))
+
+;;;; gui =======================================================================
+
+(defun superquadric-command-table ()
+  (let ((table (make-instance `command-table :title "Create Superquadric")))
+    (ct-make-shape :S "Superquadric" (make-superquadric 16 16 2.0 0.2 0.2))
+    table))
+
+(register-dynamic-command-table-entry "Create" :S "Create Superquadric Menu"
+                                      (lambda () (make-active-command-table (superquadric-command-table)))
+                                      (lambda () t))

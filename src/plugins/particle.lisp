@@ -214,12 +214,12 @@
             (length (particles self)))))
 
 (defmethod add-force-field ((p-sys particle-system) (field force-field))
-  (doarray (i ptcl (particles p-sys))
+  (do-array (i ptcl (particles p-sys))
     (push field (force-fields ptcl)))
   p-sys)
 
 (defmethod mutate-particle-system ((p-sys particle-system) factor)
-  (doarray (i ptcl (particles p-sys))
+  (do-array (i ptcl (particles p-sys))
     (mutate-particle ptcl factor))
   p-sys)
 
@@ -235,8 +235,8 @@
 
 (defmethod draw-live-points ((p-sys particle-system))
   (let ((visible-points '()))
-    (doarray-if (i ptcl #'is-alive? (particles p-sys))
-                (push (pos ptcl) visible-points))
+    (do-array-if (i ptcl #'is-alive? (particles p-sys))
+      (push (pos ptcl) visible-points))
     (3d-draw-points (make-array (length visible-points) :initial-contents visible-points))))
 
 (defmethod draw-points ((p-sys particle-system))
@@ -261,7 +261,7 @@
 
 (defmethod update-motion ((p-sys particle-system) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
-  (doarray (i ptcl (particles p-sys))
+  (do-array (i ptcl (particles p-sys))
     (when (or (= -1 (max-generations p-sys))
               (<= (generation ptcl) (max-generations p-sys)))
       (when (is-alive? ptcl)
@@ -274,7 +274,7 @@
 (defmethod source-points ((p-sys particle-system))
   (let ((points '()))
     (if (point-generator-use-live-positions-only p-sys)
-        (doarray-if (i ptcl #'is-alive? (particles p-sys))
+        (do-array-if (i ptcl #'is-alive? (particles p-sys))
           (push (pos ptcl) points))
         (dotimes (i (length (faces p-sys)))
           (let ((curve (reverse (face-points p-sys i))))

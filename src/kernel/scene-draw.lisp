@@ -5,11 +5,12 @@
 (defgeneric draw (obj)
   
   (:method ((scene scene))
-    (mapc #'draw (shapes scene)))
+    (draw (shape-root scene)))
 
-  (:method ((group group))
+  (:method ((group shape-group))
     (when (is-visible? group)
-      (mapc #'draw (children group))))
+      (do-children (child group)
+        (draw child))))
 
   ;; push matrix and do transform operations before drawing
   (:method :before ((shape shape))
@@ -74,7 +75,8 @@
 (defmethod draw-bounds ((shape shape) &optional (color (c! 0 1 1)))
   (multiple-value-bind (lo hi)
       (get-bounds shape)
-    (3d-draw-bounds lo hi color)))
+    (when (and lo hi)
+      (3d-draw-bounds lo hi color))))
 
 (defmethod draw-selected ((shape shape))
   (draw-bounds shape (c! 1 0 0)))

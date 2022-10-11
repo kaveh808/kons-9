@@ -50,11 +50,11 @@
     (let* ((points (source-points obj))
            (min-dist (p-dist point (aref points 0)))
            (closest-index 0))
-      (doarray (i p points)
-               (let ((dist (p-dist point p)))
-                 (when (< dist min-dist)
-                   (setf min-dist dist)
-                   (setf closest-index i))))
+      (do-array (i p points)
+        (let ((dist (p-dist point p)))
+          (when (< dist min-dist)
+            (setf min-dist dist)
+            (setf closest-index i))))
       (aref points closest-index))))
 
 ;;;; curve-source-protocol =====================================================

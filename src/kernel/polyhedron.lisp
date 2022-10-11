@@ -87,7 +87,7 @@
 
 (defmethod compute-point-normals ((polyh polyhedron))
   (let ((p-normals (make-array (length (points polyh)) :initial-element (p! 0 0 0))))
-    (doarray (f face (faces polyh))
+    (do-array (f face (faces polyh))
       (dolist (pref face)
         (setf (aref p-normals pref)
               (p:+ (aref p-normals pref)
@@ -132,12 +132,12 @@
 
 (defmethod set-point-colors-by-xyz ((polyh polyhedron) color-fn)
   (allocate-point-colors polyh)
-  (doarray (i p (points polyh))
+  (do-array (i p (points polyh))
     (setf (aref (point-colors polyh) i) (funcall color-fn p))))
 
 (defmethod set-point-colors-by-point-and-normal ((polyh polyhedron) color-fn)
   (allocate-point-colors polyh)
-  (doarray (i p (points polyh))
+  (do-array (i p (points polyh))
     (let ((n (aref (point-normals polyh) i)))
       (setf (aref (point-colors polyh) i) (funcall color-fn p n)))))
 
@@ -181,7 +181,7 @@
   (let ((hash (make-hash-table :test 'equal))
         (count -1)
         (new-refs (make-array (length (points polyh)))))
-    (doarray (i p (points polyh))
+    (do-array (i p (points polyh))
       (let ((j (gethash (point->list p) hash)))
         (if (null j)
             (progn
@@ -191,9 +191,9 @@
             (setf (aref new-refs i) j))))
     (let ((new-points (make-array (1+ (apply #'max (coerce new-refs 'list)))))
           (new-faces (make-array (length (faces polyh)))))
-      (doarray (i p (points polyh))
+      (do-array (i p (points polyh))
         (setf (aref new-points (aref new-refs i)) p))
-      (doarray (i f (faces polyh))
+      (do-array (i f (faces polyh))
         (setf (aref new-faces i) (mapcar (lambda (ref) (aref new-refs ref)) f)))
       (make-polyhedron new-points new-faces))))
 

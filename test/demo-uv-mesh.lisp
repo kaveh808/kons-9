@@ -99,16 +99,17 @@ a path CURVE. The profile and path can be open or closed.
   (let* ((path (make-sine-curve-curve 360 1 4 2 64))
          (prof (make-circle-curve 1.0 4))
          (mesh (sweep-extrude-uv-mesh prof path :twist (* 2 pi) :taper 0.0)))
+    (setf (name mesh) 'mesh)
     (add-shape *scene* mesh)))
 #|
 Assign point colors to the UV-MESH by uv.
 |#
-(set-point-colors-by-uv (first (shapes *scene*))
+(set-point-colors-by-uv (find-shape-by-name *scene* 'mesh)
                         (lambda (u v) (declare (ignore u)) (c-rainbow v)))
 #|
 Assign point colors to the UV-MESH by xyz.
 |#
-(set-point-colors-by-xyz (first (shapes *scene*))
+(set-point-colors-by-xyz (find-shape-by-name *scene* 'mesh)
                          (lambda (p) (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))
 
 #|

@@ -33,17 +33,3 @@
 (defmethod printable-data ((self scene-item))
   (format nil "~a" (name self)))
 
-(defmethod select ((item scene-item))
-  (setf (is-selected? item) t)
-  (when (scene item)
-    (add-selection (scene item) item)))
-
-(defmethod unselect ((item scene-item))
-  (setf (is-selected? item) nil)
-  (when (scene item)
-    (remove-selection (scene item) item)))
-
-(defmethod toggle-select ((item scene-item))
-  (if (is-selected? item)
-      (unselect item)
-      (select item)))

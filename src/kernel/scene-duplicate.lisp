@@ -68,9 +68,9 @@
     (copy-simple-slot show-axis)
     (copy-simple-slot show-bounds?))
 
-  (:method ((dst group) (src group))
+  (:method ((dst shape-group) (src shape-group))
     (call-next-method)
-    (copy-list-slot children))
+    (copy-array-slot children))
 
   (:method ((dst point-cloud) (src point-cloud))
     (call-next-method)
@@ -146,7 +146,7 @@
 
   (:method ((dst motion-group) (src motion-group))
     (call-next-method)
-    (copy-list-slot children))
+    (copy-array-slot children))
 
   (:method ((dst animator) (src animator))
     (call-next-method)
@@ -169,8 +169,8 @@
 
   (:method ((dst scene) (src scene))
     (call-next-method)
-    (copy-list-slot shapes)
-    (copy-list-slot motions)
+    (copy-instance-slot shape-root)
+    (copy-instance-slot motion-root)
     (copy-list-slot selection)
     ;; initialized? -- do not copy
     (copy-simple-slot start-frame)

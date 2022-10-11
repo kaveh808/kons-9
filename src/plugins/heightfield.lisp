@@ -5,8 +5,9 @@
 (defclass heightfield (uv-mesh)
   ((height-fn :accessor height-fn :initarg :height-fn :initform nil)))
 
-(defmethod make-heightfield (x-segments z-segments bounds-lo bounds-hi &optional (height-fn nil))
-  (let ((hfield (make-instance 'heightfield :u-dim (1+ z-segments)
+(defmethod make-heightfield (x-segments z-segments bounds-lo bounds-hi &key (name nil) (height-fn nil))
+  (let ((hfield (make-instance 'heightfield :name name
+                                            :u-dim (1+ z-segments)
                                             :v-dim (1+ x-segments)
                                             :u-wrap nil
                                             :v-wrap nil
@@ -41,4 +42,36 @@
   (compute-heights hfield)
   (compute-face-normals hfield)
   (compute-point-normals hfield))
+
+;;;; gui =======================================================================
+
+(defun heightfield-command-table ()
+  (let ((table (make-instance `command-table :title "Create Heightfield")))
+    (ct-make-shape :A "Heightfield 1"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (* 4 (noise (p! x 0 z))))))
+    (ct-make-shape :B "Heightfield 2"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (* 4 (turbulence (p! x 0 z) 4)))))
+    (ct-make-shape :C "Heightfield 3"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (let* ((p (p! x 0 z))
+                                                         (mag (p:length (p:scale p .25))))
+                                                    (if (= mag 0.0)
+                                                        10.0
+                                                        (/ 1.0 mag))))))
+    (ct-make-shape :D "Heightfield 4"
+                   (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                     :height-fn (lambda (x z)
+                                                  (let* ((p (p! x 0 z))
+                                                         (mag (max 0.001 (p:length (p:scale p 4.0)))))
+                                                    (* 3 (/ (sin mag) mag))))))
+    table))
+
+(register-dynamic-command-table-entry "Create" :H "Create Heightfield Menu"
+                                      (lambda () (make-active-command-table (heightfield-command-table)))
+                                      (lambda () t))
 

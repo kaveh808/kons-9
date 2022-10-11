@@ -4,6 +4,7 @@
 
 (defclass drawing-settings ()
   ((monitor-scale :accessor monitor-scale :initarg :monitor-scale :initform 1.0)
+   (default-font :accessor default-font :initarg :default-font :initform (asdf:system-relative-pathname "kons-9" "data/font/DejaVuSansMono.ttf"))
    (point-size :accessor point-size :initarg :point-size :initform 3.0)
    (line-thickness :accessor line-thickness :initarg :line-thickness :initform 1.0)
    (fg-color :accessor fg-color :initarg :fg-color :initform (c! 0 0 0))
@@ -250,7 +251,7 @@
 
 (defun 3d-draw-bounds (lo hi color)
   (with-gl-disable :lighting
-    (gl:line-width (line-thickness *drawing-settings*))
+    (gl:line-width (* 2 (line-thickness *drawing-settings*))) ;otherwise not visible for cubes etc.
     (gl-set-color color)
     (gl:begin :lines)
       (when (and lo hi)
@@ -287,7 +288,7 @@
     (if is-closed?
         (gl:begin :line-loop)
         (gl:begin :line-strip))
-    (doarray (i p points)
+    (do-array (i p points)
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
@@ -301,7 +302,7 @@
           (gl-set-fg-color)
           (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
-    (doarray (i p points)
+    (do-array (i p points)
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 

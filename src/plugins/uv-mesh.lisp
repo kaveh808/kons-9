@@ -46,8 +46,8 @@
             (setf (aref (point-colors mesh) (uv-mesh-1d-ref mesh  u v))
                   (funcall color-fn u0 v0))))))))
 
-(defmethod set-point-colors-by-uv ((group group) color-fn)
-  (dolist (child (children group))
+(defmethod set-point-colors-by-uv ((group shape-group) color-fn)
+  (do-children (child group)
     (set-point-colors-by-uv child color-fn)))
 
 (defun index+1 (index dim wrap?)
@@ -308,3 +308,21 @@
                               longitude-segments
                               :v-wrap t
                               :v-cap nil)))
+
+;;;; gui =======================================================================
+
+(defun uv-mesh-command-table ()
+  (let ((table (make-instance `command-table :title "Create UV Mesh")))
+    (ct-make-shape :C "Cone"     (make-cone-uv-mesh 2 2 16 7))
+    (ct-make-shape :Y "Cylinder" (make-cylinder-uv-mesh 1.5 3 16 4))
+    (ct-make-shape :G "Grid"     (make-grid-uv-mesh 3 1.5 1 1))
+    (ct-make-shape :P "Prism"    (make-rect-prism-uv-mesh 1.5 3 4 2))
+    (ct-make-shape :R "Pyramid"  (make-pyramid-uv-mesh 2 2 5 3))
+    (ct-make-shape :S "Sphere"   (make-sphere-uv-mesh 1.5 8 16))
+    (ct-make-shape :T "Torus"    (make-torus-uv-mesh 1.0 2.0 8 32))
+    table))
+
+(register-dynamic-command-table-entry "Create" :u "Create UV Mesh Menu"
+                                      (lambda () (make-active-command-table (uv-mesh-command-table)))
+                                      (lambda () t))
+

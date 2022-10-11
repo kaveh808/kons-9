@@ -50,6 +50,31 @@
 (defun indent-padding (num)
   (format nil "~v{~a~:*~}" num '(#\space)))
 
+(defun is-whitespace-char? (char)
+  (or (eq char #\space) (not (graphic-char-p char))))
+
+(defun remove-extra-spaces (str)
+  (string-trim '(#\space #\newline #\tab)
+               (with-output-to-string (out)
+                 (let ((skip? nil))
+                   (loop for c across str
+                         do (cond ((and skip? (is-whitespace-char? c))
+                                   nil)
+                                  ((not (is-whitespace-char? c))
+                                   (write-char c out)
+                                   (setf skip? nil))
+                                  ((is-whitespace-char? c)
+                                   (write-char #\space out)
+                                   (setf skip? t))))))))
+
+(defun string-trim-to-length (str len &optional (ellipses "..."))
+  (cond ((< (length str) len)
+         str)
+        (ellipses
+         (strcat (subseq str 0 (- len (length ellipses))) ellipses))
+        (t
+         (subseq str 0 len))))
+                  
 (defun array->list (array)
   (map 'list #'identity array))
 
@@ -77,12 +102,12 @@
             (push b result))))
     (nreverse result)))
 
-(defmacro doarray ((i obj array) &rest body)
+(defmacro do-array ((i obj array) &rest body)
   `(dotimes (,i (length ,array))
      (let ((,obj (aref ,array ,i)))
        ,@body)))
 
-(defmacro doarray-if ((i obj test array) &rest body)
+(defmacro do-array-if ((i obj test array) &rest body)
   `(dotimes (,i (length ,array))
      (let ((,obj (aref ,array ,i)))
        (when (funcall ,test ,obj)
@@ -94,6 +119,15 @@
     (replace new vec :end1 i)
     (replace new vec :start1 (1+ i) :start2 i)
     new))
+
+;;; destructive version, assumes adjustable array
+(defun insert-into-array (vector value position)
+  (vector-push-extend value vector) ; ensure that the array is large enough
+  ;; shift the end of the array right
+  (loop for i from (1- (length vector)) downto (1+ position) do
+      (setf (aref vector i) (aref vector (1- i))))
+  (setf (aref vector position) value) ; insert value into the right place
+  vector)
 
 ;;;; math ======================================================================
 
