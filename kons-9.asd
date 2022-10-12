@@ -31,7 +31,7 @@
    (:file "src/kernel/matrix")
    (:file "src/kernel/noise")
    (:file "src/graphics/opengl/opengl")
-   (:file "src/graphics/opengl/ui")
+   (:file "src/graphics/opengl/ui-widgets")
    (:file "src/kernel/item")
    (:file "src/kernel/transform")
    (:file "src/kernel/scene-item")
@@ -53,7 +53,6 @@
    (:file "src/kernel/protocol")
    (:file "src/kernel/clobber")
    (:file "src/kernel/main")
-   (:file "src/ui/command-table")
    ;; font libraries -- tmp until we use 3b-bmfont
    (:module "lib/JMC-font-libs/font-master"
     :components ((:file "glyph")
@@ -66,7 +65,8 @@
                  (:file "glyph-zpb-ttf")
                  (:file "font-zpb-ttf")))
    ;; user interface
-   (:file "src/graphics/glfw/minimal-ui")
+   (:file "src/graphics/glfw/command-table")
+   (:file "src/graphics/glfw/glfw-gui")
    (:file "src/graphics/opengl/text-common")
    (:file "src/graphics/opengl/text-opengl-common")
    #+darwin(:file "src/graphics/opengl/opengl2-text")

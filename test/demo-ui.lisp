@@ -181,5 +181,38 @@ Press ESCAPE to hide all inspectors.
       :test #'is-leaf?)))
 
 #|
+(Demo 05 UI) transforming shapes ===============================================
+
+Create some shapes.
+
+Press TAB, I, S and select a shape.
+
+Press TAB to close menu.
+
+Press TAB, X and if there s a selection you will see the "Transform Selection"
+menu.
+
+Press T, T to get the "Translate" menu.
+
+Press X. Note the mouse help in the status bar.
+
+Hold CTRL and drag the mouse. The selection will translate in X.
+
+Press Y and CTRL-drag.
+
+Repeat for Z.
+
+Note that mouse scene navigation still works.
+
+Press left arrow, R for "Rotate" menu.
+
+Rotate to taste.
+
+Press left arrow, S for "Scale" menu.
+
+Scale away.
+|#
+
+#|
 END ============================================================================
 |#
