@@ -189,7 +189,7 @@ Press TAB, I, S and select a shape.
 
 Press TAB to close menu.
 
-Press TAB, X and if there s a selection you will see the "Transform Selection"
+Press TAB, X and if there is a selection you will see the "Transform Selection"
 menu.
 
 Press T, T to get the "Translate" menu.
@@ -202,9 +202,9 @@ Press Y and CTRL-drag.
 
 Repeat for Z.
 
-Note that mouse scene navigation still works.
+Note that mouse scene navigation still works: orbit, pan, in/out.
 
-Press left arrow, R for "Rotate" menu.
+Press left arrow to go back a menu, R for "Rotate" menu.
 
 Rotate to taste.
 
