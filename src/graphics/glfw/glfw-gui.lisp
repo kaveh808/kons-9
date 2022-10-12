@@ -42,37 +42,6 @@
   view)
 |#
 
-;;;; command table utils =======================================================
-
-(defparameter *dynamic-command-table-entries* (make-array 0 :adjustable t :fill-pointer 0))
-
-(defun register-dynamic-command-table-entry (table-title key-binding doc command-fn context-fn)
-  (vector-push-extend (list table-title key-binding doc command-fn context-fn)
-                      *dynamic-command-table-entries*))
-
-;; TODO -- implement plugin class with registration method?
-(defun register-dynamic-command-table-entries ()
-  (register-dynamic-command-table-entry
-   "Context" :T "Transform Selection"
-   (lambda () (make-active-command-table (transform-command-table *default-scene-view*)))
-   (lambda () (selected-shapes (scene *default-scene-view*))))
-  )
-
-(defun make-active-command-table (table)
-  (push table (command-tables *default-scene-view*))
-  (do-array (i entry-data *dynamic-command-table-entries*)
-    (apply #'add-dynamic-command-table-entry entry-data)))
-
-(defun active-command-table ()
-  (car (command-tables *default-scene-view*)))
-
-(defun add-dynamic-command-table-entry (table-title key-binding doc command-fn context-fn)
-  (let ((table (active-command-table)))
-    (when (and table
-               (equalp (title table) table-title)
-               (funcall context-fn))
-      (add-entry table key-binding command-fn doc))))
-
 ;;;; scene-view ================================================================
 
 (defclass-kons-9 scene-view ()
@@ -83,13 +52,26 @@
    (ui-contents-scroll 0)               ;offset in y
    (menu nil)
    (command-tables '())
+   (mouse-binding nil)                  ;fn to call when control-mouse-drag
+   (mouse-binding-string nil)
    ))
+
+;;; register transform context menu -- is this the right place for this?
+(defun register-dynamic-command-table-entries ()
+  (register-dynamic-command-table-entry
+   "Context" :T "Transform Selection"
+   (lambda () (make-active-command-table (transform-command-table *default-scene-view*)))
+   (lambda () (selected-shapes (scene *default-scene-view*))))
+  )
 
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera)
   (setf (status-bar view) (make-status-bar))
   (push (app-command-table view) (command-tables view))
+  ;; reset dynamic command tables in case view is being re-created
+  (setf *dynamic-command-table-entries* (make-array 0 :adjustable t :fill-pointer 0))
+  ;; register transform menus
   (register-dynamic-command-table-entries))
 
 (defun show-ui-content (view)
@@ -235,29 +217,59 @@
     (ct-subtable :S "Scale" (scale-command-table view))
     table))
 
+(defmacro mouse-transform-setup (help-str &rest action-exprs)
+  `(progn
+     (setf (mouse-binding-string *default-scene-view*)
+           (strcat "Mouse [CTRL]: " ,help-str "."))
+     (setf (mouse-binding *default-scene-view*)
+           (lambda (scene dx dy)
+             (declare (ignore dy))
+             (dolist (shape (selected-shapes scene))
+               ,@action-exprs)))))
+
 (defun translate-command-table (view)
   (declare (ignore view))
   (let ((table (make-instance `command-table :title "Translate")))
-    (ct-entry :X "Translate X")
-    (ct-entry :Y "Translate Y")
-    (ct-entry :Z "Translate Z")
+    (ct-entry :X "Translate X" (mouse-transform-setup
+                                "Translate X"
+                                (translate-by shape (p! (* dx .01) 0 0))))
+    (ct-entry :Y "Translate Y" (mouse-transform-setup
+                                "Translate Y"
+                                (translate-by shape (p! 0 (* dx .01) 0))))
+    (ct-entry :Z "Translate Z" (mouse-transform-setup
+                                "Translate Z"
+                                (translate-by shape (p! 0 0 (* dx .01)))))
     table))
 
 (defun rotate-command-table (view)
   (declare (ignore view))
   (let ((table (make-instance `command-table :title "Rotate")))
-    (ct-entry :X "Rotate X")
-    (ct-entry :Y "Rotate Y")
-    (ct-entry :Z "Rotate Z")
+    (ct-entry :X "Rotate X" (mouse-transform-setup
+                                "Rotate X"
+                                (rotate-by shape (p! (* dx 1) 0 0))))
+    (ct-entry :Y "Rotate Y" (mouse-transform-setup
+                                "Rotate Y"
+                                (rotate-by shape (p! 0 (* dx 1) 0))))
+    (ct-entry :Z "Rotate Z" (mouse-transform-setup
+                                "Rotate Z"
+                                (rotate-by shape (p! 0 0 (* dx 1)))))
     table))
 
 (defun scale-command-table (view)
   (declare (ignore view))
   (let ((table (make-instance `command-table :title "Scale")))
-    (ct-entry :U "Scale Uniform")
-    (ct-entry :X "Scale X")
-    (ct-entry :Y "Scale Y")
-    (ct-entry :Z "Scale Z")
+    (ct-entry :U "Scale Uniformly" (mouse-transform-setup
+                                    "Scale Uniformly"
+                                    (scale-by shape (p! (+ 1 (* dx .01)) (+ 1 (* dx .01)) (+ 1 (* dx .01))))))
+    (ct-entry :X "Scale X" (mouse-transform-setup
+                                "Scale X"
+                                (scale-by shape (p! (+ 1 (* dx .01)) 1 1))))
+    (ct-entry :Y "Scale Y" (mouse-transform-setup
+                                "Scale Y"
+                                (scale-by shape (p! 1 (+ 1 (* dx .01)) 1))))
+    (ct-entry :Z "Scale Z" (mouse-transform-setup
+                                "Scale Z"
+                                (scale-by shape (p! 1 1 (+ 1 (* dx .01))))))
     table))
 
 
@@ -303,9 +315,9 @@
     (create-contents (menu view))))
 
 ;;; respond to first click in window
-(defmethod accepts-first-mouse ((self scene-view) event)
-  (declare (ignore event))
-  t)
+;; (defmethod accepts-first-mouse ((self scene-view) event)
+;;   (declare (ignore event))
+;;   t)
 
 (defmethod mouse-down ((self scene-view) event)
   ;; TODO -- do 3D selection
@@ -353,9 +365,9 @@
                ((eq :backspace key)
                 (do-backspace-input *ui-keyboard-focus*))
                ))
-        ((and (or (member :shift mod-keys) (member :alt mod-keys))
-              (or (eq :left key) (eq :right key) (eq :up key) (eq :down key))) ;temporary translate 
-         (translate-selection key mod-keys))
+        ;; ((and (or (member :shift mod-keys) (member :alt mod-keys))
+        ;;       (or (eq :left key) (eq :right key) (eq :up key) (eq :down key))) ;temporary translate 
+        ;;  (translate-selection key mod-keys))
         ((eq :left key)                 ;go to previous menu
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
@@ -499,13 +511,16 @@
 (defun mouse-dragged (x y dx dy)
   (declare (ignore x y))
 ;;  (format t "mouse-dragged dx: ~a, dy: ~a, mod: ~a~%" dx dy *current-mouse-modifier*)
-  (cond ((eq :alt *current-mouse-modifier*)
+  (cond ((eq :control *current-mouse-modifier*) ;user-defined mouse binding
+         (when (mouse-binding *default-scene-view*)
+           (funcall (mouse-binding *default-scene-view*) (scene *default-scene-view*) dx dy)))
+        ((eq :alt *current-mouse-modifier*)    ;default mouse scene navigation -- pan
          (if (>= (abs dx) (abs dy))
              (incf *cam-side-dist* (* 0.1 dx))
              (incf *cam-up-dist* (* -0.1 dy))))
-        ((eq :shift *current-mouse-modifier*)
+        ((eq :shift *current-mouse-modifier*)  ;default mouse scene navigation -- in/out
          (incf *cam-fwd-dist* (* 0.1 dx)))
-        (t
+        (t                                     ;default mouse scene navigation -- orbit
          (incf *cam-x-rot* dy)
          (incf *cam-y-rot* dx))))
 
@@ -550,17 +565,16 @@
   (update-ui-content-position))
 
 (defun update-status-bar-for-scene ()
-  (let ((scene (scene *default-scene-view*))
-        (menu-str (format nil "TAB: hide menu. LEFT ARROW: previous menu."))
-        ;; (menu-str (format nil "Menu: ~A TAB: hide menu. LEFT ARROW: previous menu."
-        ;;                   (apply #'strcat
-        ;;                          (mapcar (lambda (table)
-        ;;                                    (strcat (title table) " > "))
-        ;;                                  (reverse (butlast (command-tables *default-scene-view*)))))))
-        (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
-        (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
-                           "UP/DOWN ARROW: scroll inspector. ESC: close inspector."
-                           "")))
+  (let* ((scene (scene *default-scene-view*))
+         (menu-str (format nil "TAB: hide menu. LEFT ARROW: previous menu."))
+         (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
+         (mouse-binding-str (mouse-binding-string *default-scene-view*))
+         (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
+                            "UP/DOWN ARROW: scroll inspector. ESC: close inspector."
+                            ""))
+         (secondary-str (if mouse-binding-str
+                            mouse-binding-str
+                            inspector-str)))
     (update-status-bar (status-bar *default-scene-view*)
                        :str0 (format nil "Current Frame: ~a [~a-~a]"
                                      (current-frame scene) (start-frame scene) (end-frame scene))
@@ -574,9 +588,9 @@
                        :str4 (cond (*current-highlighted-ui-item*
                                     (help-string *current-highlighted-ui-item*))
                                    ((not (menu *default-scene-view*))
-                                    (strcat mouse-str " " inspector-str))
+                                    (strcat mouse-str " " secondary-str))
                                    (t
-                                    (strcat menu-str " " inspector-str)))
+                                    (strcat menu-str " " secondary-str)))
                        )))
 
 (defun show-window (scene)
