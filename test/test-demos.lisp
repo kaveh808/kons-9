@@ -12,6 +12,7 @@ functions and the like.
                     "demo-procedural-curve"
                     "demo-uv-mesh"
                     "demo-animation"
+                    "demo-isosurface"
                     "demo")))
   (dolist (filename demo-files)
     (format t "Testing file ~a...~%" filename)
