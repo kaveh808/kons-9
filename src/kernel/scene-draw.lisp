@@ -98,7 +98,7 @@
 (defmethod draw-normals ((polyh polyhedron))
   (let ((lines ()))
     (dotimes (f (length (faces polyh)))
-      (let* ((points (face-points polyh f))
+      (let* ((points (face-points-list polyh f))
              (p0 (apply #'p-average points))
              (p1 (p:+ p0 (p:scale (aref (face-normals polyh) f) (show-normals polyh)))))
         (push p1 lines)

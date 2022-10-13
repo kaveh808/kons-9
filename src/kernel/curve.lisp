@@ -40,6 +40,9 @@
 (defmethod curve-tangents ((curve curve))
   (curve-tangents-aux (points curve) (is-closed-curve? curve)))
 
+(defmethod curve-point-dist ((curve curve) point)
+  (point-curve-dist point (points curve) (is-closed-curve? curve)))
+        
 ;;; curve shape functions ----------------------------------------------------
 
 (defun make-line-curve (p1 p2 num-segments)

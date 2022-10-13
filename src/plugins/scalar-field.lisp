@@ -55,3 +55,16 @@
                  (mag (/ strength (* falloff r r))))
             (incf val mag)))
         val))))
+
+(defun curve-source-field-fn (curve-source &key (strength 1.0) (falloff 1.0) (epsilon 0.0001))
+  (let ((curves (source-curves curve-source))
+        (curves-closed (source-curves-closed curve-source)))
+    (lambda (p)
+      (let ((val 0))
+        (loop for curve in curves
+              for closed? in curves-closed
+              do (let* ((dist (point-curve-dist p curve closed?))
+                        (r (max dist epsilon))
+                        (mag (/ strength (* falloff r r))))
+                   (incf val mag)))
+        val))))

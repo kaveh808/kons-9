@@ -65,10 +65,6 @@
 (defun p-rand1 (p &optional (pivot (p! 0 0 0)))
   (p:+ pivot (p-rand2 (p:negate p) p)))
 
-;;; magnitude (length) of point
-(defun p-mag (p)
-  (sqrt (+ (* (p:x p) (p:x p)) (* (p:y p) (p:y p)) (* (p:z p) (p:z p)))))
-
 ;;; distance between two points
 (defun p-dist (p1 p2)
   (sqrt (+ (expt (- (p:x p2) (p:x p1)) 2)
@@ -91,7 +87,6 @@
 
 (defun p-average (&rest points)
   (p-center points))
-
 
 (defun p-angle-cosine (p1 p2)
   (p:dot (p:normalize p1) (p:normalize p2)))
@@ -141,3 +136,26 @@
 
 (defun p-sphericize (p radius &optional (factor 1.0) (center +origin+))
   (p:lerp p (p* (p:normalize (p-from-to center p)) radius) factor))
+
+(defun point-line-segement-dist (p a b)
+  (let ((ab (p-from-to a b))
+        (ap (p-from-to a p))
+        (bp (p-from-to b p)))
+    (cond ((<= (p:dot ap ab) 0.0)
+           (p:length ap))               ;distance to endpoint A
+          ((>= (p:dot bp ab) 0.0)
+           (p:length bp))               ;distance to endpoint B
+          (t
+           (/ (p:length (p:cross ab ap)) (p:length ab)))))) ;perpendicular distance to line
+
+(defun point-curve-dist (point points is-closed-curve?) ;points is an array of point
+  (let* ((min-dist (p-dist point (aref points 0))))
+    (dotimes (i (1- (length points)))
+      (let ((dist (point-line-segement-dist point (aref points i) (aref points (1+ i)))))
+        (when (< dist min-dist)
+          (setf min-dist dist))))
+    (when is-closed-curve?
+      (let ((dist (point-line-segement-dist point (aref points (1- (length points))) (aref points 0))))
+        (when (< dist min-dist)
+          (setf min-dist dist))))
+    min-dist))

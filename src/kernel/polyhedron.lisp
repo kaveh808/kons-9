@@ -51,7 +51,7 @@
   (compute-point-normals polyh))  
 
 (defmethod face-center ((polyh polyhedron) face)
-  (apply #'p-average (face-points polyh face)))
+  (apply #'p-average (face-points-list polyh face)))
 
 (defmethod face-centers ((polyh polyhedron))
   (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
@@ -111,13 +111,19 @@
     (setf (aref (point-normals polyh) n)
           (p:normalize (aref (point-normals polyh) n)))))
 
-(defmethod face-points ((polyh polyhedron) i)
+(defmethod face-points-list ((polyh polyhedron) (i integer))
   (mapcar #'(lambda (pref) (aref (points polyh) pref))
           (aref (faces polyh) i)))
 
-(defmethod face-points ((polyh polyhedron) (face list))
+(defmethod face-points-list ((polyh polyhedron) (face list))
   (mapcar #'(lambda (pref) (aref (points polyh) pref))
           face))
+
+(defmethod face-points-array ((polyh polyhedron) (i integer))
+  (coerce (face-points-list polyh i) 'vector))
+
+(defmethod face-points-array ((polyh polyhedron) (face list))
+  (coerce (face-points-list polyh face) 'vector))
 
 (defmethod reverse-face-normals ((polyh polyhedron))
   (dotimes (i (length (face-normals polyh)))
@@ -150,10 +156,10 @@
 
 (defmethod refine-face ((polyh polyhedron) face)
   (let* ((point-lists '())
-         (points (face-points polyh face))
+         (points (face-points-list polyh face))
          (center (p-center points))
-        (face-points (coerce points 'vector))
-        (n (length points)))
+         (face-points (coerce points 'vector))
+         (n (length points)))
     (dotimes (i n)
       (push (list (aref face-points i)
                   (p-average (aref face-points i) (aref face-points (mod (1+ i) n)))
@@ -243,7 +249,7 @@
         (points '()))
     (dotimes (f (length (faces tri-polyh)))
       (let* ((area (face-area tri-polyh (aref (faces tri-polyh) f)))
-             (face-points (face-points tri-polyh f))
+             (face-points (face-points-list tri-polyh f))
              (p0 (elt face-points 0))
              (p1 (elt face-points 1))
              (p2 (elt face-points 2))

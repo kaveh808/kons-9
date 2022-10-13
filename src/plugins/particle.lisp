@@ -271,33 +271,39 @@
       (dolist (child (do-spawn ptcl))
         (add-particle p-sys child)))))
 
+;;;; point-source-protocol =====================================================
+
 (defmethod source-points ((p-sys particle-system))
   (let ((points '()))
     (if (point-generator-use-live-positions-only p-sys)
         (do-array-if (i ptcl #'is-alive? (particles p-sys))
           (push (pos ptcl) points))
         (dotimes (i (length (faces p-sys)))
-          (let ((curve (reverse (face-points p-sys i))))
+          (let ((curve (reverse (face-points-list p-sys i))))
             (setf points (append curve points))))) ;use all points of face
     (make-array (length points) :initial-contents points)))
 
 (defmethod source-directions ((p-sys particle-system))
   (let ((tangents #()))
     (dotimes (i (length (faces p-sys)))
-      (let* ((fp-reversed (reverse (face-points p-sys i)))
+      (let* ((fp-reversed (reverse (face-points-list p-sys i)))
             (curve (make-array (length fp-reversed) :initial-contents fp-reversed)))
         (setf tangents (concatenate 'vector (curve-tangents-aux curve nil) tangents))))
         ;; (setf tangents (append (curve-tangents-aux curve nil) tangents))))
     tangents))
 
+;;;; curve-source-protocol =====================================================
+
 (defmethod source-curves ((p-sys particle-system))
   (let ((curves '()))
     (dotimes (f (length (faces p-sys)))
-      (push (reverse (face-points p-sys f)) curves)) ;reverse face points
+      (push (reverse (face-points-array p-sys f)) curves)) ;reverse face points
     (nreverse curves)))
 
 (defmethod source-curves-closed ((p-sys particle-system))
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
+
+
 
 (defmethod make-particle-system (p-gen vel num max-gen particle-class &rest initargs)
   (apply #'make-particle-system-aux
