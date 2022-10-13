@@ -59,6 +59,7 @@
 
 ;;;; curve-source-protocol =====================================================
 
+;;; return a list of "curves" where each curve is an array of points
 (defgeneric provides-curve-source-protocol? (obj)
   (:method ((obj t)) nil)
   (:method ((curve curve)) t)
@@ -77,7 +78,7 @@
   (:method ((polyh polyhedron))
     (let ((curves '()))
       (dotimes (f (length (faces polyh)))
-        (push (face-points polyh f) curves))
+        (push (face-points-array polyh f) curves))
       (nreverse curves)))
   )
 
