@@ -22,6 +22,9 @@
         (p:y p) (coerce y 'single-float)
         (p:z p) (coerce z 'single-float)))
 
+(defun p-vec (vec3)
+  (p! (aref vec3 0) (aref vec3 1) (aref vec3 2)))
+
 (defun copy-points (points)
   (mapcar #'p:copy points))
 
@@ -61,6 +64,10 @@
 
 (defun p-rand1 (p &optional (pivot (p! 0 0 0)))
   (p:+ pivot (p-rand2 (p:negate p) p)))
+
+;;; magnitude (length) of point
+(defun p-mag (p)
+  (sqrt (+ (* (p:x p) (p:x p)) (* (p:y p) (p:y p)) (* (p:z p) (p:z p)))))
 
 ;;; distance between two points
 (defun p-dist (p1 p2)

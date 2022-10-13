@@ -84,6 +84,8 @@
    (:file "src/plugins/manager-group")
    (:file "src/plugins/particle")
    (:file "src/plugins/l-system")
+   (:file "src/plugins/scalar-field")
+   (:file "src/plugins/isosurface")
    (:file "src/plugins/poly-mesh")
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")

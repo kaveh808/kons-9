@@ -35,14 +35,16 @@
           (push (incf i) p-refs))
         (vector-push-extend (nreverse p-refs) (faces polyh))))))
 
-;; replaced by freeze-transform
-;; (defmethod polyhedron-bake ((polyh polyhedron))
-;;   (let ((mtx (transform-matrix (transform polyh))))
-;;     (dotimes (i (length (points polyh)))
-;;       (setf (aref (points polyh) i)
-;;             (transform-point (aref (points polyh) i) mtx))))
-;;   (reset-transform (transform polyh))
-;;   polyh)
+;; set geo from a list of triplet arrays of xyz vectors
+(defmethod set-triangle-arrays ((polyh polyhedron) triangle-arrays)
+  (empty-polyhedron polyh)
+  (let ((i -1))
+    (dolist (triangle-array triangle-arrays)
+      (let ((p-refs '()))
+        (do-array (ignore-2 vec3 triangle-array)
+          (vector-push-extend (p-vec vec3) (points polyh))
+          (push (incf i) p-refs))
+        (vector-push-extend (nreverse p-refs) (faces polyh))))))
 
 (defmethod freeze-transform :after ((polyh polyhedron))
   (compute-face-normals polyh)
@@ -178,6 +180,9 @@
         (refine-polyhedron (make-polyhedron (coerce points 'vector) (coerce faces 'vector)) (1- levels)))))
 
 (defmethod merge-points ((polyh polyhedron))
+  (when (or (= 0 (length (points polyh)))
+            (= 0 (length (faces polyh))))
+    (return-from merge-points polyh))
   (let ((hash (make-hash-table :test 'equal))
         (count -1)
         (new-refs (make-array (length (points polyh)))))
