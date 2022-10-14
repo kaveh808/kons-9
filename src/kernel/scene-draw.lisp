@@ -90,9 +90,6 @@
 (defmethod draw-wireframe ((curve curve))
   (3d-draw-curve (points curve) (is-closed-curve? curve)))
 
-;; (defmethod draw-points ((curve curve))
-;;   (3d-draw-points (points curve)))
-
 ;;; polyhedron helper methods --------------------------------------------------
 
 (defmethod draw-normals ((polyh polyhedron))

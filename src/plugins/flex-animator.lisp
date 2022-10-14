@@ -19,7 +19,7 @@
 (defmethod compute-dynamics ((vertex flex-vertex) force-fields)
   (let* ((p0 (point vertex))
          (external-force (if force-fields
-                             (reduce #'p:+ (mapcar #'(lambda (field)
+                             (reduce #'p+ (mapcar #'(lambda (field)
                                                        (field-value field p0 ;TODO -- replace global
                                                                     (current-time *scene*)))
                                                    force-fields))
@@ -30,7 +30,7 @@
 	 (force (p+ external-force internal-force))       ;compute force
          (acc (p/ force (mass vertex)))	                  ;compute acceleration
          (vel (p+ (velocity vertex) acc))                 ;compute velocity
-         (pos (p:+ p0 (p:scale vel (time-step vertex))))) ;compute position
+         (pos (p+ p0 (p:scale vel (time-step vertex))))) ;compute position
       (when (do-collisions? vertex)	; handle collision
 	(let ((elast (elasticity vertex))
               (friction (friction vertex))
@@ -71,9 +71,9 @@
 (defclass-kons-9 flex-animator (shape-animator)
   ((vertices (make-array 0 :adjustable t :fill-pointer t))
    (springs (make-array 0 :adjustable t :fill-pointer t))
-   (show-pinned? t)
-   (show-springs? t)
-   (do-collisions? t)
+   ;; (show-pinned? t)
+   ;; (show-springs? t)
+   ;; (do-collisions? t)
    (force-fields '())))
 
 
@@ -85,19 +85,66 @@
     (vector-push-extend spring (springs vertex2))
     spring))
 
-;;; for now connect all vertices with springs
-(defmethod create-flex-data ((anim flex-animator))
+(defmethod create-flex-data ((anim flex-animator) (shape t))
+  ;; do nothing
+  )
+
+(defmethod update-motion-after ((anim flex-animator) (shape t))
+  ;; do nothing
+  )
+
+;;; flex from curve ------------------------------------------------------------
+
+(defmethod make-flex-animator ((curve curve))
+  (let ((anim (make-instance 'flex-animator :shape curve)))
+    (create-flex-data anim curve)
+    anim))
+
+(defmethod create-flex-data ((anim flex-animator) (curve curve))
   (setf (vertices anim) (map 'vector #'(lambda (p) (make-instance 'flex-vertex :point p))
-                             (points (shape anim))))
+                             (points curve)))
+  (let ((vertices (vertices anim)))
+    (dotimes (i (1- (length vertices)))
+      (add-spring anim (aref vertices i) (aref vertices (1+ i))))
+    (when (is-closed-curve? curve)
+      (add-spring anim (aref vertices (1- (length vertices))) (aref vertices 0)))))
+
+;;; flex from polyhedron -------------------------------------------------------
+
+(defmethod make-flex-animator ((polyh polyhedron))
+  (let ((anim (make-instance 'flex-animator :shape polyh)))
+    (create-flex-data anim polyh)
+    anim))
+
+(defmethod create-flex-data ((anim flex-animator) (polyh polyhedron))
+  (setf (vertices anim) (map 'vector #'(lambda (p) (make-instance 'flex-vertex :point p))
+                             (points polyh)))
+  ;; for now connect all vertices with springs
   (do-array (i v1 (vertices anim))
     (do-array (j v2 (vertices anim))
       (when (> i j)
 	(add-spring anim v1 v2)))))
 
-(defmethod make-flex-animator ((polyh polyhedron))
-  (let ((anim (make-instance 'flex-animator :shape polyh)))
-    (create-flex-data anim)
+(defmethod update-motion-after ((anim flex-animator) (shape polyhedron))
+  (compute-face-normals shape)
+  (compute-point-normals shape))
+  
+;;; flex from poly-strand ------------------------------------------------------
+
+(defmethod make-flex-animator ((poly poly-strand))
+  (let ((anim (make-instance 'flex-animator :shape poly)))
+    (create-flex-data anim poly)
     anim))
+
+(defmethod create-flex-data ((anim flex-animator) (poly poly-strand))
+  (setf (vertices anim) (map 'vector #'(lambda (p) (make-instance 'flex-vertex :point p))
+                             (points poly)))
+  (do-array (i strand (strands poly))
+    (let ((v1 (aref (vertices anim) (aref strand 0)))
+          (v2 (aref (vertices anim) (aref strand 1))))
+      (add-spring anim v1 v2))))
+
+;;; update ---------------------------------------------------------------------
 
 (defmethod update-motion ((anim flex-animator) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
@@ -119,156 +166,16 @@
       ;; set points
       (do-array (i v vertices)
         (setf (aref points i) (point v)))
-      ;; update polyhedron
-      (compute-face-normals (shape anim))
-      (compute-point-normals (shape anim))))
+      ;; update shape if necessary
+      (update-motion-after anim (shape anim))))
   anim)
 
-;;; some convenience setters
+;;; convenience setters
 
-(defmethod set-spring-stiffness ((anim flex-animator) value)
-  (do-array (i s (springs anim))
-    (setf (stiffness s) value)))
-
-(defmethod set-vertex-friction ((anim flex-animator) value)
+(defmethod set-flex-vertex-attr ((anim flex-animator) attr value)
   (do-array (i v (vertices anim))
-    (setf (friction v) value)))
+    (setf (slot-value v attr) value)))
 
-#|
-(defmethod draw-animator ((anim flex-animator))
-  (when (show-springs? anim)
-    (#_glLineWidth 1.0)
-    (#_glColor3f 1.0 0.0 0.0)
-    (#_glBegin #$GL_LINES)
-    (dolist (spring (springs anim))
-      (let ((p1 (point (vertex1 spring)))
-	    (p2 (point (vertex2 spring))))
-	(#_glVertex3f (x p1) (y p1) (z p1))
-	(#_glVertex3f (x p2) (y p2) (z p2))))
-    (#_glEnd))
-  (when (show-pinned? anim)
-    (#_glPointSize 15.0)
-    (#_glColor3f 0.0 1.0 1.0)
-    (#_glBegin #$GL_POINTS)
-    (dolist (vertex (vertices anim))
-      (when (pinned? vertex)
-      (let ((p (point vertex)))
-	(#_glVertex3f (x p) (y p) (z p)))))
-    (#_glEnd)))
-|#
-#|
-
-;;; square
-
-(defparameter *group*
-  (with-clear-and-redraw
-    (add-shape *scene* (make-flex (make-group (make-square-shape 1.0))))))
-
-(setf *time-step* 0.0005)
-(setf *flex-damping* 0.9)
-(set-flex-vertex-attr *group* 'elasticity 0.8)
-
-(set-flex-spring-attr *group* 'stiffness 100.0)
-
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(0)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? nil '(0)))
-
-;;; hexagon
-
-(defparameter *group*
-  (with-clear-and-redraw
-    (add-shape *scene* (make-flex (make-group (make-circle-shape 1.0 6))))))
-
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(5)))
-
-(with-redraw (set-flex-vertex-attr *group* 'pinned? nil '(5)))
-
-(setf *wind* (p! 5 0 0))
-(setf *wind* (p! -10 0 0))
-(setf *wind* (p! 0 0 0))
-
-(set-flex-spring-attr *group* 'stiffness 100.0)
-
-;;; circle
-
-(setf *time-step* 0.0002)
-
-(defparameter *group*
-  (with-clear-and-redraw
-    (add-shape *scene* (make-flex (make-group (make-circle-shape 1.0 16))))))
-(set-flex-vertex-attr *group* 'elasticity 0.3)
-
-(set-flex-spring-attr *group* 'stiffness 100.0)
-
-(setf *wind* (p! 5 0 0))
-(setf *wind* (p! -10 0 0))
-(setf *wind* (p! 0 0 0))
-
-(setf *gravity* (p! 0 -9.81 0))
-
->>> implement friction
-(set-flex-vertex-attr *group* 'friction 0.0)
-
-
-(set-flex-spring-attr *group* 'stiffness 500.0) ; numerical insability
-
-(setf *time-step* 0.00005)		; reduce simulation timestep
-
-
-;;; mesh -- cross-brace-1
-
-(setf *time-step* 0.0002)
-(setf *flex-damping* 0.9)
-
-(defparameter *group*
-  (with-clear-and-redraw
-    (add-shape *scene* (make-group (make-mesh-anim-shape 7 7 (p! -.5 -.5 0) (p! .5 .5 0)
-							 :cross-brace-1? t
-							 :cross-brace-2? nil)))))
-
-(set-flex-spring-attr *group* 'stiffness 200.0)
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(0 42)))
-
-(setf *wind* (p! 5 0 0))
-(setf *wind* (p! -10 0 0))
-(setf *wind* (p! 0 0 0))
-
-(with-redraw (set-flex-vertex-attr *group* 'pinned? nil '(42)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? nil '(0)))
-
-(with-redraw (set-flex-vertex-attr *group* 'point (p! .8 .8 0) '(0)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(0)))
-
-(with-redraw (set-flex-vertex-attr *group* 'point (p! -.8 .8 0) '(42)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(42)))
-
-(set-flex-spring-attr *group* 'stiffness 500.0) ; induce numerical instability
-(setf *time-step* 0.0001)
-
-;;; mesh -- cross-brace-2
-
-(setf *time-step* 0.0002)
-(setf *flex-damping* 0.9)
-
-(defparameter *group*
-  (with-clear-and-redraw
-    (add-shape *scene* (make-group (make-mesh-anim-shape 7 7 (p! -.5 -.5 0) (p! .5 .5 0)
-							 :cross-brace-1? t
-							 :cross-brace-2? t)))))
-(set-flex-spring-attr *group* 'stiffness 200.0)
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(0 42)))
-
-(setf *wind* (p! 5 0 0))
-(setf *wind* (p! -10 0 0))
-(setf *wind* (p! 0 0 0))
-
-(with-redraw (set-flex-vertex-attr *group* 'point (p! .8 .8 0) '(0)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(0)))
-
-(with-redraw (set-flex-vertex-attr *group* 'point (p! -.8 .8 0) '(42)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(42)))
-       
-(with-redraw (set-flex-vertex-attr *group* 'point (p! 0 .8 0) '(21)))
-(with-redraw (set-flex-vertex-attr *group* 'pinned? t '(21)))
-
-|#
+(defmethod set-flex-spring-attr ((anim flex-animator) attr value)
+  (do-array (i s (springs anim))
+    (setf (slot-value s attr) value)))
