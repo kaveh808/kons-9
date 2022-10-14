@@ -79,7 +79,9 @@
    (:file "src/plugins/sweep-mesh")
    (:file "src/plugins/sweep-mesh-group")
    (:file "src/plugins/channel")
+   (:file "src/plugins/force-field")
    (:file "src/plugins/dynamics-animator")
+   (:file "src/plugins/flex-animator")
    (:file "src/plugins/procedural-curve")
    (:file "src/plugins/manager-group")
    (:file "src/plugins/particle")
@@ -89,7 +91,6 @@
    (:file "src/plugins/poly-mesh")
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")
-   
    ))
 
 #+nil (asdf:load-system :kons-9)

@@ -621,8 +621,9 @@ These look cool if you have an accelerator card.
 (defmethod printable-data ((self isosurface))
   (strcat (call-next-method) (format nil ", threshold ~a" (threshold self))))
 
-(defmethod copy-instance-data ((dst isosurface) (src isosurface))
-  (error "COPY-INSTANCE-DATA not implemented for ISOSURFACE"))
+;; TODO -- implement, using parent method (polyhedron) for now in generate-isosurface
+;; (defmethod copy-instance-data ((dst isosurface) (src isosurface))
+;;   (error "COPY-INSTANCE-DATA not implemented for ISOSURFACE"))
 
 (defmethod generate-isosurface ((iso isosurface))
   (let ((triangles (polygonize-isosurface (scalar-array (field iso)) (threshold iso))))
@@ -632,7 +633,7 @@ These look cool if you have an accelerator card.
       ;; create a new mesh
       (let ((merged-polyh (merge-points iso)))
         (copy-instance-data iso merged-polyh))
-      ;; POLYGONIZE-ISOSURFACE assumes  unit per field cell, starting at origin
+      ;; POLYGONIZE-ISOSURFACE assumes 1 unit per field cell, starting at origin
       ;; we rescale to fit field bounds
       (fit-points-to-field iso)))
   iso)
