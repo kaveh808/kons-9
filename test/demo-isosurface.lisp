@@ -166,11 +166,29 @@ Similar to Demo 06 but with a sine curve.
   )
 
 #|
-(Demo 08 isosurface) particle curve source protocol ============================
+(Demo 08 isosurface) curve source protocol =====================================
+
+Use a polyhedron as a curve source.
+|#
+(format t "  isosurface 8...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((polyh (make-dodecahedron 3.0))
+         (field (apply-field-function (make-scalar-field 40 40 40
+                                                         :bounds-lo (p! -2 -2 -2)
+                                                         :bounds-hi (p!  2  2  2))
+                                      (curve-source-field-fn polyh
+                                                             :strength 1.0 :falloff 1.2)))
+         (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 40.0))))
+    (add-shape *scene* iso))
+  )
+
+#|
+(Demo 09 isosurface) particle curve source protocol ============================
 
 Use a particle system as a curve source.
 |#
-(format t "  isosurface 8...~%") (finish-output)
+(format t "  isosurface 9...~%") (finish-output)
 
 (with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
