@@ -166,7 +166,10 @@ Generate an ISOSURFACE from the POLY-STRAND.
                                         (curve-source-field-fn poly
                                                                :strength 1.0 :falloff 1.2)))
            (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 100.0))))
-      (add-shape *scene* iso))))
+      (add-shape *scene* iso)
+      ;;; optional -- save as OBJ file
+;;      (export-obj iso "~/isosurface.obj")
+      )))
 
 #|
 END ============================================================================

@@ -1,6 +1,6 @@
 (in-package #:kons-9)
 
-;;;; obj format support ======================================================
+;;;; obj format import ======================================================
 
 (defun import-obj (filename)
   (with-open-file (stream filename :direction :input :if-does-not-exist :error)
@@ -52,4 +52,19 @@
                   (return (coerce (nreverse letters) 'string))))
                (t
                 (push c letters))))))
+
+;;;; obj format export ======================================================
+
+(defun export-obj (shape filename)
+  (with-open-file (stream filename :direction :output)
+    (write-obj shape stream)))
+
+(defmethod write-obj ((polyh polyhedron) stream)
+  (do-array (i p (points polyh))
+    (format stream "v ~A ~A ~A~%" (p:x p) (p:y p) (p:z p)))
+  (do-array (i f (faces polyh))
+    (format stream "f ")
+    (dolist (vref f)
+      (format stream "~A " (1+ vref)))
+    (format stream "~%")))
 
