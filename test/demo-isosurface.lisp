@@ -179,16 +179,47 @@ Use a polyhedron as a curve source.
                                                          :bounds-hi (p!  2  2  2))
                                       (curve-source-field-fn polyh
                                                              :strength 1.0 :falloff 1.2)))
-         (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 40.0))))
+         (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 80.0))))
     (add-shape *scene* iso))
   )
 
 #|
-(Demo 09 isosurface) particle curve source protocol ============================
+(Demo 09 isosurface) curve source protocol, animate iso threshold ==============
+
+Use a polyhedron as a curve source.
+|#
+(format t "  isosurface 9...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((polyh (make-dodecahedron 3.0))
+         (field (apply-field-function (make-scalar-field 40 40 40
+                                                         :bounds-lo (p! -2 -2 -2)
+                                                         :bounds-hi (p!  2  2  2))
+                                      (curve-source-field-fn polyh
+                                                             :strength 1.0 :falloff 1.2)))
+         (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 10.0))))
+    (add-shape *scene* iso)
+    ;; set end frame
+    (setf (end-frame *scene*) 60)
+    ;; add animator
+    (add-motion *scene*
+                (make-instance 'animator
+                               :setup-fn (lambda ()
+                                           (setf (threshold iso) 10.0)
+                                           (generate-isosurface iso))
+                               :update-fn (lambda ()
+                                            (setf (threshold iso)
+                                                  (lerp (tween (current-frame *scene*) 0 60)
+                                                        10.0 80.0))
+                                           (generate-isosurface iso)))))
+  )
+
+#|
+(Demo 10 isosurface) particle curve source protocol ============================
 
 Use a particle system as a curve source.
 |#
-(format t "  isosurface 9...~%") (finish-output)
+(format t "  isosurface 10...~%") (finish-output)
 
 (with-clear-scene
   (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
