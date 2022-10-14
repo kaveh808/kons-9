@@ -129,6 +129,12 @@
   (setf (aref vector position) value) ; insert value into the right place
   vector)
 
+(defun vec-first (vec)
+  (aref vec 0))
+
+(defun vec-last (vec)
+  (aref vec (1- (length vec))))
+
 ;;;; math ======================================================================
 
 (defconstant 2pi (* 2 pi))

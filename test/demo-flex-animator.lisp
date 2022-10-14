@@ -60,11 +60,79 @@ Create a FLEX-ANIMATOR with sideways force, weak springs, and collision friction
     (freeze-transform shape)
     (add-shape *scene* shape)
     (setf (end-frame *scene*) 1000)     ;run for as long as desired
+    ;; animator
     (let ((anim (make-flex-animator shape)))
       (setf (force-fields anim) (list (make-instance 'constant-force-field
                                                      :force-vector (p! 0.04 -.05 0))))
-      (set-spring-stiffness anim 0.2)   ;weak springs
-      (set-vertex-friction anim 0.0)    ;sticky friction
+      (set-flex-spring-attr anim 'stiffness 0.2)   ;weak springs
+      (set-flex-vertex-attr anim 'friction 0.0)    ;sticky friction
       (add-motion *scene* anim))))
 
 (update-scene *scene* 60)               ;do update for batch testing
+
+#|
+(Demo 04 flex-animator) poly-strand, square ====================================
+
+Create a web-like POLY-STRAND and animate it using a FLEX-ANIMATOR. The animator
+animates the strands shrinking, resulting in a web-looking structure.
+
+The base of the POLY-STRAND shape is a square (CURVE).
+
+Add a CONSTANT-FORCE-FIELD for gravity.
+|#
+(with-clear-scene
+  (let* ((shape (freeze-transform (rotate-to (make-square-curve 4) (p! 90 0 0))))
+         (poly (make-poly-strand shape)))
+    (insert-strands-by-length poly 100)
+    (add-shape *scene* poly)
+    ;; animator
+    (let ((anim (make-flex-animator poly)))
+      ;; turn off collisions
+      (set-flex-vertex-attr anim 'do-collisions? nil)
+      ;; pin points which are vertices of shape
+      (dotimes (i (length (points shape)))
+        (setf (pinned? (aref (vertices anim) i)) t))
+      ;; shrink springs
+      (do-array (i spring (springs anim))
+        (setf (rest-length spring) (* 0.5 (rest-length spring))))
+      (set-flex-spring-attr anim 'stiffness 0.5)
+      (set-flex-vertex-attr anim 'damping 0.5)
+      (setf (force-fields anim) (list (make-instance 'constant-force-field
+                                                     :force-vector (p! 0 -.01 0))))
+      (add-motion *scene* anim))))
+
+(update-scene *scene* 120)               ;do update for batch testing
+
+#|
+(Demo 05 flex-animator) poly-strand, cube ======================================
+
+Similar to Demo 05 but using a cube (POLYHEDRON) as the base shape for the
+POLY-STRAND.
+|#
+(with-clear-scene
+  (let* ((num-anchor-points 8)
+         (shape (make-cube 4))
+         (poly (make-poly-strand shape)))
+    (insert-strands-by-length poly 100)
+    (add-shape *scene* poly)
+    ;; animator
+    (let ((anim (make-flex-animator poly)))
+      ;; turn off collisions
+      (set-flex-vertex-attr anim 'do-collisions? nil)
+      ;; pin anchor points
+      (dotimes (i num-anchor-points)
+        (setf (pinned? (aref (vertices anim) i)) t))
+      ;; shrink springs
+      (do-array (i spring (springs anim))
+        (setf (rest-length spring) (* 0.5 (rest-length spring))))
+      (set-flex-spring-attr anim 'stiffness 0.5)
+      (set-flex-vertex-attr anim 'damping 0.5)
+      ;; (setf (force-fields anim) (list (make-instance 'constant-force-field
+      ;;                                                :force-vector (p! 0 -.01 0))))
+      (add-motion *scene* anim))))
+
+(update-scene *scene* 120)               ;do update for batch testing
+
+#|
+END ============================================================================
+|#

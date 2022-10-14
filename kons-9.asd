@@ -78,6 +78,7 @@
    (:file "src/plugins/superquadric")
    (:file "src/plugins/sweep-mesh")
    (:file "src/plugins/sweep-mesh-group")
+   (:file "src/plugins/poly-strand")
    (:file "src/plugins/channel")
    (:file "src/plugins/force-field")
    (:file "src/plugins/dynamics-animator")

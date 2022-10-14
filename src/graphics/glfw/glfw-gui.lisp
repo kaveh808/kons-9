@@ -410,17 +410,7 @@
 ;;XXX This doesn't work on wayland. I think wayland expects clients
 ;; to draw the window decorations themselves
 (defun update-window-title (window)
-  (glfw:set-window-title
-   (if (= 1 (length (command-tables *default-scene-view*)))
-       (format nil "kons-9 | window ~A | start-frame ~A | end-frame ~A | curr-frame ~A"
-               *window-size*
-               (start-frame (scene *default-scene-view*))
-               (end-frame (scene *default-scene-view*))
-               (current-frame (scene *default-scene-view*)))
-       (format nil "kons-9 | ~A [tab to reset, left arrow to go back]"
-               (apply #'strcat (mapcar (lambda (table) (strcat (title table) " > "))
-                                       (reverse (butlast (command-tables *default-scene-view*)))))))
-       window))
+  (glfw:set-window-title (format nil "kons-9 | window ~A" *window-size*) window))
 
 (glfw:def-key-callback key-callback (window key scancode action mod-keys)
   (declare (ignore scancode))
