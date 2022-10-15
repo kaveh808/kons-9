@@ -241,5 +241,46 @@ Use a particle system as a curve source.
       (add-shape *scene* iso))))
 
 #|
+(Demo 11 isosurface) signed distance functions =================================
+
+Use signed distance functions with APPLY-FIELD-FUNCTION to set the values of
+a SCALAR-FIELD.
+
+Comment in the desired function.
+|#
+(format t "  isosurface 11...~%") (finish-output)
+
+(with-clear-scene
+  ;; turn off backface culling as isosurfaces are reversed for some reason
+  (setf *do-backface-cull?* nil)
+  (let* ((field (apply-field-function (make-scalar-field 40 40 40)
+                                      (lambda (p)
+                                        ;; single shapes
+                                        ;; (sd-sphere p 1.0))
+                                        ;; (sd-box p (p! 0.2 0.4 0.8))
+                                        ;; (sd-round-box p (p! 0.2 0.4 0.8) 0.15)
+                                        ;; (sd-box-frame p (p! 0.5 0.3 0.5) .05)
+                                        ;; (sd-torus p (p! .5 .2 0.0))
+                                        ;; (sd-capped-torus p (p! .5 -.866 0.0) 0.4 0.1)
+                                        ;; (sd-link p 0.13 0.2 0.09)
+                                        ;; (sd-cylinder p (p! 0 0 0.5))
+                                        ;; (sd-cone p (p! .5 .5 0) 1.5)
+                                        ;; (sd-plane p (p! .707 .707 0) 0)
+                                        ;; (sd-tri-prism p (p! 1 1 0))
+                                        ;; (sd-vertical-capsule p .7 .2)
+                                        ;; (sd-capped-cylinder p .7 .2)
+                                        ;; (sd-cut-hollow-sphere p 0.8 .3 .1)
+                                        ;; combination of functions
+                                        (min (sd-cut-hollow-sphere p 0.7 .3 .1)
+                                             (sd-box-frame p (p! 0.8 0.3 0.8) .05)
+                                             (sd-capped-torus p (p! .5 -.866 0.0) 0.7 0.1))
+                                        
+                                      )))
+         (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
+    (add-shape *scene* iso))
+  )
+
+
+#|
 END ============================================================================
 |#
