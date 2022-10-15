@@ -10,8 +10,8 @@
 
 (defmethod strand-points ((poly poly-strand) s-ref)
   (let ((strand (aref (strands poly) s-ref)))
-    (list (aref (points poly) (aref strand 0))
-          (aref (points poly) (aref strand 1)))))
+    (vector (aref (points poly) (aref strand 0))
+            (aref (points poly) (aref strand 1)))))
 
 (defmethod append-strand ((poly poly-strand) p-ref-1 p-ref-2)
   (vector-push-extend (vector p-ref-1 p-ref-2) (strands poly)))
@@ -26,8 +26,8 @@
 (defmethod insert-strand ((poly poly-strand) strand-1 t-1 strand-2 t-2)
   (let* ((strand-1-points (strand-points poly strand-1))
          (strand-2-points (strand-points poly strand-2))
-         (p1 (p:lerp (first strand-1-points) (second strand-1-points) t-1))
-         (p2 (p:lerp (first strand-2-points) (second strand-2-points) t-2))
+         (p1 (p:lerp (elt strand-1-points 0) (elt strand-1-points 1) t-1))
+         (p2 (p:lerp (elt strand-2-points 0) (elt strand-2-points 1) t-2))
          (p-ref-1 (split-strand poly strand-1 p1))
          (p-ref-2 (split-strand poly strand-2 p2)))
     (append-strand poly p-ref-1 p-ref-2)))
@@ -116,3 +116,17 @@
         
     poly))
 
+;;;; curve-source-protocol =====================================================
+
+;;; return a list of "curves" where each curve is an array of points
+(defmethod provides-curve-source-protocol? ((poly poly-strand))
+  t)
+
+(defmethod source-curves ((poly poly-strand))
+  (let ((curves '()))
+    (dotimes (s (length (strands poly)))
+      (push (strand-points poly s) curves))
+    (nreverse curves)))
+
+(defmethod source-curves-closed ((poly poly-strand))
+  (make-list (length (strands poly)) :initial-element nil)) ;always open
