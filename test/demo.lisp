@@ -308,7 +308,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (setf (instance-shape (find-shape-by-name *scene* 'point-instancer-group))
       (make-icosahedron .2))
 
-(setf (point-generator (find-shape-by-name *scene* 'point-instancer-group))
+(setf (point-source (find-shape-by-name *scene* 'point-instancer-group))
       (make-sine-curve 360.0 1.0 4.0 4.0 64))
 
 ;;; point-instancer-group particle-system --------------------------------------------
@@ -342,7 +342,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
          (shape (make-point-instancer-group p-sys
                                             (make-octahedron .2))))
     ;;; uncomment to only instance at live position
-;;;    (setf (point-generator-use-live-positions-only p-sys) t)
+;;;    (setf (point-source-use-live-positions-only p-sys) t)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
     (add-shape *scene* shape)
