@@ -204,7 +204,7 @@
 (defclass particle-system (polyhedron animator)
   ((particles :accessor particles :initarg :particles :initform (make-array 0 :adjustable t :fill-pointer t))
    (max-generations :accessor max-generations :initarg :max-generations :initform -1) ; -1 = no maximum
-   (point-generator-use-live-positions-only :accessor point-generator-use-live-positions-only :initarg :point-generator-use-live-positions-only :initform nil)
+   (point-source-use-live-positions-only :accessor point-source-use-live-positions-only :initarg :point-source-use-live-positions-only :initform nil)
    (draw-live-points-only? :accessor draw-live-points-only? :initarg :draw-live-points-only? :initform t)
    (draw-trails :accessor draw-trails :initarg :draw-trails :initform -1))) ;length, -1 = draw entire trail
 
@@ -275,7 +275,7 @@
 
 (defmethod source-points ((p-sys particle-system))
   (let ((points '()))
-    (if (point-generator-use-live-positions-only p-sys)
+    (if (point-source-use-live-positions-only p-sys)
         (do-array-if (i ptcl #'is-alive? (particles p-sys))
           (push (pos ptcl) points))
         (dotimes (i (length (faces p-sys)))
