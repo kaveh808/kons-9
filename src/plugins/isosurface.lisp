@@ -476,147 +476,12 @@
                     (setq triangles (nconc tris triangles))))))))
         triangles))))
 
-
-#+:MCL (defun triangle-list->qd3d-model (triangles)
-  "An MCL-specific function that converts a list of triangles
-   to a QuickDraw 3D model.  Uses the MCL/QuickDraw 3D
-   interface."
-  (let ((mesh (q3::q3-mesh-new))
-        (vertex-table (make-hash-table :test #'equal)))
-    (flet ((canonicalize-v (v)
-             (let ((x (aref v 0))
-                   (y (aref v 1))
-                   (z (aref v 2)))
-               (let ((key (list x y z)))
-                 (unless (gethash key vertex-table)
-                   (setf (gethash key vertex-table)
-                         (q3:add-mesh-vertex mesh x y z))))))
-           (canonical-v (v)
-             (gethash (list (xyz-x v) (xyz-y v) (xyz-z v))
-                      vertex-table)))
-      (dolist (triangle triangles)
-        (canonicalize-v (triangle-p1 triangle))
-        (canonicalize-v (triangle-p2 triangle))
-        (canonicalize-v (triangle-p3 triangle)))
-      (q3:with-mesh-updates-delayed mesh
-        (dolist (triangle triangles)
-          (q3:add-mesh-face mesh
-                            (list (canonical-v (triangle-p1 triangle))
-                                  (canonical-v (triangle-p2 triangle))
-                                  (canonical-v (triangle-p3 triangle)))))))
-    mesh))
-
-                    
-
-
-
-#|
-
-These look cool if you have an accelerator card.
-
-(defun fill-field-array (array field-function)
-  (let ((dimensions (array-dimensions array)))
-    (destructuring-bind (i j k) dimensions
-      (dotimes (x i)
-        (dotimes (y j)
-          (dotimes (z k)
-            (setf (aref array x y z)
-                  (funcall field-function x y z)))))))
-  array)
-
-(defun display-surfaces (surfaces colors &optional title)
-  (flet ((create-color-attrib (color)
-           (let ((r (/ (color-red color) 65535.0))
-                 (g (/ (color-green color) 65535.0))
-                 (b (/ (color-blue color) 65535.0)))
-             (q3:create-attribute-set :diffuse-color r g b
-                                      :transparency-color 0.2 0.2 0.2))))
-    (let ((group (apply #'q3:create-display-group
-                        (mapcar #'(lambda (surface color)
-                                    (q3:create-display-group
-                                     (create-color-attrib color)
-                                     (triangle-list->qd3d-model surface)))
-                                surfaces
-                                colors))))
-      (make-instance 'q3:qd3d-window
-        :window-title title
-        :model group))))
-
-
-
-(let ((a (make-array '(30 30 30)))
-      (center-x 15)
-      (center-y 15)
-      (center-z 15))
-  (labels ((sinuspheroid-field-value (x y z)
-             (* (sqrt (+ (sqr (- x center-x))
-                         (sqr (- y center-y))
-                         (sqr (- z center-z))))
-                (+ 1.0 (/ (cos (/ x .5)) 5))))
-           (sqr (x) (* x x)))
-    (fill-field-array a #'sinuspheroid-field-value)
-    (let ((iso-triangles-7 (polygonize-isosurface a 7))
-          (iso-triangles-8 (polygonize-isosurface a 8))
-          (iso-triangles-9 (polygonize-isosurface a 9)))
-      (display-surfaces (list iso-triangles-7
-                              iso-triangles-8
-                              iso-triangles-9)
-                        (list *red-color*
-                              *green-color*
-                              *blue-color*)
-                        "Sinuspheroid"))))
-
-
-
-(let ((a (make-array '(30 30 30)))
-      (mols '((10.1 10 10 100) (15.1 15 15 20))))
-  (labels ((molecule-field-value (mol x y z)
-             (destructuring-bind (mx my mz strength) mol
-               (/ strength
-                  (+ (sqr (- x mx)) (sqr (- y my)) (sqr (- z mz))))))
-           (sqr (x) (* x x)))
-    (fill-field-array a #'(lambda (x y z)
-                            (reduce #'+
-                                    (mapcar #'(lambda (m)
-                                                (molecule-field-value m x y z))
-                                            mols))))
-    (let ((iso-triangles-3 (polygonize-isosurface a 3))
-          (iso-triangles-4.5 (polygonize-isosurface a 4.5))
-          (iso-triangles-8 (polygonize-isosurface a 8)))
-      (display-surfaces (list iso-triangles-3
-                              iso-triangles-4.5
-                              iso-triangles-8)
-                        (list *red-color*
-                              *green-color*
-                              *blue-color*)
-                        "Molecule"))))
-
-(let ((a (make-array '(35 35 35)))
-      (mols '((10.1 10 10 30)
-              (8.1 27 10 29)
-              (25.1 10 10 30)
-              (25.1 25 10 30))))
-  (labels ((molecule-field-value (mol x y z)
-             (destructuring-bind (mx my mz strength) mol
-               (/ strength
-                  (+ (sqr (- x mx)) (sqr (- y my)) (sqr (- z mz))))))
-           (sqr (x) (* x x)))
-    (fill-field-array a #'(lambda (x y z)
-                            (reduce #'+
-                                    (mapcar #'(lambda (m)
-                                                (molecule-field-value m x y z))
-                                            mols))))
-    (let ((iso-triangles (polygonize-isosurface a 1)))
-      (display-surfaces (list iso-triangles)
-                        (list *blue-color*)))))
-
-|#
-
 ;;;; isosurface ================================================================
 
 (defclass-kons-9 isosurface (polyhedron)
   ((field nil)
-   (threshold 1.0)))
+   (threshold 1.0)
+   (point-source-use-volume? t)))
 
 (defmethod printable-data ((self isosurface))
   (strcat (call-next-method) (format nil ", threshold ~a" (threshold self))))
@@ -647,6 +512,26 @@ These look cool if you have an accelerator card.
       (do-array (i p (points iso))
         (setf (aref (points iso) i) (p+ (p* p scale) lo)))))
   iso)
+
+(defmethod iso-field-points ((iso isosurface))
+  (threshold-cell-points (field iso) (threshold iso)))
+
+(defmethod iso-field-cell-size ((iso isosurface))
+  (with-accessors ((x-dim x-dim) (y-dim y-dim) (z-dim z-dim) (lo bounds-lo) (hi bounds-hi))
+      (field iso)
+    (let* ((size (p! (1- x-dim) (1- y-dim) (1- z-dim)))
+           (dim (p-from-to lo hi)))
+      (p/ dim size))))
+
+;;;; point-source-protocol =====================================================
+
+(defmethod provides-point-source-protocol? ((iso isosurface))
+  t)
+
+(defmethod source-points ((iso isosurface))
+  (if (point-source-use-volume? iso)
+      (iso-field-points iso)
+      (call-next-method)))
 
 ;;;; signed distance functions =================================================
 
@@ -735,3 +620,4 @@ These look cool if you have an accelerator card.
            (p:length (p- q (p! w h 0)))
            (abs (- (p:length q) r)))
        th)))
+

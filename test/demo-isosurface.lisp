@@ -92,7 +92,7 @@ Press 'space' to run the animation.
   )
 
 ;; TODO -- BUG -- crashes because face-normals and point-normals arrays are empty at
-;; a random frame, which does not happen when frames are rendered by pressing `space`
+;; some frame, which does not happen when frames are rendered by pressing `space`
 ;;(update-scene *scene* 60)               ;do update for batch testing
 
 #|
@@ -126,7 +126,7 @@ Press 'space' to run the animation.
   )
 
 ;; TODO -- BUG -- crashes because face-normals and point-normals arrays are empty at
-;; a random frame, which does not happen when frames are rendered by pressing `space`
+;; some frame, which does not happen when frames are rendered by pressing `space`
 ;;(update-scene *scene* 60)               ;do update for batch testing
 
 #|
@@ -278,6 +278,52 @@ Comment in the desired function.
                                       )))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
     (add-shape *scene* iso))
+  )
+
+#|
+(Demo 12 isosurface) voxel grid ================================================
+
+Visualize an ISOSURFACE as a VOXEL-GRID-SHAPE. Note the isosurface does not
+need to be generated.
+|#
+(format t "  isosurface 1...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((field (apply-field-function (make-scalar-field 20 20 20)
+                                      (lambda (p) (- 1.0 (p:length p)))))
+         (iso (make-instance 'isosurface :field field :threshold 0.0))
+         (vox (make-voxel-grid iso)))
+    (add-shape *scene* vox))
+  )
+
+#|
+(Demo 13 isosurface) voxel grid, animating isosurface threshold ================
+
+Animate the threshold value of the ISOSURFACE and visualize as a
+VOXEL-GRID-SHAPE. Note the isosurface does not need to be generated.
+
+Press 'space' to run the animation.
+|#
+(format t "  isosurface 4...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((p-cloud (make-point-cloud (make-grid-points 2 2 2 (p! -0.5 -0.5 -0.5) (p! 0.5 0.5 0.5))))
+         (field (apply-field-function (make-scalar-field 40 40 40)
+                                      (point-source-field-fn p-cloud :strength 1.0 :falloff 1.2)))
+         (iso (make-instance 'isosurface :field field :threshold 20.0))
+         (vox (make-voxel-grid iso)))
+    (add-shape *scene* vox)
+    ;; set end frame
+    (setf (end-frame *scene*) 60)
+    ;; add animator
+    (add-motion *scene*
+                (make-instance 'animator
+                               :setup-fn (lambda ()
+                                           (setf (threshold iso) 20.0))
+                               :update-fn (lambda ()
+                                            (setf (threshold iso)
+                                                  (lerp (tween (current-frame *scene*) 0 60)
+                                                        20.0 0.0))))))
   )
 
 

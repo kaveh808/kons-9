@@ -23,6 +23,43 @@
                                                          :element-type 'float
                                                          :initial-element 0.0)))
 
+(defmethod threshold-cell-points ((field scalar-field) threshold &optional (boundary-points? t))
+  (let ((points (make-array 0 :adjustable t :fill-pointer 0)))
+    (with-accessors ((x-dim x-dim) (y-dim y-dim) (z-dim z-dim)
+                     (lo bounds-lo) (hi bounds-hi) (array scalar-array))
+        field
+      (let ((x-lo (p:x lo))
+            (y-lo (p:y lo))
+            (z-lo (p:z lo))
+            (x-hi (p:x hi))
+            (y-hi (p:y hi))
+            (z-hi (p:z hi)))          
+        (dotimes (x x-dim)
+          (let* ((dx (/ x (1- (max x-dim 2))))
+                 (px (lerp dx x-lo x-hi)))
+            (dotimes (y y-dim)
+              (let* ((dy (/ y (1- (max y-dim 2))))
+                     (py (lerp dy y-lo y-hi)))
+                (dotimes (z z-dim)
+                  (let* ((dz (/ z (1- (max z-dim 2))))
+                         (pz (lerp dz z-lo z-hi)))
+                    (when (>= (aref array x y z) threshold)
+                      (if boundary-points? ;only return points on the threshold boundary
+                          (when (or (= x 0) (= x (1- x-dim)) ;edge of field
+                                    (= y 0) (= y (1- y-dim)) ;ditto
+                                    (= z 0) (= z (1- z-dim)) ;ditto
+                                    ;; at threshold border (one 6-neighbor is < threshold)
+                                    (not (and (>= (aref array (1- x) y z) threshold)
+                                              (>= (aref array (1+ x) y z) threshold)
+                                              (>= (aref array x (1- y) z) threshold)
+                                              (>= (aref array x (1+ y) z) threshold)
+                                              (>= (aref array x y (1- z)) threshold)
+                                              (>= (aref array x y (1+ z)) threshold))))
+                            (vector-push-extend (p! px py pz) points))
+                          (vector-push-extend (p! px py pz) points)))))))))))
+    points))
+  
+  
 (defmethod apply-field-function ((field scalar-field) fn)
   (with-accessors ((x-dim x-dim) (y-dim y-dim) (z-dim z-dim)
                    (lo bounds-lo) (hi bounds-hi) (array scalar-array))
@@ -68,3 +105,4 @@
                         (mag (/ strength (* falloff r r))))
                    (incf val mag)))
         val))))
+

@@ -18,37 +18,49 @@
 
 (def-procedural-input instancer-group instance-shape)
 
-;;;; point-instancer ===========================================================
+;;;; point-instancer-group =====================================================
 
-(defclass point-instancer (instancer-group)
-  ((point-generator :accessor point-generator :initarg :point-generator :initform nil)))
+(defclass point-instancer-group (instancer-group)
+  ((point-source :accessor point-source :initarg :point-source :initform nil)))
 
-(defmethod initialize-instance :after ((self point-instancer) &rest initargs)
+(defmethod initialize-instance :after ((self point-instancer-group) &rest initargs)
   (declare (ignore initargs))
-  (push 'point-generator (input-slots self)))
+  (push 'point-source (input-slots self)))
 
-(def-procedural-input point-instancer point-generator)
+(def-procedural-input point-instancer-group point-source)
 
 ;;; todo -- align with normals/directions (shape axis option)
-(defmethod compute-procedural-node ((self point-instancer))
+(defmethod compute-procedural-node ((self point-instancer-group))
   (remove-all-children self)
-  (let ((points (source-points (point-generator self))))
+  (let ((points (source-points (point-source self))))
     (dotimes (i (length points))
       (add-child self (translate-to (make-shape-group (list (instance-shape self))) (aref points i))))))
 
-(defun make-point-instancer (p-gen instance-shape)
-  (make-instance 'point-instancer :point-generator p-gen :instance-shape instance-shape))
+(defun make-point-instancer-group (p-source instance-shape)
+  (make-instance 'point-instancer-group :point-source p-source :instance-shape instance-shape))
 
-;;;; transform-instancer =======================================================
+;;;; voxel-grid-group ==========================================================
 
-(defclass transform-instancer (instancer-group)
+;;; TODO -- when more than 65K children, GUI shape inspector display fails in
+;;; text engine (unsigned 16 overflow)
+(defclass voxel-grid-group (point-instancer-group)
+  ((boundary-points? :accessor boundary-points? :initarg :boundary-points? :initform t)))
+
+(defun make-voxel-grid-group (isosurface)
+  (let* ((cell-size (iso-field-cell-size isosurface))
+         (instance-shape (make-box (p:x cell-size) (p:y cell-size) (p:z cell-size))))
+    (make-instance 'voxel-grid-group :point-source isosurface :instance-shape instance-shape)))
+
+;;;; transform-instancer-group =================================================
+
+(defclass transform-instancer-group (instancer-group)
   ((instance-transform :accessor instance-transform :initarg :instance-transform :initform nil)
    (num-steps :accessor num-steps :initarg :num-steps :initform 10)))
 
-(def-procedural-input transform-instancer instance-transform)
-(def-procedural-input transform-instancer num-steps)
+(def-procedural-input transform-instancer-group instance-transform)
+(def-procedural-input transform-instancer-group num-steps)
 
-(defmethod compute-procedural-node ((self transform-instancer))
+(defmethod compute-procedural-node ((self transform-instancer-group))
   (remove-all-children self)
   (with-accessors ((steps num-steps))
       self
@@ -64,8 +76,8 @@
         (partial-copy (transform instance-group) (instance-transform self) factor)
         (add-child self instance-group)))))
 
-(defun make-transform-instancer (shape transform steps &key (name nil))
-  (make-instance 'transform-instancer
+(defun make-transform-instancer-group (shape transform steps &key (name nil))
+  (make-instance 'transform-instancer-group
                  :name name
                  :instance-shape shape :instance-transform transform :num-steps steps))
 
