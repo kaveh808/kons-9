@@ -215,6 +215,9 @@
 
 ;;; 3d display =================================================================
 
+(defun 3d-translate (p)
+  (gl:translate (p:x p) (p:y p) (p:z p)))
+
 (defun 3d-push-matrix (matrix)
   (gl:push-matrix)
   (gl:mult-matrix (matrix->vector matrix))) ;is order correct?
