@@ -10,6 +10,9 @@
 (defclass point-instancer-shape (instancer-shape)
   ((point-source :accessor point-source :initarg :point-source :initform nil)))
 
+(defmethod printable-data ((self point-instancer-shape))
+  (strcat (call-next-method) (format nil ", ~a instances" (length (source-points (point-source self))))))
+
 (defmethod draw ((self point-instancer-shape))
   (3d-push-matrix (make-id-matrix))
   (let ((points (source-points (point-source self))))
