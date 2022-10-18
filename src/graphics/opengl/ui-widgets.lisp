@@ -666,6 +666,9 @@
                                     (setf (bg-color view) (if (is-selected? (data view))
                                                               (c! 0.8 0.2 0.2 0.5)
                                                               (c! 0 0 0 0))))))))
+                                    ;; update context menu if applicable
+                                    ;; (update-active-dynamic-command-table)
+                                    ;; (draw-scene-view-ui *default-scene-view*))))))
   
 (defmethod toggle-show-children ((view ui-outliner-item))
   (setf (show-children? view) (not (show-children? view))))
@@ -791,22 +794,6 @@
   (create-contents (make-instance 'ui-outliner-viewer
                                   :ui-x 20 :ui-y 20 :title title :data-object obj :data-accessor-fn accessor-fn)))
 
-;; (defun show-ui-outliner-viewer (roots)
-;;   (setf (ui-contents *default-scene-view*)
-;;         (list (create-contents (make-instance 'ui-outliner-viewer :ui-x 20 :ui-y 20 :roots roots)))))
-
-;; (defun show-ui-shape-hierarchy (scene)
-;;   (show-ui-outliner-viewer (shapes scene)))
-
-;; (defun show-ui-motion-hierarchy (scene)
-;;   (show-ui-outliner-viewer (motions scene)))
-
-#|
-(setf (ui-contents *default-scene-view*)
-      (list (create-contents (make-instance 'ui-sequence-viewer
-                                            :data '(1 2 3 4 5 6 7)))))
-|#
-
 ;;;; ui-inspector ==============================================================
 
 (defclass-kons-9 ui-inspector (ui-sequence-viewer)
@@ -821,8 +808,6 @@
 (defun ui-cleanup-inspector-string (text)
   (string-trim-to-length (remove-extra-spaces text) 60))
 
-;;;; TODO -- truncate long entries using "..."
-;;;; TODO -- limit size of inspector to window
 ;;;; TODO -- SBCL inspect limits display of sequences to 10 items
 
 (defmethod create-contents ((view ui-inspector))

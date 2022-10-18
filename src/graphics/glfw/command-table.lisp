@@ -11,7 +11,9 @@
 (defmacro ct-make-shape (key-binding help expr)
   `(add-entry table
               ,key-binding
-              (lambda () (execute (add-shape *scene* ,expr))) ;do transaction
+              (lambda () (let ((shape ,expr))
+                           (when shape
+                             (execute (add-shape *scene* shape))))) ;do transaction
               (strcat "Create " ,help)))
 
 (defmacro ct-entry (key-binding help &rest expr)
@@ -35,6 +37,7 @@
 
 (defclass-kons-9 command-table ()
   ((title nil)
+   (is-dynamic? nil)
    (entries (make-array 0 :adjustable t :fill-pointer t))))
 
 (defmethod add-entry ((table command-table) key-binding func doc)
@@ -64,6 +67,13 @@
   (do-array (i entry-data *dynamic-command-table-entries*)
     (apply #'add-dynamic-command-table-entry entry-data)))
 
+;; (defun update-active-dynamic-command-table ()
+;;   (let ((table (active-command-table)))
+;;     (when (and table (is-dynamic? table))
+;;       (setf (entries table) (make-array 0 :adjustable t :fill-pointer t))
+;;       (do-array (i entry-data *dynamic-command-table-entries*)
+;;         (apply #'add-dynamic-command-table-entry entry-data)))))
+
 (defun active-command-table ()
   (car (command-tables *default-scene-view*)))
 
@@ -73,3 +83,12 @@
                (equalp (title table) table-title)
                (funcall context-fn))
       (add-entry table key-binding command-fn doc))))
+
+;;; TODO -- is this the right place for these?
+
+;;; register transform context menu
+(register-dynamic-command-table-entry
+ "Context" :T "Transform Selection"
+ (lambda () (make-active-command-table (transform-command-table)))
+ (lambda () (selected-shapes (scene *default-scene-view*))))
+

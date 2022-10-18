@@ -335,3 +335,42 @@
                                           initargs))))
     p-sys))
 
+
+;;;; gui =======================================================================
+
+(defun single-point-source-selected? ()
+  (let ((selected-shapes (selected-shapes (scene *default-scene-view*))))
+    (and (= 1 (length selected-shapes))
+         (provides-point-source-protocol? (first selected-shapes)))))
+
+(defun make-dynamic-particle-system ()
+  (let* ((scene (scene *default-scene-view*))
+         (p-source (selected-shape scene))
+         (p-sys (make-particle-system p-source
+                                      (p! .2 .2 .2) 1 -1 'dynamic-particle
+                                      :force-fields (list (make-instance 'constant-force-field
+                                                                         :force-vector (p! 0 -.02 0))))))
+     (add-motion scene p-sys)
+    p-sys))
+
+(defun make-wriggly-particle-system ()
+  (let* ((scene (scene *default-scene-view*))
+         (p-source (selected-shape scene))
+         (p-sys (make-particle-system p-source
+                                      (p! .2 .2 .2) 1 -1 'particle
+                                      :update-angle (range-float (/ pi 8) (/ pi 16)))))
+    (add-motion scene p-sys)
+    p-sys))
+
+(defun particle-command-table ()
+  (let ((table (make-instance `command-table :title "Create Particle System")))
+    (ct-make-shape :D "Dynamic Particles" (when (single-point-source-selected?)
+                                            (make-dynamic-particle-system)))
+    (ct-make-shape :W "Wriggly Particles" (when (single-point-source-selected?)
+                                            (make-wriggly-particle-system)))
+    table))
+
+(register-dynamic-command-table-entry
+ "Context" :P "Create Particle System"
+ (lambda () (make-active-command-table (particle-command-table)))
+ #'single-point-source-selected?)
