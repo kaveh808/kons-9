@@ -78,9 +78,9 @@
   (let ((contents (ui-contents *default-scene-view*)))
     (ui-add-child contents view)
     (update-layout contents)
-    ;; scroll if going of bottom of view
+    ;; scroll if going off bottom of view
     (let ((delta-y (- (+ (ui-y contents) (ui-h contents))
-                      (- (second *window-size*) (ui-h (status-bar *default-scene-view*))))))
+                      (- (second *window-size*) (ui-h (status-bar *default-scene-view*)) 20))))
       (when (> delta-y 0)
         (decf (ui-contents-scroll *default-scene-view*) delta-y)))
     (update-ui-content-position)))
@@ -105,6 +105,15 @@
     ;;  (ui-set-position view
     ;;                   (- (first *window-size*) (ui-w view) 20)
     ;;                   (- (second *window-size*) (ui-h view) 20)))))
+
+(defun reposition-ui-content-after-delete ()
+  (when (< (ui-contents-scroll *default-scene-view*) 0)
+    (let* ((contents (ui-contents *default-scene-view*))
+           (delta-y (- (+ (ui-y contents) (ui-h contents))
+                       (- (second *window-size*) (ui-h (status-bar *default-scene-view*)) 20))))
+      (when (< delta-y 0)
+        (decf (ui-y contents) delta-y)
+        (setf (ui-y contents) (min 20 (ui-y contents)))))))
 
 (defun app-command-table (view)
   (let ((table (make-instance 'command-table :title "kons-9")))
@@ -340,7 +349,8 @@
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
   (cond ((eq :space key)                ;play animation
-         (update-scene (scene self)))
+         (update-scene (scene self))
+         (update-scene-ui))
         ((eq :left-bracket key)         ;init scene
          (init-scene (scene self)))
         ((eq :tab key)                  ;hide/show menu
@@ -353,8 +363,10 @@
          (setf (ui-contents-scroll self) 0))
         ((and (member :shift mod-keys) (eq :left key)) ;hide last inspector
          (ui-remove-last-child (ui-contents self))
-         (when (= 0 (length (children (ui-contents self))))
-           (setf (ui-contents-scroll self) 0)))
+         (update-scene-ui)
+         (if (= 0 (length (children (ui-contents self))))
+             (setf (ui-contents-scroll self) 0)
+             (reposition-ui-content-after-delete)))
         (*ui-keyboard-focus*            ;handle text box input
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
@@ -556,11 +568,11 @@
 
 (defun update-status-bar-for-scene ()
   (let* ((scene (scene *default-scene-view*))
-         (menu-str (format nil "TAB: hide menu. LEFT ARROW: previous menu."))
+         (menu-str (format nil "TAB: hide menu. L-ARROW: previous menu."))
          (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
          (mouse-binding-str (mouse-binding-string *default-scene-view*))
          (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
-                            "UP/DOWN ARROW: scroll inspector. ESC: close inspector."
+                            "UP/DN-ARROW: scroll inspectors. ESC: close inspectors, SHIFT-L-ARROW: close last inspector."
                             ""))
          (secondary-str (if mouse-binding-str
                             mouse-binding-str
