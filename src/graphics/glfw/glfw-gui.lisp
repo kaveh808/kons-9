@@ -56,31 +56,19 @@
    (mouse-binding-string nil)
    ))
 
-;;; register transform context menu -- is this the right place for this?
-(defun register-dynamic-command-table-entries ()
-  (register-dynamic-command-table-entry
-   "Context" :T "Transform Selection"
-   (lambda () (make-active-command-table (transform-command-table *default-scene-view*)))
-   (lambda () (selected-shapes (scene *default-scene-view*))))
-  )
-
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera)
   (setf (status-bar view) (make-status-bar))
-  (push (app-command-table view) (command-tables view))
-  ;; reset dynamic command tables in case view is being re-created
-  (setf *dynamic-command-table-entries* (make-array 0 :adjustable t :fill-pointer 0))
-  ;; register transform menus
-  (register-dynamic-command-table-entries))
+  (push (app-command-table view) (command-tables view)))
 
 (defun show-ui-content (view)
   (let ((contents (ui-contents *default-scene-view*)))
     (ui-add-child contents view)
     (update-layout contents)
-    ;; scroll if going of bottom of view
+    ;; scroll if going off bottom of view
     (let ((delta-y (- (+ (ui-y contents) (ui-h contents))
-                      (- (second *window-size*) (ui-h (status-bar *default-scene-view*))))))
+                      (- (second *window-size*) (ui-h (status-bar *default-scene-view*)) 20))))
       (when (> delta-y 0)
         (decf (ui-contents-scroll *default-scene-view*) delta-y)))
     (update-ui-content-position)))
@@ -106,6 +94,15 @@
     ;;                   (- (first *window-size*) (ui-w view) 20)
     ;;                   (- (second *window-size*) (ui-h view) 20)))))
 
+(defun reposition-ui-content-after-delete ()
+  (when (< (ui-contents-scroll *default-scene-view*) 0)
+    (let* ((contents (ui-contents *default-scene-view*))
+           (delta-y (- (+ (ui-y contents) (ui-h contents))
+                       (- (second *window-size*) (ui-h (status-bar *default-scene-view*)) 20))))
+      (when (< delta-y 0)
+        (decf (ui-y contents) delta-y)
+        (setf (ui-y contents) (min 20 (ui-y contents)))))))
+
 (defun app-command-table (view)
   (let ((table (make-instance 'command-table :title "kons-9")))
     (ct-subtable :S "Scene" (scene-command-table view))
@@ -113,7 +110,7 @@
     (ct-subtable :C "Create" (create-command-table view))
     (ct-subtable :I "Inspect" (inspect-command-table view))
     (ct-subtable :D "Display" (display-command-table view))
-    (ct-subtable :X "Context" (context-command-table view))
+    (ct-subtable :X "Context" (context-command-table))
     table))
 
 (defun scene-command-table (view)
@@ -143,14 +140,14 @@
 (defun edit-command-table (view)
   (let ((table (make-instance 'command-table :title "Edit")))
 ;;    (ct-entry :S "Select (TBD)")
-    (ct-entry :backspace "Delete" (remove-current-selection (scene view)))
+    ;; (ct-entry :backspace "Delete" (remove-current-selection (scene view)))
     ;; TODO -- handle selected motions...
     (ct-entry :S "Show" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) t)))
     (ct-entry :H "Hide" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) nil)))
-    (ct-entry :D "Duplicate (TBD)")
-    (ct-entry :G "Group (TBD)")
-    (ct-entry :U "Ungroup (TBD)")
-    (ct-entry :F "Find (TBD)")
+    ;; (ct-entry :D "Duplicate (TBD)")
+    ;; (ct-entry :G "Group (TBD)")
+    ;; (ct-entry :U "Ungroup (TBD)")
+    ;; (ct-entry :F "Find (TBD)")
     table))
 
 (defun create-command-table (view)
@@ -206,15 +203,15 @@
     (ct-entry :9 "Set Dark Theme" (set-theme-dark))
     table))
 
-(defun context-command-table (view)
-  (let ((table (make-instance 'command-table :title "Context")))
+(defun context-command-table ()
+  (let ((table (make-instance 'command-table :title "Context" :is-dynamic? t)))
     table))
 
-(defun transform-command-table (view)
+(defun transform-command-table ()
   (let ((table (make-instance `command-table :title "Transform")))
-    (ct-subtable :T "Translate" (translate-command-table view))
-    (ct-subtable :R "Rotate" (rotate-command-table view))
-    (ct-subtable :S "Scale" (scale-command-table view))
+    (ct-subtable :T "Translate" (translate-command-table))
+    (ct-subtable :R "Rotate" (rotate-command-table))
+    (ct-subtable :S "Scale" (scale-command-table))
     table))
 
 (defmacro mouse-transform-setup (help-str &rest action-exprs)
@@ -227,8 +224,7 @@
              (dolist (shape (selected-shapes scene))
                ,@action-exprs)))))
 
-(defun translate-command-table (view)
-  (declare (ignore view))
+(defun translate-command-table ()
   (let ((table (make-instance `command-table :title "Translate")))
     (ct-entry :X "Translate X" (mouse-transform-setup
                                 "Translate X"
@@ -241,8 +237,7 @@
                                 (translate-by shape (p! 0 0 (* dx .01)))))
     table))
 
-(defun rotate-command-table (view)
-  (declare (ignore view))
+(defun rotate-command-table ()
   (let ((table (make-instance `command-table :title "Rotate")))
     (ct-entry :X "Rotate X" (mouse-transform-setup
                                 "Rotate X"
@@ -255,8 +250,7 @@
                                 (rotate-by shape (p! 0 0 (* dx 1)))))
     table))
 
-(defun scale-command-table (view)
-  (declare (ignore view))
+(defun scale-command-table ()
   (let ((table (make-instance `command-table :title "Scale")))
     (ct-entry :U "Scale Uniformly" (mouse-transform-setup
                                     "Scale Uniformly"
@@ -340,7 +334,8 @@
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
   (cond ((eq :space key)                ;play animation
-         (update-scene (scene self)))
+         (update-scene (scene self))
+         (update-scene-ui))
         ((eq :left-bracket key)         ;init scene
          (init-scene (scene self)))
         ((eq :tab key)                  ;hide/show menu
@@ -353,8 +348,10 @@
          (setf (ui-contents-scroll self) 0))
         ((and (member :shift mod-keys) (eq :left key)) ;hide last inspector
          (ui-remove-last-child (ui-contents self))
-         (when (= 0 (length (children (ui-contents self))))
-           (setf (ui-contents-scroll self) 0)))
+         (update-scene-ui)
+         (if (= 0 (length (children (ui-contents self))))
+             (setf (ui-contents-scroll self) 0)
+             (reposition-ui-content-after-delete)))
         (*ui-keyboard-focus*            ;handle text box input
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
@@ -365,9 +362,6 @@
                ((eq :backspace key)
                 (do-backspace-input *ui-keyboard-focus*))
                ))
-        ;; ((and (or (member :shift mod-keys) (member :alt mod-keys))
-        ;;       (or (eq :left key) (eq :right key) (eq :up key) (eq :down key))) ;temporary translate 
-        ;;  (translate-selection key mod-keys))
         ((eq :left key)                 ;go to previous menu
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
@@ -382,29 +376,6 @@
            (show-menu self)))))
 
 (defmethod key-up ((self scene-view) key)
-  )
-
-;;; temporary for testing until we have direct manipulation
-(defun translate-selection (key mod-keys)
-  (let ((selected-shapes (remove-if-not (lambda (item) (subtypep (type-of item) 'shape))
-                                        (selection (scene *default-scene-view*))))
-        (dx (cond ((member :alt mod-keys)
-                   (cond ((eq :left key) -0.1)
-                         ((eq :right key) 0.1)
-                         (t 0.0)))
-                  (t 0.0)))
-        (dy (cond ((member :shift mod-keys)
-                   (cond ((eq :down key) -0.1)
-                         ((eq :up key) 0.1)
-                         (t 0.0)))
-                  (t 0.0)))
-        (dz (cond ((member :alt mod-keys)
-                   (cond ((eq :down key) -0.1)
-                         ((eq :up key) 0.1)
-                         (t 0.0)))
-                  (t 0.0))))
-    (dolist (shape selected-shapes)
-      (translate-by shape (p! dx dy dz))))
   )
 
 ;;XXX This doesn't work on wayland. I think wayland expects clients
@@ -556,11 +527,11 @@
 
 (defun update-status-bar-for-scene ()
   (let* ((scene (scene *default-scene-view*))
-         (menu-str (format nil "TAB: hide menu. LEFT ARROW: previous menu."))
+         (menu-str (format nil "TAB: hide menu. L-ARROW: previous menu."))
          (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
          (mouse-binding-str (mouse-binding-string *default-scene-view*))
          (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
-                            "UP/DOWN ARROW: scroll inspector. ESC: close inspector."
+                            "UP/DN-ARROW: scroll inspectors. ESC: close inspectors, SHIFT-L-ARROW: close last inspector."
                             ""))
          (secondary-str (if mouse-binding-str
                             mouse-binding-str

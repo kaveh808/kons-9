@@ -132,7 +132,7 @@
 
 (defmethod allocate-point-colors ((polyh polyhedron))
   (setf (point-colors polyh) (make-array (length (points polyh))
-                                         :initial-element *shading-color*)))
+                                         :initial-element (shading-color *drawing-settings*))))
   
 (defmethod reset-point-colors ((polyh polyhedron))
   (allocate-point-colors polyh)

@@ -322,7 +322,8 @@
     (ct-make-shape :T "Torus"    (make-torus-uv-mesh 1.0 2.0 8 32))
     table))
 
-(register-dynamic-command-table-entry "Create" :u "Create UV Mesh Menu"
-                                      (lambda () (make-active-command-table (uv-mesh-command-table)))
-                                      (lambda () t))
+(register-dynamic-command-table-entry
+ "Create" :u "Create UV Mesh Menu"
+ (lambda () (make-active-command-table (uv-mesh-command-table)))
+ (lambda () t))
 

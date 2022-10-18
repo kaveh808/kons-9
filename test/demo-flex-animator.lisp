@@ -172,5 +172,53 @@ Generate an ISOSURFACE from the POLY-STRAND.
       )))
 
 #|
+(Demo 07 flex-animator) poly-strand, isosurface, voxel-grid ====================
+
+Same as Demo 06 with animated VOXEL-GRID display.
+
+Press 'space' a few times to advance frame. Note: frame update is slow.
+|#
+(with-clear-scene
+  (let* ((shape (make-cube 4))
+         (poly (make-poly-strand shape)))
+    (insert-strands-by-length poly 20)
+    (add-shape *scene* poly)
+    ;; animator
+    (let ((anim (make-flex-animator poly)))
+      ;; turn off collisions
+      (set-flex-vertex-attr anim 'do-collisions? nil)
+      ;; pin points which are vertices of shape
+      (dotimes (i (length (points shape)))
+        (setf (pinned? (aref (vertices anim) i)) t))
+      ;; shrink springs
+      (do-array (i spring (springs anim))
+        (setf (rest-length spring) 0.0))
+      (set-flex-spring-attr anim 'stiffness 0.5)
+      (set-flex-vertex-attr anim 'damping 0.5)
+      ;; (setf (force-fields anim) (list (make-instance 'constant-force-field
+      ;;                                                :force-vector (p! 0 -.01 0))))
+      (add-motion *scene* anim))
+    ;; create voxel-grid-shape
+    (let* ((field (apply-field-function (make-scalar-field 40 40 40
+                                                           :bounds-lo (p! -2.2 -2.2 -2.2)
+                                                           :bounds-hi (p!  2.2  2.2  2.2))
+                                        (curve-source-field-fn poly
+                                                               :strength 1.0 :falloff 1.2)))
+           (iso (make-instance 'isosurface :field field :threshold 100.0))
+           (vox (make-voxel-grid iso)))
+      (add-shape *scene* vox)
+      ;; add animator to update field
+      ;; add animator
+      (let ((field-anim (make-instance 'animator
+                                       :update-fn (lambda ()
+                                                    (apply-field-function
+                                                     field
+                                                     (curve-source-field-fn poly
+                                                                            :strength 1.0
+                                                                            :falloff 1.2))))))
+            (add-motion *scene* field-anim)))))
+
+                                                                  
+#|
 END ============================================================================
 |#

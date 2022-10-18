@@ -34,8 +34,20 @@
 (defmethod selected-shapes ((scene scene))
   (remove-if-not (lambda (item) (subtypep (type-of item) 'shape)) (selection scene)))
 
+(defmethod selected-shape ((scene scene))
+  (let ((selected (selected-shapes scene)))
+    (if (= 1 (length selected))
+        (first selected)
+        nil)))
+
 (defmethod selected-motions ((scene scene))
   (remove-if-not (lambda (item) (subtypep (type-of item) 'motion)) (selection scene)))
+
+(defmethod selected-motion ((scene scene))
+  (let ((selected (selected-motions scene)))
+    (if (= 1 (length selected))
+        (first selected)
+        nil)))
 
 ;; TODO -- TBD... cf remove-shape-path, remove-shape
 ;; -- difference between delete-item and remove-shape-path

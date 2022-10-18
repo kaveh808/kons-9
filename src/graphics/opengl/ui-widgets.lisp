@@ -476,19 +476,6 @@
       (list (make-text-input-dialog-box "Open Scene File" (lambda (str) (load-scene str)))))
 |#
 
-;;; TODO ++ inspector align left
-;;; TODO ++ outliner title with alt hint
-;;; TODO xx menubar?
-;;; TODO ++ Menu: Scene [New, Open, Save, Quit]
-;;;               Edit [Select, Delete, Duplicate, Group, Ungroup, Find]
-;;;               Create [...]
-;;;               Transform [Translate X, ..., Rotate X, ..., Scale Uniform, Scale X, ...] -- alt for dialogs
-;;;               View [Inspect, Shapes, Motions]
-;;;               Display [...]
-;;;               Contextual [...]
-;;; TODO ++ status bar
-;;; TODO ++ inspector/outliner text sizing issues
-;;; xxx
 ;;; TODO -- how to add contextual items from plugins?
 ;;;         -- plugin class -- register method adds UI elements -- eg. Create, Context, Edit, ...
 ;;; TODO -- delete shapes in hierarchy
@@ -679,6 +666,9 @@
                                     (setf (bg-color view) (if (is-selected? (data view))
                                                               (c! 0.8 0.2 0.2 0.5)
                                                               (c! 0 0 0 0))))))))
+                                    ;; update context menu if applicable
+                                    ;; (update-active-dynamic-command-table)
+                                    ;; (draw-scene-view-ui *default-scene-view*))))))
   
 (defmethod toggle-show-children ((view ui-outliner-item))
   (setf (show-children? view) (not (show-children? view))))
@@ -804,22 +794,6 @@
   (create-contents (make-instance 'ui-outliner-viewer
                                   :ui-x 20 :ui-y 20 :title title :data-object obj :data-accessor-fn accessor-fn)))
 
-;; (defun show-ui-outliner-viewer (roots)
-;;   (setf (ui-contents *default-scene-view*)
-;;         (list (create-contents (make-instance 'ui-outliner-viewer :ui-x 20 :ui-y 20 :roots roots)))))
-
-;; (defun show-ui-shape-hierarchy (scene)
-;;   (show-ui-outliner-viewer (shapes scene)))
-
-;; (defun show-ui-motion-hierarchy (scene)
-;;   (show-ui-outliner-viewer (motions scene)))
-
-#|
-(setf (ui-contents *default-scene-view*)
-      (list (create-contents (make-instance 'ui-sequence-viewer
-                                            :data '(1 2 3 4 5 6 7)))))
-|#
-
 ;;;; ui-inspector ==============================================================
 
 (defclass-kons-9 ui-inspector (ui-sequence-viewer)
@@ -834,8 +808,6 @@
 (defun ui-cleanup-inspector-string (text)
   (string-trim-to-length (remove-extra-spaces text) 60))
 
-;;;; TODO -- truncate long entries using "..."
-;;;; TODO -- limit size of inspector to window
 ;;;; TODO -- SBCL inspect limits display of sequences to 10 items
 
 (defmethod create-contents ((view ui-inspector))
@@ -872,7 +844,7 @@
                                              :data datum
                                              :text text
                                              :is-active? t
-                                             :help-string (format nil "Mouse: inspect ~a. UP/DOWN ARROW: scroll inspector. ESC: close inspector."
+                                             :help-string (format nil "Mouse: inspect ~a. UP/DN-ARROW: scroll inspectors. ESC: close inspectors, SHIFT-L-ARROW: close last inspector."
                                                                   (ui-cleanup-inspector-string
                                                                    (format nil "~a" datum)))
                                              :on-click-fn (lambda (modifiers)
@@ -883,31 +855,6 @@
 
 (defun make-ui-inspector (obj)
   (create-contents (make-instance 'ui-inspector :ui-x 20 :ui-y 20 :obj obj)))
-
-#|
-(show-ui-inspector *scene*)
-
-(show-ui-inspector 42)
-
-(show-ui-inspector (p! 1 2 3))
-
-(show-ui-inspector :zzz)
-
-;;;; ui-inspector
-(defun ui-inspector-contents (obj)
-  (multiple-value-bind (description named-p elements)
-      (sb-impl::inspected-parts obj)
-;;    (sb-impl::tty-display-inspected-parts description named-p elements t)
-    (print elements)))
-
-(ui-inspector-contents 42)
-(ui-inspector-contents 'x)
-(ui-inspector-contents (p! 1 2 3))
-(ui-inspector-contents (first (shapes *scene*)))
-|#
-
-
-
 
 ;;;; drawing -------------------------
 
@@ -1101,13 +1048,3 @@
           (t nil)))
   )
 
-;;;; test ====================
-
-;; (defun display-ui (view)
-;;   (let ((menu (make-instance 'ui-popup-menu :x 20 :y 20 :command-table (car (command-tables view)))))
-;;     (update-layout menu)
-;;     (draw-view menu)))
-
-  ;; (draw-view (make-instance 'ui-view :x 400 :y 300 :w *ui-button-item-width* :h *ui-button-item-height*))
-  ;; (draw-view (make-instance 'ui-view :x 400 :y 200 :w *ui-button-item-width* :h *ui-button-item-height*
-  ;;                          :highlight? t)))
