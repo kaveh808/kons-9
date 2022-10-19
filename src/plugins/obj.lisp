@@ -55,16 +55,43 @@
 
 ;;;; obj format export ======================================================
 
-(defun export-obj (shape filename)
-  (with-open-file (stream filename :direction :output)
-    (write-obj shape stream)))
+(defparameter *obj-export-vref-offset* 1)
 
-(defmethod write-obj ((polyh polyhedron) stream)
-  (do-array (i p (points polyh))
-    (format stream "v ~A ~A ~A~%" (p:x p) (p:y p) (p:z p)))
+(defmethod export-obj ((scene scene) filename)
+  (with-open-file (stream filename :direction :output :if-exists :overwrite :if-does-not-exist :create)
+    (write-obj scene stream)))
+
+(defmethod write-obj ((scene scene) &optional (stream t) (matrix nil))
+  (declare (ignore matrix))
+  (setf *obj-export-vref-offset* 1)
+  (write-obj-header scene stream)
+  (write-obj (shape-root scene) stream))
+
+(defmethod write-obj-header ((scene scene) &optional (stream t))
+  (format stream "# kons-9 obj export -- https://github.com/kaveh808/kons-9~%"))
+
+(defmethod write-obj ((group shape-group) &optional (stream t) (matrix (make-id-matrix)))
+  (let ((mtx (matrix-multiply (transform-matrix (transform group)) matrix)))
+    (do-children (shape group)
+      (write-obj shape stream mtx))))
+
+(defmethod write-obj :before ((shape shape) &optional (stream t) (matrix (make-id-matrix)))
+  (declare (ignore matrix))
+  (format stream "o ~A~%" (name shape)))
+
+(defmethod write-obj ((curve curve) &optional (stream t) (matrix (make-id-matrix)))
+  ;; do nothing for now
+  )
+
+(defmethod write-obj ((polyh polyhedron) &optional (stream t) (matrix (make-id-matrix)))
+  (let ((mtx (matrix-multiply (transform-matrix (transform polyh)) matrix)))
+    (do-array (i p (points polyh))
+      (let ((p2 (transform-point p mtx)))
+        (format stream "v ~A ~A ~A~%" (p:x p2) (p:y p2) (p:z p2)))))
   (do-array (i f (faces polyh))
     (format stream "f ")
     (dolist (vref f)
-      (format stream "~A " (1+ vref)))
-    (format stream "~%")))
+      (format stream "~A " (+ vref *obj-export-vref-offset*)))
+    (format stream "~%"))
+  (incf *obj-export-vref-offset* (length (points polyh))))
 
