@@ -119,6 +119,7 @@
 ;; TODO -- open and save need work
 ;;    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
 ;;    (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
+    (ct-entry :S "Export USD Scene" (hide-menu view) (show-export-usd-scene-dialog))
 ;; TODO -- export obj file
     (ct-entry :I "Initialize Scene" (init-scene (scene view))) ;same as '[' key binding
     (ct-entry :Q "Quit Scene" (glfw:set-window-should-close))
@@ -138,6 +139,12 @@
    (make-text-input-dialog-box "Save Scene File"
                                (lambda (str)
                                  (save-scene (scene *default-scene-view*) str)))))
+
+(defun show-export-usd-scene-dialog ()
+  (show-ui-content
+   (make-text-input-dialog-box "Export USD File"
+                               (lambda (str)
+                                 (export-usd (scene *default-scene-view*) str)))))
 
 (defun edit-command-table (view)
   (let ((table (make-instance 'command-table :title "Edit")))

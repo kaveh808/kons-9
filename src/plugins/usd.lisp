@@ -20,7 +20,7 @@
 (defmethod write-usd-header ((scene scene) &optional (stream t))
   (format stream "#usda 1.0~%")
   (format stream "(~%")
-  (format stream "    doc = \"Aambrosius v0.0.1\"~%")
+  (format stream "    doc = \"kons-9 DP1\"~%")
   (format stream "    metersPerUnit = 1~%")
   (format stream "    upAxis = \"Y\"~%")
   (format stream ")~%~%"))
