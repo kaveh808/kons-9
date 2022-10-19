@@ -122,8 +122,11 @@
 (clobber:define-save-info polyhedron
   (:faces faces nil))
 
+(clobber:define-save-info group-mixin
+  (:children children))
+
 (clobber:define-save-info scene
-  (:shapes shapes)
+  (:shape-root shape-root)
 ;;  (:motions motions nil) ; motion classes not implemented -- how to save function slots?
   (:start-frame start-frame)
   (:end-frame end-frame)

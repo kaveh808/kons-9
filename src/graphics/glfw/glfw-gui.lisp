@@ -116,9 +116,11 @@
 (defun scene-command-table (view)
   (let ((table (make-instance 'command-table :title "Scene")))
     (ct-entry :N "New Scene" (clear-scene (scene view)) (ui-clear-children (ui-contents view)))
-    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
-    (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
-    (ct-entry :I "Initialize Scene" (init-scene (scene view)))
+;; TODO -- open and save need work
+;;    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
+;;    (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
+;; TODO -- export obj file
+    (ct-entry :I "Initialize Scene" (init-scene (scene view))) ;same as '[' key binding
     (ct-entry :Q "Quit Scene" (glfw:set-window-should-close))
 ;    (ct-entry :space "Update scene (hold down for animation)" (update-scene (scene view)))
     table))
