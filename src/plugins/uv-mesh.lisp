@@ -176,7 +176,7 @@
     (setf (v-dim mesh) (length unique-path-points))
     (setf (u-wrap mesh) is-closed-profile?)
     (setf (v-wrap mesh) is-closed-path?)
-    (setf (v-cap mesh) t)
+    (setf (v-cap mesh) is-closed-profile?)
     (let* ((delta (/ 1.0 (1- (v-dim mesh))))
            (prev-tangent +z-axis+)
            (p0 +origin+)
@@ -228,11 +228,10 @@
 
 ;;; TODO -- fix coerce to list
 (defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil))
-  (declare (optimize debug))
   (sweep-extrude-aux (make-instance 'uv-mesh)
-                        (coerce (points profile) 'list) (is-closed-curve? profile)
-                        (points path) (is-closed-curve? path)
-                        :twist twist :taper taper :from-end? from-end?))
+                     (coerce (points profile) 'list) (is-closed-curve? profile)
+                     (points path) (is-closed-curve? path)
+                     :twist twist :taper taper :from-end? from-end?))
 
 (defun transform-extrude-uv-mesh (profile transform num-steps &key (v-wrap nil) (u-cap nil) (v-cap t))
   (let ((mesh (make-instance 'uv-mesh :u-dim (length (points profile))

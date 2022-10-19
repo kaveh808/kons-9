@@ -47,7 +47,7 @@
 
 (defun make-line-curve (p1 p2 num-segments)
   (make-curve (make-line-points p1 p2 num-segments)
-                nil))
+              nil))
 
 (defun make-rectangle-curve (width height &optional (num-segments 1))
   (make-curve (make-rectangle-points width height num-segments)))
@@ -60,11 +60,11 @@
 
 (defun make-arc-curve (diameter start-angle end-angle num-segments)
   (make-curve (make-arc-points diameter start-angle end-angle num-segments)
-                nil))
+              nil))
 
 (defun make-spiral-curve (start-diameter end-diameter length loops num-segments)
   (make-curve (make-spiral-points start-diameter end-diameter length loops num-segments)
-                nil))
+              nil))
 
 (defun make-sine-curve-curve (period frequency x-scale y-scale num-segments)
   (make-curve (make-sine-curve-points period frequency x-scale y-scale num-segments)
