@@ -23,15 +23,16 @@
   :serial t
   :components
   ((:file "src/package")
-   ;; kernel
+   ;; utils & math
    (:file "src/kernel/utils")
    (:file "src/kernel/color")
    (:file "src/kernel/point-origin")
-   ;;(:file "src/kernel/point-simd")
    (:file "src/kernel/matrix")
    (:file "src/kernel/noise")
+   ;; graphics
    (:file "src/graphics/opengl/opengl")
    (:file "src/graphics/opengl/ui-widgets")
+   ;; kernel
    (:file "src/kernel/item")
    (:file "src/kernel/transform")
    (:file "src/kernel/scene-item")
@@ -64,8 +65,9 @@
     :components ((:file "package")
                  (:file "glyph-zpb-ttf")
                  (:file "font-zpb-ttf")))
-   ;; user interface
+   ;; app user interface
    (:file "src/graphics/glfw/command-table")
+   (:file "src/graphics/glfw/application-widgets")
    (:file "src/graphics/glfw/glfw-gui")
    (:file "src/graphics/opengl/text-common")
    (:file "src/graphics/opengl/text-opengl-common")
