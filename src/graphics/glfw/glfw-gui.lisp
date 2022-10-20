@@ -119,11 +119,10 @@
 ;; TODO -- open and save need work
 ;;    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
 ;;    (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
-    (ct-entry :S "Export USD Scene" (hide-menu view) (show-export-usd-scene-dialog))
-;; TODO -- export obj file
+    (ct-entry :E "Export OBJ Scene" (show-export-obj-scene-dialog))
+    (ct-entry :U "Export USD Scene" (show-export-usd-scene-dialog))
     (ct-entry :I "Initialize Scene" (init-scene (scene view))) ;same as '[' key binding
     (ct-entry :Q "Quit Scene" (glfw:set-window-should-close))
-;    (ct-entry :space "Update scene (hold down for animation)" (update-scene (scene view)))
     table))
 
 (defun show-open-scene-dialog ()
@@ -140,6 +139,12 @@
                                (lambda (str)
                                  (save-scene (scene *default-scene-view*) str)))))
 
+(defun show-export-obj-scene-dialog ()
+  (show-ui-content
+   (make-text-input-dialog-box "Export OBJ File"
+                               (lambda (str)
+                                 (export-obj (scene *default-scene-view*) str)))))
+
 (defun show-export-usd-scene-dialog ()
   (show-ui-content
    (make-text-input-dialog-box "Export USD File"
@@ -150,7 +155,7 @@
   (let ((table (make-instance 'command-table :title "Edit")))
 ;;    (ct-entry :S "Select (TBD)")
     ;; (ct-entry :backspace "Delete" (remove-current-selection (scene view)))
-    ;; TODO -- handle selected motions...
+    ;; TODO -- handle selected motions -- activate/deactivate...
     (ct-entry :S "Show" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) t)))
     (ct-entry :H "Hide" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) nil)))
     ;; (ct-entry :D "Duplicate (TBD)")
@@ -194,7 +199,7 @@
     (ct-entry :I "Inspector" (show-ui-content (make-ui-inspector (or (selection (scene view))
                                                                      (scene view)))))
     (ct-entry :S "Shapes" (show-ui-content (make-ui-outliner-viewer "Shapes" (shape-root (scene view)))))
-    (ct-entry :M "Motions" (show-ui-content (make-ui-outliner-viewer "Motions" (motion-root (scene view)))))
+    (ct-entry :M "Motions" (show-ui-content (make-ui-motion-outliner-viewer "Motions" (motion-root (scene view)))))
     table))
 
 (defun display-command-table (view)
@@ -361,7 +366,7 @@
          (if (= 0 (length (children (ui-contents self))))
              (setf (ui-contents-scroll self) 0)
              (reposition-ui-content-after-delete)))
-        (*ui-keyboard-focus*            ;handle text box input
+        (*ui-keyboard-focus*            ;handle text box input,  TODO -- add arrow keys
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
                ((and (eq :c key) (member :super mod-keys))

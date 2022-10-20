@@ -19,7 +19,7 @@
 (defparameter *ui-font-width* 7.3)
 
 
-;;;; uitils ====================================================================
+;;;; utils ====================================================================
 
 (defun ui-text-width (text)
   (* (length text) *ui-font-width*))
@@ -647,7 +647,8 @@
 
 (defclass-kons-9 ui-outliner-item (ui-data-item)
   ((show-children? t)                   ;show hierarchy by default
-   (outliner-children '())))
+   (outliner-children '())
+   (outliner-parent nil)))
 
 (defmethod initialize-instance :after ((view ui-outliner-item)  &rest initargs)
   (declare (ignore initargs))
@@ -669,7 +670,12 @@
                                     ;; update context menu if applicable
                                     ;; (update-active-dynamic-command-table)
                                     ;; (draw-scene-view-ui *default-scene-view*))))))
-  
+
+(defmethod add-outliner-child ((view ui-outliner-item) (child ui-outliner-item))
+  (push child (outliner-children view))
+  (setf (outliner-parent child) view)
+  view)
+
 (defmethod toggle-show-children ((view ui-outliner-item))
   (setf (show-children? view) (not (show-children? view))))
 
@@ -691,7 +697,7 @@
   (let ((i (position view (children (ui-parent view)))))
     (loop for child across (children (data view))
           do (let* ((text (format nil "~a" (printable-data child)))
-                    (item (make-instance 'ui-outliner-item
+                    (item (make-instance (outliner-item-class (ui-parent view))
                                          :ui-w (+ (ui-text-width text)
                                                   (* 4 *ui-default-spacing*)
                                                   (+ 20 (text-padding view)))
@@ -706,7 +712,8 @@
                                          :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
                                                               (name child)))))
                (ui-add-child-at (ui-parent view) item (incf i))
-               (push item (outliner-children view)))))
+               (add-outliner-child view item))))
+;;               (push item (outliner-children view)))))
   (when recurse?
     (dolist (item (outliner-children view))
       (when (and (has-children-method? (data item)) (show-children? item))
@@ -731,6 +738,9 @@
    :justification :left/top
    :spacing 0
    :padding 0))
+
+(defmethod outliner-item-class ((view ui-outliner-viewer))
+  'ui-outliner-item)
 
 (defmethod item-show-child? ((view ui-outliner-viewer) item)
   (let ((data (assoc item (items-show-children view))))
@@ -763,7 +773,7 @@
       (loop for entry across (coerce data 'vector)
             do (let* (;(tmp entry) ; TODO -- necessary otherwise all on-click-fn's use final entry???
                       (text (format nil "~a" (printable-data entry)))
-                      (item (make-instance 'ui-outliner-item
+                      (item (make-instance (outliner-item-class view)
                                            :ui-h *ui-button-item-height*
                                            :bg-color (if (is-selected? entry)
                                                          (c! 0.8 0.2 0.2 0.5)
@@ -857,6 +867,13 @@
   (create-contents (make-instance 'ui-inspector :ui-x 20 :ui-y 20 :obj obj)))
 
 ;;;; drawing -------------------------
+
+(defun draw-line (x1 y1 x2 y2 &optional (line-width *ui-border-width*))
+  (gl:line-width line-width)
+  (gl:begin :lines)
+  (gl:vertex x1 y1)
+  (gl:vertex x2 y2)
+  (gl:end))
 
 (defun draw-rect-fill (x y w h &optional (inset 0.0))
   (gl:polygon-mode :front-and-back :fill)

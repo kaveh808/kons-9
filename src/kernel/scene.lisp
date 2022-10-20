@@ -26,6 +26,11 @@
 (defmethod current-time ((scene scene))
   (/ (coerce (current-frame scene) 'single-float) (fps scene)))
 
+(defmethod relative-current-time ((scene scene))
+  (if (= (end-frame scene) (start-frame scene))
+      0.0
+      (coerce (/ (current-frame scene) (- (end-frame scene) (start-frame scene))) 'float)))
+
 (defmethod add-selection ((scene scene) (item scene-item))
   (setf (is-selected? item) t)
   (pushnew item (selection scene))
