@@ -198,6 +198,17 @@
                                    (subseq (text view) (cursor-position view) (length (text view)))))
     (decf (cursor-position view))))
 
+(defmethod do-arrow-input ((view ui-text-box-item) key)
+  (let ((max-position (length (text view))))
+    (cond ((eq :left key)
+           (setf (cursor-position view) (clamp (1- (cursor-position view)) 0 max-position)))
+          ((eq :right key)
+           (setf (cursor-position view) (clamp (1+ (cursor-position view)) 0 max-position)))
+          ((eq :up key)
+           (setf (cursor-position view) 0))
+          ((eq :down key)
+           (setf (cursor-position view) max-position)))))
+
 ;;;; ui-menu-item ==============================================================
 
 (defclass-kons-9 ui-menu-item (ui-button-item)

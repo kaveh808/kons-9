@@ -347,7 +347,19 @@
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
-  (cond ((eq :space key)                ;play animation
+  (cond (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
+         (cond ((and (eq :v key) (member :super mod-keys))
+                (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
+               ((and (eq :c key) (member :super mod-keys))
+                (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
+               ((and (eq :x key) (member :super mod-keys))
+                (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
+               ((eq :backspace key)
+                (do-backspace-input *ui-keyboard-focus*))
+               ((member key '(:left :right :up :down))
+                (do-arrow-input *ui-keyboard-focus* key))
+               ))
+    ((eq :space key)                ;play animation
          (update-scene (scene self))
          (update-scene-ui))
         ((eq :left-bracket key)         ;init scene
@@ -371,16 +383,6 @@
          (if (= 0 (length (children (ui-contents self))))
              (setf (ui-contents-scroll self) 0)
              (reposition-ui-content-after-delete)))
-        (*ui-keyboard-focus*            ;handle text box input,  TODO -- add arrow keys
-         (cond ((and (eq :v key) (member :super mod-keys))
-                (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
-               ((and (eq :c key) (member :super mod-keys))
-                (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
-               ((and (eq :x key) (member :super mod-keys))
-                (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
-               ((eq :backspace key)
-                (do-backspace-input *ui-keyboard-focus*))
-               ))
         ((eq :left key)                 ;go to previous menu
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
