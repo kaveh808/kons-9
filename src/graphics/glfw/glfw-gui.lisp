@@ -343,7 +343,7 @@
   (setf (menu self) nil)
   (setf (command-tables self) (last (command-tables self)))) ;pop all but original table
 
-;;; TODO -- register global key bindings: esc, space, tab, [, etc
+;;; TODO -- register global key bindings: esc, space, tab, [, backspace, etc
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
@@ -355,9 +355,11 @@
         ((eq :backspace key)            ;delete selected items
          (delete-selection (scene self))
          (update-scene-ui))
-        ((eq :tab key)                  ;hide/show menu
-         (cond ((and (menu self) (is-visible? (menu self)))
-                (hide-menu self))
+        ((eq :tab key)                  ;hide/show main menu
+         (cond ((and (menu self) (is-visible? (menu self))) ;menu visible
+                (if (> (length (command-tables self)) 1)    ;submenu visible
+                    (setf (command-tables self) (last (command-tables self))) ;go to main menu
+                    (hide-menu self)))  ;hide menu
                (t
                 (show-menu self))))
         ((eq :escape key)               ;hide all inspectors
