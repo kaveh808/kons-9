@@ -36,10 +36,12 @@
   (vector-push-extend item (children group))
   (when (scene group)
     (set-item-scene (scene group) item))
+  (pushnew group (parents item))
   group)
 
 (defmethod remove-child ((group group-mixin) (item scene-item))
   (setf (children group) (delete item (children group)))
+  (setf (parents item) (delete group (parents item)))
   group)
 
 (defmethod set-children ((group group-mixin) scene-items)
@@ -49,6 +51,10 @@
   group)
 
 (defmethod remove-all-children ((group group-mixin))
+  ;; do not just call remove-child as it destructively modifies children array
+  ;; that we are looping over
+  (do-children (child group)
+    (setf (parents child) (delete group (parents child))))
   (setf (children group) (make-array 0 :adjustable t :fill-pointer 0))
   group)
 
