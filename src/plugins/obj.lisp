@@ -79,6 +79,11 @@
   (declare (ignore matrix))
   (format stream "o ~A~%" (name shape)))
 
+(defmethod write-obj ((shape shape) &optional (stream t) (matrix (make-id-matrix)))
+  (declare (ignore stream matrix))
+  ;; do nothing -- subclass responsibility
+  )
+
 (defmethod write-obj ((curve curve) &optional (stream t) (matrix (make-id-matrix)))
   (declare (ignore stream matrix))
   ;; do nothing for now

@@ -38,7 +38,7 @@
 
 (defmethod write-usd ((shape shape) &optional (stream t) (indent 0))
   (declare (ignore stream indent))
-  ;; do nothing for now
+  ;; do nothing -- subclass responsibility
   )
 
 (defmethod write-usd :after ((shape shape) &optional (stream t) (indent 0))

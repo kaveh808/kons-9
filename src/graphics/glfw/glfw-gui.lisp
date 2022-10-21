@@ -119,8 +119,8 @@
 ;; TODO -- open and save need work
 ;;    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
 ;;    (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
-    (ct-entry :E "Export OBJ Scene" (show-export-obj-scene-dialog))
-    (ct-entry :U "Export USD Scene" (show-export-usd-scene-dialog))
+    (ct-entry :E "Export OBJ File" (show-export-obj-scene-dialog))
+    (ct-entry :U "Export USD File" (show-export-usd-scene-dialog))
     (ct-entry :I "Initialize Scene" (init-scene (scene view))) ;same as '[' key binding
     (ct-entry :Q "Quit Scene" (glfw:set-window-should-close))
     table))
