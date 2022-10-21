@@ -14,7 +14,7 @@ functions and the like.
                     "demo-animation"
                     "demo-isosurface"
                     "demo-flex-animator"
-                    "demo")))
+                    "demo-misc")))
   (dolist (filename demo-files)
     (format t "Testing file ~a...~%" filename)
     (load (asdf:system-relative-pathname "kons-9" (strcat "test/" filename ".lisp"))))

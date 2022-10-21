@@ -203,7 +203,7 @@
 (defclass-kons-9 ui-menu-item (ui-button-item)
   ()
   (:default-initargs
-   :bg-color (c! 0.8 0.8 0.8 0.25)))
+   :bg-color (c! 0.8 0.8 0.8 0.5)))
 
 ;;;; ui-group ==============================================================
 
@@ -612,7 +612,6 @@
 (defclass-kons-9 ui-sequence-viewer (ui-group)
   ((data nil))
   (:default-initargs
-;;   :bg-color (c! 0.8 0.8 0.8 0.5)
    :layout :vertical))
 
 (defmethod create-contents ((view ui-sequence-viewer))
@@ -633,12 +632,6 @@
                                                               (show-ui-content (make-ui-inspector tmp))))
                   (children view))))))
   (update-layout view))
-
-#|
-(setf (ui-contents *default-scene-view*)
-      (list (create-contents (make-instance 'ui-sequence-viewer
-                                            :data '(1 2 3 4 5 6 7)))))
-|#
 
 ;;;; ui-outliner-item ==========================================================
 
@@ -694,26 +687,27 @@
     (resize-contents (ui-parent view))))
 
 (defmethod add-parent-contents ((view ui-outliner-item) &key (recurse? nil))
-  (let ((i (position view (children (ui-parent view)))))
-    (loop for child across (children (data view))
-          do (let* ((text (format nil "~a" (printable-data child)))
-                    (item (make-instance (outliner-item-class (ui-parent view))
-                                         :ui-w (+ (ui-text-width text)
-                                                  (* 4 *ui-default-spacing*)
-                                                  (+ 20 (text-padding view)))
-                                         :ui-h *ui-button-item-height*
-                                         :bg-color (if (is-selected? child)
-                                                       (c! 0.8 0.2 0.2 0.5)
-                                                       (c! 0 0 0 0))
-                                         :text-padding (+ 20 (text-padding view))
-                                         :data child
-                                         :text text
-                                         :is-active? t
-                                         :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
-                                                              (name child)))))
-               (ui-add-child-at (ui-parent view) item (incf i))
-               (add-outliner-child view item))))
-;;               (push item (outliner-children view)))))
+  (let ((i (position view (children (ui-parent view))))
+        (children (children (data view))))
+    (dotimes (j (min 10 (length children))) ;cap num children entries to 10 to avoid text engine overflow
+      (let* ((child (aref children j))
+             (text (format nil "~a" (printable-data child)))
+             (item (make-instance (outliner-item-class (ui-parent view))
+                                  :ui-w (+ (ui-text-width text)
+                                           (* 4 *ui-default-spacing*)
+                                           (+ 20 (text-padding view)))
+                                  :ui-h *ui-button-item-height*
+                                  :bg-color (if (is-selected? child)
+                                                (c! 0.8 0.2 0.2 0.5)
+                                                (c! 0 0 0 0))
+                                  :text-padding (+ 20 (text-padding view))
+                                  :data child
+                                  :text text
+                                  :is-active? t
+                                  :help-string (format nil "Mouse: select ~a, [ALT] show/hide children"
+                                                       (name child)))))
+        (ui-add-child-at (ui-parent view) item (incf i))
+        (add-outliner-child view item))))
   (when recurse?
     (dolist (item (outliner-children view))
       (when (and (has-children-method? (data item)) (show-children? item))
@@ -733,7 +727,7 @@
    (data-accessor-fn nil)
    (items-show-children '()))
   (:default-initargs
-   :bg-color (c! 1 1 1 0.5)
+   :bg-color (c! 1 1 1 0.75)
    :layout :vertical
    :justification :left/top
    :spacing 0
@@ -809,7 +803,7 @@
 (defclass-kons-9 ui-inspector (ui-sequence-viewer)
   ((obj nil))
   (:default-initargs
-   :bg-color (c! 1 1 1 0.5)
+   :bg-color (c! 1 1 1 0.75)
    :layout :vertical
    :justification :left/top
    :spacing 0

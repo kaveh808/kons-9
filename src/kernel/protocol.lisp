@@ -26,13 +26,14 @@
   (:method ((obj t)) 
     (error "Method SOURCE-DIRECTIONS not implemented for object ~a" obj))
 
-  (:method ((curve curve))
-    (curve-tangents curve))
-
   (:method ((p-cloud point-cloud))
     ;; arbitrarily return (1 1 1) for use as velocity multiplier
-    (make-array (length (points p-cloud))
-                :initial-element (p! 1 1 1)))
+    ;; (make-array (length (points p-cloud))
+    ;;             :initial-element (p! 1 1 1)))
+    (source-radial-directions p-cloud))
+  
+  (:method ((curve curve))
+    (curve-tangents curve))
 
   (:method ((polyh polyhedron))
     (if (point-source-use-face-centers? polyh)
