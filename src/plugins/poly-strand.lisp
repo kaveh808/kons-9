@@ -68,7 +68,7 @@
     (when *display-wireframe?*
       (draw-wireframe poly))
     (when *display-points?*
-      (draw-points poly))))
+      (draw-points poly nil))))         ;TODO -- maybe implement point-colors later
 
 (defmethod draw-wireframe ((poly poly-strand))
   (let ((lines '())

@@ -3,7 +3,8 @@
 ;;;; point-cloud ========================================================
 
 (defclass point-cloud (shape)
-  ((points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t))))
+  ((points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t))
+   (point-colors :accessor point-colors :initarg :point-colors :initform nil)))
 
 (defmethod printable-data ((self point-cloud))
   (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))
@@ -49,6 +50,19 @@
   (transform-points! (points p-cloud) (transform-matrix (transform p-cloud)))
   (reset-transform (transform p-cloud))
   p-cloud)
+
+(defmethod allocate-point-colors ((p-cloud point-cloud))
+  (setf (point-colors p-cloud) (make-array (length (points p-cloud))
+                                           :initial-element (shading-color *drawing-settings*))))
+  
+(defmethod reset-point-colors ((p-cloud point-cloud))
+  (allocate-point-colors p-cloud)
+  p-cloud)
+
+(defmethod set-point-colors-by-xyz ((p-cloud point-cloud) color-fn)
+  (allocate-point-colors p-cloud)
+  (do-array (i p (points p-cloud))
+    (setf (aref (point-colors p-cloud) i) (funcall color-fn p))))
 
 ;;; point generator functions --------------------------------------------------
 

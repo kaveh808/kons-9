@@ -291,7 +291,7 @@
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
-(defun 3d-draw-points (points &key (highlight? nil))
+(defun 3d-draw-points (points point-colors &key (highlight? nil))
   (with-gl-disable :lighting
     (if highlight?
         (progn
@@ -301,8 +301,14 @@
           (gl-set-fg-color)
           (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
-    (do-array (i p points)
-      (gl:vertex (p:x p) (p:y p) (p:z p)))
+    (cond (point-colors
+           (do-array (i p points)
+             (let ((c (aref point-colors i)))
+               (gl:color (c-red c) (c-green c) (c-blue c)))
+             (gl:vertex (p:x p) (p:y p) (p:z p))))
+          (t
+           (do-array (i p points)
+             (gl:vertex (p:x p) (p:y p) (p:z p)))))
     (gl:end)))
 
 (defun 3d-draw-lines (points &key (highlight? nil))

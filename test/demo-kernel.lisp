@@ -124,8 +124,25 @@ Triangulate a polyhedron.
 Generate a point cloud on the surface of a polyhedron.
 |#
 (with-clear-scene
-  (add-shape *scene* (generate-point-cloud (make-cube-sphere 4.0 3)
-                                           40)))
+  (let ((p-cloud (generate-point-cloud (make-cube-sphere 4.0 3)
+                                       40)))
+    (setf (name p-cloud) 'points)
+    (add-shape *scene* p-cloud)))
+
+#|
+Assign random point colors.
+|#
+(set-point-colors-by-xyz (find-shape-by-name *scene* 'points)
+                         (lambda (p)
+                           (declare (ignore p))
+                           (c-rand)))
+
+#|
+Assign rainbow point colors by Y value.
+|#
+(set-point-colors-by-xyz (find-shape-by-name *scene* 'points)
+                         (lambda (p)
+                           (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))
 
 #|
 (Demo 06 kernel) transforms and hierarchies ====================================

@@ -227,21 +227,23 @@
   (when *display-wireframe?*
     (draw-wireframe p-sys))
   (when *display-points?*
-    (draw-points p-sys)))
+    (draw-points p-sys nil)))
 
 ;;; TODO -- trail not implemented
 (defmethod draw-wireframe ((p-sys particle-system))
   (3d-draw-wireframe-polygons (points p-sys) (faces p-sys) :closed? nil))
 
-(defmethod draw-live-points ((p-sys particle-system))
+(defmethod draw-live-points ((p-sys particle-system) use-point-colors?)
+  (declare (ignore use-point-colors?))  ;TODO -- maybe implement later
   (let ((visible-points '()))
     (do-array-if (i ptcl #'is-alive? (particles p-sys))
       (push (pos ptcl) visible-points))
-    (3d-draw-points (make-array (length visible-points) :initial-contents visible-points))))
+    (3d-draw-points (make-array (length visible-points) :initial-contents visible-points)
+                    nil)))
 
-(defmethod draw-points ((p-sys particle-system))
+(defmethod draw-points ((p-sys particle-system) use-point-colors?)
   (if (draw-live-points-only? p-sys)
-      (draw-live-points p-sys)
+      (draw-live-points p-sys use-point-colors?)
       (call-next-method)))
 
 (defmethod draw-normals ((p-sys particle-system))
