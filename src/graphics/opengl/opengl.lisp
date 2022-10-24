@@ -291,7 +291,7 @@
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
 
-(defun 3d-draw-points (points &key (highlight? nil))
+(defun 3d-draw-points (points point-colors &key (highlight? nil))
   (with-gl-disable :lighting
     (if highlight?
         (progn
@@ -301,8 +301,14 @@
           (gl-set-fg-color)
           (gl:point-size (point-size *drawing-settings*))))
     (gl:begin :points)
-    (do-array (i p points)
-      (gl:vertex (p:x p) (p:y p) (p:z p)))
+    (cond (point-colors
+           (do-array (i p points)
+             (let ((c (aref point-colors i)))
+               (gl:color (c-red c) (c-green c) (c-blue c)))
+             (gl:vertex (p:x p) (p:y p) (p:z p))))
+          (t
+           (do-array (i p points)
+             (gl:vertex (p:x p) (p:y p) (p:z p)))))
     (gl:end)))
 
 (defun 3d-draw-lines (points &key (highlight? nil))
@@ -336,6 +342,57 @@
       (3d-draw-filled-polygons-aux points faces face-normals point-normals point-colors))))
 
 (defmethod 3d-draw-filled-polygons-aux (points faces face-normals point-normals point-colors)
+  (let* ((col (shading-color *drawing-settings*))
+         (r (c-red col))
+         (g (c-green col))
+         (b (c-blue col)))
+    (gl-set-material col)
+    (with-gl-enable :color-material
+      (gl:color-material :front-and-back :diffuse)
+      (cond ((and (> (length point-colors) 0) *do-smooth-shading?*)
+             (dotimes (f (length faces))
+               (gl:begin :polygon)
+               (dolist (pref (aref faces f))
+                 (let ((p (aref points pref))
+                       (n (aref point-normals pref))
+                       (c (aref point-colors pref)))
+                   (gl:color (c-red c) (c-green c) (c-blue c))
+                   (gl:normal (p:x n) (p:y n) (p:z n))
+                   (gl:vertex (p:x p) (p:y p) (p:z p))))
+               (gl:end)))
+            ((> (length point-colors) 0)
+             (dotimes (f (length faces))
+               (gl:begin :polygon)
+               (let ((n (aref face-normals f)))
+                 (gl:normal (p:x n) (p:y n) (p:z n)))
+               (dolist (pref (aref faces f))
+                 (let ((p (aref points pref))
+                       (c (aref point-colors pref)))
+                   (gl:color (c-red c) (c-green c) (c-blue c))
+                   (gl:vertex (p:x p) (p:y p) (p:z p))))
+               (gl:end)))
+              (*do-smooth-shading?*
+               (dotimes (f (length faces))
+                 (gl:begin :polygon)
+                 (dolist (pref (aref faces f))
+                   (let ((p (aref points pref))
+                         (n (aref point-normals pref)))
+                     (gl:normal (p:x n) (p:y n) (p:z n))
+                     (gl:color r g b)
+                     (gl:vertex (p:x p) (p:y p) (p:z p))))
+                 (gl:end)))
+              (t
+               (dotimes (f (length faces))
+                 (gl:begin :polygon)
+                 (let ((n (aref face-normals f)))
+                   (gl:normal (p:x n) (p:y n) (p:z n)))
+                 (dolist (pref (aref faces f))
+                   (let ((p (aref points pref)))
+                     (gl:color r g b)
+                     (gl:vertex (p:x p) (p:y p) (p:z p))))
+                 (gl:end)))))))
+
+(defmethod 3d-draw-filled-polygons-aux-SAV (points faces face-normals point-normals point-colors)
   (let ((col (shading-color *drawing-settings*)))
     (gl-set-material col)
     (with-gl-enable :color-material

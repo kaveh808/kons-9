@@ -6,7 +6,6 @@
   ((faces :accessor faces :initarg :faces :initform (make-array 0 :adjustable t :fill-pointer t))
    (face-normals :accessor face-normals :initarg :face-normals :initform (make-array 0 :adjustable t :fill-pointer t))
    (point-normals :accessor point-normals :initarg :point-normals :initform (make-array 0 :adjustable t :fill-pointer t))
-   (point-colors :accessor point-colors :initarg :point-colors :initform nil)
    (show-normals :accessor show-normals :initarg :show-normals :initform nil)  ; length or nil
    (point-source-use-face-centers? :accessor point-source-use-face-centers? :initarg :point-source-use-face-centers? :initform nil)))
 
@@ -129,19 +128,6 @@
   (dotimes (i (length (face-normals polyh)))
     (setf (aref (face-normals polyh) i) (p:negate (aref (face-normals polyh) i))))
   polyh)
-
-(defmethod allocate-point-colors ((polyh polyhedron))
-  (setf (point-colors polyh) (make-array (length (points polyh))
-                                         :initial-element (shading-color *drawing-settings*))))
-  
-(defmethod reset-point-colors ((polyh polyhedron))
-  (allocate-point-colors polyh)
-  polyh)
-
-(defmethod set-point-colors-by-xyz ((polyh polyhedron) color-fn)
-  (allocate-point-colors polyh)
-  (do-array (i p (points polyh))
-    (setf (aref (point-colors polyh) i) (funcall color-fn p))))
 
 (defmethod set-point-colors-by-point-and-normal ((polyh polyhedron) color-fn)
   (allocate-point-colors polyh)

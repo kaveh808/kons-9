@@ -93,7 +93,7 @@
   (when *display-wireframe?*
     (draw-wireframe l-sys))
   (when *display-points?*
-    (draw-points l-sys)))
+    (draw-points l-sys nil)))         ;TODO -- maybe implement point-colors later
 
 (defmethod draw-wireframe ((l-sys l-system))
   (3d-draw-wireframe-polygons (points l-sys) (faces l-sys) :closed? nil))

@@ -115,7 +115,12 @@
 
 (defun scene-command-table (view)
   (let ((table (make-instance 'command-table :title "Scene")))
-    (ct-entry :N "New Scene" (clear-scene (scene view)) (ui-clear-children (ui-contents view)))
+    (ct-entry :N "New Scene" ;;; (clear-scene (scene view)) (ui-clear-children (ui-contents view)))
+              (let ((scene (make-instance 'scene)))
+                (setf *scene* scene)
+                (setf (scene view) *scene*)
+                (ui-clear-children (ui-contents view))
+                (setf (ui-contents-scroll view) 0)))
 ;; TODO -- open and save need work
 ;;    (ct-entry :O "Open Scene" (hide-menu view) (ui-clear-children (ui-contents view)) (show-open-scene-dialog))
 ;;    (ct-entry :S "Save Scene" (hide-menu view) (show-save-scene-dialog))
@@ -154,7 +159,7 @@
 (defun edit-command-table (view)
   (let ((table (make-instance 'command-table :title "Edit")))
 ;;    (ct-entry :S "Select (TBD)")
-    ;; (ct-entry :backspace "Delete" (remove-current-selection (scene view)))
+    (ct-entry :backspace "Delete" (remove-selection (scene view)))
     ;; TODO -- handle selected motions -- activate/deactivate...
     (ct-entry :S "Show" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) t)))
     (ct-entry :H "Hide" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) nil)))
@@ -343,18 +348,35 @@
   (setf (menu self) nil)
   (setf (command-tables self) (last (command-tables self)))) ;pop all but original table
 
-;;; TODO -- register global key bindings: esc, space, tab, [, etc
+;;; TODO -- register global key bindings: esc, space, tab, [, backspace, etc
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
-  (cond ((eq :space key)                ;play animation
+  (cond (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
+         (cond ((and (eq :v key) (member :super mod-keys))
+                (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
+               ((and (eq :c key) (member :super mod-keys))
+                (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
+               ((and (eq :x key) (member :super mod-keys))
+                (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
+               ((eq :backspace key)
+                (do-backspace-input *ui-keyboard-focus*))
+               ((member key '(:left :right :up :down))
+                (do-arrow-input *ui-keyboard-focus* key))
+               ))
+    ((eq :space key)                ;play animation
          (update-scene (scene self))
          (update-scene-ui))
         ((eq :left-bracket key)         ;init scene
          (init-scene (scene self)))
-        ((eq :tab key)                  ;hide/show menu
-         (cond ((and (menu self) (is-visible? (menu self)))
-                (hide-menu self))
+        ((eq :backspace key)            ;delete selected items
+         (delete-selection (scene self))
+         (update-scene-ui))
+        ((eq :tab key)                  ;hide/show main menu
+         (cond ((and (menu self) (is-visible? (menu self))) ;menu visible
+                (if (> (length (command-tables self)) 1)    ;submenu visible
+                    (setf (command-tables self) (last (command-tables self))) ;go to main menu
+                    (hide-menu self)))  ;hide menu
                (t
                 (show-menu self))))
         ((eq :escape key)               ;hide all inspectors
@@ -366,16 +388,6 @@
          (if (= 0 (length (children (ui-contents self))))
              (setf (ui-contents-scroll self) 0)
              (reposition-ui-content-after-delete)))
-        (*ui-keyboard-focus*            ;handle text box input,  TODO -- add arrow keys
-         (cond ((and (eq :v key) (member :super mod-keys))
-                (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
-               ((and (eq :c key) (member :super mod-keys))
-                (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
-               ((and (eq :x key) (member :super mod-keys))
-                (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
-               ((eq :backspace key)
-                (do-backspace-input *ui-keyboard-focus*))
-               ))
         ((eq :left key)                 ;go to previous menu
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))

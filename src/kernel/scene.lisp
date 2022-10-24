@@ -31,11 +31,6 @@
       0.0
       (coerce (/ (current-frame scene) (- (end-frame scene) (start-frame scene))) 'float)))
 
-(defmethod add-selection ((scene scene) (item scene-item))
-  (setf (is-selected? item) t)
-  (pushnew item (selection scene))
-  item)
-
 (defmethod selected-shapes ((scene scene))
   (remove-if-not (lambda (item) (subtypep (type-of item) 'shape)) (selection scene)))
 
@@ -54,28 +49,36 @@
         (first selected)
         nil)))
 
-;; TODO -- TBD... cf remove-shape-path, remove-shape
-;; -- difference between delete-item and remove-shape-path
-;; -- keep list of scene paths in selection instead of scene-items?
-;;    -- ability to delete instance and not actual item?
-;; -- redo scene to have single shape-root and motion-root groups?
-;; -- implement scene-item-group mixin and use in group and motion-group?
-(defmethod remove-selection ((scene scene) (item scene-item))
-  (setf (is-selected? item) nil)
-  (setf (selection scene) (remove item (selection scene)))
-;;  (dolist (path (get-shape-paths scene item))
-;;    (remove-shape-path scene path))
+(defmethod add-to-selection ((scene scene) (item scene-item))
+  (setf (is-selected? item) t)
+  (pushnew item (selection scene))
   item)
+
+(defmethod remove-from-selection ((scene scene) (item scene-item))
+  (setf (is-selected? item) nil)
+  (setf (selection scene) (delete item (selection scene))))
 
 (defmethod toggle-selection ((scene scene) (item scene-item))
   (if (member item (selection scene))
-      (remove-selection scene item)
-      (add-selection scene item)))
+      (remove-from-selection scene item)
+      (add-to-selection scene item)))
 
 (defmethod clear-selection ((scene scene))
   (dolist (item (selection scene))
     (setf (is-selected? item) nil))
   (setf (selection scene) '()))
+
+(defmethod delete-selection ((scene scene))
+  (dolist (item (selection scene))
+    (setf (is-selected? item) nil)
+    (remove-item scene item))
+  (setf (selection scene) '()))
+
+(defmethod remove-item ((scene scene) (item scene-item))
+  (let ((parents (parents item)))
+    (dolist (parent parents)
+      (remove-child parent item)))
+  item)
 
 (defmethod add-shape ((scene scene) (shape shape))
   (add-child (shape-root scene) shape)
@@ -106,18 +109,11 @@
 (defmethod add-motions ((scene scene) motions)
   (mapcar #'(lambda (a) (add-motion scene a)) (reverse motions)))
 
-;;; TODO -- set shape scene to nil, remove shapes from scene selection
 (defmethod clear-shapes ((scene scene))
   (remove-all-children (shape-root scene)))
 
-;;; TODO -- set motion scene to nil, remove motions from scene selection
 (defmethod clear-motions ((scene scene))
   (remove-all-children (motion-root scene)))
-
-;;; TODO -- handle motions in selection
-(defmethod remove-current-selection ((scene scene))
-  (dolist (shape (selection scene))
-    (remove-shape scene shape)))
 
 (defmethod clear-scene ((scene scene))
   (setf (selection scene) '())

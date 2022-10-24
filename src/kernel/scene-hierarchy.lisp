@@ -106,6 +106,20 @@
           (cleanup-nested-path-list (car l))
           l)))
 
+;;; get-scene-paths ------------------------------------------------------------
+
+;; (defmethod get-scene-paths ((scene scene) (item scene-item))
+;;   (append (get-shape-paths scene item)
+;;           (get-motion-paths scene item)))
+
+;;; remove-scene-path ----------------------------------------------------------
+
+;; (defmethod remove-scene-path ((scene scene) scene-path)
+;;   (let ((item (scene-path-item scene-path))
+;;         (parent (scene-path-parent-item scene-path)))
+;;     (when (and item parent)
+;;       (remove-child parent item))))      
+
 ;;;; scene shape hierarchy functions ===========================================
 
 ;;; find-shapes ----------------------------------------------------------------
@@ -245,16 +259,6 @@
         (list (transform-matrix (transform shape)))
         nil))
   )
-
-;;; remove-shape-path ----------------------------------------------------------
-
-;; TODO -- cf remove-selection
-;; -- what to do if item has no parent? -- replace scene shapes with root shape group?
-;; (defmethod remove-shape-path ((scene scene) shape-path)
-;;   (let ((item (scene-path-item shape-path))
-;;         (parent (scene-path-parent-item shape-path)))
-;;     (when (and item parent)
-;;       (remove-child parent item))))      
 
 ;;;; scene motion hierarchy functions ==========================================
 
