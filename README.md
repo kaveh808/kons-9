@@ -56,3 +56,42 @@ Type 'h' in the window to see the available key bindings.
 Open `test/demo-kernel.lisp` and start evaluating the blocks of code for the demos. Things should appear in the graphics window.
 
 Have fun.
+
+## Run the Testsuite as a Batch Job
+
+Use development script `development/testsuite` to run the testsuite as
+a batch job. Specific tests can be requested by adding one argument to
+the command line, such as
+
+    development/testsuite exercise-clamp
+    development/testsuite testsuite-utils
+
+The following command lists all available tests
+
+    development/testsuite list-all-available-tests
+
+## Run the Testsuite from the REPL
+
+Load the system:
+
+    (ql:quickload "kons-9/testsuite")
+
+List all available tests with
+
+    (kons-9/testsuite:list-all-available-tests)
+
+Tests are implemented as regular functions and can be run with
+statements similar to
+
+    (kons-9/testsuite:run-all-available-tests)
+
+or
+
+    (kons-9/testsuite:exercise-clamp)
+    (kons-9/testsuite:testsuite-utils)
+
+Users not familiar with [Confidence][confidence-home] may want to
+review the [quick introduction to Confidence][confidence-intro].
+
+  [confidence-home]: https://github.com/melusina-org/cl-confidence
+  [confidence-intro]: https://github.com/melusina-org/cl-confidence/blob/main/example/example.lisp
