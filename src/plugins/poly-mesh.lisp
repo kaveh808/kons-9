@@ -149,5 +149,5 @@
     (dotimes (i (length (points mesh)))
       (when (selected? (aref (pm-vertices mesh) i))
         (push (aref (points mesh) i) selected-points)))
-    (3d-draw-points (coerce selected-points 'vector) :highlight? t)))
+    (3d-draw-points (coerce selected-points 'vector) nil :highlight? t)))
 
