@@ -85,6 +85,7 @@
    (:file "src/plugins/force-field")
    (:file "src/plugins/dynamics-animator")
    (:file "src/plugins/flex-animator")
+   (:file "src/plugins/boid-system")
    (:file "src/plugins/procedural-curve")
    (:file "src/plugins/scalar-field")
    (:file "src/plugins/isosurface")

@@ -29,6 +29,9 @@
 (defmethod num-children ((group group-mixin))
   (length (children group)))
 
+(defmethod get-child ((group group-mixin) i)
+  (aref (children group) i))
+
 (defmethod children-as-list ((group group-mixin))
   (coerce (children group) 'list))
 

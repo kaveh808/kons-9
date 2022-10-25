@@ -68,7 +68,7 @@
 
 (defun make-sine-curve-curve (period frequency x-scale y-scale num-segments)
   (make-curve (make-sine-curve-points period frequency x-scale y-scale num-segments)
-                nil))
+              nil))
 
 #|
 (defun make-3-point-arc (p0 p1 p2 num-segments)
