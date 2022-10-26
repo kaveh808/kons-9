@@ -158,7 +158,7 @@
 (format t "  particle-system...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
+  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 1 0)))
                                      (p! 0 .2 0) 10 -1 'particle
                                      :update-angle (range-float (/ pi 8) (/ pi 16))
                                      :life-span 10)))
@@ -169,10 +169,11 @@
 ;;; particle-system force-field collisions
 ;;; TODO -- num of intial particles not working -- always 1
 (with-clear-scene
-  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
+  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 1 2 .5)))
                                      (p-rand .2) 2 -1 'dynamic-particle
                                      :life-span 20
                                      :do-collisions? t
+                                     :elasticity 0.8
                                      :force-fields (list (make-instance 'constant-force-field
                                                                         :force-vector (p! 0 -.02 0))))))
     (add-shape *scene* p-sys)
@@ -256,7 +257,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (with-clear-scene
   (let* ((shape (generate-point-cloud (triangulate-polyhedron (import-obj *example-obj-filename*))
                                       100))
-         (p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
+         (p-sys (make-particle-system (make-point-cloud (vector (p! 0 0.1 0)))
                                       (p! .2 .2 .2) 10 -1 'climbing-particle
                                       :support-point-cloud shape
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
@@ -273,7 +274,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
   (let* ((shape
            (import-obj *example-obj-filename*))
          (cloud (generate-point-cloud shape 100))
-         (p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
+         (p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
                                       (p! .2 .2 .2) 10 -1 'climbing-particle
                                       :support-point-cloud cloud
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
@@ -315,7 +316,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (format t "  point-instancer-group particle-system...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
+  (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0.1 0)))
                                       (p! 0 .2 0) 10 -1 'particle
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10))))
@@ -334,7 +335,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (format t "  point-instancer-group particle-system dependency-node-mixin...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
+  (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0.1 0)))
                                       (p! 0 .2 0) 10 -1 'particle
                                       :update-angle (range-float (/ pi 8) (/ pi 16))
                                       :life-span (rand1 5 10)))
@@ -541,7 +542,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :update-angle (range-float (/ pi 16) (/ pi 32)))))
     (add-shape *scene* p-gen)
     (setf (name p-sys) 'p-system-1)
-    (add-shape *scene* p-sys)
+    (add-shape *sce         ne* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
 
