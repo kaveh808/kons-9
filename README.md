@@ -2,6 +2,10 @@
 
 ## An IDE For 3D Production
 
+Teaser trailer for the project:
+
+https://www.youtube.com/watch?v=THMzaVDaZP8
+
 **kons-9** is a new 3D computer graphics and animation software system being developed as an **open source project** under the MIT license. It broadly falls under the category of a **3D digital content creation tool**, while providing interesting and unique features not found in other systems. The intention is to develop a **flexible and extensible system** in which can be built a wide variety of application and domain specific tools and packages.
 
 The unique differentiating aspect of **kons-9** is that it combines the power of a **software development IDE** with the visual tools of **3D graphics authoring system**. It does this by being implemented in **Common Lisp**, an **object-oriented dynamic language** which provides powerful facilities for **exploratory development and rapid prototyping** within a live interactive software environment.
