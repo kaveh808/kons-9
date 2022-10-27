@@ -347,8 +347,8 @@
          (g (c-green col))
          (b (c-blue col)))
     (gl-set-material col)
+    (gl:color-material :front-and-back :diffuse)
     (with-gl-enable :color-material
-      (gl:color-material :front-and-back :diffuse)
       (cond ((and (> (length point-colors) 0) *do-smooth-shading?*)
              (dotimes (f (length faces))
                (gl:begin :polygon)
@@ -395,8 +395,8 @@
 (defmethod 3d-draw-filled-polygons-aux-SAV (points faces face-normals point-normals point-colors)
   (let ((col (shading-color *drawing-settings*)))
     (gl-set-material col)
+    (gl:color-material :front-and-back :diffuse)
     (with-gl-enable :color-material
-      (gl:color-material :front-and-back :diffuse)
       (dotimes (f (length faces))
         (gl:begin :polygon)
         (when (not *do-smooth-shading?*)
@@ -427,8 +427,8 @@
 
 (defmethod 3d-draw-highlighted-polygons-aux (points faces face-normals point-normals faces-highlighted)
   (let ((sel-col (sel-color *drawing-settings*)))
+    (gl:color-material :front-and-back :diffuse)
     (with-gl-enable :color-material
-      (gl:color-material :front-and-back :diffuse)
       (dotimes (f (length faces))
         (when (aref faces-highlighted f)
           (gl:begin :polygon)
