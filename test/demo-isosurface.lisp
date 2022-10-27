@@ -222,8 +222,8 @@ Use a particle system as a curve source.
 (format t "  isosurface 10...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0 0)))
-                                     (p! 0 .2 0) 10 -1 'particle
+  (let ((p-sys (make-particle-system-from-point (p! 0 3 0) 10 (p! -.2 -.2 -.2) (p! .2 .2 .2)
+                                     'particle
                                      :update-angle (range-float (/ pi 8) (/ pi 16))
                                      :life-span 10)))
     ;; add particle system to scene as both a shape and a motion
@@ -233,8 +233,8 @@ Use a particle system as a curve source.
     (update-scene *scene* 15)
     ;;; create field and isosurface from particle paths (curves)
     (let* ((field (apply-field-function (make-scalar-field 40 40 40
-                                                           :bounds-lo (p! -2 0 -2)
-                                                           :bounds-hi (p!  2 4  2))
+                                                           :bounds-lo (p! -3 0 -3)
+                                                           :bounds-hi (p!  3 6  3))
                                         (curve-source-field-fn p-sys
                                                                :strength 1.0 :falloff 1.2)))
            (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 100.0))))
@@ -286,7 +286,7 @@ Comment in the desired function.
 Visualize an ISOSURFACE as a VOXEL-GRID-SHAPE. Note the isosurface does not
 need to be generated.
 |#
-(format t "  isosurface 1...~%") (finish-output)
+(format t "  isosurface 12...~%") (finish-output)
 
 (with-clear-scene
   (let* ((field (apply-field-function (make-scalar-field 20 20 20)
@@ -304,7 +304,7 @@ VOXEL-GRID-SHAPE. Note the isosurface does not need to be generated.
 
 Press 'space' to run the animation.
 |#
-(format t "  isosurface 4...~%") (finish-output)
+(format t "  isosurface 13...~%") (finish-output)
 
 (with-clear-scene
   (let* ((p-cloud (make-point-cloud (make-grid-points 2 2 2 (p! -0.5 -0.5 -0.5) (p! 0.5 0.5 0.5))))

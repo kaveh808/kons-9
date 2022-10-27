@@ -17,6 +17,9 @@ The demos below demonstrate examples of generating UV-MESH instances.
 
 Some functions which generate basic shapes.
 |#
+
+(format t "  uv-mesh 1...~%") (finish-output)
+
 (with-clear-scene
   (add-shape *scene* (translate-to (make-grid-uv-mesh 3 1.5 1 1) (p! 0 0 -6.0)))
   (add-shape *scene* (translate-to (make-cylinder-uv-mesh 1.5 3 16 4) (p! 0 0 -4.0)))
@@ -32,6 +35,9 @@ Some functions which generate basic shapes.
 
 A transform extrude transforms a profile POLYGON and sweeps out a UV-MESH.
 |#
+
+(format t "  uv-mesh 2...~%") (finish-output)
+
 (with-clear-scene
   (add-shape *scene* (transform-extrude-uv-mesh (make-rectangle-curve 2 2 2)
                                                 (make-euler-transform (p! 2 1 4) (p! 90 90 60) (p! 1 .5 .2))
@@ -42,6 +48,9 @@ A transform extrude transforms a profile POLYGON and sweeps out a UV-MESH.
 
 Another example of a transform extrude.
 |#
+
+(format t "  uv-mesh 3...~%") (finish-output)
+
 (with-clear-scene
   (add-shape *scene* (transform-extrude-uv-mesh (make-circle-curve 2.0 16)
                                                 (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))
@@ -52,6 +61,9 @@ Another example of a transform extrude.
 
 A transform extrude with a rotate pivot.
 |#
+
+(format t "  uv-mesh 4...~%") (finish-output)
+
 (with-clear-scene
   (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
     (setf (pivot (rotate xform)) (p! 1 0 0))
@@ -65,6 +77,9 @@ A transform extrude with a rotate pivot.
 
 A transform extrude with a scale pivot.
 |#
+
+(format t "  uv-mesh 5...~%") (finish-output)
+
 (with-clear-scene
   (let ((xform (make-euler-transform (p! 0 0 4) (p! 0 0 360) (p! 2 .2 1))))
     (setf (pivot (scale xform)) (p! 1 2 0))
@@ -77,6 +92,9 @@ A transform extrude with a scale pivot.
 
 Using a GENERALIZED-TRANSFORM. Should exactly match (Demo 05 uv-mesh).
 |#
+
+(format t "  uv-mesh 6...~%") (finish-output)
+
 (with-clear-scene
   (let ((xform (make-instance 'generalized-transform
                               :operators
@@ -95,6 +113,9 @@ Using a GENERALIZED-TRANSFORM. Should exactly match (Demo 05 uv-mesh).
 A sweep extrude operation creates a UV-MESH by sweeping a profile CURVE along
 a path CURVE. The profile and path can be open or closed.
 |#
+
+(format t "  uv-mesh 7...~%") (finish-output)
+
 (with-clear-scene 
   (let* ((path (make-sine-curve-curve 360 1 4 2 64))
          (prof (make-circle-curve 1.0 4))
@@ -113,11 +134,38 @@ Assign point colors to the UV-MESH by xyz.
                          (lambda (p) (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))
 
 #|
-(Demo 08 uv-mesh) function-extrude-uv-mesh ====================================
+(Demo 08 uv-mesh) create group of uv-meshes ====================================
+
+Create a group of UV-MESH shapes along a PARTICLE-SYSTEM.
+|#
+
+(format t "  uv-mesh 8...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .2 -.2) (p! .2 .5 .2) 'particle
+                                                 :update-angle (range-float (/ pi 8) (/ pi 16)))))
+    (setf (name p-sys) 'p-system)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+;;; create a SHAPE-GROUP of UV-MESH by extruding a circle along the paths of
+;;; the PARTICLE-SYSTEM.
+(let ((group (make-shape-group (sweep-extrude (make-circle 0.5 8)
+                                              (find-shape-by-name *scene* 'p-system)
+                                              :taper 0.0 :twist 0.0))))
+  (setf (name group) 'sweep-group)
+  (add-shape *scene* group))
+
+#|
+(Demo 09 uv-mesh) function-extrude-uv-mesh ====================================
 
 A function extrude operation sweeps out a profile CURVE using a function to
 allow for more general procedural modeling.
 |#
+
+(format t "  uv-mesh 9...~%") (finish-output)
+
 (with-clear-scene
   (add-shape *scene* (function-extrude-uv-mesh
                       (make-circle-curve 2.0 16)
@@ -128,10 +176,13 @@ allow for more general procedural modeling.
                       20)))
 
 #|
-(Demo 09 uv-mesh) function-extrude-uv-mesh ====================================
+(Demo 10 uv-mesh) function-extrude-uv-mesh ====================================
 
 Another example of a function extrude.
 |#
+
+(format t "  uv-mesh 10...~%") (finish-output)
+
 (with-clear-scene
   (add-shape *scene* (function-extrude-uv-mesh
                       (make-circle-curve 2.0 16)

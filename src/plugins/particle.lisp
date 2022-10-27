@@ -63,7 +63,7 @@
    (life-span :accessor life-span :initarg :life-span :initform -1) ; -1 = immortal
    (update-angle :accessor update-angle :initarg :update-angle :initform (range-float 0.0 0))
    (spawn-number-children :accessor spawn-number-children :initarg :spawn-number-children :initform (range-float 2 0))
-   (spawn-angle :accessor spawn-angle :initarg :spawn-angle :initform (range-float (/ pi 2) 0))
+   (spawn-angle :accessor spawn-angle :initarg :spawn-angle :initform (range-float (/ pi 8) (/ pi 16)))
    (spawn-life-span-factor :accessor spawn-life-span-factor :initarg :spawn-life-span-factor :initform (range-float 1.0 0))
    (spawn-velocity-factor :accessor spawn-velocity-factor :initarg :spawn-velocity-factor :initform (range-float 1.0 0))))
 
@@ -305,38 +305,35 @@
 (defmethod source-curves-closed ((p-sys particle-system))
   (make-list (length (faces p-sys)) :initial-element nil)) ;always open
 
+;;;; create particle systems ===================================================
 
-
-(defmethod make-particle-system (p-gen vel num max-gen particle-class &rest initargs)
+(defun make-particle-system-from-point-source (p-source vel-fn particle-class &rest particle-initargs)
   (apply #'make-particle-system-aux
-         (source-points p-gen)
-         (source-directions p-gen)
-         vel num max-gen particle-class initargs))
+         (source-points p-source)
+         (if vel-fn
+             (map 'vector vel-fn (source-directions p-source))
+             (source-directions p-source))
+         particle-class
+         particle-initargs))
 
-;; (defmethod make-particle-system ((p-gen point-source-mixin) (vel point) num max-gen particle-class &rest initargs)
-;;   (let ((p-sys (make-instance 'particle-system :max-generations max-gen)))
-;;     (let ((points (point-source-points p-gen))
-;;           (normals (point-source-directions p-gen)))
-;;       (loop for p across points
-;;             for n across normals
-;;             do (dotimes (i num)
-;;                  (add-particle p-sys (apply #'make-instance particle-class
-;;                                             :pos p
-;;                                             :vel (p* n vel)
-;;                                             initargs)))))
-;;     p-sys))
+(defun make-particle-system-from-point (point num min-vel max-vel particle-class &rest particle-initargs)
+  (let ((pnts (make-array num))
+        (vels (make-array num)))
+    (dotimes (i num)
+      (setf (aref pnts i) (p:copy point))
+      (setf (aref vels i) (p-rand2 min-vel max-vel)))
+    (apply #'make-particle-system-aux
+           pnts
+           vels
+           particle-class
+           particle-initargs)))
 
-(defmethod make-particle-system-aux (points directions vel num max-gen particle-class &rest initargs)
-  (let ((p-sys (make-instance 'particle-system :max-generations max-gen)))
+(defun make-particle-system-aux (points velocities particle-class &rest initargs)
+  (let ((p-sys (make-instance 'particle-system)))
     (loop for p across points
-          for v across directions
-          do (dotimes (i num)
-               (add-particle p-sys (apply #'make-instance particle-class
-                                          :pos p
-                                          :vel (p:* v vel)
-                                          initargs))))
+          for v across velocities
+          do (add-particle p-sys (apply #'make-instance particle-class :pos p :vel v initargs)))
     p-sys))
-
 
 ;;;; gui =======================================================================
 

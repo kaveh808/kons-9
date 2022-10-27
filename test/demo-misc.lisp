@@ -2,73 +2,6 @@
 
 ;;;; start plugins demos =======================================================
 
-(format t "  heightfields...~%") (finish-output)
-
-;;; heightfield ---------------------------------------------------------------
-;;; try using various height functions and color functions
-(with-clear-scene
-  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       :name 'hfield
-                                       :height-fn (lambda (x z)
-                                                    (* 4 (noise (p! x 0 z)))))))
-
-(with-clear-scene
-  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       :name 'hfield
-                                       :height-fn (lambda (x z)
-                                                    (* 4 (turbulence (p! x 0 z) 4))))))
-
-(with-clear-scene
-  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       :name 'hfield
-                                       :height-fn (lambda (x z)
-                                                    (let* ((p (p! x 0 z))
-                                                           (mag (p:length (p:scale p .25))))
-                                                      (if (= mag 0.0)
-                                                          10.0
-                                                          (/ 1.0 mag)))))))
-
-(with-clear-scene
-  (add-shape *scene* (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
-                                       :name 'hfield
-                                       :height-fn (lambda (x z)
-                                                    (let* ((p (p! x 0 z))
-                                                           (mag (max 0.001 (p:length (p:scale p 4.0)))))
-                                                      (* 3 (/ (sin mag) mag)))))))
-
-;;; rainbow color based on height
-(let ((mesh (find-shape-by-name *scene* 'hfield)))
-  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:y p) -.25 1.0) 0.0 1.0)))))
-
-;;; rainbow color based on XZ distance from origin
-(let ((mesh (find-shape-by-name *scene* 'hfield)))
-  (set-point-colors-by-xyz mesh (lambda (p) (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0)))))
-
-;;; 3D color noise
-(let ((mesh (find-shape-by-name *scene* 'hfield)))
-  (set-point-colors-by-xyz mesh (lambda (p) (color-noise p))))
-
-;;; animated heightfield -------------------------------------------------------
-(with-clear-scene
-  (let ((mesh (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5))))
-    (set-point-colors-by-xyz mesh
-                             (lambda (p)
-                               (c-rainbow (clamp (tween (p:length (p! (p:x p) 0 (p:z p))) 0 8) 0.0 1.0))))
-    (add-shape *scene* mesh)
-    (macrolet ((my-height-fn (scale)
-                 `(lambda (x z)
-                    (let* ((p (p! x 0 z))
-                           (mag (max 0.001 (p:length (p:scale p ,scale)))))
-                      (* 3 (/ (sin mag) mag))))))
-      (add-motion *scene*
-                    (make-instance 'animator
-                                   :setup-fn (lambda ()
-                                              (setf (height-fn mesh) (my-height-fn 1.0))
-                                              (update-heightfield mesh))
-                                   :update-fn (lambda ()
-                                                (setf (height-fn mesh) (my-height-fn (+ 1.0 (current-time *scene*))))
-                                                (update-heightfield mesh)))))))
-
 ;;; procedural-mixin superquadric ----------------------------------------------
 
 (format t "  superquadrics...~%") (finish-output)
@@ -153,62 +86,6 @@
 ;;; WARNING -- press space key in 3D view to generate new l-system levels hangs for some of these
 ;;; need to investigate
 
-;;; particle-system ------------------------------------------------------------
-
-(format t "  particle-system...~%") (finish-output)
-
-(with-clear-scene
-  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 1 0)))
-                                     (p! 0 .2 0) 10 -1 'particle
-                                     :update-angle (range-float (/ pi 8) (/ pi 16))
-                                     :life-span 10)))
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; particle-system force-field collisions
-;;; TODO -- num of intial particles not working -- always 1
-(with-clear-scene
-  (let ((p-sys (make-particle-system (make-point-cloud (vector (p! 1 2 .5)))
-                                     (p-rand .2) 2 -1 'dynamic-particle
-                                     :life-span 20
-                                     :do-collisions? t
-                                     :elasticity 0.8
-                                     :force-fields (list (make-instance 'constant-force-field
-                                                                        :force-vector (p! 0 -.02 0))))))
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; NOT TESTED BELOW THIS LINE
-
-;;; sweep-mesh dependency-node-mixin -------------------------------------------
-
-(format t "  sweep-mesh...~%") (finish-output)
-
-(with-clear-scene
-  (defparameter *profile* (make-circle 0.8 4))
-  (defparameter *path* (make-sine-curve 360 1 4 1 32))
-  (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
-  (add-shape *scene* *mesh*))
-
-;;; modify slots and shape will change
-(setf (num-segments *profile*) 6)
-(setf (num-segments *path*) 8)
-(setf (taper *mesh*) 1.0)
-
-;;; sweep-mesh dependency-node-mixin animator ----------------------------------
-(with-clear-scene
-  (defparameter *profile* (make-circle 1.2 4))
-  (defparameter *path* (make-sine-curve 360 1 4 1 32))
-  (defparameter *mesh* (make-sweep-mesh *profile* 0 *path* 0 :twist (* 2 pi) :taper 0.0))
-  (let ((anim (make-instance 'animator
-                             :setup-fn (lambda () (setf (num-segments *profile*) 4) nil)
-                             :update-fn (lambda () (incf (num-segments *profile*))))))
-    (add-motion *scene* anim)
-    (add-shape *scene* *mesh*)))
-;;; hold down space key in 3D view to run animation
-
 ;;; dynamics-animator ----------------------------------------------------------
 
 (format t "  dynamics-animator...~%") (finish-output)
@@ -250,51 +127,6 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
   (add-shape *scene*
              (import-obj *example-obj-filename*)))
 
-;;; particle system growth along point-cloud -----------------------------------
-
-(format t "  particle-system...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((shape (generate-point-cloud (triangulate-polyhedron (import-obj *example-obj-filename*))
-                                      100))
-         (p-sys (make-particle-system (make-point-cloud (vector (p! 0 0.1 0)))
-                                      (p! .2 .2 .2) 10 -1 'climbing-particle
-                                      :support-point-cloud shape
-                                      :update-angle (range-float (/ pi 8) (/ pi 16))
-                                      :life-span (rand1 5 10))))
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
-
-;;; particle system growth along point-cloud & sweep-extrude -------------------
-
-(format t "  particle-system...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((shape
-           (import-obj *example-obj-filename*))
-         (cloud (generate-point-cloud shape 100))
-         (p-sys (make-particle-system (make-point-cloud (vector (p! 0 2 0)))
-                                      (p! .2 .2 .2) 10 -1 'climbing-particle
-                                      :support-point-cloud cloud
-                                      :update-angle (range-float (/ pi 8) (/ pi 16))
-                                      :life-span (rand1 5 10))))
-    (setf (name p-sys) 'p-system)
-    (add-shape *scene* shape)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
-;;; sweep-extrude along particle system paths (first shape in scene)
-;;; BUG -- the group contains at least one degenerate uv-mesh (16x16) with no points, causing
-;;; a crash in set-point-colors-by-uv (added sanity check in that method)
-(let ((group (make-shape-group (sweep-extrude (make-circle 0.1 8)
-                                              (find-shape-by-name *scene* 'p-system)
-                                              :taper 1.0 :twist 0.0 :from-end? nil))))
-  (set-point-colors-by-uv group (lambda (u v)
-                                  (declare (ignore u v))
-                                  (c! 0.1 0.5 0.1)))
-  (add-shape *scene* group))
-
 ;;; point-instancer-group ------------------------------------------------------------
 
 (format t "  point-instancer-group...~%") (finish-output)
@@ -311,6 +143,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 (setf (point-source (find-shape-by-name *scene* 'point-instancer-group))
       (make-sine-curve 360.0 1.0 4.0 4.0 64))
 
+#|
 ;;; point-instancer-group particle-system --------------------------------------------
 
 (format t "  point-instancer-group particle-system...~%") (finish-output)
@@ -348,6 +181,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
     (add-shape *scene* shape)
     ))
 ;;; hold down space key in 3D view to run animation
+|#
 
 ;;; transform-instancer-group euler-transform ----------------------------------------
 
@@ -411,166 +245,6 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
            (group-2 (make-transform-instancer-group group-1 transform-2 6)))
       (add-shape *scene* group-2))))
 
-;;; particle-system curve-shape force-field ------------------------------------
-
-(format t "  particle-system 2...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((curve (make-circle 4.0 16))
-         (p-sys (make-particle-system curve (p! .2 .2 .2) 1 4 'dynamic-particle
-                                      :force-fields (list (make-instance 'constant-force-field
-                                                                         :force-vector (p! 0 -.02 0))))))
-    (add-shape *scene* curve)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; particle-system curve-shape sweep-extrude ----------------------------------
-
-(format t "  particle-system 3...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (make-circle 4.0 16))
-         (p-sys (make-particle-system p-gen (p! .2 .2 .2) 4 4 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (setf (name p-sys) 'p-system)
-    (add-shape *scene* p-gen)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-;;; do sweep along paths
-(let ((group (make-shape-group (sweep-extrude (make-circle 0.5 6)
-                                              (find-shape-by-name *scene* 'p-system)
-                                              :taper 0.0))))
-  (set-point-colors-by-uv group (lambda (u v) (declare (ignore u)) (c-rainbow v)))
-  (add-shape *scene* group))
-
-;;; particle-system point-generator-mixin uv-mesh ------------------------------
-
-(format t "  particle-system 4...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
-         (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (setf (name p-sys) 'p-system)
-    (add-shape *scene* p-gen)       
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-;;; do sweep along paths
-(let ((group (make-shape-group (sweep-extrude (make-circle 0.2 6)
-                                              (find-shape-by-name *scene* 'p-system)
-                                              :taper 0.0))))
-  (set-point-colors-by-uv group (lambda (u v) (declare (ignore u)) (c-rainbow v)))
-  (add-shape *scene* group))
-
-;;; particle-system point-generator-mixin sweep-mesh-group ---------------------
-
-(format t "  particle-system 5...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (make-grid-uv-mesh 8 8 24 24))
-         (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32))))
-         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6)
-                                                  p-sys
-                                                  :taper 0.0 :twist 2pi)))
-;;    (add-shape *scene* p-gen)
-;;    (add-shape *scene* p-sys)
-    (add-shape *scene* sweep-mesh-group)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; particle-system point-generator-mixin sweep-mesh-group spawning ------------
-
-(format t "  particle-system 6...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (make-grid-uv-mesh 4 4 1 1))
-         (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 8 'particle
-                                      :life-span (round (rand2 5 10))
-                                      :update-angle (range-float (/ pi 16) (/ pi 32))))
-         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
-                                                  :taper 0.0 :twist 0.0)))
-    (add-shape *scene* p-sys)
-    (add-shape *scene* sweep-mesh-group)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; particle-system point-generator-mixin use polyh face centers ---------------
-
-(format t "  particle-system 7...~%") (finish-output)
-
-(with-clear-scene
-  (let ((p-gen (make-icosahedron 2.0)))
-    (setf (point-source-use-face-centers? p-gen) t)
-    (let* ((p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
-                                        :life-span 10
-                                        :update-angle (range-float (/ pi 16) (/ pi 32))
-                                        :spawn-angle (range-float (/ pi 8) (/ pi 16))))
-           (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
-                                                    :taper 0.0 :twist 0.0)))
-      (add-shape *scene* p-gen)
-      (add-shape *scene* p-sys)
-      (add-shape *scene* sweep-mesh-group)
-      (add-motion *scene* p-sys))))
-;;; hold down space key in 3D view to run animation
-
-;;; particle-system point-generator-mixin polyhedron ---------------------------
-
-(format t "  particle-system 8...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (import-obj *example-obj-filename*))
-         (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'dynamic-particle
-                                       :force-fields (list (make-instance 'constant-force-field
-                                                                          :force-vector (p! 0 -.05 0))))))
-    (add-shape *scene* p-gen)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation -- slow, profile & optimize
-
-;;; particle-system point-generator-mixin particle-system ----------------------
-
-(format t "  particle-system 9...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (freeze-transform (translate-by (make-superquadric 8 5 2.0 1.0 1.0)
-                                                (p! 0 2 0))))
-         (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (add-shape *scene* p-gen)
-    (setf (name p-sys) 'p-system-1)
-    (add-shape *sce         ne* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; for automated testing
-(update-scene *scene* 10)
-
-;;; make new particle-system generate from paths of existing particle-system
-(progn
-  (clear-motions *scene*)             ;remove exsting particle animator
-  (let* ((p-gen (find-shape-by-name *scene* 'p-system-1))
-         (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (setf (name p-sys) 'p-system-2)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; for automated testing
-(update-scene *scene* 5)
-
-;;; do sweep-extrude  
-(let ((group (make-shape-group (sweep-extrude (make-circle 0.25 4)
-                                              (find-shape-by-name *scene* 'p-system-2)
-                                              :taper 0.0))))
-  (set-point-colors-by-uv group (lambda (u v)
-                                  (declare (ignore u))
-                                  (c-rainbow v)))
-    (add-shape *scene* group))
 
 ;;; polyhedron curve-generator-mixin -------------------------------------------
 
