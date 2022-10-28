@@ -40,7 +40,7 @@ If you wish to do so, please:
 
 ## How To Run kons-9
 
-This code currently runs in sbcl on MacOS and Linux. We need developers to work on sbcl/Windows, as well. The system currently uses OpenGL as a graphics engine.
+This code currently runs in SBCL on MacOS, Linux, and Windows. The system currently uses OpenGL as a graphics engine, though we are working on moving to Vulkan/Metal.
 
 Download the code and load the local directory:
 
@@ -55,9 +55,7 @@ Run the following code to open a 3D view window:
     (in-package :kons-9)
     (run)
 
-Type 'h' in the window to see the available key bindings.
-
-Open `test/demo-kernel.lisp` and start evaluating the blocks of code for the demos. Things should appear in the graphics window.
+Open `test/demo-kernel.lisp` and start evaluating the blocks of code for the demos. Things should appear in the graphics window. Try the other demo files as well.
 
 Have fun.
 
