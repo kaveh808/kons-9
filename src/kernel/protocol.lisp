@@ -18,8 +18,7 @@
   (:method ((polyh polyhedron))
     (if (point-source-use-face-centers? polyh)
         (face-centers polyh)
-        (call-next-method)))
-  )
+        (call-next-method))))
 
 (defgeneric source-directions (obj)
 
@@ -30,7 +29,8 @@
     ;; arbitrarily return (1 1 1) for use as velocity multiplier
     ;; (make-array (length (points p-cloud))
     ;;             :initial-element (p! 1 1 1)))
-    (source-radial-directions p-cloud))
+;;    (source-radial-directions p-cloud))
+    (source-random-directions p-cloud))
   
   (:method ((curve curve))
     (curve-tangents curve))
@@ -38,13 +38,18 @@
   (:method ((polyh polyhedron))
     (if (point-source-use-face-centers? polyh)
         (face-normals polyh)
-        (point-normals polyh)))
-  )
+        (point-normals polyh))))
+
+(defgeneric source-random-directions (obj)
+  (:method ((obj t))
+    (let ((dir (make-array (length (source-points obj)))))
+      (dotimes (i (length dir))
+        (setf (aref dir i) (p-rand)))
+      dir)))
 
 (defgeneric source-radial-directions (obj)
   (:method ((obj t)) 
-    (map 'vector #'p:normalize (source-points obj)))
-  )
+    (map 'vector #'p:normalize (source-points obj))))
 
 (defgeneric source-closest-point (obj point)
   (:method ((obj t) point)
