@@ -11,6 +11,7 @@ functions and the like.
 (let ((demo-files '("demo-kernel"
                     "demo-procedural-curve"
                     "demo-uv-mesh"
+                    "demo-superquadric"
                     "demo-heightfield"
                     "demo-particle"
                     "demo-sweep-mesh"

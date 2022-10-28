@@ -58,9 +58,9 @@ with the particle system.
 
 (with-clear-scene
   (let* (;(p-gen (make-grid-uv-mesh 8 8 24 24))
-         (p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .2 -.2) (p! .2 .5 .2) 'particle
+         (p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .5 .2) 'particle
                                                  :update-angle (range-float (/ pi 8) (/ pi 16))))
-         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6)
+         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.5 6)
                                                   p-sys
                                                   :taper 0.0 :twist 2pi)))
     (setf (name sweep-mesh-group) 'sweep-group)

@@ -12,7 +12,7 @@ update accordingly.
 
 We also assume that you are familiar with the basics of 3D graphics.
 
-As of this writing, kons-9 runs on MacOS (Intel & M1) and Linux.
+As of this writing, kons-9 runs on MacOS (Intel & M1), Linux. and Windows.
 
 We hope you find the system enjoyable and useful.
 |#

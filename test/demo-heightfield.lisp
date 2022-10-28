@@ -89,3 +89,5 @@ We use an animator to vary the values of the heightfield formula over time.
                                    :update-fn (lambda ()
                                                 (setf (height-fn mesh) (my-height-fn (+ 1.0 (current-time *scene*))))
                                                 (update-heightfield mesh)))))))
+
+;;; Hold down space key to play animation. Press '[' key to go back to frame 0.

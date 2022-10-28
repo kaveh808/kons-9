@@ -1,39 +1,6 @@
 (in-package #:kons-9)
 
-;;;; start plugins demos =======================================================
-
-;;; procedural-mixin superquadric ----------------------------------------------
-
-(format t "  superquadrics...~%") (finish-output)
-
-(with-clear-scene
-  (let ((mesh (make-superquadric 16 16 2.0 1 0.1 :name 'superquadric)))
-    (add-shape *scene* mesh)
-    (translate-by mesh (p! 0 1 0))))
-
-;;; modify slots and shape will change due to prcedural-mixin setup
-(setf (e1 (find-shape-by-name *scene* 'superquadric)) 0.5)
-
-(setf (u-dim (find-shape-by-name *scene* 'superquadric)) 32)
-
-;;; animated superquadric
-(with-clear-scene
-  (let ((mesh (make-superquadric 32 32 2.0 1.0 1.0)))
-    (add-shape *scene* mesh)
-    (translate-by mesh (p! 0 1 0))
-    (add-motion *scene*
-                  (make-instance 'animator
-                                 :setup-fn (lambda ()
-                                            (setf (e1 mesh) 1.0)
-                                            (setf (e2 mesh) 1.0))
-                                 :update-fn (lambda ()
-                                              (let ((p (p:normalize
-                                                        (noise-gradient
-                                                         (p! (+ (current-time *scene*) 0.123)
-                                                             (+ (current-time *scene*) 0.347)
-                                                             (+ (current-time *scene*) 0.965))))))
-                                              (setf (e1 mesh) (* (abs (p:x p)) 2.0))
-                                              (setf (e2 mesh) (* (abs (p:y p)) 2.0))))))))
+;;;; start misc demos ==========================================================
 
 ;;; parametric-curve -----------------------------------------------------------
 
@@ -68,18 +35,22 @@
 
 ;;; uncomment an l-system to test
 (with-clear-scene
-  (let ((l-sys
+  (defparameter *l-sys*
           ;; (make-koch-curve-l-system)
           ;; (make-binary-tree-l-system)
           ;; (make-serpinski-triangle-l-system)
           ;; (make-serpinski-arrowhead-l-system)
           ;; (make-dragon-curve-l-system)
-           (make-fractal-plant-l-system)
-          ))
-    (setf (name l-sys) 'l-system)
-    (add-shape *scene* l-sys)
-    (add-motion *scene* l-sys)
-    (update-scene *scene* 5)
+           (make-fractal-plant-l-system))
+  (add-shape *scene* *l-sys*)
+  (add-motion *scene* *l-sys*)
+  (add-motion *scene*
+              (make-instance 'animator
+                             :update-fn (lambda ()
+                                          (scale-to-size *l-sys* 5.0)
+                                          (center-at-origin *l-sys*)))))
+
+    ;;    (update-scene *scene* 5)
     ;; resize shape to convenient size and center shape at origin
     (scale-to-size (find-shape-by-name *scene* 'l-system) 5.0)
     (center-at-origin (find-shape-by-name *scene* 'l-system))))
