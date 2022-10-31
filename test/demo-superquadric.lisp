@@ -1,6 +1,14 @@
 (in-package #:kons-9)
 
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 A SUPERQUADRIC is a subclass of UV-MESH. Superquadrics are a parametric (e1, e2)
 representation of various ellipsoidal shapes. When both e1 and e2 are 1.0, the
 resulting shape is a sphere.

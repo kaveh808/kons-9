@@ -1,6 +1,14 @@
 (in-package #:kons-9)
 
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 The FLEX-ANIMATOR class animates a POLYHEDRON shape using simple mass-spring
 dynamics. It is intended as a test platform for more complex behaviors.
 

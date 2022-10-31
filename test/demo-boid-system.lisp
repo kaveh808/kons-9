@@ -1,6 +1,14 @@
 (in-package #:kons-9)
 
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 The BOID-ANIMATOR and BOID-SYSTEM classes simulate creatures with behaviors in
 an ecosystem-like setting. It is intended as a test platform for more complex
 behaviors.

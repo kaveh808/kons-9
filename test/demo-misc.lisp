@@ -1,5 +1,15 @@
 (in-package #:kons-9)
 
+#|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+|#
+
 ;;;; start misc demos ==========================================================
 
 ;;; parametric-curve -----------------------------------------------------------
@@ -13,6 +23,7 @@
   (add-shape *scene* (make-butterfly-curve 1024)))
 
 ;;; poly-mesh ------------------------------------------------------------------
+
 (with-clear-scene
   (add-shape *scene* (translate-by (make-cube 2.0 :name 'cube :mesh-type 'poly-mesh) (p! 0 1 0))))
 ;;; select vertices
@@ -36,26 +47,26 @@
 ;;; uncomment an l-system to test
 (with-clear-scene
   (defparameter *l-sys*
-          ;; (make-koch-curve-l-system)
-          ;; (make-binary-tree-l-system)
-          ;; (make-serpinski-triangle-l-system)
-          ;; (make-serpinski-arrowhead-l-system)
-          ;; (make-dragon-curve-l-system)
-           (make-fractal-plant-l-system))
+    ;; (make-koch-curve-l-system)
+    ;; (make-binary-tree-l-system)
+    ;; (make-serpinski-triangle-l-system)
+    ;; (make-serpinski-arrowhead-l-system)
+     (make-dragon-curve-l-system)
+    ;; (make-fractal-plant-l-system)
+    )
   (add-shape *scene* *l-sys*)
   (add-motion *scene* *l-sys*)
+    ;; resize shape to convenient size and center shape at origin
   (add-motion *scene*
               (make-instance 'animator
                              :update-fn (lambda ()
                                           (scale-to-size *l-sys* 5.0)
-                                          (center-at-origin *l-sys*)))))
+                                          (center-at-origin *l-sys*))))
+  ;; grow 5 levels to have a representative shape
+  (update-scene *scene* 5))
 
-    ;;    (update-scene *scene* 5)
-    ;; resize shape to convenient size and center shape at origin
-    (scale-to-size (find-shape-by-name *scene* 'l-system) 5.0)
-    (center-at-origin (find-shape-by-name *scene* 'l-system))))
-;;; WARNING -- press space key in 3D view to generate new l-system levels hangs for some of these
-;;; need to investigate
+;;; WARNING -- pressing space key in 3D view to update l-system growth hangs for some of these
+;;; past level 5 or so -- need to investigate
 
 ;;; dynamics-animator ----------------------------------------------------------
 

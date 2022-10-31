@@ -2,10 +2,21 @@
 
 
 #|
-The PARTICLE-SYSTEM class is a ...
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
 
-PARTICLE-SYSTEM inherits from POLYHEDRON and internally creates polygonal faces from
-its ...
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
+The PARTICLE-SYSTEM class represents particles which are updated over time.
+These can be used to simulate fireworks-type objects or trailing/branching
+structures.
+
+PARTICLE-SYSTEM inherits from POLYHEDRON and internally creates polygonal faces
+from the trails of its particles. These trails/faces can be used as paths for
+SWEEP-MESH creation.
 
 The demos below demonstrate examples of using particle systems.
 |#

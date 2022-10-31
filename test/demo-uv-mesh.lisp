@@ -1,7 +1,14 @@
 (in-package #:kons-9)
 
-
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 The UV-MESH class is a polyhedral mesh class which is made up of a 2D array of
 points. The mesh is parametrized in U and V, allowing for generation of shapes
 using a variety of procedural techniques such as sweeps.

@@ -1,6 +1,14 @@
 (in-package #:kons-9)
 
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 The PROCEDURAL-POLYGON class uses the kons-9 PROCEDURAL-MIXIN facility to
 automatically update the shape when one of the input slots changes.
 

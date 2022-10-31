@@ -1,6 +1,14 @@
 (in-package #:kons-9)
 
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 A HEIGHTFIELD is a subclass of UV-MESH. It stores a height value (Y) for each
 point on the XZ plane, representing the function Y=f(X,Z). It is useful for
 visualizing mathematical functions of this sort, as well as terrain and
