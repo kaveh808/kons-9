@@ -28,6 +28,9 @@
 (defun copy-points (points)
   (mapcar #'p:copy points))
 
+(defun copy-point-array (point-array)
+  (map 'vector #'p:copy point-array))
+
 (defmacro def-point-func-1 (op)
   `(defun ,(concat-syms 'p op) (p val)
      (ctypecase val

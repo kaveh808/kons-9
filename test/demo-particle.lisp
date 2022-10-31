@@ -208,6 +208,8 @@ Climbing particles which follow the surface of a shape, via an intermediate
 point-cloud.
 |#
 
+#| TODO -- comment out until we have POLYH-CLOSEST-POINT
+
 (format t "  particle-system 09...~%") (finish-output)
 
 (with-clear-scene
@@ -225,7 +227,7 @@ point-cloud.
 ;;; suggestion: turn off filled display for a better view (TAB, D, 1)
 
 (update-scene *scene* 20)               ;do update for batch testing
-
+|#
 
 #|
 ;;; particle-system point-generator-mixin use polyh face centers ---------------

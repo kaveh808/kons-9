@@ -47,7 +47,7 @@
   (make-instance 'point-cloud :points points))
 
 (defmethod freeze-transform ((p-cloud point-cloud))
-  (transform-points! (points p-cloud) (transform-matrix (transform p-cloud)))
+  (transform-point-array! (points p-cloud) (transform-matrix (transform p-cloud)))
   (reset-transform (transform p-cloud))
   p-cloud)
 
