@@ -2,10 +2,21 @@
 
 
 #|
-The PARTICLE-SYSTEM class is a ...
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
 
-PARTICLE-SYSTEM inherits from POLYHEDRON and internally creates polygonal faces from
-its ...
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
+The PARTICLE-SYSTEM class represents particles which are updated over time.
+These can be used to simulate fireworks-type objects or trailing/branching
+structures.
+
+PARTICLE-SYSTEM inherits from POLYHEDRON and internally creates polygonal faces
+from the trails of its particles. These trails/faces can be used as paths for
+SWEEP-MESH creation.
 
 The demos below demonstrate examples of using particle systems.
 |#
@@ -197,6 +208,8 @@ Climbing particles which follow the surface of a shape, via an intermediate
 point-cloud.
 |#
 
+#| TODO -- comment out until we have POLYH-CLOSEST-POINT
+
 (format t "  particle-system 09...~%") (finish-output)
 
 (with-clear-scene
@@ -214,7 +227,7 @@ point-cloud.
 ;;; suggestion: turn off filled display for a better view (TAB, D, 1)
 
 (update-scene *scene* 20)               ;do update for batch testing
-
+|#
 
 #|
 ;;; particle-system point-generator-mixin use polyh face centers ---------------

@@ -1,4 +1,12 @@
 #|
+These demos assume that you have succeeded in loading the system and opening
+the graphics window. If you have not, please check the README file.
+
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 https://graphics.pixar.com/usd/release/tut_xforms.html
 |#
 

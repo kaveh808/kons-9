@@ -140,6 +140,8 @@
 
 ;;;; climbing-particle ===================================================
 
+#| TODO -- comment out until we have POLYH-CLOSEST-POINT
+
 (defclass climbing-particle (particle)
   ((support-point-cloud :accessor support-point-cloud :initarg :support-point-cloud :initform nil)))
 
@@ -152,6 +154,7 @@
   (let* ((pos (source-closest-point (support-point-cloud ptcl) (pos ptcl))))
     (when (not (p:= pos (pos ptcl))) ; avoid duplicate points
       (setf (pos ptcl) pos))))
+|#
 
 ;;;; dynamic-particle ====================================================
 

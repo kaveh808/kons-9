@@ -12,7 +12,7 @@
         (vector (start-time motion) (duration motion))
         (compute-motion-absolute-timing motion (absolute-timing (outliner-parent view))))))
 
-(defmethod draw-view :after ((view ui-motion-outliner-item) &optional (x-offset 0) (y-offset 0))
+(defmethod draw-view :after ((view ui-motion-outliner-item) x-offset y-offset)
   ;; draw bar showing motion timing data
   (with-accessors ((x ui-x) (y ui-y) (w ui-w) (h ui-h))
       view
@@ -36,7 +36,7 @@
   (create-contents (make-instance 'ui-motion-outliner-viewer
                                   :ui-x 20 :ui-y 20 :title title :data-object obj :data-accessor-fn accessor-fn)))
 
-(defmethod draw-view :after ((view ui-motion-outliner-viewer) &optional (x-offset 0) (y-offset 0))
+(defmethod draw-view :after ((view ui-motion-outliner-viewer) x-offset y-offset)
   ;; draw current frame indicator
   (gl:color 0.3 0.3 0.6 1.0)
   (let ((rel-time (relative-current-time (scene *default-scene-view*)))

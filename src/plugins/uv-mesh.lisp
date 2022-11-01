@@ -135,8 +135,8 @@
 ;;     (compute-polyhedron-data mesh)
 ;;     mesh))
 
-(defun curve-tangent (i points &optional (is-closed? nil))
-  (let ((len (length points))
+(defun curve-tangent (i point-array &optional (is-closed? nil))
+  (let ((len (length point-array))
 	i1
 	i2)
     (if (= len 2)
@@ -154,7 +154,7 @@
 					 (setf i2 i))))
 	      (t (progn (setf i1 (1- i))
 			(setf i2 (1+ i))))))
-    (p:normalize (p:- (nth i2 points) (nth i1 points)))))
+    (p:normalize (p:- (aref point-array i2) (aref point-array i1)))))
 
 (defun curve-remove-consecutive-duplicates (curve)
     (if (and curve (> (length curve) 1))
@@ -164,56 +164,54 @@
         curve))
 
 ;;; assumes profile curve has z-axis as normal
-;;; TODO -- optimize, remove coerce of points to list and then array
-(defmethod sweep-extrude-aux ((mesh uv-mesh) profile-points is-closed-profile? path-points is-closed-path?
+(defmethod sweep-extrude-aux ((mesh uv-mesh)
+                              profile-point-array is-closed-profile?
+                              path-point-array is-closed-path?
                               &key (twist 0.0) (taper 1.0) (from-end? nil))
-  (declare (optimize debug))
-  (let ((unique-path-points (curve-remove-consecutive-duplicates (coerce path-points 'list)))) ; fix this
-    (when (or (< (length profile-points) 2)
-              (< (length unique-path-points) 2))
-      (return-from sweep-extrude-aux (make-instance 'uv-mesh))) ;return empty mesh -- throw error?
-    (setf (u-dim mesh) (length profile-points))
-    (setf (v-dim mesh) (length unique-path-points))
-    (setf (u-wrap mesh) is-closed-profile?)
-    (setf (v-wrap mesh) is-closed-path?)
-    (setf (v-cap mesh) is-closed-profile?)
-    (let* ((delta (/ 1.0 (1- (v-dim mesh))))
-           (prev-tangent +z-axis+)
-           (p0 +origin+)
-           (points (copy-points profile-points))
-           (path-points-2 (if from-end?
-                              (reverse unique-path-points)
-                              unique-path-points)))
-      (allocate-mesh-arrays mesh)
-      (loop :for p1 :in path-points-2
-            :for v :from 0
-            :do (let* ((factor (tween v 0.0 (- (v-dim mesh) 1)))
-                       (tangent (curve-tangent v path-points-2 (v-wrap mesh))))
-                  (when (p:= tangent +origin+) ;heuristic to avoid null tangent in P0-P1-P0 case
-                    (setf tangent prev-tangent))
-                  (let* ((r1-mtx (make-axis-rotation-matrix (p-angle prev-tangent tangent) ;p:angle barfs if tangents are equal, should tangents be equal?
-                                                            (p:cross prev-tangent tangent)
-                                                            p1))
-                         (r2-mtx (make-axis-rotation-matrix (* delta twist) tangent p1))
-                         (t-mtx (make-translation-matrix (p:- p1 p0)))
-                         (mtx (matrix-multiply-n t-mtx r1-mtx r2-mtx)))
-                    (transform-point-list! points mtx)
-                    (setf prev-tangent tangent)
-                    (setf p0 p1)
-                    (let ((scaled-points (copy-points points))
-                          (s-mtx (make-scale-matrix (p:lerp (p! 1 1 1) (p! taper taper taper) factor)
-                                                    p1)))
-                      (transform-point-list! scaled-points s-mtx)		      
-                      (loop :for p2 :in scaled-points
-                            :for u :from 0
-                            :do (setf (aref (uv-point-array mesh) u v) (p:copy p2)))))))
-      (compute-polyhedron-data mesh))))
+  (when (or (< (length profile-point-array) 2)
+            (< (length path-point-array) 2))
+    (return-from sweep-extrude-aux (make-instance 'uv-mesh))) ;return empty mesh -- throw error?
+  (setf (u-dim mesh) (length profile-point-array))
+  (setf (v-dim mesh) (length path-point-array))
+  (setf (u-wrap mesh) is-closed-profile?)
+  (setf (v-wrap mesh) is-closed-path?)
+  (setf (v-cap mesh) is-closed-profile?)
+  (let* ((delta (/ 1.0 (1- (v-dim mesh))))
+         (prev-tangent +z-axis+)
+         (p0 +origin+)
+         (point-array (copy-point-array profile-point-array))
+         (path-points-2 (if from-end?
+                            (reverse path-point-array)
+                            path-point-array)))
+    (allocate-mesh-arrays mesh)
+    (do-array (v p1 path-points-2)
+      (let* ((factor (tween v 0.0 (1- (v-dim mesh))))
+             (tangent (curve-tangent v path-points-2 (v-wrap mesh)))
+             (r1-mtx (make-axis-rotation-matrix (p-angle prev-tangent tangent)
+                                                (p:cross prev-tangent tangent)
+                                                p1))
+             (r2-mtx (make-axis-rotation-matrix (* delta twist) tangent p1))
+             (t-mtx (make-translation-matrix (p:- p1 p0)))
+             (mtx (matrix-multiply-n t-mtx r1-mtx r2-mtx)))
+        (transform-point-array! point-array mtx)
+        (setf prev-tangent tangent)
+        (setf p0 p1)
+        (if (= 1.0 taper)               ;no need for scale transform
+          (do-array (u p2 point-array)
+            (setf (aref (uv-point-array mesh) u v) (p:copy p2)))
+          (let ((scaled-point-array (copy-point-array point-array))
+                (s-mtx (make-scale-matrix (p:lerp (p! 1 1 1) (p! taper taper taper) factor)
+                                          p1)))
+            (transform-point-array! scaled-point-array s-mtx)		      
+            (do-array (u p2 scaled-point-array)
+              (setf (aref (uv-point-array mesh) u v) (p:copy p2))))))))
+  (compute-polyhedron-data mesh))
 
 ;;; TODO -- cleanup
 ;;; for now sweep 0-th profile along all paths
 (defmethod sweep-extrude (profiles paths &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((meshes '())
-        (profile-curve (coerce (elt (source-curves profiles) 0) 'list))
+        (profile-curve (elt (source-curves profiles) 0))
         (profile-closed (elt (source-curves-closed profiles) 0))
         (path-curves (source-curves paths))
         (path-closed (source-curves-closed paths)))
@@ -226,10 +224,9 @@
                    meshes))
     (nreverse meshes)))
 
-;;; TODO -- fix coerce to list
 (defmethod sweep-extrude-uv-mesh (profile path &key (twist 0.0) (taper 1.0) (from-end? nil))
   (sweep-extrude-aux (make-instance 'uv-mesh)
-                     (coerce (points profile) 'list) (is-closed-curve? profile)
+                     (points profile) (is-closed-curve? profile)
                      (points path) (is-closed-curve? path)
                      :twist twist :taper taper :from-end? from-end?))
 

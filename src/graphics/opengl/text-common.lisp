@@ -401,7 +401,9 @@
   (values))
 
 (defun render-text (pos-x pos-y text &key (color #x000000ff))
-  (font-render-text *current-font* *draw-list* pos-x pos-y color text))
+  (when (not (ui-is-clipped? pos-x pos-y
+                             (+ pos-x (* *ui-font-width* (length text))) (+ pos-y *ui-font-height*)))
+    (font-render-text *current-font* *draw-list* pos-x pos-y color text)))
 
 (defun test-text ()
   (progn

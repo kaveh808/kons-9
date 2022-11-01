@@ -6,13 +6,18 @@ Greetings and welcome to kons-9!
 These demos assume that you have succeeded in loading the system and opening
 the graphics window. If you have not, please check the README file.
 
+Make sure you have opened the graphics window by doing:
+
+(in-package :kons-9)
+(run)
+
 The demos below will walk you through some of the features of the software. You
 will evaluate the expressions in each demo and the graphics in the window will
 update accordingly.
 
 We also assume that you are familiar with the basics of 3D graphics.
 
-As of this writing, kons-9 runs on MacOS (Intel & M1) and Linux.
+As of this writing, kons-9 runs on MacOS (Intel & M1), Linux. and Windows.
 
 We hope you find the system enjoyable and useful.
 |#
@@ -343,7 +348,7 @@ You can turn off shading to see axes better (press 1 key).
 (map-shape-hierarchy *scene* (lambda (s) (setf (show-axis s) 1.0)))
 
 #|
-Animate each joined by a specified number of degrees per frame.
+Animate each joint by a specified number of degrees per frame.
 
 Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#

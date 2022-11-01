@@ -312,14 +312,14 @@
   (3d-flush-render))
 
 (defmethod draw-scene-view-ui ((view scene-view))
-  (draw-view (status-bar view))
+  (draw-view (status-bar view) 0 0)
   (let ((menu (menu view)))
     (when (and menu (is-visible? menu))
       (when (not (eq (command-table menu) (car (command-tables view))))
         (make-popup-menu view)
         (setf (is-visible? (menu view)) t))
-      (draw-view (menu view))))
-  (draw-view (ui-contents view)))
+      (draw-view (menu view) 0 0)))
+  (draw-view (ui-contents view) 0 0))
 
 (defmethod make-popup-menu ((view scene-view))
   (when (command-tables view)
@@ -529,6 +529,7 @@
   ;; (format t "window-resized: win: ~a, w: ~a, h: ~a ~%" window w h)
   ;; (finish-output)
   (setf *window-size* (list w h))
+  (update-clip-rect)
   (update-gl-3d-viewport)
   (draw-scene-view *default-scene-view*)      ; redraw while being resized
   (glfw:swap-buffers)
@@ -580,6 +581,11 @@
                                     (strcat menu-str " " secondary-str)))
                        )))
 
+(defun update-clip-rect ()
+  (setf *ui-clip-rect* (make-instance 'ui-rect
+                                      :ui-x 0 :ui-y 0
+                                      :ui-w (first *window-size*) :ui-h (second *window-size*))))
+
 (defun show-window (scene)
   ;; XXX TODO assert that this is running on the main thread.
   ;; Graphics calls on OS X must occur in the main thread
@@ -606,7 +612,8 @@
           ;; in glfw3. For now, just set the first scene-view created
           ;; as default and use that for event handling
           (setf *default-scene-view* scene-view)
-
+          (update-clip-rect)
+          
           ;; assume monitor scale is same in x and y, just use first value
           ;; also assume we are running on the "primary" monitor
           ;; use FLOOR due to bug encountered with user's 4K monitor setting of 1.1458334
@@ -622,6 +629,7 @@
           (glfw:set-window-position-callback 'window-position-callback)
           (glfw:set-window-size-callback 'window-size-callback)
           (setf *window-size* (glfw:get-window-size))
+          (update-clip-rect)
           ;;           (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
           (update-gl-3d-viewport)
           (update-window-title glfw:*window*)
