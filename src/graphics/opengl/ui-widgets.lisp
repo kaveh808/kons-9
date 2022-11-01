@@ -1,6 +1,8 @@
 (in-package #:kons-9)
 
-;;;; ui utils ==================================================================
+;;;; ui globals ================================================================
+
+(defparameter *ui-clip-rect* nil)
 
 (defparameter *ui-popup-menu-width* 200)
 (defparameter *ui-button-item-width* 200)
@@ -17,7 +19,7 @@
 
 ;;; TODO -- temporary, query font later
 (defparameter *ui-font-width* 7.3)
-
+(defparameter *ui-font-height* 16)
 
 ;;;; utils ====================================================================
 
@@ -700,7 +702,8 @@
 (defmethod add-parent-contents ((view ui-outliner-item) &key (recurse? nil))
   (let ((i (position view (children (ui-parent view))))
         (children (children (data view))))
-    (dotimes (j (min 10 (length children))) ;cap num children entries to 10 to avoid text engine overflow
+;    (dotimes (j (min 10 (length children))) ;cap num children entries to 10 to avoid text engine overflow
+    (dotimes (j (length children)) ;cap num children entries to 10 to avoid text engine overflow
       (let* ((child (aref children j))
              (text (format nil "~a" (printable-data child)))
              (item (make-instance (outliner-item-class (ui-parent view))
@@ -871,74 +874,75 @@
 (defun make-ui-inspector (obj)
   (create-contents (make-instance 'ui-inspector :ui-x 20 :ui-y 20 :obj obj)))
 
-;;;; drawing -------------------------
+;;;; drawing ===================================================================
 
+(defun ui-is-clipped? (x-lo y-lo x-hi y-hi)
+  (and *ui-clip-rect*
+       (or (> x-lo (ui-right  *ui-clip-rect*))
+           (< x-hi (ui-x      *ui-clip-rect*))
+           (> y-lo (ui-bottom *ui-clip-rect*))
+           (< y-hi (ui-y      *ui-clip-rect*)))))
+         
 (defun draw-line (x1 y1 x2 y2 &optional (line-width *ui-border-width*))
-  (gl:line-width line-width)
-  (gl:begin :lines)
-  (gl:vertex x1 y1)
-  (gl:vertex x2 y2)
-  (gl:end))
+  (when (not (ui-is-clipped? x1 y1 x2 y2))
+    (gl:line-width line-width)
+    (gl:begin :lines)
+    (gl:vertex x1 y1)
+    (gl:vertex x2 y2)
+    (gl:end)))
 
 (defun draw-rect-fill (x y w h &optional (inset 0.0))
-  (gl:polygon-mode :front-and-back :fill)
-  (gl:begin :polygon)
-  (gl:vertex    (+ x inset)       (+ y inset))
-  (gl:vertex (- (+ x w) inset)    (+ y inset))
-  (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
-  (gl:vertex    (+ x inset)    (- (+ y h) inset))
-  (gl:end))
+  (when (not (ui-is-clipped? x y (+ x w) (+ y h)))
+    (gl:polygon-mode :front-and-back :fill)
+    (gl:begin :polygon)
+    (gl:vertex    (+ x inset)       (+ y inset))
+    (gl:vertex (- (+ x w) inset)    (+ y inset))
+    (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
+    (gl:vertex    (+ x inset)    (- (+ y h) inset))
+    (gl:end)))
 
 ;; draw as lines so corners look clean
 (defun draw-rect-border (x y w h &optional (inset 0.0) (line-width *ui-border-width*))
-  (gl:line-width line-width)
-  (gl:begin :lines)
-  (gl:vertex       x             (+ y inset))
-  (gl:vertex    (+ x w)           (+ y inset))
-  (gl:vertex       x           (- (+ y h) inset))
-  (gl:vertex    (+ x w)        (- (+ y h) inset))
-  (gl:vertex (- (+ x w) inset)    (+ y inset))
-  (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
-  (gl:vertex    (+ x inset)       (+ y inset))
-  (gl:vertex    (+ x inset)    (- (+ y h) inset))
-  (gl:end))
-
-;; draw as lines so corners look clean
-(defun draw-rect-border-SAV (x y w h &optional (inset 0.0) (line-width *ui-border-width*))
-  (gl:polygon-mode :front-and-back :line)
-  (gl:line-width line-width)
-  (gl:begin :polygon)
-  (gl:vertex    (+ x inset)       (+ y inset))
-  (gl:vertex (- (+ x w) inset)    (+ y inset))
-  (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
-  (gl:vertex    (+ x inset)    (- (+ y h) inset))
-  (gl:end))
+  (when (not (ui-is-clipped? x y (+ x w) (+ y h)))
+    (gl:line-width line-width)
+    (gl:begin :lines)
+    (gl:vertex       x             (+ y inset))
+    (gl:vertex    (+ x w)           (+ y inset))
+    (gl:vertex       x           (- (+ y h) inset))
+    (gl:vertex    (+ x w)        (- (+ y h) inset))
+    (gl:vertex (- (+ x w) inset)    (+ y inset))
+    (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
+    (gl:vertex    (+ x inset)       (+ y inset))
+    (gl:vertex    (+ x inset)    (- (+ y h) inset))
+    (gl:end)))
 
 (defun draw-rect-x-mark (x y w h &optional (inset 0.0) (line-width *ui-border-width*))
-  (gl:line-width line-width)
-  (gl:begin :lines)
-  (gl:vertex    (+ x inset)       (+ y inset))
-  (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
-  (gl:vertex    (+ x inset)    (- (+ y h) inset))
-  (gl:vertex (- (+ x w) inset)    (+ y inset))
-  (gl:end))
+  (when (not (ui-is-clipped? x y (+ x w) (+ y h)))
+    (gl:line-width line-width)
+    (gl:begin :lines)
+    (gl:vertex    (+ x inset)       (+ y inset))
+    (gl:vertex (- (+ x w) inset) (- (+ y h) inset))
+    (gl:vertex    (+ x inset)    (- (+ y h) inset))
+    (gl:vertex (- (+ x w) inset)    (+ y inset))
+    (gl:end)))
 
 (defun draw-cursor (x y)
-  (gl:line-width *ui-border-width*)
-  (gl:begin :lines)
   (let ((x0 (- x 3))
         (x1 (+ x 2))
         (y0 (+ y 3))
         (y1 (- (+ y *ui-button-item-height*) 4)))
-    (gl:vertex x y0)
-    (gl:vertex x y1)
-    (gl:vertex x0 y0)
-    (gl:vertex x1 y0)
-    (gl:vertex x0 y1)
-    (gl:vertex x1 y1)
-    (gl:end)))
+    (when (not (ui-is-clipped? x0 y0 x1 y1))
+      (gl:line-width *ui-border-width*)
+      (gl:begin :lines)
+      (gl:vertex x y0)
+      (gl:vertex x y1)
+      (gl:vertex x0 y0)
+      (gl:vertex x1 y0)
+      (gl:vertex x0 y1)
+      (gl:vertex x1 y1)
+      (gl:end))))
 
-(defmethod draw-title-bar ((view ui-group) &optional x-offset y-offset)
+(defmethod draw-title-bar ((view ui-group) x-offset y-offset)
   (gl:color 0.4 0.4 0.4 0.8)
   (with-accessors ((fg fg-color) (x ui-x) (y ui-y) (w ui-w))
       view
@@ -952,7 +956,7 @@
                  (+ 16 y y-offset) (title view) :color #xffffffff)))
 
   
-(defmethod draw-ui-view ((view ui-view) &optional x-offset y-offset)
+(defmethod draw-ui-view ((view ui-view) x-offset y-offset)
   (with-accessors ((bg bg-color) (fg fg-color) (x ui-x) (y ui-y) (w ui-w) (h ui-h))
       view
     ;; fill
@@ -967,27 +971,27 @@
                           (if (> line-width 1) (* 0.5 line-width) 0)
                           line-width)))))
   
-(defgeneric draw-view (view &optional x-offset y-offset)
+(defgeneric draw-view (view x-offset y-offset)
 
-  (:method ((view ui-view) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-view) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)))
   
-  (:method ((view ui-label-item) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-label-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
         (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (text view)))))
 
-  (:method ((view ui-outliner-item) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-outliner-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
         (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (outliner-item-text view)))))
 
-  (:method ((view ui-button-item) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-button-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
@@ -996,7 +1000,7 @@
         (render-text (+ (ui-centered-text-x (text view) (ui-w view)) x x-offset)
                      (+ 16 y y-offset) (text view)))))
 
-  (:method ((view ui-menu-item) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-menu-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
@@ -1004,7 +1008,7 @@
         (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
         (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view)))))
 
-  (:method ((view ui-check-box-item) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-check-box-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y) (cbg check-bg-color) (fg fg-color))
@@ -1022,7 +1026,7 @@
                             (- *ui-button-item-height* 9) (- *ui-button-item-height* 8)
                             0 (* 2 *ui-border-width*))))))
 
-  (:method ((view ui-text-box-item) &optional (x-offset 0) (y-offset 0))
+  (:method ((view ui-text-box-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
@@ -1033,7 +1037,7 @@
           (when (eq view *ui-keyboard-focus*)
             (draw-cursor (+ local-x (* *ui-font-width* (cursor-position view))) local-y))))))
 
-  (:method :after ((view ui-group) &optional (x-offset 0) (y-offset 0))
+  (:method :after ((view ui-group) x-offset y-offset)
     (when (is-visible? view)
       (when (title view)
         (draw-title-bar view x-offset y-offset))
