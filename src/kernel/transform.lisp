@@ -33,7 +33,6 @@
                              (axis self)
                              (pivot self)))
 
-;; TODO: scale pivot
 (defclass scale-operator (transform-operator)
   ((scaling :accessor scaling :initarg :scaling :initform (p! 1.0 1.0 1.0))
    (pivot :accessor pivot :initarg :pivot :initform (p! 0.0 0.0 0.0))))

@@ -854,6 +854,18 @@ Hold down space key to play animation. Press '[' key to go back to frame 0.
 |#
 
 #|
+(Demo 23 kernel) randomize points ==============================================
+
+Randomize points of a shape. Must be a subclass of POINT-CLOUD.
+|#
+(with-clear-scene
+  (add-shape *scene* (randomize-points (make-circle-curve 4.0 32) (p! .1 .1 0))))
+
+(with-clear-scene
+  (add-shape *scene* (randomize-points (make-cube-sphere 4.0 3) (p! .1 .1 0))))
+
+
+#|
 END ============================================================================
 |#
 

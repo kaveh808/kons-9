@@ -41,28 +41,26 @@
   (do-children (child group)
     (set-point-colors-by-point-and-normal child color-fn)))
 
-;;;; TODO
-;;;; find a better place for these functions -- modeling.lisp?
-;;;; shapes is a list, points is a vector -- confusing?
+;;;; modeling with groups ======================================================
 
-(defun scatter-shapes-in-group (shape-fn points)
-  (let ((shapes (mapcar (lambda (p)
-                          (translate-to (funcall shape-fn) p))
-                        (coerce points 'list))))
+(defun scatter-shapes-in-group (shape-fn point-array)
+  (let ((shapes (map 'list
+                     (lambda (p) (translate-to (funcall shape-fn) p))
+                     point-array)))
     (make-shape-group shapes)))
 
-(defun scatter-shapes (shapes points)
-  (if (= (length shapes) (length points))
+(defun scatter-shapes (shapes point-array)
+  (if (= (length shapes) (length point-array))
       (loop for shape in shapes
-            for point across points
+            for point across point-array
             do (translate-to shape point))
-      (error "Mismatch in sizes of shapes (~a) and points (~a)" (length shapes) (length points))))
+      (error "Mismatch in sizes of shapes (~a) and point-array (~a)" (length shapes) (length point-array))))
 
-(defun scatter-shape-instances (shapes points)
-  (if (= (length shapes) (length points))
+(defun scatter-shape-instances (shapes point-array)
+  (if (= (length shapes) (length point-array))
       (let ((instances (mapcar (lambda (shape) (make-shape-group (list shape)))
                                shapes)))
-        (scatter-shapes instances points)
+        (scatter-shapes instances point-array)
         instances)
-      (error "Mismatch in sizes of shapes (~a) and points (~a)" (length shapes) (length points))))
+      (error "Mismatch in sizes of shapes (~a) and point-array (~a)" (length shapes) (length point-array))))
 
