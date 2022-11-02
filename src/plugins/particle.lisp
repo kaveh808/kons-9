@@ -140,6 +140,21 @@
 
 ;;;; climbing-particle ===================================================
 
+(defclass climbing-particle (particle)
+  ((support-polyh :accessor support-polyh :initarg :support-polyh :initform nil)))
+
+(defmethod copy-particle-data ((dst climbing-particle) (src climbing-particle))
+  (call-next-method)
+  (setf (support-polyh dst) (support-polyh src)))
+
+(defmethod update-position ((ptcl climbing-particle))
+  (call-next-method)
+  (let* ((pos (polyhedron-closest-point (support-polyh ptcl) (pos ptcl))))
+
+;    (print (list 'update-position (pos ptcl) pos))
+    
+    (setf (pos ptcl) pos)))
+
 #| TODO -- comment out until we have POLYH-CLOSEST-POINT
 
 (defclass climbing-particle (particle)

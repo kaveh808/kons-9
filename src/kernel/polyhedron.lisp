@@ -55,12 +55,6 @@
 (defmethod face-centers ((polyh polyhedron))
   (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
-(defun triangle-normal (p0 p1 p2)
-  (p:normalize (p:cross (p:- p1 p0) (p:- p2 p1))))
-
-(defun quad-normal (p0 p1 p2 p3)
-  (p:normalize (p:cross (p:- p2 p0) (p:- p3 p1))))
-
 ;; no checking, asssumes well-formed faces
 (defmethod face-normal ((polyh polyhedron) face)
   (cond ((< (length face) 3)
@@ -267,6 +261,26 @@
     (when (not (<= (length (aref (faces polyh) f)) 3))
       (return-from is-triangulated-polyhedron? nil)))
   t)
+
+(defmethod polyhedron-closest-point ((polyh polyhedron) p)
+  (cond ((is-triangulated-polyhedron? polyh)
+         (let ((min-dist nil)
+               (closest-point nil))
+           (dotimes (f (length (faces polyh)))
+             (let* ((face-points (face-points-list polyh f))
+                    (p0 (elt face-points 0))
+                    (p1 (elt face-points 1))
+                    (p2 (elt face-points 2)))
+               (multiple-value-bind (point dist)
+                   (point-triangle-closest-point p p0 p1 p2)
+                 (when (or (null min-dist) (< dist min-dist))
+                   (setf min-dist dist)
+                   (setf closest-point point)))))
+           closest-point))
+        (t
+         (error "POLYHEDRON ~a IS NOT TRIANGULATED" (name polyh)))))
+
+;;;; polyhedron primitives =====================================================
 
 (defun make-tetrahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* diameter 0.5))

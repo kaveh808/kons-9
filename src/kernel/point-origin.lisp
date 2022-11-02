@@ -110,24 +110,30 @@
                     (acos (/ z (sqrt (+ (* x x) (* z z))))))))
     (values y-angle x-angle)))
 
-(defun angle-2d (p1 p2)
-  (let* ((theta1 (atan (p:y p1) (p:x p1)))
-	 (theta2 (atan (p:y p2) (p:x p2)))
-	 (dtheta (- theta2 theta1)))
-    (loop while (> dtheta pi)
-	  do (setf dtheta (- dtheta (* 2 pi))))
-    (loop while (< dtheta (- pi))
-	  do (setf dtheta (+ dtheta (* 2 pi))))
-    dtheta))
+(defun triangle-normal (p0 p1 p2)
+  (p:normalize (p:cross (p:- p1 p0) (p:- p2 p1))))
 
+(defun quad-normal (p0 p1 p2 p3)
+  (p:normalize (p:cross (p:- p2 p0) (p:- p3 p1))))
 
-(defun point-in-polygon? (p points)
-  (let ((angle 0.0))
-    (loop :for (p1 p2) :on (append points (list (first points))) :by #'cdr :while p2
-	  :do (setf angle (+ angle (angle-2d (p- p1 p) (p- p2 p)))))
-    (if (< (abs angle) pi)
-	nil
-	t)))
+;;; TODO -- do these work in 3D?
+;; (defun angle-2d (p1 p2)
+;;   (let* ((theta1 (atan (p:y p1) (p:x p1)))
+;; 	 (theta2 (atan (p:y p2) (p:x p2)))
+;; 	 (dtheta (- theta2 theta1)))
+;;     (loop while (> dtheta pi)
+;; 	  do (setf dtheta (- dtheta (* 2 pi))))
+;;     (loop while (< dtheta (- pi))
+;; 	  do (setf dtheta (+ dtheta (* 2 pi))))
+;;     dtheta))
+
+;; (defun point-in-polygon? (p points)
+;;   (let ((angle 0.0))
+;;     (loop :for (p1 p2) :on (append points (list (first points))) :by #'cdr :while p2
+;; 	  :do (setf angle (+ angle (angle-2d (p- p1 p) (p- p2 p)))))
+;;     (if (< (abs angle) pi)
+;; 	nil
+;; 	t)))
 
 (defun points-bounds (points) ;nobody uses this, why did I fix it?
   (let ((bounds-lo (p:copy (first points)))
@@ -162,3 +168,89 @@
         (when (< dist min-dist)
           (setf min-dist dist))))
     min-dist))
+
+;;; TODO - the following are for polyh-closest-point -- need to be optimized
+
+(defun point-on-plane (point plane-point plane-normal)
+  (let* ((v (p-from-to plane-point point))
+         (d (p:dot v plane-normal))
+         (p (p:- point (p:scale plane-normal d))))
+
+;    (print (list 'point-on-plane point plane-point plane-normal v d p))
+    
+    p))
+
+(defun point-on-triangle-plane (p a b c)
+  (let ((n (triangle-normal a b c)))
+    (point-on-plane p a n)))
+
+(defun point-barycentric-coordinates (p a b c)
+  (let* ((v0 (p-from-to a b))
+         (v1 (p-from-to a c))
+         (v2 (p-from-to a p))
+         (d00 (p:dot v0 v0))
+         (d01 (p:dot v0 v1))
+         (d11 (p:dot v1 v1))
+         (d20 (p:dot v2 v0))
+         (d21 (p:dot v2 v1))
+         (denom (- (* d00 d11) (* d01 d01)))
+         (v (/ (- (* d11 d20) (* d01 d21)) denom))
+         (w (/ (- (* d00 d21) (* d01 d20)) denom))
+         (u (- 1.0 v w)))
+    (p! u v w)))
+
+(defun point-inside-triangle (p a b c)
+  (let* ((p0 (point-on-triangle-plane p a b c))
+         (bary (point-barycentric-coordinates p0 a b c)))
+
+    ;; (print (and (<= 0.0 (p:x bary) 1.0)
+    ;;             (<= 0.0 (p:y bary) 1.0)
+    ;;             (<= 0.0 (p:z bary) 1.0)))
+
+    (if (and (<= 0.0 (p:x bary) 1.0)
+             (<= 0.0 (p:y bary) 1.0)
+             (<= 0.0 (p:z bary) 1.0))
+        (progn
+
+;          (print (list 'inside p0))
+          
+          p0)
+        nil)))
+
+(defun point-line-segement-closest-point (p a b)
+  (let ((ab (p:normalize (p-from-to a b)))
+        (ap (p:normalize (p-from-to a p)))
+        (bp (p:normalize (p-from-to b p))))
+    (cond ((<= (p:dot ap ab) 0.0)
+;           (print (list 'a a))
+           a)
+          ((>= (p:dot bp ab) 0.0)
+;           (print (list 'b b))
+           b)
+          (t
+           (let* ((d (p:normalize ab))
+                 (p0 (p:scale d (p:dot ap d))))
+;           (print (list 'p0 p0))
+             p0)))))
+
+;;; return closest point and distance to point
+(defun point-triangle-closest-point (p a b c)
+
+;  (print (list 'point-triangle-closest-point p))
+
+  (let ((p0 (point-inside-triangle p a b c)))
+    (if p0
+        (values p0 (p-dist p p0))
+        (let* ((p1 (point-line-segement-closest-point p a b))
+               (p2 (point-line-segement-closest-point p b c))
+               (p3 (point-line-segement-closest-point p c a))
+               (d1 (p-dist p p1))
+               (d2 (p-dist p p2))
+               (d3 (p-dist p p3)))
+          (cond ((and (< d1 d2) (< d1 d3))
+                 (values p1 d1))
+                ((and (< d2 d1) (< d2 d3))
+                 (values p2 d2))
+                (t
+                 (values p3 d3)))))))
+                
