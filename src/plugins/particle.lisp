@@ -150,10 +150,9 @@
 (defmethod update-position ((ptcl climbing-particle))
   (call-next-method)
   (let* ((pos (polyhedron-closest-point (support-polyh ptcl) (pos ptcl))))
-
-;    (print (list 'update-position (pos ptcl) pos))
-    
-    (setf (pos ptcl) pos)))
+    (when (not (p:= pos (pos ptcl))) ; avoid duplicate points
+;      (setf (vel ptcl) (p:+ (vel ptcl) (p-from-to (pos ptcl) pos))) ;update vel as well
+      (setf (pos ptcl) pos))))
 
 #| TODO -- comment out until we have POLYH-CLOSEST-POINT
 

@@ -146,7 +146,7 @@
 (defun p-sphericize (p radius &optional (factor 1.0) (center +origin+))
   (p:lerp p (p* (p:normalize (p-from-to center p)) radius) factor))
 
-(defun point-line-segement-dist (p a b)
+(defun point-line-segment-dist (p a b)
   (let ((ab (p-from-to a b))
         (ap (p-from-to a p))
         (bp (p-from-to b p)))
@@ -160,11 +160,11 @@
 (defun point-curve-dist (point points is-closed-curve?) ;points is an array of point
   (let* ((min-dist (p-dist point (aref points 0))))
     (dotimes (i (1- (length points)))
-      (let ((dist (point-line-segement-dist point (aref points i) (aref points (1+ i)))))
+      (let ((dist (point-line-segment-dist point (aref points i) (aref points (1+ i)))))
         (when (< dist min-dist)
           (setf min-dist dist))))
     (when is-closed-curve?
-      (let ((dist (point-line-segement-dist point (aref points (1- (length points))) (aref points 0))))
+      (let ((dist (point-line-segment-dist point (aref points (1- (length points))) (aref points 0))))
         (when (< dist min-dist)
           (setf min-dist dist))))
     min-dist))
@@ -217,19 +217,40 @@
           p0)
         nil)))
 
-(defun point-line-segement-closest-point (p a b)
+;;; TODO -- problem with points snapping to end points
+
+(defun point-line-segment-closest-point (p a b)
+
+;  (print "---------------------------------------------")
+;  (print (list 'point-line-segment-closest-point p a b))
+
   (let ((ab (p:normalize (p-from-to a b)))
-        (ap (p:normalize (p-from-to a p)))
-        (bp (p:normalize (p-from-to b p))))
+        (ap  (p-from-to a p))
+        (bp  (p-from-to b p)))
+
+;    (print (list 'ab ab))
+;    (print (list 'ap ap))
+;    (print (list 'bp bp))
+
     (cond ((<= (p:dot ap ab) 0.0)
-;           (print (list 'a a))
+;           (print (list 'a (p:dot ap ab) a))
            a)
           ((>= (p:dot bp ab) 0.0)
-;           (print (list 'b b))
+;           (print (list 'b (p:dot bp ab) b))
            b)
           (t
-           (let* ((d (p:normalize ab))
-                 (p0 (p:scale d (p:dot ap d))))
+           (let* ((param-t (p:dot ab ap))
+                  (p0 (p:+ a (p:scale ab param-t))))
+           ;; d = ab
+           ;; v = ap
+           ;; t = v.d
+           ;; p = a + td
+
+           ;; (/ (p:length (p:cross ab ap)) (p:length ab)))))) ;perpendicular distance to line
+
+           
+           ;; (let* ((d (p:normalize ab))
+           ;;       (p0 (p:scale d (p:dot ap d))))
 ;           (print (list 'p0 p0))
              p0)))))
 
@@ -241,15 +262,15 @@
   (let ((p0 (point-inside-triangle p a b c)))
     (if p0
         (values p0 (p-dist p p0))
-        (let* ((p1 (point-line-segement-closest-point p a b))
-               (p2 (point-line-segement-closest-point p b c))
-               (p3 (point-line-segement-closest-point p c a))
+        (let* ((p1 (point-line-segment-closest-point p a b))
+               (p2 (point-line-segment-closest-point p b c))
+               (p3 (point-line-segment-closest-point p c a))
                (d1 (p-dist p p1))
                (d2 (p-dist p p2))
                (d3 (p-dist p p3)))
-          (cond ((and (< d1 d2) (< d1 d3))
+          (cond ((and (<= d1 d2) (<= d1 d3))
                  (values p1 d1))
-                ((and (< d2 d1) (< d2 d3))
+                ((and (<= d2 d1) (<= d2 d3))
                  (values p2 d2))
                 (t
                  (values p3 d3)))))))

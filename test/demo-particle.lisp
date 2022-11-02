@@ -227,28 +227,7 @@ point-cloud.
 ;;; hold down space key in 3D view to run animation -- gets slow, need to optimize
 ;;; suggestion: turn off filled display for a better view (TAB, D, 1)
 
-(update-scene *scene* 60)               ;do update for batch testing
-
-#| TODO -- comment out until we have POLYH-CLOSEST-POINT
-
-(format t "  particle-system 09...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((shape (make-cube-sphere 6.0 3))
-         (cloud (generate-point-cloud shape 40))
-         (p-sys (make-particle-system-from-point (p! 0 3 0) 10 (p! -.2 0 -.2) (p! .2 0 .2)
-                                                 'climbing-particle
-                                                 :support-point-cloud cloud
-                                                 :update-angle (range-float (/ pi 8) (/ pi 16))
-                                                 :life-span 10)))
-    (add-shape *scene* shape)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
-;;; suggestion: turn off filled display for a better view (TAB, D, 1)
-
-(update-scene *scene* 20)               ;do update for batch testing
-|#
+(update-scene *scene* 30)               ;do update for batch testing
 
 #|
 ;;; particle-system point-generator-mixin use polyh face centers ---------------
