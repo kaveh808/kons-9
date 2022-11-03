@@ -46,27 +46,32 @@
 
 (defgeneric map-hierarchy (self func &key test)
 
+  (:method :after ((group group-mixin) func &key (test nil))
+    (do-children (child group)
+      (map-hierarchy child func :test test))
+    group)
+
   (:method ((shape shape) func &key (test nil))
     (when (or (null test) (funcall test shape))
       (funcall func shape))
     shape)
 
-  ;; TODO -- replace with group-mixin
-  (:method :after ((group shape-group) func &key (test nil))
-    (do-children (child group)
-      (map-hierarchy child func :test test))
-    group)
+  ;; ;; TODO -- replace with group-mixin
+  ;; (:method :after ((group shape-group) func &key (test nil))
+  ;;   (do-children (child group)
+  ;;     (map-hierarchy child func :test test))
+  ;;   group)
 
   (:method ((motion motion) func &key (test nil))
     (when (or (null test) (funcall test motion))
       (funcall func motion))
     motion)
 
-  ;; TODO -- replace with group-mixin
-  (:method :after ((group motion-group) func &key (test nil))
-    (do-children (child group)
-      (map-hierarchy child func :test test))
-    group)
+  ;; ;; TODO -- replace with group-mixin
+  ;; (:method :after ((group motion-group) func &key (test nil))
+  ;;   (do-children (child group)
+  ;;     (map-hierarchy child func :test test))
+  ;;   group)
   )
 
 (defgeneric is-leaf? (self)

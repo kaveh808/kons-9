@@ -75,7 +75,7 @@
 ;;                    do (push (aref array i j) new-list)))
 ;;     (nreverse new-list)))
 
-;;; TODO -- this does not copy the points, they will be shared between uv-point-array and polyhedron points
+;;; NOTE: this does not copy the points, they will be shared between uv-point-array and polyhedron points
 (defun flatten-array (array)
   "Return an n-dimensional array as a 1-dimensional vector."
   (let ((vector (make-array (array-total-size array))))
@@ -207,8 +207,7 @@
               (setf (aref (uv-point-array mesh) u v) (p:copy p2))))))))
   (compute-polyhedron-data mesh))
 
-;;; TODO -- cleanup
-;;; for now sweep 0-th profile along all paths
+;;; sweep 0-th profile along all paths
 (defmethod sweep-extrude (profiles paths &key (twist 0.0) (taper 1.0) (from-end? nil))
   (let ((meshes '())
         (profile-curve (elt (source-curves profiles) 0))

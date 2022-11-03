@@ -316,8 +316,3 @@
   (loop for p across point-array
         do (transform-point! p matrix)))
 
-;;; TODO -- remove this for efficiency?
-;; (defun transform-point-list! (points matrix)
-;;   (mapc #'(lambda (p) (transform-point! p matrix)) points)
-;;   points)
-

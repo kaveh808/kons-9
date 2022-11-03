@@ -90,12 +90,13 @@
          (axis (p:normalize (p:cross vel rnd)))
          (mtx (make-axis-rotation-matrix (range-value (update-angle ptcl)) axis))
          (new-vel (transform-point vel mtx)))
-    (setf (vel ptcl) new-vel)))
+    (setf (vel ptcl) new-vel)
+    new-vel))
 
 (defmethod update-position ((ptcl particle))
   (setf (pos ptcl)
         (p:+ (pos ptcl)
-            (update-velocity ptcl))))
+             (update-velocity ptcl))))
 
 (defmethod update-particle ((ptcl particle))
   (if (or (= -1 (life-span ptcl))
@@ -140,21 +141,21 @@
 
 ;;;; climbing-particle ===================================================
 
-#| TODO -- comment out until we have POLYH-CLOSEST-POINT
-
 (defclass climbing-particle (particle)
-  ((support-point-cloud :accessor support-point-cloud :initarg :support-point-cloud :initform nil)))
+  ((support-polyh :accessor support-polyh :initarg :support-polyh :initform nil)))
 
 (defmethod copy-particle-data ((dst climbing-particle) (src climbing-particle))
   (call-next-method)
-  (setf (support-point-cloud dst) (support-point-cloud src)))
+  (setf (support-polyh dst) (support-polyh src)))
 
 (defmethod update-position ((ptcl climbing-particle))
-  (call-next-method)
-  (let* ((pos (source-closest-point (support-point-cloud ptcl) (pos ptcl))))
-    (when (not (p:= pos (pos ptcl))) ; avoid duplicate points
-      (setf (pos ptcl) pos))))
-|#
+  (update-velocity ptcl)
+  (let* ((new-pos (p:+ (pos ptcl) (vel ptcl)))
+         (new-pos-on-polyh (polyhedron-closest-point (support-polyh ptcl) new-pos)))
+    (when (not (p:= new-pos-on-polyh (pos ptcl))) ; avoid duplicate points
+      (setf (vel ptcl) (p:scale (p:normalize (p-from-to (pos ptcl) new-pos-on-polyh))
+                                (p:length (vel ptcl)))) ;redirect vel but keep magnitude
+      (setf (pos ptcl) new-pos-on-polyh))))
 
 ;;;; dynamic-particle ====================================================
 

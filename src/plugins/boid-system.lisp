@@ -62,7 +62,7 @@
   (let* ((food (nearest-food-within-range boid))
          (angle (and food (boid-heading boid food))))
     (if angle
-        (setf (heading boid) angle) ;; TODO lerp
+        (setf (heading boid) angle)
         (incf (heading boid) (rand2 -10 10)))
     ;; move
     (let ((dx (sin (radians (heading boid))))

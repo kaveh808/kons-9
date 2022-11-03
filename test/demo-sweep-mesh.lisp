@@ -90,3 +90,32 @@ with the particle system.
     (add-shape *scene* sweep-mesh-group)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
+
+#|
+(Demo 05 sweep-mesh) animate a sweep-mesh-group ================================
+
+Create a SWEEP-MESH-GROUP along a PARTICLE-SYSTEM growing along a POLYHEDRON.
+The mesh automatically grows with the particle system.
+|#
+
+(format t "  sweep-mesh 5...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (triangulate-polyhedron (make-cube-sphere 6.0 3)))
+         ;(shape (triangulate-polyhedron (make-cube 6)))
+         ;(shape (triangulate-polyhedron (make-grid-uv-mesh 6 6 1 1)))
+         (p-sys (make-particle-system-from-point (p! 0 3.0 0) 1 (p! -.5 0 -.5) (p! .5 0 .5)
+                                                 'climbing-particle
+                                                 :support-polyh shape
+                                                 :update-angle (range-float (/ pi 8) (/ pi 16))
+                                                 :life-span -1))
+         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
+                                                  :taper 1.0 :twist 0.0)))
+    (add-shape *scene* shape)
+    (add-shape *scene* p-sys)
+    (add-shape *scene* sweep-mesh-group)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation -- gets slow, need to optimize
+;;; suggestion: turn off filled display for a better view (TAB, D, 1)
+
+(update-scene *scene* 240)               ;do update for batch testing

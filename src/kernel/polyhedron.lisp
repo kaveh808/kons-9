@@ -55,12 +55,6 @@
 (defmethod face-centers ((polyh polyhedron))
   (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
-(defun triangle-normal (p0 p1 p2)
-  (p:normalize (p:cross (p:- p1 p0) (p:- p2 p1))))
-
-(defun quad-normal (p0 p1 p2 p3)
-  (p:normalize (p:cross (p:- p2 p0) (p:- p3 p1))))
-
 ;; no checking, asssumes well-formed faces
 (defmethod face-normal ((polyh polyhedron) face)
   (cond ((< (length face) 3)
@@ -194,55 +188,44 @@
         (setf (aref new-faces i) (mapcar (lambda (ref) (aref new-refs ref)) f)))
       (make-polyhedron new-points new-faces))))
 
-(defun triangle-area (p0 p1 p2)
-  (let ((e1 (p-from-to p0 p1))
-        (e2 (p-from-to p1 p2)))
-    (/ (* (p:length e1) (p:length e2) (p-angle-sine e1 e2)) 2)))
-
 ;;; only works for triangles
-(defmethod face-area ((polyh polyhedron) face)
-  (cond ((< (length face) 3)
-         0.0)
-        ((= (length face) 3)
-         (let* ((p0 (aref (points polyh) (elt face 0)))
-                (p1 (aref (points polyh) (elt face 1)))
-                (p2 (aref (points polyh) (elt face 2))))
-           (triangle-area p0 p1 p2)))
-        (t
-         (error "POLYHEDRON ~a FACE ~a IS NOT A TRIANGLE" polyh face))))
-
-(defun barycentric-point (p0 p1 p2 a b)
-  (p:+ p0
-       (p:+ (p:scale (p-from-to p0 p1) a)
-            (p:scale (p-from-to p0 p2) b))))
+;; (defmethod face-area ((polyh polyhedron) face)
+;;   (cond ((< (length face) 3)
+;;          0.0)
+;;         ((= (length face) 3)
+;;          (let* ((p0 (aref (points polyh) (elt face 0)))
+;;                 (p1 (aref (points polyh) (elt face 1)))
+;;                 (p2 (aref (points polyh) (elt face 2))))
+;;            (triangle-area p0 p1 p2)))
+;;         (t
+;;          (error "POLYHEDRON ~a FACE ~a IS NOT A TRIANGLE" polyh face))))
 
 (defun generate-face-barycentric-points (p0 p1 p2 num)
-  (let ((barycentric-points '()))
-    (dotimes (i (round num))
-      (let ((a (rand2 0.0 1.0))
-            (b (rand2 0.0 1.0)))
-        (do () ((<= (+ a b) 1.0))
-          (setf a (rand2 0.0 1.0))
-          (setf b (rand2 0.0 1.0)))
-        (push (barycentric-point p0 p1 p2 a b)
-              barycentric-points)))
-    barycentric-points))
+  (multiple-value-bind (int frac)
+      (floor num)
+    (let ((points '()))
+      (dotimes (i int)
+        (push (random-barycentric-point p0 p1 p2) points))
+      (when (< (random 1.0) frac)
+        (push (random-barycentric-point p0 p1 p2) points))
+      points)))
 
 (defmethod generate-point-cloud ((polyh polyhedron) &optional (density 1.0))
-  (let ((tri-polyh (if (is-triangulated-polyhedron? polyh)
-                       polyh
-                       (triangulate-polyhedron polyh)))
-        (points '()))
-    (dotimes (f (length (faces tri-polyh)))
-      (let* ((area (face-area tri-polyh (aref (faces tri-polyh) f)))
-             (face-points (face-points-list tri-polyh f))
+  (let* ((tri-polyh (if (is-triangulated-polyhedron? polyh)
+                        polyh
+                        (triangulate-polyhedron polyh)))
+         (tri-faces (faces tri-polyh))
+         (point-array (make-array 128 :adjustable t :fill-pointer 0)))
+    (dotimes (f (length tri-faces))
+      (let* ((face-points (face-points-list tri-polyh f))
              (p0 (elt face-points 0))
              (p1 (elt face-points 1))
              (p2 (elt face-points 2))
+             (area (triangle-area p0 p1 p2))
              (barycentric-points (generate-face-barycentric-points p0 p1 p2 (* area density))))
         (dolist (p barycentric-points)
-          (push p points))))
-    (make-point-cloud (coerce points 'vector))))
+          (vector-push-extend p point-array))))
+    (make-point-cloud point-array)))
 
 (defun face-triangle-refs (prefs)
   (cond ((< (length prefs) 3)
@@ -267,6 +250,26 @@
     (when (not (<= (length (aref (faces polyh) f)) 3))
       (return-from is-triangulated-polyhedron? nil)))
   t)
+
+(defmethod polyhedron-closest-point ((polyh polyhedron) p)
+  (cond ((is-triangulated-polyhedron? polyh)
+         (let ((min-dist nil)
+               (closest-point nil))
+           (dotimes (f (length (faces polyh)))
+             (let* ((face-points (face-points-list polyh f))
+                    (p0 (elt face-points 0))
+                    (p1 (elt face-points 1))
+                    (p2 (elt face-points 2)))
+               (multiple-value-bind (point dist)
+                   (point-triangle-closest-point p p0 p1 p2)
+                 (when (or (null min-dist) (< dist min-dist))
+                   (setf min-dist dist)
+                   (setf closest-point point)))))
+           closest-point))
+        (t
+         (error "POLYHEDRON ~a IS NOT TRIANGULATED" (name polyh)))))
+
+;;;; polyhedron primitives =====================================================
 
 (defun make-tetrahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* diameter 0.5))

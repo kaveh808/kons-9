@@ -182,18 +182,20 @@ force field.
 (format t "  particle-system 08...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((shape (freeze-transform (translate-by (make-heightfield 20 20 (p! -5 0 -5) (p! 5 0 5)
-                                                                  :height-fn (lambda (x z)
-                                                                               (* 4 (turbulence (p! x 0 z) 4))))
-                                                (p! 0 -1 0))))
-         (p-sys (make-particle-system-from-point-source shape
-                                                        (lambda (v) (p:scale v 0.05))
-                                                        'dynamic-particle
-                                                        :life-span -1 ;infinite life-span
-                                                        :do-collisions? nil
-                                                        :force-fields (list (make-instance 'noise-force-field
-                                                                                           :noise-frequency 0.2
-                                                                                           :noise-amplitude 0.2)))))
+  (let* ((shape (freeze-transform
+                 (translate-by (make-heightfield 20 20 (p! -5 0 -5) (p! 5 0 5)
+                                                 :height-fn (lambda (x z)
+                                                              (* 4 (turbulence (p! x 0 z) 4))))
+                               (p! 0 -1 0))))
+         (p-sys (make-particle-system-from-point-source
+                 shape
+                 (lambda (v) (p:scale v 0.05))
+                 'dynamic-particle
+                 :life-span -1 ;infinite life-span
+                 :do-collisions? nil
+                 :force-fields (list (make-instance 'noise-force-field
+                                                    :noise-frequency 0.2
+                                                    :noise-amplitude 0.2)))))
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
@@ -208,26 +210,24 @@ Climbing particles which follow the surface of a shape, via an intermediate
 point-cloud.
 |#
 
-#| TODO -- comment out until we have POLYH-CLOSEST-POINT
-
 (format t "  particle-system 09...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((shape (make-cube-sphere 6.0 3))
-         (cloud (generate-point-cloud shape 40))
-         (p-sys (make-particle-system-from-point (p! 0 3 0) 10 (p! -.2 0 -.2) (p! .2 0 .2)
+  (let* ((shape (triangulate-polyhedron (make-cube-sphere 6.0 3)))
+         ;(shape (triangulate-polyhedron (make-cube 6)))
+         ;(shape (triangulate-polyhedron (make-grid-uv-mesh 3 3 1 1)))
+         (p-sys (make-particle-system-from-point (p! .5 3.5 0) 10 (p! -.5 0 -.5) (p! .5 0 .5)
                                                  'climbing-particle
-                                                 :support-point-cloud cloud
+                                                 :support-polyh shape
                                                  :update-angle (range-float (/ pi 8) (/ pi 16))
                                                  :life-span 10)))
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation -- gets slow, need to profile code & optimize
+;;; hold down space key in 3D view to run animation -- gets slow, need to optimize
 ;;; suggestion: turn off filled display for a better view (TAB, D, 1)
 
-(update-scene *scene* 20)               ;do update for batch testing
-|#
+(update-scene *scene* 30)               ;do update for batch testing
 
 #|
 ;;; particle-system point-generator-mixin use polyh face centers ---------------

@@ -99,3 +99,22 @@ We use an animator to vary the values of the heightfield formula over time.
                                                 (update-heightfield mesh)))))))
 
 ;;; Hold down space key to play animation. Press '[' key to go back to frame 0.
+
+#|
+(Demo 03 heightfield) placing shapes on a heightfield ==========================
+
+Use a POINT-INSTANCER and a POINT-CLOUD to scatter shapes on a heightfield.
+|#
+
+(format t "  heightfield 3...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((hfield (make-heightfield 80 80 (p! -5 0 -5) (p! 5 0 5)
+                                   :name 'hfield
+                                   :height-fn (lambda (x z)
+                                                (* 4 (turbulence (p! x 0 z) 4)))))
+         (p-cloud (generate-point-cloud hfield 10)) ;10 points per unit area
+         (group (make-point-instancer-group p-cloud (make-cube .2))))
+    (add-shape *scene* hfield)
+    (add-shape *scene* p-cloud)
+    (add-shape *scene* group)))
