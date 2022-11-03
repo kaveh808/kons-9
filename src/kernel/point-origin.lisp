@@ -96,7 +96,7 @@
 
 (defun p-angle-sine (p1 p2)
   (let ((c (p-angle-cosine p1 p2)))
-    (sqrt (- 1 (* c c)))))
+    (sqrt (- 1.0 (* c c)))))
 
 (defun p-angle (p1 p2)
   (acos (max -1.0 (min 1.0 (p:dot (p:normalize p1) (p:normalize p2))))))
@@ -115,6 +115,24 @@
 
 (defun quad-normal (p0 p1 p2 p3)
   (p:normalize (p:cross (p:- p2 p0) (p:- p3 p1))))
+
+(defun triangle-area (p0 p1 p2)
+  (let ((e1 (p-from-to p0 p1))
+        (e2 (p-from-to p1 p2)))
+    (/ (* (p:length e1) (p:length e2) (p-angle-sine e1 e2)) 2)))
+
+(defun barycentric-point (p0 p1 p2 a b)
+  (p:+ p0
+       (p:+ (p:scale (p-from-to p0 p1) a)
+            (p:scale (p-from-to p0 p2) b))))
+
+(defun random-barycentric-point (p0 p1 p2)
+  (let ((a (rand2 0.0 1.0))
+        (b (rand2 0.0 1.0)))
+    (do () ((<= (+ a b) 1.0))
+      (setf a (rand2 0.0 1.0))
+      (setf b (rand2 0.0 1.0)))
+    (barycentric-point p0 p1 p2 a b)))
 
 ;;; TODO -- do these work in 3D?
 ;; (defun angle-2d (p1 p2)

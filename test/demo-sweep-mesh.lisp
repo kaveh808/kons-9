@@ -118,4 +118,4 @@ The mesh automatically grows with the particle system.
 ;;; hold down space key in 3D view to run animation -- gets slow, need to optimize
 ;;; suggestion: turn off filled display for a better view (TAB, D, 1)
 
-(update-scene *scene* 30)               ;do update for batch testing
+(update-scene *scene* 240)               ;do update for batch testing
