@@ -35,7 +35,7 @@ Make sure you have opened the graphics window by doing:
   (select-edge (find-shape-by-name *scene* 'cube) 11)
   (select-edge (find-shape-by-name *scene* 'cube) 10))
 ;;; select faces
-(progn   ;;TODO --  selected faces shouldn't change due to lighting or shading
+(progn
   (select-face (find-shape-by-name *scene* 'cube) 2)
   (select-face (find-shape-by-name *scene* 'cube) 5))
 
