@@ -63,7 +63,7 @@
                       *dynamic-command-table-entries*))
 
 (defun make-active-command-table (table)
-  (push table (command-tables *default-scene-view*))
+  (push table (command-tables *scene-view*))
   (do-array (i entry-data *dynamic-command-table-entries*)
     (apply #'add-dynamic-command-table-entry entry-data)))
 
@@ -75,7 +75,7 @@
 ;;         (apply #'add-dynamic-command-table-entry entry-data)))))
 
 (defun active-command-table ()
-  (car (command-tables *default-scene-view*)))
+  (car (command-tables *scene-view*)))
 
 (defun add-dynamic-command-table-entry (table-title key-binding doc command-fn context-fn)
   (let ((table (active-command-table)))
@@ -90,5 +90,5 @@
 (register-dynamic-command-table-entry
  "Context" :T "Transform Selection"
  (lambda () (make-active-command-table (transform-command-table)))
- (lambda () (selected-shapes (scene *default-scene-view*))))
+ (lambda () (selected-shapes (scene *scene-view*))))
 
