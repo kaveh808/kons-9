@@ -39,7 +39,7 @@
 (defmethod draw-view :after ((view ui-motion-outliner-viewer) x-offset y-offset)
   ;; draw current frame indicator
   (gl:color 0.3 0.3 0.6 1.0)
-  (let ((rel-time (relative-current-time (scene *default-scene-view*)))
+  (let ((rel-time (relative-current-time (scene *scene-view*)))
         (x-lo (+ (ui-x view) x-offset 10))
         (x-hi (+ (ui-x view) (ui-w view) x-offset -10))
         (y-lo (+ (ui-y view) y-offset *ui-button-item-height*))
