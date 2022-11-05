@@ -342,12 +342,12 @@
 ;;;; gui =======================================================================
 
 (defun single-point-source-selected? ()
-  (let ((selected-shapes (selected-shapes (scene *default-scene-view*))))
+  (let ((selected-shapes (selected-shapes (scene *scene-view*))))
     (and (= 1 (length selected-shapes))
          (provides-point-source-protocol? (first selected-shapes)))))
 
 (defun make-dynamic-particle-system ()
-  (let* ((scene (scene *default-scene-view*))
+  (let* ((scene (scene *scene-view*))
          (p-source (selected-shape scene))
          (p-sys (make-particle-system p-source
                                       (p! .2 .2 .2) 1 -1 'dynamic-particle
@@ -357,7 +357,7 @@
     p-sys))
 
 (defun make-wriggly-particle-system ()
-  (let* ((scene (scene *default-scene-view*))
+  (let* ((scene (scene *scene-view*))
          (p-source (selected-shape scene))
          (p-sys (make-particle-system p-source
                                       (p! .2 .2 .2) 1 -1 'particle

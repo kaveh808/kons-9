@@ -5,11 +5,7 @@
 (defclass superquadric (uv-mesh procedural-mixin)
   ((diameter :accessor diameter :initarg :diameter :initform 1.0)
    (e1 :accessor e1 :initarg :e1 :initform 0.2)
-   (e2 :accessor e2 :initarg :e2 :initform 0.2))
-  (:default-initargs
-   :u-dim 16
-   :v-dim 16
-   :u-wrap t))
+   (e2 :accessor e2 :initarg :e2 :initform 0.2)))
 
 (def-procedural-input superquadric u-dim)
 (def-procedural-input superquadric v-dim)

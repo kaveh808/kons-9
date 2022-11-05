@@ -87,7 +87,8 @@
 (def-procedural-input variant-manager-group visible-index)
 
 (defmethod compute-procedural-node ((self variant-manager-group))
-  (do-children (child self)
-    (setf (is-visible? child) nil))
-  (setf (is-visible? (aref (children self) (visible-index self))) t))
+  (when (> (length (children self)) 0)
+    (do-children (child self)
+      (setf (is-visible? child) nil))
+    (setf (is-visible? (aref (children self) (visible-index self))) t)))
 

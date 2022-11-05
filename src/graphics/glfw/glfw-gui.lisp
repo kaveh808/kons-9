@@ -4,9 +4,10 @@
 (defparameter *current-mouse-pos-x* 0)
 (defparameter *current-mouse-pos-y* 0)
 (defparameter *current-mouse-modifier* nil)
+(defparameter *ui-interactive-mode* nil)
 ;; Hack! Figure out the right analogous representation
 ;; of a GL-enabled NSView for the GLFW3 backend
-(defvar *default-scene-view* nil)
+(defvar *scene-view* nil)
 
 (defparameter *current-highlighted-ui-item* nil)
 
@@ -63,30 +64,30 @@
   (push (app-command-table view) (command-tables view)))
 
 (defun show-ui-content (view)
-  (let ((contents (ui-contents *default-scene-view*)))
+  (let ((contents (ui-contents *scene-view*)))
     (ui-add-child contents view)
     (update-layout contents)
     ;; scroll if going off bottom of view
     (let ((delta-y (- (+ (ui-y contents) (ui-h contents))
-                      (- (second *window-size*) (ui-h (status-bar *default-scene-view*)) 20))))
+                      (- (second *window-size*) (ui-h (status-bar *scene-view*)) 20))))
       (when (> delta-y 0)
-        (decf (ui-contents-scroll *default-scene-view*) delta-y)))
+        (decf (ui-contents-scroll *scene-view*) delta-y)))
     (update-ui-content-position)))
 
 (defun hide-ui-content (view)
-  (let ((contents (ui-contents *default-scene-view*)))
+  (let ((contents (ui-contents *scene-view*)))
     (ui-remove-child contents view)
     (update-layout contents)))
 
 (defun update-ui-content-position ()
-  (let ((view (ui-contents *default-scene-view*)))
+  (let ((view (ui-contents *scene-view*)))
   ;; (case location
   ;;   (:top-left
   ;;    (ui-set-position view 20 20))
   ;;   (:top-right
     (ui-set-position view
                      (- (first *window-size*) (ui-w view) 20)
-                     (+ 20 (ui-contents-scroll *default-scene-view*)))))
+                     (+ 20 (ui-contents-scroll *scene-view*)))))
     ;; (:bottom-left
     ;;  (ui-set-position view 20 (- (second *window-size*) (ui-h view) 20)))
     ;; (:bottom-right
@@ -95,10 +96,10 @@
     ;;                   (- (second *window-size*) (ui-h view) 20)))))
 
 (defun reposition-ui-content-after-delete ()
-  (when (< (ui-contents-scroll *default-scene-view*) 0)
-    (let* ((contents (ui-contents *default-scene-view*))
+  (when (< (ui-contents-scroll *scene-view*) 0)
+    (let* ((contents (ui-contents *scene-view*))
            (delta-y (- (+ (ui-y contents) (ui-h contents))
-                       (- (second *window-size*) (ui-h (status-bar *default-scene-view*)) 20))))
+                       (- (second *window-size*) (ui-h (status-bar *scene-view*)) 20))))
       (when (< delta-y 0)
         (decf (ui-y contents) delta-y)
         (setf (ui-y contents) (min 20 (ui-y contents)))))))
@@ -110,6 +111,7 @@
     (ct-subtable :C "Create" (create-command-table view))
     (ct-subtable :I "Inspect" (inspect-command-table view))
     (ct-subtable :D "Display" (display-command-table view))
+    (ct-entry    :M "Interactive Mode (ESC to exit)" (setf *ui-interactive-mode* (not *ui-interactive-mode*)))
     (ct-subtable :X "Context" (context-command-table))
     table))
 
@@ -136,25 +138,25 @@
                                (lambda (str)
                                  (let ((scene (load-scene str)))
                                    (setf *scene* scene)
-                                   (setf (scene *default-scene-view*) *scene*))))))
+                                   (setf (scene *scene-view*) *scene*))))))
 
 (defun show-save-scene-dialog ()
   (show-ui-content
    (make-text-input-dialog-box "Save Scene File"
                                (lambda (str)
-                                 (save-scene (scene *default-scene-view*) str)))))
+                                 (save-scene (scene *scene-view*) str)))))
 
 (defun show-export-obj-scene-dialog ()
   (show-ui-content
    (make-text-input-dialog-box "Export OBJ File"
                                (lambda (str)
-                                 (export-obj (scene *default-scene-view*) str)))))
+                                 (export-obj (scene *scene-view*) str)))))
 
 (defun show-export-usd-scene-dialog ()
   (show-ui-content
    (make-text-input-dialog-box "Export USD File"
                                (lambda (str)
-                                 (export-usd (scene *default-scene-view*) str)))))
+                                 (export-usd (scene *scene-view*) str)))))
 
 (defun edit-command-table (view)
   (let ((table (make-instance 'command-table :title "Edit")))
@@ -235,9 +237,9 @@
 
 (defmacro mouse-transform-setup (help-str &rest action-exprs)
   `(progn
-     (setf (mouse-binding-string *default-scene-view*)
+     (setf (mouse-binding-string *scene-view*)
            (strcat "Mouse [CTRL]: " ,help-str "."))
-     (setf (mouse-binding *default-scene-view*)
+     (setf (mouse-binding *scene-view*)
            (lambda (scene dx dy)
              (declare (ignore dy))
              (dolist (shape (selected-shapes scene))
@@ -364,7 +366,11 @@
                ((member key '(:left :right :up :down))
                 (do-arrow-input *ui-keyboard-focus* key))
                ))
-    ((eq :space key)                ;play animation
+        (*ui-interactive-mode*          ;interactive mode: send keyboard events to scene interactor
+         (if (eq :escape key)
+             (setf *ui-interactive-mode* nil)
+             (update-scene-interactor (scene self) key mod-keys)))
+        ((eq :space key)                ;play animation
          (update-scene (scene self))
          (update-scene-ui))
         ((eq :left-bracket key)         ;init scene
@@ -417,17 +423,17 @@
   (cond ;;((and (eq key :escape) (eq action :press))
          ;;(glfw:set-window-should-close))
         ((or (eq action :press) (eq action :repeat))
-         (when *default-scene-view*
-           (key-down *default-scene-view* key mod-keys)))
+         (when *scene-view*
+           (key-down *scene-view* key mod-keys)))
         ((eq action :release)
-         (when *default-scene-view*
-           (key-up *default-scene-view* key))))
+         (when *scene-view*
+           (key-up *scene-view* key))))
   (update-window-title window))
 
 (glfw:def-char-callback char-callback (window char)
   ;; (format t "char-callback: w: ~a, k: ~a~%" window char)
   ;; (finish-output)
-  (when (and *default-scene-view* *ui-keyboard-focus*)
+  (when (and *scene-view* *ui-keyboard-focus*)
     (do-char-input *ui-keyboard-focus* char)))
 
 (glfw:def-mouse-button-callback mouse-callback (window button action mod-keys)
@@ -479,28 +485,28 @@
   (declare (ignore dx dy))
   ;;  (format t "mouse-moved x: ~a, y: ~a~%" x y)
   ;; menu takes priority over other ui components in view -- assume no overlap
-  (let ((menu (menu *default-scene-view*)))
+  (let ((menu (menu *scene-view*)))
     (if (and menu (is-visible? menu))
         (when (not (highlight-ui-item-under-mouse menu x y))
-          (highlight-ui-item-under-mouse (ui-contents *default-scene-view*) x y))
-        (highlight-ui-item-under-mouse (ui-contents *default-scene-view*) x y))))
+          (highlight-ui-item-under-mouse (ui-contents *scene-view*) x y))
+        (highlight-ui-item-under-mouse (ui-contents *scene-view*) x y))))
 
 (defun mouse-click (x y button modifiers)
   ;; clear keyboard focus
   (setf *ui-keyboard-focus* nil)
   ;; menu takes priority over other ui components in view -- assume no overlap
-  (let ((menu (menu *default-scene-view*)))
+  (let ((menu (menu *scene-view*)))
     (if (and menu (is-visible? menu))
         (when (not (do-action-ui-item-under-mouse menu x y button modifiers))
-          (do-action-ui-item-under-mouse (ui-contents *default-scene-view*) x y button modifiers))
-        (do-action-ui-item-under-mouse (ui-contents *default-scene-view*) x y button modifiers))))
+          (do-action-ui-item-under-mouse (ui-contents *scene-view*) x y button modifiers))
+        (do-action-ui-item-under-mouse (ui-contents *scene-view*) x y button modifiers))))
 
 (defun mouse-dragged (x y dx dy)
   (declare (ignore x y))
 ;;  (format t "mouse-dragged dx: ~a, dy: ~a, mod: ~a~%" dx dy *current-mouse-modifier*)
   (cond ((eq :control *current-mouse-modifier*) ;user-defined mouse binding
-         (when (mouse-binding *default-scene-view*)
-           (funcall (mouse-binding *default-scene-view*) (scene *default-scene-view*) dx dy)))
+         (when (mouse-binding *scene-view*)
+           (funcall (mouse-binding *scene-view*) (scene *scene-view*) dx dy)))
         ((eq :alt *current-mouse-modifier*)    ;default mouse scene navigation -- pan
          (if (>= (abs dx) (abs dy))
              (incf *cam-side-dist* (* 0.1 dx))
@@ -531,10 +537,10 @@
   (setf *window-size* (list w h))
   (update-clip-rect)
   (update-gl-3d-viewport)
-  (draw-scene-view *default-scene-view*)      ; redraw while being resized
+  (draw-scene-view *scene-view*)      ; redraw while being resized
   (glfw:swap-buffers)
   (update-scene-ui)
-  (update-status-bar (status-bar *default-scene-view*) :view-width w :view-height h)
+  (update-status-bar (status-bar *scene-view*) :view-width w :view-height h)
   (update-window-title window))
 
 (glfw:def-window-position-callback window-position-callback (window x y)
@@ -547,23 +553,24 @@
   (window-resized window w h))
 
 (defun update-scene-ui ()
-  (loop for view across (children (ui-contents *default-scene-view*))
+  (loop for view across (children (ui-contents *scene-view*))
         do (create-contents view))
-  (update-layout (ui-contents *default-scene-view*))
+  (update-layout (ui-contents *scene-view*))
   (update-ui-content-position))
 
 (defun update-status-bar-for-scene ()
-  (let* ((scene (scene *default-scene-view*))
+  (let* ((scene (scene *scene-view*))
+         (status-bar (status-bar *scene-view*))
          (menu-str (format nil "TAB: hide menu. L-ARROW: previous menu."))
          (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
-         (mouse-binding-str (mouse-binding-string *default-scene-view*))
-         (inspector-str (if (> (length (children (ui-contents *default-scene-view*))) 0)
+         (mouse-binding-str (mouse-binding-string *scene-view*))
+         (inspector-str (if (> (length (children (ui-contents *scene-view*))) 0)
                             "UP/DN-ARROW: scroll inspectors. ESC: close inspectors, SHIFT-L-ARROW: close last inspector."
                             ""))
          (secondary-str (if mouse-binding-str
                             mouse-binding-str
                             inspector-str)))
-    (update-status-bar (status-bar *default-scene-view*)
+    (update-status-bar status-bar
                        :str0 (format nil "Current Frame: ~a [~a-~a]"
                                      (current-frame scene) (start-frame scene) (end-frame scene))
                        :str1 (let ((n-shapes (num-shapes scene))
@@ -573,13 +580,17 @@
                        :str2 (format nil "Selection: ~a shape~p" (length (selection scene))  (length (selection scene)))
                        :str3 (format nil "Cursor: (~a, ~a)"
                                      (floor *current-mouse-pos-x*) (floor *current-mouse-pos-y*))
-                       :str4 (cond (*current-highlighted-ui-item*
+                       :str4 (cond (*ui-interactive-mode*
+                                    "INTERACTIVE MODE ON")
+                                   (*current-highlighted-ui-item*
                                     (help-string *current-highlighted-ui-item*))
-                                   ((not (menu *default-scene-view*))
+                                   ((not (menu *scene-view*))
                                     (strcat mouse-str " " secondary-str))
                                    (t
-                                    (strcat menu-str " " secondary-str)))
-                       )))
+                                    (strcat menu-str " " secondary-str))))
+    (if *ui-interactive-mode*
+        (setf (bg-color status-bar) (c! .2 1 .2 0.5))
+        (setf (bg-color status-bar) (c! 1 1 1 0.5)))))
 
 (defun update-clip-rect ()
   (setf *ui-clip-rect* (make-instance 'ui-rect
@@ -604,14 +615,14 @@
       (glfw:with-init-window (:title "kons-9" :width (first *window-size*) :height (second *window-size*))
         ;; (let ((app-view (make-instance 'app-view)))
         ;;   (setf (scene (scene-view app-view)) scene)
-        ;;   (setf *default-scene-view* (scene-view app-view))
+        ;;   (setf *scene-view* (scene-view app-view))
 
         (let ((scene-view (make-instance 'scene-view :scene scene)))
           
           ;; Hack! Need to figure out how to tie a scene-view to a window
           ;; in glfw3. For now, just set the first scene-view created
           ;; as default and use that for event handling
-          (setf *default-scene-view* scene-view)
+          (setf *scene-view* scene-view)
           (update-clip-rect)
           
           ;; assume monitor scale is same in x and y, just use first value
@@ -633,11 +644,13 @@
           ;;           (setf *viewport-aspect-ratio* (/ (first *window-size*) (second *window-size*)))
           (update-gl-3d-viewport)
           (update-window-title glfw:*window*)
-          (update-status-bar (status-bar *default-scene-view*)
+          (update-status-bar (status-bar *scene-view*)
                              :view-width (first *window-size*) :view-height (second *window-size*))
           (initial-text-engine-setup)
           (loop until (glfw:window-should-close-p)
-                do (draw-scene-view *default-scene-view*)
+                do (when *ui-interactive-mode*          ;interactive mode do idle
+                     (update-scene-interactor (scene *scene-view*) nil nil))
+                do (draw-scene-view *scene-view*)
                 do (update-status-bar-for-scene)
                 do (glfw:swap-buffers)
                 do (glfw:poll-events)))))))
@@ -645,8 +658,10 @@
 ;;; does not return a useful value
 (defmacro with-clear-scene (&body body)
   `(progn
-     (clear-scene (scene *default-scene-view*))
+     (clear-scene (scene *scene-view*))
      ,@body
-     (update-scene-ui)))
+     (update-scene-ui)
+     (setf (ui-contents-scroll *scene-view*) 0)
+     ))
 
 

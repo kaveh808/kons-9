@@ -37,6 +37,10 @@
    (ui-w 0.0)
    (ui-h 0.0)))
 
+(defmethod print-object ((self ui-rect) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "X: ~a, Y: ~a, W: ~a, H: ~a" (ui-x self) (ui-y self) (ui-w self) (ui-h self))))
+
 (defmethod ui-right ((rect ui-rect))
   (+ (ui-x rect) (ui-w rect)))
 
@@ -694,7 +698,12 @@
 (defmethod add-parent-contents ((view ui-outliner-item) &key (recurse? nil))
   (let ((i (position view (children (ui-parent view))))
         (children (children (data view))))
-    (dotimes (j (length children))
+    (dotimes (j (min 10 (length children)))
+      ;; TODO -- cap num children entries to 10 to avoid text engine overflow
+      ;; clipping does not work in all cases -- looks like outliner-view draw gets called without
+      ;; update-layout being called -- maybe due to text render threading?
+      ;; happens when shapes inspector is open and point-instancer-group demo in demo-misc.lisp
+      ;; is run
       (let* ((child (aref children j))
              (text (format nil "~a" (printable-data child)))
              (item (make-instance (outliner-item-class (ui-parent view))
@@ -779,9 +788,10 @@
                                            :data entry
                                            :text text
                                            :is-active? t
-                                           :help-string (format nil "Mouse: select ~a, [alt] show/hide children"
+                                           :help-string (format nil "Mouse: select ~a" ;, [alt] show/hide children" ; not implemented yet
                                                                 (name entry)))))
-                 (setf (ui-w item) (+ (ui-text-width (outliner-item-text item)) (* 4 *ui-default-spacing*)))
+                 (setf (ui-w item)
+                       (+ (ui-text-width (outliner-item-text item)) (* 4 *ui-default-spacing*)))
                  (ui-add-child view item)
                  ;; show children if any
                  (when (and (has-children-method? (data item)) (show-children? item))
@@ -867,6 +877,15 @@
 ;;;; drawing ===================================================================
 
 (defun ui-is-clipped? (x-lo y-lo x-hi y-hi)
+
+  ;; (print (list x-lo y-lo x-hi y-hi
+  ;;              *ui-clip-rect*
+  ;;              (and *ui-clip-rect*
+  ;;                   (or (> x-lo (ui-right  *ui-clip-rect*))
+  ;;                       (< x-hi (ui-x      *ui-clip-rect*))
+  ;;                       (> y-lo (ui-bottom *ui-clip-rect*))
+  ;;                       (< y-hi (ui-y      *ui-clip-rect*))))))
+  
   (and *ui-clip-rect*
        (or (> x-lo (ui-right  *ui-clip-rect*))
            (< x-hi (ui-x      *ui-clip-rect*))
@@ -976,6 +995,9 @@
 
   (:method ((view ui-outliner-item) x-offset y-offset)
     (when (is-visible? view)
+
+;      (print (list view (text view) x-offset y-offset))
+      
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view

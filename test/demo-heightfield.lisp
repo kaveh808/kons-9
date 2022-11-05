@@ -118,3 +118,7 @@ Use a POINT-INSTANCER and a POINT-CLOUD to scatter shapes on a heightfield.
     (add-shape *scene* hfield)
     (add-shape *scene* p-cloud)
     (add-shape *scene* group)))
+
+#|
+END ============================================================================
+|#

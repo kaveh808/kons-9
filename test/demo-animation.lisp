@@ -129,9 +129,6 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
 (defun anim-obj-filename (path filename index padding)
   (format nil (format nil "~~a/~~a~a.obj" (format nil "~~~a,'0d" padding)) path filename index))
 
-;;; TODO -- not tested since change to array children slot
-#| only run if file data is set
-
 (with-clear-scene
   (flet ((anim-obj-filename (path filename index padding)
            (format nil (format nil "~~a/~~a~a.obj" (format nil "~~~a,'0d" padding)) path filename index)))
@@ -141,6 +138,7 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
                                              (+ i *obj-start-frame*) *obj-file-padding*))
               shapes))
       (let ((group (set-children (make-instance 'variant-manager-group) (reverse shapes))))
+        (setf (visible-index group) 0)  ;only make first shape visible
         (add-shape *scene* group)
         (add-motion *scene* 
                     (make-instance 'animator
@@ -151,4 +149,3 @@ https://graphics.pixar.com/usd/release/tut_xforms.html
   (setf (start-frame *scene*) *obj-start-frame*)
   (setf (end-frame *scene*) *obj-end-frame*))
 
-|#

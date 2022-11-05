@@ -158,14 +158,15 @@ Simulate particles in orbit.
 (format t "  particle-system 07...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point-source (make-circle-curve 4 16)
-                                                       (lambda (v) (p:scale (p:normalize (p+ v (p-rand))) 0.2))
-                                                       'dynamic-particle
-                                                       :life-span -1 ;infinite life-span
-                                                       :do-collisions? nil
-                                                       :force-fields (list (make-instance 'attractor-force-field
-                                                                                          :location (p! 0 0 0)
-                                                                                          :magnitude 0.1)))))
+  (let ((p-sys (make-particle-system-from-point-source
+                (make-circle-curve 4 16)
+                (lambda (v) (p:scale (p:normalize (p+ v (p-rand))) 0.2))
+                'dynamic-particle
+                :life-span -1 ;infinite life-span
+                :do-collisions? nil
+                :force-fields (list (make-instance 'attractor-force-field
+                                                   :location (p! 0 0 0)
+                                                   :magnitude 0.1)))))
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
 ;;; hold down space key in 3D view to run animation
@@ -206,8 +207,7 @@ force field.
 #|
 (Demo 09 particle) climbing particle system ====================================
 
-Climbing particles which follow the surface of a shape, via an intermediate
-point-cloud.
+Climbing particles which follow the surface of a shape.
 |#
 
 (format t "  particle-system 09...~%") (finish-output)
@@ -230,79 +230,82 @@ point-cloud.
 (update-scene *scene* 30)               ;do update for batch testing
 
 #|
-;;; particle-system point-generator-mixin use polyh face centers ---------------
+(Demo 10 particle) particle system from polyhedron faces =======================
 
-(format t "  particle-system 7...~%") (finish-output)
+Generating particles from polyhedron face centroids (as opposed to vertices).
+|#
+
+(format t "  particle-system 10...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-gen (make-icosahedron 2.0)))
-    (setf (point-source-use-face-centers? p-gen) t)
-    (let* ((p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'particle
+  (let ((p-source (make-icosahedron 2.0)))
+    (setf (point-source-use-face-centers? p-source) t) ;comment out to use poly points
+    (let* ((p-sys (make-particle-system-from-point-source p-source
+                                                          (lambda (v) (p:scale v 0.1))
+                                                          'particle
                                         :life-span 10
                                         :update-angle (range-float (/ pi 16) (/ pi 32))
                                         :spawn-angle (range-float (/ pi 8) (/ pi 16))))
            (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                     :taper 0.0 :twist 0.0)))
-      (add-shape *scene* p-gen)
-      (add-shape *scene* p-sys)
+      (add-shape *scene* p-source)
+      ;; (add-shape *scene* p-sys)         ;no need to add p-sys shape to scene
       (add-shape *scene* sweep-mesh-group)
       (add-motion *scene* p-sys))))
 ;;; hold down space key in 3D view to run animation
 
-;;; particle-system point-generator-mixin polyhedron ---------------------------
+(update-scene *scene* 30)               ;do update for batch testing
 
-(format t "  particle-system 8...~%") (finish-output)
+#|
+(Demo 11 particle) climbing particle system ====================================
 
-(with-clear-scene
-  (let* ((p-gen (import-obj *example-obj-filename*))
-         (p-sys (make-particle-system p-gen (p! .2 .2 .2) 1 4 'dynamic-particle
-                                       :force-fields (list (make-instance 'constant-force-field
-                                                                          :force-vector (p! 0 -.05 0))))))
-    (add-shape *scene* p-gen)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation -- slow, profile & optimize
-
-;;; particle-system point-generator-mixin particle-system ----------------------
-
-(format t "  particle-system 9...~%") (finish-output)
-
-(with-clear-scene
-  (let* ((p-gen (freeze-transform (translate-by (make-superquadric 8 5 2.0 1.0 1.0)
-                                                (p! 0 2 0))))
-         (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (add-shape *scene* p-gen)
-    (setf (name p-sys) 'p-system-1)
-    (add-shape *sce         ne* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; for automated testing
-(update-scene *scene* 10)
-
-;;; make new particle-system generate from paths of existing particle-system
-(progn
-  (clear-motions *scene*)             ;remove exsting particle animator
-  (let* ((p-gen (find-shape-by-name *scene* 'p-system-1))
-         (p-sys (make-particle-system p-gen (p! .4 .4 .4) 1 1 'particle
-                                      :update-angle (range-float (/ pi 16) (/ pi 32)))))
-    (setf (name p-sys) 'p-system-2)
-    (add-shape *scene* p-sys)
-    (add-motion *scene* p-sys)))
-;;; hold down space key in 3D view to run animation
-
-;;; for automated testing
-(update-scene *scene* 5)
-
-;;; do sweep-extrude  
-(let ((group (make-shape-group (sweep-extrude (make-circle 0.25 4)
-                                              (find-shape-by-name *scene* 'p-system-2)
-                                              :taper 0.0))))
-  (set-point-colors-by-uv group (lambda (u v)
-                                  (declare (ignore u))
-                                  (c-rainbow v)))
-    (add-shape *scene* group))
-
+Climbing particles which follow the surface of a shape.
 |#
 
+(format t "  particle-system 11...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (import-obj (asdf:system-relative-pathname "kons-9" "test/data/cow.obj")))
+         (p-sys (make-particle-system-from-point (p! .5 1.8 0) 10 (p! -.5 0 -.5) (p! .5 0 .5)
+                                                 'climbing-particle
+                                                 :support-polyh shape
+                                                 :update-angle (range-float (/ pi 8) (/ pi 16))
+                                                 :life-span 10)))
+;    (add-shape *scene* shape)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 30)               ;do update for batch testing
+
+#|
+(Demo 12 particle) dynamic particle system =====================================
+
+Dynamic particles growing from a superquadric with a gravity force field.
+|#
+
+(format t "  particle-system 12...~%") (finish-output)
+
+(with-clear-scene
+  (let ((p-source (freeze-transform (translate-by (make-superquadric 16 8 2.0 1.0 1.0)
+                                                  (p! 0 2 0)))))
+    (setf (point-source-use-face-centers? p-source) t) ;comment out to use poly points
+    (let ((p-sys (make-particle-system-from-point-source
+                  p-source
+                  (lambda (v) (p:scale v 0.2))
+                  'dynamic-particle
+                  :life-span -1 ;infinite life-span
+                  :do-collisions? t
+                  :force-fields (list (make-instance 'constant-force-field
+                                                     :force-vector (p! 0 -0.05 0))))))
+      (add-shape *scene* p-source)
+      (add-shape *scene* p-sys)
+      (add-motion *scene* p-sys))))
+;;; hold down space key in 3D view to run animation
+
+;;; for automated testing
+(update-scene *scene* 30)
+
+#|
+END ============================================================================
+|#
