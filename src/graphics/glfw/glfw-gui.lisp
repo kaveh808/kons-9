@@ -4,6 +4,7 @@
 (defparameter *current-mouse-pos-x* 0)
 (defparameter *current-mouse-pos-y* 0)
 (defparameter *current-mouse-modifier* nil)
+(defparameter *ui-interactive-mode* nil)
 ;; Hack! Figure out the right analogous representation
 ;; of a GL-enabled NSView for the GLFW3 backend
 (defvar *scene-view* nil)
@@ -110,6 +111,7 @@
     (ct-subtable :C "Create" (create-command-table view))
     (ct-subtable :I "Inspect" (inspect-command-table view))
     (ct-subtable :D "Display" (display-command-table view))
+    (ct-entry    :M "Interactive Mode (ESC to exit)" (setf *ui-interactive-mode* (not *ui-interactive-mode*)))
     (ct-subtable :X "Context" (context-command-table))
     table))
 
@@ -364,7 +366,11 @@
                ((member key '(:left :right :up :down))
                 (do-arrow-input *ui-keyboard-focus* key))
                ))
-    ((eq :space key)                ;play animation
+        (*ui-interactive-mode*          ;interactive mode: send keyboard events to scene interactor
+         (if (eq :escape key)
+             (setf *ui-interactive-mode* nil)
+             (update-scene-interactor (scene self) key mod-keys)))
+        ((eq :space key)                ;play animation
          (update-scene (scene self))
          (update-scene-ui))
         ((eq :left-bracket key)         ;init scene
@@ -554,6 +560,7 @@
 
 (defun update-status-bar-for-scene ()
   (let* ((scene (scene *scene-view*))
+         (status-bar (status-bar *scene-view*))
          (menu-str (format nil "TAB: hide menu. L-ARROW: previous menu."))
          (mouse-str "Mouse: orbit, [ALT] pan, [SHIFT] in/out. TAB: show/hide menu.")
          (mouse-binding-str (mouse-binding-string *scene-view*))
@@ -563,7 +570,7 @@
          (secondary-str (if mouse-binding-str
                             mouse-binding-str
                             inspector-str)))
-    (update-status-bar (status-bar *scene-view*)
+    (update-status-bar status-bar
                        :str0 (format nil "Current Frame: ~a [~a-~a]"
                                      (current-frame scene) (start-frame scene) (end-frame scene))
                        :str1 (let ((n-shapes (num-shapes scene))
@@ -573,13 +580,17 @@
                        :str2 (format nil "Selection: ~a shape~p" (length (selection scene))  (length (selection scene)))
                        :str3 (format nil "Cursor: (~a, ~a)"
                                      (floor *current-mouse-pos-x*) (floor *current-mouse-pos-y*))
-                       :str4 (cond (*current-highlighted-ui-item*
+                       :str4 (cond (*ui-interactive-mode*
+                                    "INTERACTIVE MODE ON")
+                                   (*current-highlighted-ui-item*
                                     (help-string *current-highlighted-ui-item*))
                                    ((not (menu *scene-view*))
                                     (strcat mouse-str " " secondary-str))
                                    (t
-                                    (strcat menu-str " " secondary-str)))
-                       )))
+                                    (strcat menu-str " " secondary-str))))
+    (if *ui-interactive-mode*
+        (setf (bg-color status-bar) (c! .2 1 .2 0.5))
+        (setf (bg-color status-bar) (c! 1 1 1 0.5)))))
 
 (defun update-clip-rect ()
   (setf *ui-clip-rect* (make-instance 'ui-rect
@@ -637,6 +648,8 @@
                              :view-width (first *window-size*) :view-height (second *window-size*))
           (initial-text-engine-setup)
           (loop until (glfw:window-should-close-p)
+                do (when *ui-interactive-mode*          ;interactive mode do idle
+                     (update-scene-interactor (scene *scene-view*) nil nil))
                 do (draw-scene-view *scene-view*)
                 do (update-status-bar-for-scene)
                 do (glfw:swap-buffers)

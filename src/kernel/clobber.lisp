@@ -170,7 +170,7 @@
   (start-transaction-log filename))
 
 ;; (setf *scene* (start-transaction-log filename))
-;;   (setf (scene *default-scene-view*) *scene*))
+;;   (setf (scene *scene-view*) *scene*))
 
 #|
 testing

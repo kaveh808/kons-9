@@ -47,6 +47,7 @@
    (:file "src/kernel/motion-group")
    (:file "src/kernel/animator")
    (:file "src/kernel/animation")
+   (:file "src/kernel/interactor")
    (:file "src/kernel/scene")
    (:file "src/kernel/scene-draw")
    (:file "src/kernel/scene-hierarchy")

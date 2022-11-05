@@ -5,6 +5,7 @@
 (defclass-kons-9 scene (item)
   ((shape-root (make-instance 'shape-group :name 'shapes))
    (motion-root (make-instance 'motion-group :name 'motions))
+   (interactor nil)
    (initialized? nil)
    (selection '())
    (start-frame 0)
@@ -147,3 +148,7 @@
 
 (defmethod num-motions ((scene scene))
   (length (find-motions scene #'identity)))
+
+(defmethod update-scene-interactor ((scene scene) key key-mods)
+  (when (interactor scene)
+    (update-interactor (interactor scene) key key-mods)))
