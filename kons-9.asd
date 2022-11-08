@@ -97,6 +97,7 @@
    (:file "src/plugins/poly-mesh")
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")
+   (:file "src/plugins/stl")
    ))
 
 (asdf:defsystem #:kons-9/testsuite

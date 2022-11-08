@@ -58,7 +58,7 @@
 (defparameter *obj-export-vref-offset* 1)
 
 (defmethod export-obj ((scene scene) filename)
-  (with-open-file (stream filename :direction :output :if-exists :overwrite :if-does-not-exist :create)
+  (with-open-file (stream filename :direction :output :if-exists :supersede :if-does-not-exist :create)
     (write-obj scene stream)))
 
 (defmethod write-obj ((scene scene) &optional (stream t) (matrix nil))
