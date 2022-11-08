@@ -32,7 +32,7 @@
   (map 'vector #'p:copy point-array))
 
 (defmacro def-point-func-1 (op)
-  `(defun ,(concat-syms 'p op) (p val)
+  `(defun ,(intern (concatenate 'string "P" (symbol-name op))) (p val)
      (ctypecase val
        (p:vec (,(find-symbol (symbol-name op) 'p) p val))
        (number (p! (,op (p:x p) val)
@@ -43,7 +43,6 @@
 (def-point-func-1 -)
 (def-point-func-1 *)
 (def-point-func-1 /)
-
 
 (defun p-from-to (p1 p2)
   (p:- p2 p1))
