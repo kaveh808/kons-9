@@ -349,19 +349,25 @@
 (defun make-dynamic-particle-system ()
   (let* ((scene (scene *scene-view*))
          (p-source (selected-shape scene))
-         (p-sys (make-particle-system p-source
-                                      (p! .2 .2 .2) 1 -1 'dynamic-particle
-                                      :force-fields (list (make-instance 'constant-force-field
-                                                                         :force-vector (p! 0 -.02 0))))))
+         (p-sys (make-particle-system-from-point-source
+                 p-source
+                 (lambda (v) (p:scale v 0.2))
+                 'dynamic-particle
+                 :life-span -1
+                 :force-fields (list (make-instance 'constant-force-field
+                                                    :force-vector (p! 0 -.02 0))))))
      (add-motion scene p-sys)
     p-sys))
 
 (defun make-wriggly-particle-system ()
   (let* ((scene (scene *scene-view*))
          (p-source (selected-shape scene))
-         (p-sys (make-particle-system p-source
-                                      (p! .2 .2 .2) 1 -1 'particle
-                                      :update-angle (range-float (/ pi 8) (/ pi 16)))))
+         (p-sys (make-particle-system-from-point-source
+                 p-source
+                 (lambda (v) (p:scale v 0.2))
+                 'particle
+                 :life-span -1
+                 :update-angle (range-float (/ pi 8) (/ pi 16)))))
     (add-motion scene p-sys)
     p-sys))
 
