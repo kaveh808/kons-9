@@ -128,15 +128,21 @@
   (setup-motion (motion-root scene))
   (setf (initialized? scene) t))
 
-(defmethod update-scene ((scene scene) &optional (num-frames 1))
+(defmethod update-scene ((scene scene) &optional (num-frames 1)) ;num-frames = nil for interactive mode
   (when (not (initialized? scene))
     (init-scene scene))
-  (dotimes (i num-frames)
-    (when (< (current-frame scene) (end-frame scene))
-      (incf (current-frame scene))
+  (if (null num-frames)                 ;update regardless of frame number (for interactive mode)
+      ;; interactive mode
       (let ((timing (compute-motion-absolute-timing scene nil)))
         (do-children (child (motion-root scene))
-          (update-motion child timing))))))
+          (update-motion child timing)))
+      ;; animation mode
+      (dotimes (i num-frames)
+        (when (< (current-frame scene) (end-frame scene))
+          (incf (current-frame scene))
+          (let ((timing (compute-motion-absolute-timing scene nil)))
+            (do-children (child (motion-root scene))
+              (update-motion child timing)))))))
 
 (defmethod compute-motion-absolute-timing ((scene scene) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
@@ -151,4 +157,6 @@
 
 (defmethod update-scene-interactor ((scene scene) key key-mods)
   (when (interactor scene)
-    (update-interactor (interactor scene) key key-mods)))
+    (update-interactor (interactor scene) key key-mods))
+  ;; also update animators
+  (update-scene scene nil))
