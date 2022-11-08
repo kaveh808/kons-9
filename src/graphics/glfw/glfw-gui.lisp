@@ -161,7 +161,7 @@
 (defun edit-command-table (view)
   (let ((table (make-instance 'command-table :title "Edit")))
 ;;    (ct-entry :S "Select (TBD)")
-    (ct-entry :backspace "Delete" (remove-selection (scene view)))
+    (ct-entry :backspace "Delete" (delete-selection (scene view)))
     ;; TODO -- handle selected motions -- activate/deactivate...
     (ct-entry :S "Show" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) t)))
     (ct-entry :H "Hide" (dolist (shape (selected-shapes (scene view))) (setf (is-visible? shape) nil)))
