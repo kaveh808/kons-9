@@ -271,6 +271,30 @@
 
 ;;;; polyhedron primitives =====================================================
 
+(defun make-rectangle-polyhedron (width height &key (name nil) (mesh-type 'polyhedron))
+  (let* ((points (make-rectangle-points width height 1))
+         (faces (loop :for i :below (length points) :collect i)))
+    (make-polyhedron points
+                     (vector faces)
+                     :name name
+                     :mesh-type mesh-type)))
+
+(defun make-square-polyhedron (side &key (name nil) (mesh-type 'polyhedron))
+  (let* ((points (make-rectangle-points side side 1))
+         (faces (loop :for i :below (length points) :collect i)))
+    (make-polyhedron points
+                     (vector faces)
+                     :name name
+                     :mesh-type mesh-type)))
+
+(defun make-circle-polyhedron (diameter num-segments &key (name nil) (mesh-type 'polyhedron))
+  (let* ((points (make-circle-points diameter num-segments))
+         (faces (loop :for i :below (length points) :collect i)))
+    (make-polyhedron points
+                     (vector faces)
+                     :name name
+                     :mesh-type mesh-type)))
+
 (defun make-tetrahedron (diameter &key (name nil) (mesh-type 'polyhedron))
   (let ((r (* diameter 0.5))
         (-r (* diameter -0.5)))

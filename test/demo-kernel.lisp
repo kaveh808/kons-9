@@ -108,6 +108,15 @@ The POLYHEDRON class is the basic 3D shape representaion.
                        (translate-to (make-icosahedron  2.0) (p! 5 0 0)))))
 
 #|
+Flat POLYHEDRON shapes. These are one-sided when backface culling is on.
+|#
+(with-clear-scene
+  (add-shapes *scene* (list
+                       (translate-to (make-rectangle-polyhedron 2 1) (p! -2.5 0 0))
+                       (translate-to (make-square-polyhedron 1.5)    (p!  0   0 0))
+                       (translate-to (make-circle-polyhedron 2.0 32) (p!  2.5 0 0)))))
+
+#|
 Refine (subdivide) a polyhedron.
 |#
 (with-clear-scene
