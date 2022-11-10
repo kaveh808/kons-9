@@ -68,7 +68,7 @@
    (done-spawn? :accessor done-spawn? :initarg :done-spawn? :initform nil)
    (mutate-spawns? :accessor mutate-spawns? :initarg :mutate-spawns? :initform nil)
    (spawn-number-children :accessor spawn-number-children :initarg :spawn-number-children :initform (range-float 2 0))
-   (spawn-angle :accessor spawn-angle :initarg :spawn-angle :initform (range-float (/ pi 8) (/ pi 16)))
+   (spawn-angle :accessor spawn-angle :initarg :spawn-angle :initform (range-float 45.0 22.5))
    (spawn-life-span-factor :accessor spawn-life-span-factor :initarg :spawn-life-span-factor :initform (range-float 1.0 0))
    (spawn-velocity-factor :accessor spawn-velocity-factor :initarg :spawn-velocity-factor :initform (range-float 1.0 0))))
 
@@ -93,7 +93,7 @@
   (let* ((vel (vel ptcl))
          (rnd (p-rand))
          (axis (p:normalize (p:cross vel rnd)))
-         (mtx (make-axis-rotation-matrix (range-value (update-angle ptcl)) axis))
+         (mtx (make-axis-rotation-matrix (radians (range-value (update-angle ptcl))) axis))
          (new-vel (transform-point vel mtx)))
     (setf (vel ptcl) new-vel)
     new-vel))
@@ -115,7 +115,7 @@
   (let* ((vel (vel ptcl))
          (rnd (p-rand))
          (axis (p:normalize (p:cross vel rnd)))
-         (mtx (make-axis-rotation-matrix (range-value (spawn-angle ptcl)) axis))
+         (mtx (make-axis-rotation-matrix (radians (range-value (spawn-angle ptcl))) axis))
          (new-vel (transform-point vel mtx)))
     (p:scale new-vel (range-value (spawn-velocity-factor ptcl)))))
 
@@ -126,7 +126,6 @@
                               :generation (1+ (generation ptcl))
                               :life-span (* (life-span ptcl)
                                             (range-value (spawn-life-span-factor ptcl))))))
-    (vector-push-extend (pos child) (points child)) ;store initial pos in points
     (copy-particle-data child ptcl)   ;transfer data
     (when (mutate-spawns? ptcl)
         (mutate-particle child 1.0))
@@ -260,7 +259,9 @@
   )
 
 (defmethod add-particle ((p-sys particle-system) ptcl)
-  (vector-push-extend ptcl (particles p-sys)))
+  (vector-push-extend ptcl (particles p-sys))
+  (vector-push-extend (pos ptcl) (points ptcl))   ;store initial pos in points
+  p-sys)
 
 (defmethod update-motion ((p-sys particle-system) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
@@ -284,7 +285,6 @@
     (warn "PARTICLE-SYSTEM ~a does not have any points. Using default bounds values." p-sys)
     (return-from get-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
   (points-bounds (points p-sys)))
-
 
 ;;;; point-source-protocol =====================================================
 
@@ -369,7 +369,7 @@
                  (lambda (v) (p:scale v 0.2))
                  'particle
                  :life-span -1
-                 :update-angle (range-float (/ pi 8) (/ pi 16)))))
+                 :update-angle (range-float 20.0 10.0))))
     (add-motion scene p-sys)
     p-sys))
 

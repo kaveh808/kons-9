@@ -31,7 +31,7 @@ Create 10 particles from a point. The particles split after their life-span of
 (format t "  particle-system 01...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point (p! 0 1 0) 10 (p! -.5 0 -.5) (p! .5 1 .5)
+  (let ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.1 0 -.1) (p! .1 .2 .1)
                                                 'particle
                                                 :life-span 5)))
     (add-shape *scene* p-sys)
@@ -95,7 +95,7 @@ Randomized particle velocities' update-angle to give "wriggle" effect.
                                                         (lambda (v) (p:scale v 0.2))
                                                         'particle
                                                         :life-span 10
-                                                        :update-angle (range-float (/ pi 8) (/ pi 16)))))
+                                                        :update-angle (range-float 20.0 10.0))))
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
@@ -138,7 +138,7 @@ Create dynamic particles with wriggle effect.
   (let ((p-sys (make-particle-system-from-point (p! 0 1 0) 10 (p! -.2 0 -.2) (p! .2 .5 .2)
                                                 'dynamic-particle
                                                 :life-span 20
-                                                :update-angle (range-float (/ pi 8) (/ pi 16))
+                                                :update-angle (range-float 20.0 10.0)
                                                 :do-collisions? t
                                                 :elasticity 0.95
                                                 :force-fields (list (make-instance 'constant-force-field
@@ -219,7 +219,7 @@ Climbing particles which follow the surface of a shape.
          (p-sys (make-particle-system-from-point (p! .5 3.5 0) 10 (p! -.5 0 -.5) (p! .5 0 .5)
                                                  'climbing-particle
                                                  :support-polyh shape
-                                                 :update-angle (range-float (/ pi 8) (/ pi 16))
+                                                 :update-angle (range-float 45.0 22.5)
                                                  :life-span 10)))
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
@@ -244,8 +244,8 @@ Generating particles from polyhedron face centroids (as opposed to vertices).
                                                           (lambda (v) (p:scale v 0.1))
                                                           'particle
                                         :life-span 10
-                                        :update-angle (range-float (/ pi 16) (/ pi 32))
-                                        :spawn-angle (range-float (/ pi 8) (/ pi 16))))
+                                        :update-angle (range-float 10.0 5.0)
+                                        :spawn-angle (range-float 45.0 22.5)))
            (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                     :taper 0.0 :twist 0.0)))
       (add-shape *scene* p-source)
@@ -269,7 +269,7 @@ Climbing particles which follow the surface of a shape.
          (p-sys (make-particle-system-from-point (p! .5 1.8 0) 10 (p! -.5 0 -.5) (p! .5 0 .5)
                                                  'climbing-particle
                                                  :support-polyh shape
-                                                 :update-angle (range-float (/ pi 8) (/ pi 16))
+                                                 :update-angle (range-float 45.0 22.5)
                                                  :life-span 10)))
 ;    (add-shape *scene* shape)
     (add-shape *scene* p-sys)
