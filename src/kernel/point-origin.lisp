@@ -152,10 +152,12 @@
 ;; 	nil
 ;; 	t)))
 
-(defun points-bounds (points) ;nobody uses this, why did I fix it?
-  (let ((bounds-lo (p:copy (first points)))
-	(bounds-hi (p:copy (first points))))
-    (dolist (p points)
+(defun points-bounds (point-array)
+  (when (= 0 (length point-array))
+    (return-from points-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
+  (let ((bounds-lo (p:copy (aref point-array 0)))
+        (bounds-hi (p:copy (aref point-array 0))))
+    (do-array (i p point-array)
       (p:min! bounds-lo bounds-lo p)
       (p:max! bounds-hi bounds-hi p))
     (values bounds-lo bounds-hi)))
