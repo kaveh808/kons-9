@@ -307,5 +307,47 @@ Dynamic particles growing from a superquadric with a gravity force field.
 (update-scene *scene* 30)
 
 #|
+(Demo 13 particle) particle system attributes ==================================
+
+Create a row particle systems with varrying attributes.
+|#
+
+(format t "  particle-system 13...~%") (finish-output)
+
+(with-clear-scene
+  (defparameter *p-sys-1* (make-particle-system-from-point
+                           (p! -8 0 0) 1 (p! 0 .2 0) (p! 0 .2 0)
+                           'particle
+                           :life-span 5))
+  (defparameter *p-sys-2* (make-particle-system-from-point
+                           (p! -4 0 0) 1 (p! 0 .2 0) (p! 0 .2 0)
+                           'particle
+                           :life-span 5
+                           :spawn-angle (range-float 10.0 5.0))) ;narrower branching
+  (defparameter *p-sys-3* (make-particle-system-from-point
+                           (p! 0 0 0) 1 (p! 0 .2 0) (p! 0 .2 0)
+                           'particle
+                           :life-span 5
+                           :spawn-velocity-factor (range-float .5 .2))) ;shorter branching
+  (defparameter *p-sys-4* (make-particle-system-from-point
+                           (p! 4 0 0) 1 (p! 0 .2 0) (p! 0 .2 0)
+                           'particle
+                           :life-span 5
+                           :update-angle (range-float 20.0 10.0))) ;twisty branches
+  (defparameter *p-sys-5* (make-particle-system-from-point
+                           (p! 8 0 0) 1 (p! 0 .2 0) (p! 0 .2 0)
+                           'particle
+                           :life-span 5
+                           :spawn-angle (range-float 5.0 2.5) ;very narrow branching
+                           :update-angle (range-float 10.0 5.0))) ;twisty branches
+  (add-shapes *scene* (list *p-sys-1* *p-sys-2* *p-sys-3* *p-sys-4* *p-sys-5*))
+  (add-motions *scene* (list *p-sys-1* *p-sys-2* *p-sys-3* *p-sys-4* *p-sys-5*)))
+
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 30)               ;do update for batch testing
+
+
+#|
 END ============================================================================
 |#

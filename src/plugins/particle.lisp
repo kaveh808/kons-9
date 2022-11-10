@@ -52,28 +52,30 @@
 
 ;;;; particle ============================================================
 
-(defclass particle ()
-  ((pos :accessor pos :initarg :pos :initform (p! 0 0 0))
-   (vel :accessor vel :initarg :vel :initform (p! 0 0 0))
-   (is-alive? :accessor is-alive? :initarg :is-alive? :initform t)
-   (generation :accessor generation :initarg :generation :initform 1)
-   (life-span :accessor life-span :initarg :life-span :initform -1) ; -1 = immortal
-   (age :accessor age :initarg :age :initform 0)
+(defclass-kons-9 particle ()
+  ((pos (p! 0 0 0))
+   (vel (p! 0 0 0))
+   (is-alive? t)
+   (generation 1)
+   (life-span -1) ; -1 = immortal
+   (age 0)
 
-   (points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t))
-;;   (behaviors :accessor behaviors :initarg :behaviors :initform (make-array 0 :adjustable t :fill-pointer t))
+   ;; size, color, alpha
    
-   (update-angle :accessor update-angle :initarg :update-angle :initform (range-float 0.0 0))
+   (points (make-array 0 :adjustable t :fill-pointer t))
+;;   (behaviors (make-array 0 :adjustable t :fill-pointer t))
+   
+   (update-angle (range-float 0.0 0))
 
-   (done-spawn? :accessor done-spawn? :initarg :done-spawn? :initform nil)
-   (mutate-spawns? :accessor mutate-spawns? :initarg :mutate-spawns? :initform nil)
-   (spawn-number-children :accessor spawn-number-children :initarg :spawn-number-children :initform (range-float 2 0))
-   (spawn-angle :accessor spawn-angle :initarg :spawn-angle :initform (range-float 45.0 22.5))
-   (spawn-life-span-factor :accessor spawn-life-span-factor :initarg :spawn-life-span-factor :initform (range-float 1.0 0))
-   (spawn-velocity-factor :accessor spawn-velocity-factor :initarg :spawn-velocity-factor :initform (range-float 1.0 0))))
+   (spawn-done? nil)
+   (spawn-mutate? nil)
+   (spawn-number-children (range-float 2 0))
+   (spawn-angle (range-float 45.0 22.5))
+   (spawn-life-span-factor (range-float 1.0 0))
+   (spawn-velocity-factor (range-float 1.0 0))))
 
 (defmethod copy-particle-data ((dst particle) (src particle))
-  (setf (mutate-spawns? dst) (mutate-spawns? src))
+  (setf (spawn-mutate? dst) (spawn-mutate? src))
   (setf (update-angle dst) (range-duplicate (update-angle src)))
   (setf (spawn-number-children dst) (range-duplicate (spawn-number-children src)))
   (setf (spawn-angle dst) (range-duplicate (spawn-angle src)))
@@ -127,16 +129,16 @@
                               :life-span (* (life-span ptcl)
                                             (range-value (spawn-life-span-factor ptcl))))))
     (copy-particle-data child ptcl)   ;transfer data
-    (when (mutate-spawns? ptcl)
+    (when (spawn-mutate? ptcl)
         (mutate-particle child 1.0))
     child))
 
 (defmethod do-spawn ((ptcl particle))
   (if (and (not (= -1 (life-span ptcl)))
            (>= (age ptcl) (life-span ptcl))
-           (not (done-spawn? ptcl)))
+           (not (spawn-done? ptcl)))
       (progn
-        (setf (done-spawn? ptcl) t)
+        (setf (spawn-done? ptcl) t)
         ;; spawn offspring
         (let ((children '()))
           (dotimes (i (round (range-value (spawn-number-children ptcl))))
