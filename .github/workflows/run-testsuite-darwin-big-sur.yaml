@@ -1,4 +1,4 @@
-name: 'Run testsuite'
+name: 'Run testsuite on Big Sur'
 on:
   - workflow_dispatch
   - push
