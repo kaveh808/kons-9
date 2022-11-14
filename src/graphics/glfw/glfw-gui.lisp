@@ -536,14 +536,15 @@
 (defun window-resized (window w h)
   ;; (format t "window-resized: win: ~a, w: ~a, h: ~a ~%" window w h)
   ;; (finish-output)
-  (setf *window-size* (list w h))
-  (update-clip-rect)
-  (update-gl-3d-viewport)
-  (draw-scene-view *scene-view*)      ; redraw while being resized
-  (glfw:swap-buffers)
-  (update-scene-ui)
-  (update-status-bar (status-bar *scene-view*) :view-width w :view-height h)
-  (update-window-title window))
+  (unless (zerop h)
+    (setf *window-size* (list w h))
+    (update-clip-rect)
+    (update-gl-3d-viewport)
+    (draw-scene-view *scene-view*)      ; redraw while being resized
+    (glfw:swap-buffers)
+    (update-scene-ui)
+    (update-status-bar (status-bar *scene-view*) :view-width w :view-height h)
+    (update-window-title window)))
 
 (glfw:def-window-position-callback window-position-callback (window x y)
   (declare (ignore window x y))
