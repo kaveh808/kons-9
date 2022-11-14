@@ -111,7 +111,9 @@
     (ct-subtable :C "Create" (create-command-table view))
     (ct-subtable :I "Inspect" (inspect-command-table view))
     (ct-subtable :D "Display" (display-command-table view))
-    (ct-entry    :M "Interactive Mode (ESC to exit)" (setf *ui-interactive-mode* (not *ui-interactive-mode*)))
+    (ct-entry    :M "Interactive Mode (ESC to exit)"
+                 (hide-menu view)
+                 (setf *ui-interactive-mode* (not *ui-interactive-mode*)))
     (ct-subtable :X "Context" (context-command-table))
     table))
 
@@ -367,7 +369,7 @@
                 (do-arrow-input *ui-keyboard-focus* key))
                ))
         (*ui-interactive-mode*          ;interactive mode: send keyboard events to scene interactor
-         (if (eq :escape key)
+         (if (eq :escape key)           ;escape exits interactive mode
              (setf *ui-interactive-mode* nil)
              (update-scene-interactor (scene self) key mod-keys)))
         ((eq :space key)                ;play animation

@@ -156,7 +156,7 @@ in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
                                       :life-span (rand1 5 10)))
          (shape (make-point-instancer-group p-sys
                                             (make-octahedron .2))))
-    ;;; uncomment to only instance at live position
+    ;;; uncomment to only instance at live position -- SLOT REMOVED FOR NOW
 ;;;    (setf (point-source-use-live-positions-only p-sys) t)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
