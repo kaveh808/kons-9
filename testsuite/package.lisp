@@ -9,7 +9,9 @@
     #:assert-condition
     #:assert-eq
     #:assert-list-equal
-    #:assert-float-is-essentially-equal)
+    #:assert-float-is-essentially-equal
+    #:list-testcases
+    #:*testcase-interactive-p*)
    (:export
     #:list-available-tests
     ))
