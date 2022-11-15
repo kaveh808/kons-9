@@ -80,12 +80,12 @@ Load the system:
 
 List all available tests with
 
-    (kons-9/testsuite:list-all-available-tests)
+    (kons-9/testsuite:list-available-tests)
 
 Tests are implemented as regular functions and can be run with
 statements similar to
 
-    (kons-9/testsuite:run-all-available-tests)
+    (kons-9/testsuite:run-all-tests)
 
 or
 
