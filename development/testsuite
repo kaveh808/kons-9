@@ -23,6 +23,7 @@ testsuite_run()
 	set -- 'run-all-tests'
     fi
     testsuite_lisp\
+	--eval "(load #p\"${TOPLEVELDIR}/tools/verify-quicklisp.lisp\")"\
 	--eval "(load #p\"${TOPLEVELDIR}/tools/verify-confidence.lisp\")"\
 	--eval "(ql:quickload \"${testsuitesystem}\" :silent t)"\
 	--eval "(${testsuitesystem}:$1)"
