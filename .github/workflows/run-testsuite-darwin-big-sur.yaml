@@ -1,0 +1,45 @@
+name: 'Run testsuite on Big Sur'
+on:
+  - workflow_dispatch
+  - push
+  - pull_request
+jobs:
+  run-testsuite:
+    runs-on: 'macos-11'
+    permissions:
+      contents: read
+    steps:
+      - name: 'Download MacPorts'
+        run: |
+         wget https://github.com/macports/macports-base/releases/download/v2.7.1/MacPorts-2.7.1-11-BigSur.pkg
+      - name: 'Install MacPorts'
+        run: |
+          sudo installer -pkg ./MacPorts-2.7.1-11-BigSur.pkg -target /
+      - name: 'Add MacPorts to the PATH'
+        run: |
+          sudo install -o root -g wheel -m 644 /dev/null /etc/paths.d/900-macports
+          sudo sh -c "printf '/opt/local/bin' > /etc/paths.d/900-macports"
+          printf '/opt/local/bin' > "${GITHUB_PATH}"
+      - name: 'Install SBCL and Kons-9 dependencies'
+        run: |
+          sudo port install sbcl cl-quicklisp glfw
+      - name: 'Install Quicklisp in CI environment'
+        run: |
+          sbcl\
+            --load '/opt/local/share/cl-quicklisp/quicklisp.lisp'\
+            --eval '(quicklisp-quickstart:install)'\
+            --eval '(ql-util:without-prompting (ql:add-to-init-file))'\
+            --quit
+          printf '\n(pushnew \043p\"%s\" ql:*local-project-directories*)\n' "${GITHUB_WORKSPACE}" >> ~/.sbclrc
+          cat ~/.sbclrc
+      - name: 'Clone Confidence'
+        run: |
+          cd ~/quicklisp/local-projects
+          git clone https://github.com/melusina-org/cl-confidence.git
+      - name: 'Checkout repository'
+        uses: actions/checkout@v3
+      - name: 'Register Quicklisp local projects'
+        run: |
+          sbcl --eval '(ql:register-local-projects)' --quit
+      - name: 'Run the testsuite'
+        run: 'development/testsuite'
