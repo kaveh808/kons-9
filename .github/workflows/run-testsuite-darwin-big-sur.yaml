@@ -2,6 +2,7 @@ name: 'Run testsuite on Big Sur'
 on:
   - workflow_dispatch
   - push
+  - pull_request
 jobs:
   run-testsuite:
     runs-on: 'macos-11'
