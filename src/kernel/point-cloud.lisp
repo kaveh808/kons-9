@@ -105,7 +105,7 @@
          (radius (/ diameter 2.0))
          (angle-delta (/ (- (radians end-angle) (radians start-angle)) num-segments)))
     (dotimes (i (1+ num-segments))
-      (let ((angle (* i angle-delta)))
+      (let ((angle (+ (* i angle-delta) (radians start-angle))))
         (setf (aref points i) (p! (* (sin angle) radius) (* (cos angle) radius) 0))))
     points))
 

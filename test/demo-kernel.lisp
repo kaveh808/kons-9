@@ -83,7 +83,7 @@ The CURVE class represents open or closed paths in 3D space.
   (add-shape *scene* (translate-to (make-rectangle-curve 2 1 4) (p! 0 0 -4.0)))
   (add-shape *scene* (translate-to (make-square-curve 1.5) (p! 0 0 -2.0)))
   (add-shape *scene* (translate-to (make-circle-curve 2.0 16) (p! 0 0 0.0)))
-  (add-shape *scene* (translate-to (make-arc-curve 2.0 0 90 16) (p! 0 0 2.0)))
+  (add-shape *scene* (translate-to (make-arc-curve 2.0 -30 60 16) (p! 0 0 2.0)))
   (add-shape *scene* (translate-to (make-sine-curve-curve 360 1 2 1 16) (p! 0 0 4.0)))
   (add-shape *scene* (translate-to (make-spiral-curve .2 2.0 -1.0 4 64) (p! 0 0 6.0))))
 
