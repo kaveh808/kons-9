@@ -54,6 +54,7 @@
    (:file "src/kernel/scene-duplicate")
    (:file "src/kernel/protocol")
    (:file "src/kernel/clobber")
+   (:file "src/kernel/validate")
    (:file "src/kernel/main")
    ;; font libraries -- tmp until we use 3b-bmfont
    (:module "lib/JMC-font-libs/font-master"

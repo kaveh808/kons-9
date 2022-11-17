@@ -8,6 +8,13 @@
   (defun p! (x y z)
     (p:vec (coerce x 'single-float) (coerce y 'single-float) (coerce z 'single-float))))
 
+(deftype point ()
+  "Point in 3D space expressed as a single-float 3-vector."
+  'p:vec)
+
+(defun point? (x)
+  (typep x 'point))
+
 (defun point->list (p)
   (list (p:x p) (p:y p) (p:z p)))
 

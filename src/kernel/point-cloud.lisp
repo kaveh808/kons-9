@@ -6,8 +6,8 @@
   ((points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t)
            :documentation "Contained points." :type vector)
    (point-colors :accessor point-colors :initarg :point-colors :initform nil
-                 :documentation "Color of each point." :type (or null vector)))
-  (:documentation "A point cloud is an ordered sequence of optionally colored set of points in 3D space."))
+                 :documentation "Color of each point (or null if unspecified.)" :type (or null vector)))
+  (:documentation "A point cloud is a sequence of (optionally colored) points in 3D space."))
 
 (defmethod printable-data ((self point-cloud))
   (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))

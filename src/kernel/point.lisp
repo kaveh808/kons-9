@@ -28,13 +28,6 @@
 (defun p! (x y z &optional w)
   (point:new :svec3 x y z w)))
 
-(deftype point ()
-  "Point in 3D space expressed as a single-float 3-vector."
-  'p:vec)
-
-(defun point? (x)
-  (typep x 'point))
-
 ;; (defun point->list (p)
 ;;   (list (x p) (y p) (z p)))
 
