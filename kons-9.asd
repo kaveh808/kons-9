@@ -76,6 +76,7 @@
    #-darwin(:file "src/graphics/opengl/opengl3-text")
    ;; plugins
    (:file "src/plugins/parametric-curve")
+   (:file "src/plugins/outline")
    (:file "src/plugins/uv-mesh")
    (:file "src/plugins/heightfield")
    (:file "src/plugins/superquadric")
