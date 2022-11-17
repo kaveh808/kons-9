@@ -67,7 +67,8 @@
 ;;;; ui-view ===================================================================
 
 (defclass-kons-9 ui-view (ui-rect)
-  ((ui-parent nil)
+  ((ui-name nil)
+   (ui-parent nil)
    (bg-color (c! 0 0 0 0))
    (fg-color (c! 0 0 0 1))
    (is-visible? t)
@@ -266,6 +267,10 @@
         do (setf (ui-parent child) nil))
   (setf (fill-pointer (children view)) 0)
   view)
+
+(defmethod find-child ((view ui-group) name)
+  (find-if (lambda (child) (eql name (ui-name child)))
+           (children view)))
 
 (defmethod update-layout ((view ui-group))
   (ecase (layout view)
