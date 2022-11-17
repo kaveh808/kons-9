@@ -112,7 +112,8 @@
 		 (:file "assertions")
  		 (:module "kernel"
  		  :components ((:file "utils")
-			       (:file "point-cloud")))
+			       (:file "point-cloud")
+			       (:file "validation")))
  		 (:file "entrypoint")))))
 
 #+nil (asdf:load-system :kons-9)

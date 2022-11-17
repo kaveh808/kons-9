@@ -10,6 +10,8 @@
     #:assert-eq
     #:assert-list-equal
     #:assert-float-is-essentially-equal
+    #:assert-t
+    #:assert-t*
     #:list-testcases
     #:*testcase-interactive-p*)
    (:export
