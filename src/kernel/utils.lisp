@@ -182,3 +182,18 @@
 (defun clamp (x lo hi)
   (max lo (min x hi)))
 
+;;;; informal types ============================================================
+
+;; Handy types to reference as documentation but only weakly checked.
+;; Uses of these types could be tightened up later e.g. as element-typed vectors.
+
+(deftype vector-of (informal-element-type)
+  "Vector containing elements of INFORMAL-ELEMENT-TYPE (any value, not checked.)"
+  (declare (ignore informal-element-type))
+  'vector)
+
+(deftype list-of (informal-element-type)
+  "List containing elements of INFORMAL-ELEMENT-TYPE (any value, not checked.)"
+  (declare (ignore informal-element-type))
+  'list)
+

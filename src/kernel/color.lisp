@@ -2,6 +2,14 @@
 
 ;;;; color ==============================================================
 
+(deftype color ()
+  "Mutable vector of R,G,B,A signle-float values between zero and one."
+  '(vector * 4))
+
+(defun color? (x)
+  (and (typep x 'color)
+       (every (lambda (x) (typep x '(single-float 0.0f0 1.0f0))) x)))
+
 ;;; we define colors as simple vectors
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun c! (r g b &optional (a 1.0))

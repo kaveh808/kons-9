@@ -3,11 +3,17 @@
 ;;;; polyhedron ================================================================
 
 (defclass polyhedron (point-cloud)
-  ((faces :accessor faces :initarg :faces :initform (make-array 0 :adjustable t :fill-pointer t))
-   (face-normals :accessor face-normals :initarg :face-normals :initform (make-array 0 :adjustable t :fill-pointer t))
-   (point-normals :accessor point-normals :initarg :point-normals :initform (make-array 0 :adjustable t :fill-pointer t))
-   (show-normals :accessor show-normals :initarg :show-normals :initform nil)  ; length or nil
-   (point-source-use-face-centers? :accessor point-source-use-face-centers? :initarg :point-source-use-face-centers? :initform nil)))
+  ((faces :accessor faces :initarg :faces :initform (make-array 0 :adjustable t :fill-pointer t) :type (vector-of :index-list)
+          :documentation "Faces bounding the polyhedron. A face is a set of point indices.")
+   (face-normals :accessor face-normals :initarg :face-normals :initform (make-array 0 :adjustable t :fill-pointer t) :type (vector-of :point-list)
+                 :documentation "Unit normal vector to each corresponding face.")
+   (point-normals :accessor point-normals :initarg :point-normals :initform (make-array 0 :adjustable t :fill-pointer t) :type (vector-of :point-list)
+                  :documentation "Unit normal vector to each corresponding point (vertex.)")
+   (show-normals :accessor show-normals :initarg :show-normals :initform nil :type (or null integer)
+                 :documentation "Scaling factor for showing normals in the UI (or null for do not show.)")
+   (point-source-use-face-centers? :accessor point-source-use-face-centers? :initarg :point-source-use-face-centers? :initform nil :type boolean
+                                   :documentation "Use face centers instead of vertices when used as a point-source."))
+  (:documentation "3D shape bounded by a set of polygonal faces."))
 
 (defmethod printable-data ((self polyhedron))
   (strcat (call-next-method) (format nil ", ~a faces" (length (faces self)))))

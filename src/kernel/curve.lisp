@@ -4,7 +4,9 @@
 
 ;;; this shape is defined by an array of points (vertices)
 (defclass curve (point-cloud)
-  ((is-closed-curve? :accessor is-closed-curve? :initarg :is-closed-curve? :initform t)))
+  ((is-closed-curve? :accessor is-closed-curve? :initarg :is-closed-curve? :initform t :type boolean
+                     :documentation "Closed curves implicitly loop from last point back to first point."))
+  (:documentation "A curve is an open or closed (looping) path through a point cloud."))
 
 (defun make-curve (points &optional (is-closed-curve? t))
   (make-instance 'curve :points points :is-closed-curve? is-closed-curve?))
