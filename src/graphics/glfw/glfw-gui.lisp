@@ -364,7 +364,7 @@
                ((and (eq :x key) (member :super mod-keys))
                 (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
                ((eq :backspace key)
-                (do-backspace-input *ui-keyboard-focus*))
+                (do-backspace-input *ui-keyboard-focus* mod-keys))
                ((member key '(:left :right :up :down))
                 (do-arrow-input *ui-keyboard-focus* key))
                ))
@@ -400,7 +400,7 @@
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
         ((or (eq :up key) (eq :down key)) ;scroll inspectors
-         (incf (ui-contents-scroll self) (if (eq :up key) -10 10))
+         (incf (ui-contents-scroll self) (if (eq :up key) -50 50))
          (update-ui-content-position))
         ((and (menu self) (is-visible? (menu self))) ;do menu selection
          (do-command (car (command-tables self)) key)

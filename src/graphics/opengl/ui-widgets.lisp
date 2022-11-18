@@ -198,12 +198,17 @@
     (setf (text view) "")
     result))
 
-(defmethod do-backspace-input ((view ui-text-box-item))
-  (when (> (cursor-position view) 0)
-    (setf (text view) (concatenate 'string
-                                   (subseq (text view) 0 (1- (cursor-position view)))
-                                   (subseq (text view) (cursor-position view) (length (text view)))))
-    (decf (cursor-position view))))
+(defmethod do-backspace-input ((view ui-text-box-item) mod-keys)
+  (let ((pos (cursor-position view)))
+    (when (> pos 0)
+      (cond ((member :shift mod-keys)   ;delete to start of text when shift modifier
+             (setf (text view) (subseq (text view) pos (length (text view))))
+             (setf (cursor-position view) 0))
+            (t                          ;delete single character
+             (setf (text view) (concatenate 'string
+                                            (subseq (text view) 0 (1- pos))
+                                            (subseq (text view) pos (length (text view)))))
+             (decf (cursor-position view)))))))
 
 (defmethod do-arrow-input ((view ui-text-box-item) key)
   (let ((max-position (length (text view))))
@@ -358,6 +363,34 @@
                    (incf y (+ (ui-h child) spacing))))))
   view)
 
+;;;; ui-number-entry ===========================================================
+
+(defclass-kons-9 ui-number-entry (ui-group)
+  ()
+  (:default-initargs
+   :is-visible? t
+   :layout :horizontal
+   :spacing 0
+   :padding 0))
+
+(defmethod number-entry-value ((view ui-number-entry))
+  (let ((text-box (aref (children view) 1)))
+    (read-from-string (text text-box))))
+
+(defun make-number-entry (name label number)
+  (let* ((view (make-instance 'ui-number-entry :ui-name name :draw-border? nil))
+         (label (make-instance 'ui-label-item :ui-x 0 :ui-y 0
+                                              :ui-w (+ 10 (ui-text-width label))
+                                              :ui-h *ui-button-item-height*
+                                              :text label :text-padding 5))
+         (text-box (make-instance 'ui-text-box-item 
+                                                    :ui-x 80 :ui-y 0
+                                                    :ui-w 80 :ui-h *ui-button-item-height*
+                                                    :text (format nil "~A" number))))
+    (ui-add-children view (list label text-box))
+    (update-layout view)
+    view))
+
 ;;;; ui-message-box ===========================================================
 
 (defclass-kons-9 ui-message-box (ui-group)
@@ -495,6 +528,47 @@
 ;;; TODO -- delete shapes in hierarchy
 ;;; TODO -- update ui-contents due to scene updates -- eg hierarchy viewer when shape deleted
 ;;; TODO -- global key bindings (eg. space, backspace) -- register properly and avoid shadowing with c-t
+
+;;;; editor panel --------------------------------------------------------------
+
+(defun make-editor-panel (title update-func contents)
+  (let* ((box (make-instance 'ui-dialog-box
+                             :ui-x 20
+                             :ui-y 20
+                             :title title
+                             :spacing 10))
+         (contents-group (make-instance 'ui-group
+                                        :ui-name 'contents
+                                        :layout :vertical
+                                        :spacing 5
+                                        :padding 0
+                                        :justification :right/bottom
+                                        :draw-border? nil ;t ;for debugging
+                                        ))
+         (buttons-group (make-instance 'ui-group
+                                        :layout :horizontal
+                                        :spacing 5
+                                        :padding 5
+                                        :draw-border? nil ;t ;for debugging
+                                        ))
+         (close-button (make-instance 'ui-button-item
+                                       :ui-w 80
+                                       :text "Close"
+                                       :on-click-fn (lambda (modifiers)
+                                                      (declare (ignore modifiers))
+                                                      (setf (is-visible? box) nil))
+                                       ))
+         (update-button (make-instance 'ui-button-item
+                                   :ui-w 80
+                                   :text "Update"
+                                   :on-click-fn (lambda (modifiers)
+                                                  (declare (ignore modifiers))
+                                                  (funcall update-func box)))))
+    (ui-add-children contents-group contents)
+    (ui-add-children buttons-group (list close-button update-button))
+    (ui-add-child box (update-layout contents-group))
+    (ui-add-child box (update-layout buttons-group))
+    (update-layout box)))
 
 ;;;; ui-status-bar =============================================================
 
