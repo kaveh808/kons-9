@@ -91,3 +91,21 @@
   (make-sine-curve-points (period poly) (frequency poly)
                           (x-scale poly) (y-scale poly) (num-segments poly)))
 
+
+;;;; gui =======================================================================
+
+(defun procedural-curve-command-table ()
+  (let ((table (make-instance `command-table :title "Create Procedural Curve")))
+    (ct-make-shape :L "Line Curve" (make-line (p! 0 0 0) (p! 2 2 2) 4))
+    (ct-make-shape :R "Rectangle Curve" (make-rectangle 2 1 4))
+    (ct-make-shape :S "Square Curve" (make-square 1.5 1))
+    (ct-make-shape :C "Circle Curve" (make-circle 2.0 16))
+    (ct-make-shape :A "Arc Curve" (make-arc 2.0 0 90 8))
+    (ct-make-shape :N "Sine Curve" (make-sine-curve 360 1 2 1 16))
+    (ct-make-shape :P "Spiral Curve" (make-spiral .2 2.0 -1.0 4 64))
+    table))
+
+(register-dynamic-command-table-entry
+ "Create" :O "Create Procedural Curve Menu"
+ (lambda () (make-active-command-table (procedural-curve-command-table)))
+ (lambda () t))
