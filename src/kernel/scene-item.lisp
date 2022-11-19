@@ -19,11 +19,12 @@
 
 ;;;; scene-item ================================================================
 
-(defclass-kons-9 scene-item (item)
-  ((name nil)
-   (scene nil)
-   (parents '())
-   (is-selected? nil)))
+(defclass scene-item (item)
+  ((name :accessor name :initarg :name :initform nil)
+   (scene :accessor scene :initarg :scene :initform nil)
+   (parents :accessor parents :initarg :parents :initform '())
+   (is-selected? :accessor is-selected? :initarg :is-selected? :initform nil)
+   (editable-slots :accessor editable-slots :initarg :editable-slots :initform '() :allocation :class)))
 
 (defmethod initialize-instance :after ((item scene-item) &rest initargs)
   (declare (ignore initargs))
