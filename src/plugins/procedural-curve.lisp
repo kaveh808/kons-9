@@ -7,6 +7,8 @@
      ,@(mapcar #'(lambda (input)
                    `(def-procedural-input ,name ,input))
                inputs)
+     (defmethod editable-slots ((poly ,name))
+       (append (call-next-method) ',inputs))
      (defmethod compute-procedural-node ((poly ,name))
        (setf (points poly) ,@compute-expr))
      (defun ,(concat-syms 'make- name) ,(append (mapcar #'first slot-names-and-initforms)
@@ -22,6 +24,9 @@
 
 (defclass-kons-9 procedural-curve (curve procedural-mixin)
   ((num-segments 64)))
+
+(defmethod editable-slots ((self procedural-curve))
+  (append (call-next-method) '(num-segments)))
 
 (def-procedural-input procedural-curve num-segments)
 (def-procedural-output procedural-curve points)
@@ -96,13 +101,34 @@
 
 (defun procedural-curve-command-table ()
   (let ((table (make-instance `command-table :title "Create Procedural Curve")))
-    (ct-make-shape :L "Line Curve" (make-line (p! 0 0 0) (p! 2 2 2) 4))
-    (ct-make-shape :R "Rectangle Curve" (make-rectangle 2 1 4))
-    (ct-make-shape :S "Square Curve" (make-square 1.5 1))
-    (ct-make-shape :C "Circle Curve" (make-circle 2.0 16))
-    (ct-make-shape :A "Arc Curve" (make-arc 2.0 0 90 8))
-    (ct-make-shape :N "Sine Curve" (make-sine-curve 360 1 2 1 16))
-    (ct-make-shape :P "Spiral Curve" (make-spiral .2 2.0 -1.0 4 64))
+    (ct-make-shape :L "Line"
+                   (let ((obj (make-line (p! 0 0 0) (p! 2 2 2) 4)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
+    (ct-make-shape :R "Rectangle"
+                   (let ((obj (make-rectangle 2 1 4)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))
+    (ct-make-shape :S "Square"
+                   (let ((obj (make-square 1.5 1)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
+    (ct-make-shape :C "Circle"
+                   (let ((obj (make-circle 2.0 16)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
+    (ct-make-shape :A "Arc"
+                   (let ((obj (make-arc 2.0 0 90 8)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
+    (ct-make-shape :N "Sine"
+                   (let ((obj (make-sine-curve 360 1 2 1 16)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
+    (ct-make-shape :P "Spiral"
+                   (let ((obj (make-spiral .2 2.0 -1.0 4 64)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
     table))
 
 (register-dynamic-command-table-entry

@@ -391,6 +391,30 @@
     (update-layout view)
     view))
 
+;;;; scene-item-editor =========================================================
+
+;; editable-slot-info -- name type validate-fn text-box-hints
+;; highlight illegal text field if fails validation
+
+(defun ui-get-child-values (view names)
+  (mapcar (lambda (name) (number-entry-value (find-child view name)))
+          names))
+
+(defun ui-make-entries (names values)
+  (mapcar (lambda (name value) (make-number-entry name (format nil "~A:" name) value))
+          names
+          values))
+
+(defun make-scene-item-editor (obj update-obj-fn)
+  (let* ((param-names (editable-slots obj))                         ;get param names from class slot
+         (param-values (get-slot-values obj param-names))           ;get param values from instance
+         (contents (ui-make-entries param-names param-values))      ;create ui widgets for params
+         (update-fn (lambda (editor)                                ;define update func for editor
+                      (let* ((ui-values (ui-get-child-values (find-child editor 'contents) param-names)))
+                        (set-slot-values obj param-names ui-values) ;set instance slot values
+                        (funcall update-obj-fn obj)))))             ;update instance
+    (make-editor-panel (format nil "Edit ~A" (name obj)) update-fn contents)))
+
 ;;;; ui-message-box ===========================================================
 
 (defclass-kons-9 ui-message-box (ui-group)

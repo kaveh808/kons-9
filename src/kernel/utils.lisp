@@ -28,6 +28,17 @@
        slot-info-list)
      ,@class-options))
 
+;;;; class utils ===============================================================
+
+(defun get-slot-values (obj slot-names)
+  (mapcar (lambda (name) (slot-value obj name))
+          slot-names))
+
+(defun set-slot-values (obj slot-names slot-values)
+  (mapc (lambda (name value) (setf (slot-value obj name) value))
+        slot-names
+        slot-values))
+
 ;;;; utils =====================================================================
 
 (defun my-debug (x &optional (str ""))
