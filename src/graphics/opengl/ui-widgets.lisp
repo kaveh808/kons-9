@@ -363,9 +363,9 @@
                    (incf y (+ (ui-h child) spacing))))))
   view)
 
-;;;; ui-number-entry ===========================================================
+;;;; ui-data-entry =============================================================
 
-(defclass-kons-9 ui-number-entry (ui-group)
+(defclass-kons-9 ui-data-entry (ui-group)
   ()
   (:default-initargs
    :is-visible? t
@@ -373,22 +373,33 @@
    :spacing 0
    :padding 0))
 
-(defmethod number-entry-value ((view ui-number-entry))
-  (let ((text-box (aref (children view) 1)))
-    (read-from-string (text text-box))))
+(defmethod get-entry-value ((view ui-data-entry) type)
+  (let* ((text-box (aref (children view) 1))
+         (str (text text-box)))
+    (ecase type
+      ((:number :symbol) (read-from-string str))
+      ((:string) str)
+      ((:point) (with-input-from-string (s str) (p! (read s) (read s) (read s)))))))
 
-(defun make-number-entry (name label number)
-  (let* ((view (make-instance 'ui-number-entry :ui-name name :draw-border? nil))
+(defmethod set-entry-value ((view ui-data-entry) value type)
+  (let ((text-box (aref (children view) 1)))
+    (setf (text text-box)
+          (ecase type
+            ((:number :symbol :string) (format nil "~A" value))
+            ((:point) (format nil "~A ~A ~A" (p:x value) (p:y value) (p:z value)))))))
+          
+(defun make-data-entry (name label value type)
+  (let* ((view (make-instance 'ui-data-entry :ui-name name :draw-border? nil))
          (label (make-instance 'ui-label-item :ui-x 0 :ui-y 0
                                               :ui-w (+ 10 (ui-text-width label))
                                               :ui-h *ui-button-item-height*
                                               :text label :text-padding 5))
-         (text-box (make-instance 'ui-text-box-item 
-                                                    :ui-x 80 :ui-y 0
-                                                    :ui-w 80 :ui-h *ui-button-item-height*
-                                                    :text (format nil "~A" number))))
+         (text-box (make-instance 'ui-text-box-item :ui-x 80 :ui-y 0
+                                                    :ui-w 120 :ui-h *ui-button-item-height*)))
+;;;                                                    :text (format nil "~A" number))))
     (ui-add-children view (list label text-box))
     (update-layout view)
+    (set-entry-value view value type)
     view))
 
 ;;;; scene-item-editor =========================================================
@@ -396,21 +407,26 @@
 ;; editable-slot-info -- name type validate-fn text-box-hints
 ;; highlight illegal text field if fails validation
 
-(defun ui-get-child-values (view names)
-  (mapcar (lambda (name) (number-entry-value (find-child view name)))
-          names))
-
-(defun ui-make-entries (names values)
-  (mapcar (lambda (name value) (make-number-entry name (format nil "~A:" name) value))
+(defun ui-get-child-values (view names types)
+  (mapcar (lambda (name type) (get-entry-value (find-child view name) type))
           names
-          values))
+          types))
+
+(defun ui-make-entries (names values types)
+  (mapcar (lambda (name value type) (make-data-entry name (format nil "~A:" name) value type))
+          names
+          values
+          types))
 
 (defun make-scene-item-editor (obj update-obj-fn)
-  (let* ((param-names (editable-slots obj))                         ;get param names from class slot
+  (let* ((param-info (editable-slots obj))                          ;get param names from class slot
+         (param-names (mapcar #'first param-info))
+         (param-types (mapcar #'second param-info))
          (param-values (get-slot-values obj param-names))           ;get param values from instance
-         (contents (ui-make-entries param-names param-values))      ;create ui widgets for params
+         (contents (ui-make-entries param-names param-values param-types))      ;create ui widgets for params
          (update-fn (lambda (editor)                                ;define update func for editor
-                      (let* ((ui-values (ui-get-child-values (find-child editor 'contents) param-names)))
+                      (let* ((ui-values (ui-get-child-values (find-child editor 'contents)
+                                                             param-names param-types)))
                         (set-slot-values obj param-names ui-values) ;set instance slot values
                         (funcall update-obj-fn obj)))))             ;update instance
     (make-editor-panel (format nil "Edit ~A" (name obj)) update-fn contents)))

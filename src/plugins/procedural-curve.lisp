@@ -1,14 +1,14 @@
 (in-package #:kons-9)
 
 (defmacro def-procedural-curve (name slot-names-and-initforms class-options
-                                  inputs &rest compute-expr)
+                                  inputs-info &rest compute-expr)
   `(progn
      (defclass-kons-9 ,name (procedural-curve) ,slot-names-and-initforms ,@class-options)
      ,@(mapcar #'(lambda (input)
-                   `(def-procedural-input ,name ,input))
-               inputs)
+                   `(def-procedural-input ,name ,(first input)))
+               inputs-info)
      (defmethod editable-slots ((poly ,name))
-       (append (call-next-method) ',inputs))
+       (append (call-next-method) ',inputs-info))
      (defmethod compute-procedural-node ((poly ,name))
        (setf (points poly) ,@compute-expr))
      (defun ,(concat-syms 'make- name) ,(append (mapcar #'first slot-names-and-initforms)
@@ -26,7 +26,7 @@
   ((num-segments 64)))
 
 (defmethod editable-slots ((self procedural-curve))
-  (append (call-next-method) '(num-segments)))
+  (append (call-next-method) '((num-segments :number))))
 
 (def-procedural-input procedural-curve num-segments)
 (def-procedural-output procedural-curve points)
@@ -38,7 +38,7 @@
     ((p1 (p! 0 0 0))
      (p2 (p! 0 1 0)))
   ()
-  (p1 p2)
+  ((p1 :point) (p2 :point))
   (make-line-points (p1 poly) (p2 poly) (num-segments poly)))
 
 (def-procedural-curve
@@ -46,21 +46,21 @@
     ((width 2.0)
      (height 1.0))
   ()
-  (width height)
+  ((width :number) (height :number))
   (make-rectangle-points (width poly) (height poly) (num-segments poly)))
 
 (def-procedural-curve
     square
     ((side 2.0))
   ()
-  (side)
+  ((side :number))
   (make-rectangle-points (side poly) (side poly) (num-segments poly)))
 
 (def-procedural-curve
     circle
     ((diameter 2.0))
   ()
-  (diameter)
+  ((diameter :number))
   (make-circle-points (diameter poly) (num-segments poly)))
 
 (def-procedural-curve
@@ -70,7 +70,7 @@
      (end-angle 90.0))
   ((:default-initargs
     :is-closed-curve? nil))
-  (diameter start-angle end-angle)
+  ((diameter :number) (start-angle :number) (end-angle :number))
   (make-arc-points (diameter poly) (start-angle poly) (end-angle poly) (num-segments poly)))
 
 (def-procedural-curve
@@ -81,7 +81,7 @@
      (num-loops 2.0))
   ((:default-initargs
     :is-closed-curve? nil))
-  (start-diameter end-diameter axis-length num-loops)
+  ((start-diameter :number) (end-diameter :number) (axis-length :number) (num-loops :number))
   (make-spiral-points (start-diameter poly) (end-diameter poly) (axis-length poly) (num-loops poly) (num-segments poly)))
 
 (def-procedural-curve
@@ -92,7 +92,7 @@
      (y-scale 1.0))
   ((:default-initargs
     :is-closed-curve? nil))
-  (period frequency x-scale y-scale)
+  ((period :number) (frequency :number) (x-scale :number) (y-scale :number))
   (make-sine-curve-points (period poly) (frequency poly)
                           (x-scale poly) (y-scale poly) (num-segments poly)))
 
