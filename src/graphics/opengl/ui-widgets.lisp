@@ -374,30 +374,44 @@
    :padding 0))
 
 (defmethod get-entry-value ((view ui-data-entry) type)
-  (let* ((text-box (aref (children view) 1))
-         (str (text text-box)))
-    (ecase type
-      ((:number :symbol) (read-from-string str))
-      ((:string) str)
-      ((:point) (with-input-from-string (s str) (p! (read s) (read s) (read s)))))))
+  (case type
+    ((:boolean)
+     (let ((check-box (aref (children view) 1)))
+       (is-pushed? check-box)))
+    (otherwise
+     (let* ((text-box (aref (children view) 1))
+            (str (text text-box)))
+       (ecase type
+         ((:number :symbol) (read-from-string str))
+         ((:string) str)
+         ((:point) (with-input-from-string (s str) (p! (read s) (read s) (read s)))))))))
 
 (defmethod set-entry-value ((view ui-data-entry) value type)
-  (let ((text-box (aref (children view) 1)))
-    (setf (text text-box)
-          (ecase type
-            ((:number :symbol :string) (format nil "~A" value))
-            ((:point) (format nil "~A ~A ~A" (p:x value) (p:y value) (p:z value)))))))
-          
+  (case type
+    ((:boolean)
+     (let ((check-box (aref (children view) 1)))
+       (setf (is-pushed? check-box) value)))
+    (otherwise
+     (let ((text-box (aref (children view) 1)))
+       (setf (text text-box)
+             (ecase type
+               ((:number :symbol :string) (format nil "~A" value))
+               ((:point) (format nil "~A ~A ~A" (p:x value) (p:y value) (p:z value)))))))))
+
 (defun make-data-entry (name label value type)
   (let* ((view (make-instance 'ui-data-entry :ui-name name :draw-border? nil))
          (label (make-instance 'ui-label-item :ui-x 0 :ui-y 0
                                               :ui-w (+ 10 (ui-text-width label))
                                               :ui-h *ui-button-item-height*
                                               :text label :text-padding 5))
-         (text-box (make-instance 'ui-text-box-item :ui-x 80 :ui-y 0
-                                                    :ui-w 120 :ui-h *ui-button-item-height*)))
-;;;                                                    :text (format nil "~A" number))))
-    (ui-add-children view (list label text-box))
+         (value-widget (case type
+                         ((:boolean) (make-instance 'ui-check-box-item :ui-x 80 :ui-y 0
+                                                                       :ui-w 120 :ui-h *ui-button-item-height*
+                                                                       :text ""))
+                         (otherwise
+                          (make-instance 'ui-text-box-item :ui-x 80 :ui-y 0
+                                                           :ui-w 120 :ui-h *ui-button-item-height*)))))
+    (ui-add-children view (list label value-widget))
     (update-layout view)
     (set-entry-value view value type)
     view))

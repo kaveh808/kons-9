@@ -70,7 +70,7 @@
      (end-angle 90.0))
   ((:default-initargs
     :is-closed-curve? nil))
-  ((diameter :number) (start-angle :number) (end-angle :number))
+  ((diameter :number) (start-angle :number) (end-angle :number) (is-closed-curve? :boolean))
   (make-arc-points (diameter poly) (start-angle poly) (end-angle poly) (num-segments poly)))
 
 (def-procedural-curve
@@ -121,7 +121,7 @@
                    (let ((obj (make-arc 2.0 0 90 8)))
                      (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
                      obj))                     
-    (ct-make-shape :N "Sine"
+    (ct-make-shape :N "Sine Curve"
                    (let ((obj (make-sine-curve 360 1 2 1 16)))
                      (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
                      obj))                     
