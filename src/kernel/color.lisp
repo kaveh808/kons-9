@@ -3,7 +3,7 @@
 ;;;; color ==============================================================
 
 (deftype color ()
-  "Mutable vector of R,G,B,A signle-float values between zero and one."
+  "Mutable vector of R,G,B,A single-float values between zero and one."
   '(vector * 4))
 
 (defun color? (x)
