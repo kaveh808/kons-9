@@ -5,14 +5,12 @@
 (defparameter *current-mouse-pos-y* 0)
 (defparameter *current-mouse-modifier* nil)
 (defparameter *ui-interactive-mode* nil)
-;; Hack! Figure out the right analogous representation
-;; of a GL-enabled NSView for the GLFW3 backend
-(defvar *scene-view* nil)
-
 (defparameter *current-highlighted-ui-item* nil)
 
+(defparameter *scene-view* nil)
+
 #|
-;;;; app-view ================================================================
+;;;; app-view ==================================================================
 
 (defclass-kons-9 app-view (ui-group)
   ((scene-view (make-instance 'scene-view))
@@ -60,8 +58,8 @@
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera)
-  (setf (status-bar view) (make-status-bar))
-  (push (app-command-table view) (command-tables view)))
+  (setf (status-bar view) (make-status-bar)))
+;;  (push (app-command-table view) (command-tables view)))
 
 (defun show-ui-content (view)
   (let ((contents (ui-contents *scene-view*)))
@@ -600,7 +598,7 @@
                                       :ui-x 0 :ui-y 0
                                       :ui-w (first *window-size*) :ui-h (second *window-size*))))
 
-(defun show-window (scene)
+(defun show-window (scene &optional (command-table nil))
   ;; XXX TODO assert that this is running on the main thread.
   ;; Graphics calls on OS X must occur in the main thread
   ;; Normally this is called by run function in kernel/main.lisp
@@ -621,12 +619,18 @@
         ;;   (setf *scene-view* (scene-view app-view))
 
         (let ((scene-view (make-instance 'scene-view :scene scene)))
+          ;; assign top level command-table for view
+          (push (or command-table (app-command-table scene-view))
+                (command-tables scene-view))
           
           ;; Hack! Need to figure out how to tie a scene-view to a window
           ;; in glfw3. For now, just set the first scene-view created
           ;; as default and use that for event handling
           (setf *scene-view* scene-view)
           (update-clip-rect)
+
+          ;; TODO -- initial application functionality, create application elsewhere later
+          (setf *application* (make-instance 'application :scene-view scene-view))
           
           ;; assume monitor scale is same in x and y, just use first value
           ;; also assume we are running on the "primary" monitor

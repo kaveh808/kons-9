@@ -432,18 +432,25 @@
           values
           types))
 
-(defun make-scene-item-editor (obj update-obj-fn)
+(defun make-scene-item-editor (obj update-obj-fn &key (title (format nil "Edit ~A" (name obj)))
+                                                   (close-button? t)
+                                                   (update-button-text "Update")
+                                                   (close-after-update? nil))
   (let* ((param-info (editable-slots obj))                          ;get param names from class slot
          (param-names (mapcar #'first param-info))
          (param-types (mapcar #'second param-info))
          (param-values (get-slot-values obj param-names))           ;get param values from instance
-         (contents (ui-make-entries param-names param-values param-types))      ;create ui widgets for params
+         (contents (ui-make-entries param-names param-values param-types));create ui widgets for params
          (update-fn (lambda (editor)                                ;define update func for editor
                       (let* ((ui-values (ui-get-child-values (find-child editor 'contents)
                                                              param-names param-types)))
                         (set-slot-values obj param-names ui-values) ;set instance slot values
-                        (funcall update-obj-fn obj)))))             ;update instance
-    (make-editor-panel (format nil "Edit ~A" (name obj)) update-fn contents)))
+                        (when close-after-update? (hide-ui-content editor))
+                        (when update-obj-fn
+                          (funcall update-obj-fn obj))))))          ;update instance
+    (make-editor-panel title update-fn contents
+                       :close-button? close-button?
+                       :update-button-text update-button-text)))
 
 ;;;; ui-message-box ===========================================================
 
@@ -585,7 +592,7 @@
 
 ;;;; editor panel --------------------------------------------------------------
 
-(defun make-editor-panel (title update-func contents)
+(defun make-editor-panel (title update-func contents &key (close-button? t) (update-button-text "Update"))
   (let* ((box (make-instance 'ui-dialog-box
                              :ui-x 20
                              :ui-y 20
@@ -605,21 +612,23 @@
                                         :padding 5
                                         :draw-border? nil ;t ;for debugging
                                         ))
-         (close-button (make-instance 'ui-button-item
-                                       :ui-w 80
-                                       :text "Close"
-                                       :on-click-fn (lambda (modifiers)
-                                                      (declare (ignore modifiers))
-                                                      (setf (is-visible? box) nil))
-                                       ))
+         (close-button (when close-button?
+                         (make-instance 'ui-button-item
+                                        :ui-w 80
+                                        :text "Close"
+                                        :on-click-fn (lambda (modifiers)
+                                                       (declare (ignore modifiers))
+                                                       (setf (is-visible? box) nil)))))
          (update-button (make-instance 'ui-button-item
                                    :ui-w 80
-                                   :text "Update"
+                                   :text update-button-text
                                    :on-click-fn (lambda (modifiers)
                                                   (declare (ignore modifiers))
-                                                  (funcall update-func box)))))
+                                                  (when update-func (funcall update-func box))))))
     (ui-add-children contents-group contents)
-    (ui-add-children buttons-group (list close-button update-button))
+    (ui-add-children buttons-group (if close-button?
+                                       (list close-button update-button)
+                                       (list update-button)))
     (ui-add-child box (update-layout contents-group))
     (ui-add-child box (update-layout buttons-group))
     (update-layout box)))
