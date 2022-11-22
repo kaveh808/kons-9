@@ -45,13 +45,15 @@
   (sweep-extrude-aux mesh
                      (profile-points mesh) (is-profile-closed? mesh)
                      (path-points mesh) (is-path-closed? mesh)
-                     :twist (twist mesh) :taper (taper mesh) :from-end? (from-end? mesh)))
+                     :twist (twist mesh) :taper (taper mesh) :from-end? (from-end? mesh))
+  mesh)
 
 (defun make-sweep-mesh (profile-curve-source profile-curve-index path-curve-source path-curve-index
                         &rest initargs)
-  (apply #'make-instance 'sweep-mesh :profile-curve-source profile-curve-source
-                                     :profile-curve-index profile-curve-index
-                                     :path-curve-source path-curve-source
-                                     :path-curve-index path-curve-index
-                                     initargs))
+  (compute-procedural-node
+   (apply #'make-instance 'sweep-mesh :profile-curve-source profile-curve-source
+                                      :profile-curve-index profile-curve-index
+                                      :path-curve-source path-curve-source
+                                      :path-curve-index path-curve-index
+                                      initargs)))
 
