@@ -56,7 +56,7 @@
       errors)))
 
 (defun verror (format &rest format-args)
-  "Signal a (continuable) validation error on *VALIDATION-SUBJET*."
+  "Signal a (continuable) validation error on *VALIDATION-SUBJECT*."
   (check-type format string)
   (with-simple-restart (ignore "Ignore this single error and continue.")
     (error (make-instance 'validation-error
