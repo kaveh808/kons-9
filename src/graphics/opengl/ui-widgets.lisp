@@ -150,6 +150,35 @@
   (declare (ignore x y button modifiers))
   (setf (is-pushed? view) (not (is-pushed? view))))
 
+;;;; ui-choice-button ==========================================================
+
+(defclass-kons-9 ui-choice-button (ui-label-item)
+  ((choice-index 0)
+   (choices (make-array 0 :adjustable t :fill-pointer 0))
+   (is-popped-up? nil)
+   (choice-menu nil))
+  (:default-initargs
+   :draw-border? t ;nil
+   :is-active? t))
+
+(defmethod initialize-instance :after ((view ui-choice-button)  &rest initargs)
+  (declare (ignore initargs))
+  ;; assumes choices have been set
+  (set-width-for-text view)
+  (setf (choice-menu view) (make-instance 'ui-choice-menu :choice-button view))
+  (create-contents (choice-menu view)))
+
+(defmethod set-width-for-text ((view ui-choice-button))
+  (setf (ui-w view) (max 80
+                         (if (> (length (choices view)) 0)
+                             (+ (reduce #'max (map 'vector #'ui-text-width (choices view)))
+                                (* 2 (text-padding view)))
+                             0))))
+
+(defmethod do-action ((view ui-choice-button) x y button modifiers)
+  (declare (ignore x y button modifiers))
+  (setf (is-visible? (choice-menu view)) t))
+
 ;;;; ui-text-box-item ==========================================================
 
 (defclass-kons-9 ui-text-box-item (ui-label-item)
@@ -528,18 +557,22 @@
     (update-layout box)))
 
 #|
-(setf (ui-contents *default-scene-view*)
-      (list (make-dialog-box (list (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
-                                                                 :text "Label 1")
-                                   (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
-                                                                 :text "Label 2")
-                                   (make-instance 'ui-button-item :ui-w *ui-popup-menu-width*
-                                                                  :text "My Button")
-                                   (make-instance 'ui-check-box-item :ui-w *ui-popup-menu-width*
-                                                                     :text "Check Box")
-                                   (make-instance 'ui-text-box-item :ui-w *ui-popup-menu-width*
-                                                                    :text "Text Box")
-                                   ))))
+(show-ui-content
+ (make-dialog-box
+  (list (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
+                                      :text "Label 1")
+        (make-instance 'ui-choice-button :ui-w *ui-popup-menu-width*
+                                         :choice-index 0
+                                         :choices #("Choice 0" "Best Choice 1" "Choice 2"))
+        (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
+                                      :text "Label 2")
+        (make-instance 'ui-button-item :ui-w *ui-popup-menu-width*
+                                       :text "My Button")
+        (make-instance 'ui-check-box-item :ui-w *ui-popup-menu-width*
+                                          :text "Check Box")
+        (make-instance 'ui-text-box-item :ui-w *ui-popup-menu-width*
+                                         :text "Text Box")
+        )))
 |#
 
 (defun make-text-input-dialog-box (title ok-action-fn &optional (ok-button-text "OK") (cancel-button-text "Cancel"))
@@ -680,6 +713,41 @@
     (ui-set-rect (aref (children view) 4)    0    h (ui-w view) h)
     view))
                         
+;;;; ui-choice-menu ============================================================
+
+(defclass-kons-9 ui-choice-menu (ui-group)
+  ((choice-button nil))
+  (:default-initargs
+   :is-visible? nil
+   :bg-color (c! .8 .8 .8 1.0)          ;opaque as we may draw over other widgets
+   :layout :vertical
+   :spacing 0
+   :padding 0
+   :ui-x 0
+   :ui-y *ui-button-item-height*))      ;position menu below button
+
+(defmethod create-contents ((view ui-choice-menu))
+  (setf (fill-pointer (children view)) 0)
+  (let ((button (choice-button view)))
+    (when button
+      (setf (title view) nil)
+      (when (> (length (choices button)) 0)
+        (loop for text across (choices button)
+              do (let ((tmp text))     ;TODO -- without this all entries get fn of last entry???
+                   (vector-push-extend
+                    (make-instance 'ui-menu-item :ui-w (ui-w button)
+                                                 :ui-h *ui-button-item-height* 
+                                                 :text text
+                                                 :key-text nil
+                                                 :is-active? t
+                                                 :on-click-fn (lambda (modifiers)
+                                                                (declare (ignore modifiers))
+                                                                (setf (text button) tmp)
+                                                                (setf (is-visible? view) nil)))
+                                                                
+                    (children view)))))))
+  (update-layout view))
+
 ;;;; ui-popup-menu =============================================================
 
 (defclass-kons-9 ui-popup-menu (ui-group)
@@ -1150,17 +1218,26 @@
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
-        (render-text (+ (ui-centered-text-x (text view) (ui-w view)) x x-offset)
-                     (+ 16 y y-offset) (text view)))))
+        (cond ((key-text view)
+               (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
+               (render-text (+ (ui-centered-text-x (text view) (ui-w view)) x x-offset)
+                            (+ 16 y y-offset)
+                            (text view)))
+              (t
+               (render-text (+ (ui-centered-text-x (text view) (ui-w view)) x x-offset)
+                            (+ 16 y y-offset)
+                            (text view)))))))
 
   (:method ((view ui-menu-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
-        (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
-        (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view)))))
+        (cond ((key-text view)
+               (render-text (+ 5 x x-offset) (+ 16 y y-offset) (key-text view))
+               (render-text (+ 30 x x-offset) (+ 16 y y-offset) (text view)))
+              (t
+               (render-text (+ 5 x x-offset) (+ 16 y y-offset) (text view)))))))
 
   (:method ((view ui-check-box-item) x-offset y-offset)
     (when (is-visible? view)
@@ -1180,6 +1257,15 @@
                             (- *ui-button-item-height* 9) (- *ui-button-item-height* 8)
                             0 (* 2 *ui-border-width*))))))
 
+  (:method ((view ui-choice-button) x-offset y-offset)
+    (when (is-visible? view)
+      (draw-ui-view view x-offset y-offset)
+      (with-accessors ((x ui-x) (y ui-y))
+          view
+        (render-text (+ (text-padding view) x x-offset) (+ 16 y y-offset) (text view))
+        (when (is-visible? (choice-menu view))
+          (draw-view (choice-menu view) (+ x x-offset) (+ y y-offset))))))
+  
   (:method ((view ui-text-box-item) x-offset y-offset)
     (when (is-visible? view)
       (draw-ui-view view x-offset y-offset)
@@ -1198,6 +1284,22 @@
       (loop for child across (children view)
             do (draw-view child (+ (ui-x view) x-offset) (+ (ui-y view) y-offset)))))
   )
+
+(defgeneric draw-view-overlay (view x-offset y-offset)
+
+  (:method ((view ui-view) x-offset y-offset)
+    ;; do nothing
+    )
+
+  (:method ((view ui-choice-button) x-offset y-offset)
+    (when (and (is-visible? view) (is-visible? (choice-menu view)))
+      (draw-view (choice-menu view) (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))))
+
+  (:method ((view ui-group) x-offset y-offset)
+    (when (is-visible? view)
+      (loop for child across (children view)
+            do (draw-view-overlay child (+ (ui-x view) x-offset) (+ (ui-y view) y-offset)))))
+)
 
 ;;;; hit testing -------------------------
 
@@ -1226,5 +1328,11 @@
                         (return-from find-ui-at-point found))))
              view)
           (t nil)))
+
+  (:method ((view ui-choice-button) global-x global-y &optional (x-offset 0) (y-offset 0))
+    (if (is-visible? (choice-menu view))
+        (find-ui-at-point (choice-menu view) global-x global-y
+                          (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))
+        (call-next-method)))
   )
 

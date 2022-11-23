@@ -304,12 +304,15 @@
 
   (2d-setup-projection (first *window-size*) (second *window-size*))
 
-  (progn
-    (text-engine-begin-frame)
-    (draw-scene-view-ui view)
-;    (test-text)
-    (text-engine-end-frame)
-    )
+  ;; draw scene ui
+  (text-engine-begin-frame)
+  (draw-scene-view-ui view)
+  (text-engine-end-frame)
+
+  ;; draw scene ui overlay (e.g. choice menus)
+  (text-engine-begin-frame)
+  (draw-scene-view-ui-overlay view)
+  (text-engine-end-frame)
 
   (3d-flush-render))
 
@@ -322,6 +325,9 @@
         (setf (is-visible? (menu view)) t))
       (draw-view (menu view) 0 0)))
   (draw-view (ui-contents view) 0 0))
+
+(defmethod draw-scene-view-ui-overlay ((view scene-view))
+  (draw-view-overlay (ui-contents view) 0 0))
 
 (defmethod make-popup-menu ((view scene-view))
   (when (command-tables view)
@@ -629,9 +635,6 @@
           (setf *scene-view* scene-view)
           (update-clip-rect)
 
-          ;; TODO -- initial application functionality, create application elsewhere later
-          (setf *application* (make-instance 'application :scene-view scene-view))
-          
           ;; assume monitor scale is same in x and y, just use first value
           ;; also assume we are running on the "primary" monitor
           ;; use FLOOR due to bug encountered with user's 4K monitor setting of 1.1458334
