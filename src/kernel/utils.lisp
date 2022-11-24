@@ -12,19 +12,32 @@
     (dolist (subclass subclasses)
       (print-class-hierarchy subclass (+ indent 2)))))
 
-;;;; defklass macro ============================================================
+;;;; defclass-kons-9 macro =====================================================
 
-(defmacro defclass-kons-9 (name superclasses slot-names-and-initforms &rest class-options)
+;;; slot-info-list ((name init-value) ...) ;;TODO -- [:allocation :class]) ...)
+
+(defmacro defclass-kons-9 (name superclasses slot-info-list &rest class-options)
   `(defclass ,name ,superclasses
      ,(mapcar #'(lambda (slot-info)
                   (let ((slot-name (first slot-info))
                         (slot-value (second slot-info)))
-                    (list slot-name
-                          :accessor slot-name
-                          :initarg (intern (symbol-name slot-name) "KEYWORD")
-                          :initform slot-value)))
-       slot-names-and-initforms)
+                    `(,slot-name
+                      :accessor ,slot-name
+                      :initarg ,(intern (symbol-name slot-name) "KEYWORD")
+                      :initform ,slot-value)))
+       slot-info-list)
      ,@class-options))
+
+;;;; class utils ===============================================================
+
+(defun get-slot-values (obj slot-names)
+  (mapcar (lambda (name) (slot-value obj name))
+          slot-names))
+
+(defun set-slot-values (obj slot-names slot-values)
+  (mapc (lambda (name value) (setf (slot-value obj name) value))
+        slot-names
+        slot-values))
 
 ;;;; utils =====================================================================
 

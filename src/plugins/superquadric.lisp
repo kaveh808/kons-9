@@ -50,14 +50,15 @@
                             (* cv su r)))))))))))
 
 (defmethod make-superquadric (u-dim v-dim diameter e1 e2 &key (name nil))
-  (make-instance 'superquadric :name name
-                               :u-dim u-dim
-                               :v-dim v-dim
-                               :u-wrap t
-                               :v-wrap nil
-                               :diameter diameter
-                               :e1 e1
-                               :e2 e2))
+  (compute-procedural-node
+   (make-instance 'superquadric :name name
+                                :u-dim u-dim
+                                :v-dim v-dim
+                                :u-wrap t
+                                :v-wrap nil
+                                :diameter diameter
+                                :e1 e1
+                                :e2 e2)))
 
 ;;;; gui =======================================================================
 

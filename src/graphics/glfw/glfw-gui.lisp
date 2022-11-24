@@ -5,14 +5,13 @@
 (defparameter *current-mouse-pos-y* 0)
 (defparameter *current-mouse-modifier* nil)
 (defparameter *ui-interactive-mode* nil)
-;; Hack! Figure out the right analogous representation
-;; of a GL-enabled NSView for the GLFW3 backend
-(defvar *scene-view* nil)
-
 (defparameter *current-highlighted-ui-item* nil)
+(defparameter *current-choice-menu-and-pos* nil) ;nil or (menu x y)
+
+(defparameter *scene-view* nil)
 
 #|
-;;;; app-view ================================================================
+;;;; app-view ==================================================================
 
 (defclass-kons-9 app-view (ui-group)
   ((scene-view (make-instance 'scene-view))
@@ -60,8 +59,8 @@
 (defmethod initialize-instance :after ((view scene-view) &rest initargs)
   (declare (ignore initargs))
   (init-view-camera)
-  (setf (status-bar view) (make-status-bar))
-  (push (app-command-table view) (command-tables view)))
+  (setf (status-bar view) (make-status-bar)))
+;;  (push (app-command-table view) (command-tables view)))
 
 (defun show-ui-content (view)
   (let ((contents (ui-contents *scene-view*)))
@@ -306,12 +305,15 @@
 
   (2d-setup-projection (first *window-size*) (second *window-size*))
 
-  (progn
-    (text-engine-begin-frame)
-    (draw-scene-view-ui view)
-;    (test-text)
-    (text-engine-end-frame)
-    )
+  ;; draw scene ui
+  (text-engine-begin-frame)
+  (draw-scene-view-ui view)
+  (text-engine-end-frame)
+
+  ;; draw scene ui overlay (e.g. choice menus)
+  (text-engine-begin-frame)
+  (draw-scene-view-ui-overlay view)
+  (text-engine-end-frame)
 
   (3d-flush-render))
 
@@ -324,6 +326,9 @@
         (setf (is-visible? (menu view)) t))
       (draw-view (menu view) 0 0)))
   (draw-view (ui-contents view) 0 0))
+
+(defmethod draw-scene-view-ui-overlay ((view scene-view))
+  (draw-view-overlay (ui-contents view) 0 0))
 
 (defmethod make-popup-menu ((view scene-view))
   (when (command-tables view)
@@ -356,7 +361,10 @@
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
-  (cond (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
+  (cond ((and *current-choice-menu-and-pos* (eq :escape key)) ;escape closes any choice menu
+         (setf (is-visible? (elt *current-choice-menu-and-pos* 0)) nil)
+         (unregister-choice-menu))
+        (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
                ((and (eq :c key) (member :super mod-keys))
@@ -364,7 +372,7 @@
                ((and (eq :x key) (member :super mod-keys))
                 (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
                ((eq :backspace key)
-                (do-backspace-input *ui-keyboard-focus*))
+                (do-backspace-input *ui-keyboard-focus* mod-keys))
                ((member key '(:left :right :up :down))
                 (do-arrow-input *ui-keyboard-focus* key))
                ))
@@ -400,7 +408,7 @@
          (when (and (menu self) (is-visible? (menu self)) (> (length (command-tables self)) 1))
            (setf (command-tables self) (cdr (command-tables self)))))
         ((or (eq :up key) (eq :down key)) ;scroll inspectors
-         (incf (ui-contents-scroll self) (if (eq :up key) -10 10))
+         (incf (ui-contents-scroll self) (if (eq :up key) -50 50))
          (update-ui-content-position))
         ((and (menu self) (is-visible? (menu self))) ;do menu selection
          (do-command (car (command-tables self)) key)
@@ -461,11 +469,23 @@
             (t
              (mouse-moved x y dx dy))))))
 
+(defun register-choice-menu (menu x y)
+  (setf *current-choice-menu-and-pos* (list menu x y)))
+
+(defun unregister-choice-menu ()
+  (print 'unregister-choice-menu)
+  (setf *current-choice-menu-and-pos* nil))
+
 (defun highlight-ui-item-under-mouse (ui-view x y)
   (when *current-highlighted-ui-item*
     (setf (highlight? *current-highlighted-ui-item*) nil)
     (setf *current-highlighted-ui-item* nil))
-  (let ((ui-item (find-ui-at-point ui-view x y)))
+  (let ((ui-item (if *current-choice-menu-and-pos* ;choice menu gets priority
+                     (find-ui-at-point (elt *current-choice-menu-and-pos* 0)
+                                       x y
+                                       (elt *current-choice-menu-and-pos* 1)  ;menu global x
+                                       (elt *current-choice-menu-and-pos* 2)) ;menu global y
+                     (find-ui-at-point ui-view x y))))
     (if (and ui-item (is-active? ui-item))
         (progn
           (setf (highlight? ui-item) t)
@@ -475,7 +495,13 @@
         nil)))
 
 (defun do-action-ui-item-under-mouse (ui-view x y button modifiers)
-  (let ((ui-item (find-ui-at-point ui-view x y)))
+  (let ((ui-item (if *current-choice-menu-and-pos* ;choice menu gets priority
+                     (find-ui-at-point (elt *current-choice-menu-and-pos* 0)
+                                       x y
+                                       (elt *current-choice-menu-and-pos* 1)  ;menu global x
+                                       (elt *current-choice-menu-and-pos* 2)) ;menu global y
+                     (find-ui-at-point ui-view x y))))
+;  (let ((ui-item (find-ui-at-point ui-view x y)))
     (if (and ui-item (is-active? ui-item))
         (progn
           (do-action ui-item x y button modifiers)
@@ -600,7 +626,7 @@
                                       :ui-x 0 :ui-y 0
                                       :ui-w (first *window-size*) :ui-h (second *window-size*))))
 
-(defun show-window (scene)
+(defun show-window (scene &optional (command-table nil))
   ;; XXX TODO assert that this is running on the main thread.
   ;; Graphics calls on OS X must occur in the main thread
   ;; Normally this is called by run function in kernel/main.lisp
@@ -621,13 +647,16 @@
         ;;   (setf *scene-view* (scene-view app-view))
 
         (let ((scene-view (make-instance 'scene-view :scene scene)))
+          ;; assign top level command-table for view
+          (push (or command-table (app-command-table scene-view))
+                (command-tables scene-view))
           
           ;; Hack! Need to figure out how to tie a scene-view to a window
           ;; in glfw3. For now, just set the first scene-view created
           ;; as default and use that for event handling
           (setf *scene-view* scene-view)
           (update-clip-rect)
-          
+
           ;; assume monitor scale is same in x and y, just use first value
           ;; also assume we are running on the "primary" monitor
           ;; use FLOOR due to bug encountered with user's 4K monitor setting of 1.1458334

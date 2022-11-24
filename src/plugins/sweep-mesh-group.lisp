@@ -20,12 +20,14 @@
                                      (path-curve-source group)
                                      :twist (twist group)
                                      :taper (taper group)
-                                     :from-end? (from-end? group))))
+                                     :from-end? (from-end? group)))
+  group)
 
 (defun make-sweep-mesh-group (profile-curve-source path-curve-source &rest initargs)
-  (apply #'make-instance 'sweep-mesh-group :profile-curve-source profile-curve-source
-                                           :path-curve-source path-curve-source
-                                           initargs))
+  (compute-procedural-node
+   (apply #'make-instance 'sweep-mesh-group :profile-curve-source profile-curve-source
+                                            :path-curve-source path-curve-source
+                                            initargs)))
 
 ;;;; gui =======================================================================
 
