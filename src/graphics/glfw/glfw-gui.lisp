@@ -6,6 +6,7 @@
 (defparameter *current-mouse-modifier* nil)
 (defparameter *ui-interactive-mode* nil)
 (defparameter *current-highlighted-ui-item* nil)
+(defparameter *current-choice-menu-and-pos* nil) ;nil or (menu x y)
 
 (defparameter *scene-view* nil)
 
@@ -360,7 +361,10 @@
 (defmethod key-down ((self scene-view) key mod-keys)
   ;; (format t "key-down self: ~a, key: ~a mod-keys: ~a~%" self key mod-keys)
   ;; (finish-output)
-  (cond (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
+  (cond ((and *current-choice-menu-and-pos* (eq :escape key)) ;escape closes any choice menu
+         (setf (is-visible? (elt *current-choice-menu-and-pos* 0)) nil)
+         (unregister-choice-menu))
+        (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
          (cond ((and (eq :v key) (member :super mod-keys))
                 (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
                ((and (eq :c key) (member :super mod-keys))
@@ -465,11 +469,23 @@
             (t
              (mouse-moved x y dx dy))))))
 
+(defun register-choice-menu (menu x y)
+  (setf *current-choice-menu-and-pos* (list menu x y)))
+
+(defun unregister-choice-menu ()
+  (print 'unregister-choice-menu)
+  (setf *current-choice-menu-and-pos* nil))
+
 (defun highlight-ui-item-under-mouse (ui-view x y)
   (when *current-highlighted-ui-item*
     (setf (highlight? *current-highlighted-ui-item*) nil)
     (setf *current-highlighted-ui-item* nil))
-  (let ((ui-item (find-ui-at-point ui-view x y)))
+  (let ((ui-item (if *current-choice-menu-and-pos* ;choice menu gets priority
+                     (find-ui-at-point (elt *current-choice-menu-and-pos* 0)
+                                       x y
+                                       (elt *current-choice-menu-and-pos* 1)  ;menu global x
+                                       (elt *current-choice-menu-and-pos* 2)) ;menu global y
+                     (find-ui-at-point ui-view x y))))
     (if (and ui-item (is-active? ui-item))
         (progn
           (setf (highlight? ui-item) t)
@@ -479,7 +495,13 @@
         nil)))
 
 (defun do-action-ui-item-under-mouse (ui-view x y button modifiers)
-  (let ((ui-item (find-ui-at-point ui-view x y)))
+  (let ((ui-item (if *current-choice-menu-and-pos* ;choice menu gets priority
+                     (find-ui-at-point (elt *current-choice-menu-and-pos* 0)
+                                       x y
+                                       (elt *current-choice-menu-and-pos* 1)  ;menu global x
+                                       (elt *current-choice-menu-and-pos* 2)) ;menu global y
+                     (find-ui-at-point ui-view x y))))
+;  (let ((ui-item (find-ui-at-point ui-view x y)))
     (if (and ui-item (is-active? ui-item))
         (progn
           (do-action ui-item x y button modifiers)

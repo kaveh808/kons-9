@@ -153,7 +153,7 @@
 ;;;; ui-choice-button ==========================================================
 
 (defclass-kons-9 ui-choice-button (ui-label-item)
-  ((choice-index 0)
+  (;(choice-index 0)
    (choices (make-array 0 :adjustable t :fill-pointer 0))
    (is-popped-up? nil)
    (choice-menu nil))
@@ -407,6 +407,10 @@
     ((:boolean)
      (let ((check-box (aref (children view) 1)))
        (is-pushed? check-box)))
+    ((:choice)
+     (let* ((choice-button (aref (children view) 1))
+            (str (text choice-button)))
+       (read-from-string str)))
     (otherwise
      (let* ((text-box (aref (children view) 1))
             (str (text text-box)))
@@ -420,6 +424,9 @@
     ((:boolean)
      (let ((check-box (aref (children view) 1)))
        (setf (is-pushed? check-box) value)))
+    ((:choice)
+     (let ((choice-button (aref (children view) 1)))
+       (setf (text choice-button) (format nil "~A" value))))
     (otherwise
      (let ((text-box (aref (children view) 1)))
        (setf (text text-box)
@@ -427,16 +434,21 @@
                ((:number :symbol :string) (format nil "~A" value))
                ((:point) (format nil "~A ~A ~A" (p:x value) (p:y value) (p:z value)))))))))
 
-(defun make-data-entry (name label value type)
+(defun make-data-entry (name label value type &optional (choices nil))
   (let* ((view (make-instance 'ui-data-entry :ui-name name :draw-border? nil))
          (label (make-instance 'ui-label-item :ui-x 0 :ui-y 0
                                               :ui-w (+ 10 (ui-text-width label))
                                               :ui-h *ui-button-item-height*
                                               :text label :text-padding 5))
          (value-widget (case type
-                         ((:boolean) (make-instance 'ui-check-box-item :ui-x 80 :ui-y 0
-                                                                       :ui-w 120 :ui-h *ui-button-item-height*
-                                                                       :text ""))
+                         ((:boolean)
+                          (make-instance 'ui-check-box-item :ui-x 80 :ui-y 0
+                                                            :ui-w 120 :ui-h *ui-button-item-height*
+                                                            :text ""))
+                         ((:choice)
+                          (make-instance 'ui-choice-button :ui-x 80 :ui-y 0
+                                                           :ui-w 120 :ui-h *ui-button-item-height*
+                                                           :text "" :choices choices))
                          (otherwise
                           (make-instance 'ui-text-box-item :ui-x 80 :ui-y 0
                                                            :ui-w 120 :ui-h *ui-button-item-height*)))))
@@ -455,11 +467,13 @@
           names
           types))
 
-(defun ui-make-entries (names values types)
-  (mapcar (lambda (name value type) (make-data-entry name (format nil "~A:" name) value type))
+(defun ui-make-entries (names values types choices-list)
+  (mapcar (lambda (name value type choices)
+            (make-data-entry name (format nil "~A:" name) value type choices))
           names
           values
-          types))
+          types
+          choices-list))
 
 (defun make-scene-item-editor (obj update-obj-fn &key (title (format nil "Edit ~A" (name obj)))
                                                    (close-button? t)
@@ -468,8 +482,12 @@
   (let* ((param-info (editable-slots obj))                          ;get param names from class slot
          (param-names (mapcar #'first param-info))
          (param-types (mapcar #'second param-info))
+         (param-choices (mapcar (lambda (param) (if (= 3 (length param))
+                                                    (elt param 2)
+                                                    nil))
+                                param-info))
          (param-values (get-slot-values obj param-names))           ;get param values from instance
-         (contents (ui-make-entries param-names param-values param-types));create ui widgets for params
+         (contents (ui-make-entries param-names param-values param-types param-choices));create ui widgets for params
          (update-fn (lambda (editor)                                ;define update func for editor
                       (let* ((ui-values (ui-get-child-values (find-child editor 'contents)
                                                              param-names param-types)))
@@ -562,7 +580,7 @@
   (list (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
                                       :text "Label 1")
         (make-instance 'ui-choice-button :ui-w *ui-popup-menu-width*
-                                         :choice-index 0
+;;                                         :choice-index 0
                                          :choices #("Choice 0" "Best Choice 1" "Choice 2"))
         (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
                                       :text "Label 2")
@@ -743,7 +761,8 @@
                                                  :on-click-fn (lambda (modifiers)
                                                                 (declare (ignore modifiers))
                                                                 (setf (text button) tmp)
-                                                                (setf (is-visible? view) nil)))
+                                                                (setf (is-visible? view) nil)
+                                                                (unregister-choice-menu)));unregister menu
                                                                 
                     (children view)))))))
   (update-layout view))
@@ -1293,7 +1312,9 @@
 
   (:method ((view ui-choice-button) x-offset y-offset)
     (when (and (is-visible? view) (is-visible? (choice-menu view)))
-      (draw-view (choice-menu view) (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))))
+      (draw-view (choice-menu view) (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))
+      ;; we do this here because we need the global x and y of the menu
+      (register-choice-menu (choice-menu view) (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))))
 
   (:method ((view ui-group) x-offset y-offset)
     (when (is-visible? view)
@@ -1331,8 +1352,14 @@
 
   (:method ((view ui-choice-button) global-x global-y &optional (x-offset 0) (y-offset 0))
     (if (is-visible? (choice-menu view))
+        (progn
+          (print (list global-x global-y x-offset y-offset (ui-x view) (ui-y view)
+                       (find-ui-at-point (choice-menu view) global-x global-y
+                                         (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))))
+          
         (find-ui-at-point (choice-menu view) global-x global-y
                           (+ (ui-x view) x-offset) (+ (ui-y view) y-offset))
+        )
         (call-next-method)))
   )
 
