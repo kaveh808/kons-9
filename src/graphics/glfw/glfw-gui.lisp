@@ -475,7 +475,6 @@
   (setf *current-choice-menu-and-pos* (list menu x y)))
 
 (defun unregister-choice-menu ()
-  (print 'unregister-choice-menu)
   (setf *current-choice-menu-and-pos* nil))
 
 (defun highlight-ui-item-under-mouse (ui-view x y)
