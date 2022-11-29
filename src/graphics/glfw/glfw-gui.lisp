@@ -501,7 +501,6 @@
                                        (elt *current-choice-menu-and-pos* 1)  ;menu global x
                                        (elt *current-choice-menu-and-pos* 2)) ;menu global y
                      (find-ui-at-point ui-view x y))))
-;  (let ((ui-item (find-ui-at-point ui-view x y)))
     (if (and ui-item (is-active? ui-item))
         (progn
           (do-action ui-item x y button modifiers)
