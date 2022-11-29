@@ -207,7 +207,11 @@
 ;;; TODO ++ do not insert modifier key text
 ;;; TODO ++ draw cursor when is *ui-keyboard-focus*
 ;;; TODO ++ arrow keys
-;;; TODO -- mark region (shift-click, drag, double click, etc)
+;;; TODO -- mark region
+;;; + shift-click
+;;; - drag
+;;; - double click
+;;; + alt A (select all)
 
 (defun insert-string (string insertion position)
   (concatenate 'string
@@ -260,6 +264,10 @@
   (let ((result (do-copy-input view)))
     (remove-selected-text view)
     result))
+
+(defmethod do-select-all ((view ui-text-box-item))
+  (setf (mark-position view) 0)
+  (setf (cursor-position view) (length (text view))))
 
 (defmethod do-backspace-input ((view ui-text-box-item) mod-keys)
   (let ((pos (cursor-position view))
@@ -616,7 +624,7 @@
     (ui-add-child box (update-layout buttons-group))
     (update-layout box)))
 
-#|
+#| xxxx
 (show-ui-content
  (make-dialog-box
   (list (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*

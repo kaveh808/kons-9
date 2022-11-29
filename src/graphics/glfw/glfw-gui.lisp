@@ -371,6 +371,8 @@
                 (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
                ((and (eq :x key) (member :super mod-keys))
                 (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
+               ((and (eq :a key) (member :super mod-keys))
+                (do-select-all *ui-keyboard-focus*))
                ((eq :backspace key)
                 (do-backspace-input *ui-keyboard-focus* mod-keys))
                ((member key '(:left :right :up :down))
