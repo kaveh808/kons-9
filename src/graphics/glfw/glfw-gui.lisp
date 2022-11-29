@@ -530,8 +530,13 @@
         (do-action-ui-item-under-mouse (ui-contents *scene-view*) x y button modifiers))))
 
 (defun mouse-dragged (x y dx dy)
-  (declare (ignore x y))
 ;;  (format t "mouse-dragged dx: ~a, dy: ~a, mod: ~a~%" dx dy *current-mouse-modifier*)
+  (if *current-highlighted-ui-item*
+      (do-drag-action *current-highlighted-ui-item* x y dx dy)
+      (do-3d-navigation x y dx dy)))
+
+(defun do-3d-navigation (x y dx dy)
+  (declare (ignore x y))
   (cond ((eq :control *current-mouse-modifier*) ;user-defined mouse binding
          (when (mouse-binding *scene-view*)
            (funcall (mouse-binding *scene-view*) (scene *scene-view*) dx dy)))

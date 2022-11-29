@@ -96,6 +96,11 @@
   (when (on-click-fn view)
     (funcall (on-click-fn view) modifiers)))
 
+(defmethod do-drag-action ((view ui-view) x y dx dy)
+  (declare (ignore x y dx dy))
+  ;; do nothing
+  )
+
 ;;;; ui-label-item =============================================================
 
 (defclass-kons-9 ui-label-item (ui-view)
@@ -190,17 +195,25 @@
    :is-active? t
    :can-have-keyboard-focus? t))
 
+(defmethod coord-to-text-pos ((view ui-text-box-item) x y)
+  (max 0
+       (min (length (text view))
+            (floor (/ (first (local-coords view x y)) *ui-font-width*)))))
+
 (defmethod do-action ((view ui-text-box-item) x y button modifiers)
   (declare (ignore button))
   (setf *ui-keyboard-focus* view)
-  (let ((pos (max 0
-                  (min (length (text view))
-                       (floor (/ (first (local-coords view x y)) *ui-font-width*))))))
+  (let ((pos (coord-to-text-pos view x y)))
     (if (member :shift modifiers)       ;shift-click to set cursor only
         (setf (mark-position view) pos)
         (progn                          ;click sets both mark and cursor
           (setf (mark-position view) pos)
           (setf (cursor-position view) pos)))))
+
+(defmethod do-drag-action ((view ui-text-box-item) x y dx dy)
+  (declare (ignore dx dy))
+  (let ((pos (coord-to-text-pos view x y)))
+    (setf (cursor-position view) pos)))
 
 ;;; TODO ++ edit text
 ;;; TODO ++ handle char input properly
@@ -210,8 +223,9 @@
 ;;; TODO -- mark region
 ;;; + shift-click
 ;;; - drag
-;;; - double click
+;;; - double click -- not handled by glfw?
 ;;; + alt A (select all)
+;;; TODO -- emacs bindings -- C-a, C-e, C-d
 
 (defun insert-string (string insertion position)
   (concatenate 'string
@@ -631,6 +645,7 @@
                                       :text "Label 1")
         (make-instance 'ui-choice-button :ui-w *ui-popup-menu-width*
 ;;                                         :choice-index 0
+                                         :text "Pulldown"
                                          :choices #("Choice 0" "Best Choice 1" "Choice 2"))
         (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
                                       :text "Label 2")
@@ -1225,7 +1240,7 @@
 (defun draw-cursor (x y)
   (let ((x0 (- x 3))
         (x1 (+ x 2))
-        (y0 (+ y 4))
+        (y0 (+ y 5))
         (y1 (- (+ y *ui-button-item-height*) 4)))
     (when (not (ui-is-clipped? x0 y0 x1 y1))
       (gl:color 0.0 0.0 0.0 1.0)
