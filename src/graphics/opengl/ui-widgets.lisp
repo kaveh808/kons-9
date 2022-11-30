@@ -96,6 +96,11 @@
   (when (on-click-fn view)
     (funcall (on-click-fn view) modifiers)))
 
+(defmethod do-drag-action ((view ui-view) x y dx dy)
+  (declare (ignore x y dx dy))
+  ;; do nothing
+  )
+
 ;;;; ui-label-item =============================================================
 
 (defclass-kons-9 ui-label-item (ui-view)
@@ -182,62 +187,137 @@
 ;;;; ui-text-box-item ==========================================================
 
 (defclass-kons-9 ui-text-box-item (ui-label-item)
-  ((cursor-position 0))
+  ((cursor-position 0)
+   (mark-position 0))
   (:default-initargs
    :draw-border? t
    :bg-color (c! 1 1 1 1)
    :is-active? t
    :can-have-keyboard-focus? t))
 
+(defmethod coord-to-text-pos ((view ui-text-box-item) x y)
+  (max 0
+       (min (length (text view))
+            (floor (/ (first (local-coords view x y)) *ui-font-width*)))))
+
 (defmethod do-action ((view ui-text-box-item) x y button modifiers)
-  (declare (ignore button modifiers))
+  (declare (ignore button))
   (setf *ui-keyboard-focus* view)
-  (setf (cursor-position view) (max 0
-                                    (min (length (text view))
-                                         (floor (/ (first (local-coords view x y)) *ui-font-width*))))))
+  (let ((pos (coord-to-text-pos view x y)))
+    (if (member :shift modifiers)       ;shift-click to set cursor only
+        (setf (mark-position view) pos)
+        (progn                          ;click sets both mark and cursor
+          (setf (mark-position view) pos)
+          (setf (cursor-position view) pos)))))
+
+(defmethod do-drag-action ((view ui-text-box-item) x y dx dy)
+  (declare (ignore dx dy))
+  (let ((pos (coord-to-text-pos view x y)))
+    (setf (cursor-position view) pos)))
 
 ;;; TODO ++ edit text
 ;;; TODO ++ handle char input properly
 ;;; TODO ++ do not insert modifier key text
 ;;; TODO ++ draw cursor when is *ui-keyboard-focus*
 ;;; TODO ++ arrow keys
-;;; TODO -- mark region (shift-click, drag, double click, etc)
+;;; TODO ++ mark region
+;;; + shift-click
+;;; + drag
+;;; - double click -- not handled by glfw?
+;;; + alt A (select all)
+;;; TODO ++ emacs bindings -- C-a, C-e, C-d, C-k, C-y
+;;; TODO -- handle text that is wider than text-box -- clip text to widget?
 
-(defun insert-string (string insert position)
+(defun insert-string (string insertion position)
   (concatenate 'string
                (subseq string 0 position)
-               insert
+               insertion
                (if (< position (length string))
                    (subseq string position (length string))
                    "")))
   
+(defun remove-string (string position-0 position-1)
+  (let ((p0 (min position-0 position-1))
+        (p1 (max position-0 position-1)))
+    (concatenate 'string
+                 (subseq string 0 p0)
+                 (subseq string p1 (length string)))))
+
+(defmethod remove-selected-text ((view ui-text-box-item))
+  (let ((pos (cursor-position view))
+        (mark (mark-position view)))
+    (when (not (= pos mark))            ;text selected
+      (let ((p0 (min pos mark)))
+        (setf (text view) (remove-string (text view) pos mark))
+        (setf (cursor-position view) p0)
+        (setf (mark-position view) p0)))))
+  
 (defmethod do-char-input ((view ui-text-box-item) char)
+  ;; delete selected text before insertion
+  (remove-selected-text view)
+  ;; insert text
   (setf (text view) (insert-string (text view) (string char) (cursor-position view)))
-  (incf (cursor-position view)))
+  (incf (cursor-position view))
+  (setf (mark-position view) (cursor-position view)))
 
 (defmethod do-paste-input ((view ui-text-box-item) string)
   (setf (text view) (insert-string (text view) string (cursor-position view)))
-  (incf (cursor-position view) (length string)))
+  (incf (cursor-position view) (length string))
+  ;; update mark
+  (setf (mark-position view) (cursor-position view)))
 
 (defmethod do-copy-input ((view ui-text-box-item))
-  (text view))
+  (let ((pos (cursor-position view))
+        (mark (mark-position view)))
+    (if (not (= pos mark))            ;text selected
+      (let ((p0 (min pos mark))
+            (p1 (max pos mark)))
+        (subseq (text view) p0 p1))
+      "")))                             ;no text selection
 
 (defmethod do-cut-input ((view ui-text-box-item))
-  (let ((result (text view)))
-    (setf (text view) "")
+  (let ((result (do-copy-input view)))
+    (remove-selected-text view)
     result))
 
+(defmethod do-select-all ((view ui-text-box-item))
+  (setf (mark-position view) 0)
+  (setf (cursor-position view) (length (text view))))
+
 (defmethod do-backspace-input ((view ui-text-box-item) mod-keys)
-  (let ((pos (cursor-position view)))
-    (when (> pos 0)
-      (cond ((member :shift mod-keys)   ;delete to start of text when shift modifier
-             (setf (text view) (subseq (text view) pos (length (text view))))
-             (setf (cursor-position view) 0))
-            (t                          ;delete single character
+  (let ((pos (cursor-position view))
+        (mark (mark-position view)))
+    (cond ((= pos mark)                 ;no text selection
+           (when (> pos 0)
+             (cond ((member :shift mod-keys)   ;delete to start of text when shift modifier
+                    (setf (text view) (subseq (text view) pos (length (text view))))
+                    (setf (cursor-position view) 0)
+                    (setf (mark-position view) 0))
+                   (t                          ;delete single character
+                    (setf (text view) (concatenate 'string
+                                                   (subseq (text view) 0 (1- pos))
+                                                   (subseq (text view) pos (length (text view)))))
+                    (decf (cursor-position view))
+                    (decf (mark-position view))))))
+          (t                            ;text selected
+           (remove-selected-text view)))))
+
+(defmethod do-delete-forward-input ((view ui-text-box-item))
+  (let ((pos (cursor-position view))
+        (mark (mark-position view)))
+    (cond ((= pos mark)                 ;no text selection
+           (when (< pos (length (text view)))
              (setf (text view) (concatenate 'string
-                                            (subseq (text view) 0 (1- pos))
-                                            (subseq (text view) pos (length (text view)))))
-             (decf (cursor-position view)))))))
+                                            (subseq (text view) 0 pos)
+                                            (subseq (text view) (1+ pos) (length (text view)))))))
+          (t                            ;text selected
+           (remove-selected-text view)))))
+
+(defmethod do-kill-line-input ((view ui-text-box-item))
+  (let ((pos (cursor-position view)))
+    (when (< pos (length (text view)))
+      (setf (text view) (subseq (text view) 0 pos)))
+    (setf (mark-position view) pos)))
 
 (defmethod do-arrow-input ((view ui-text-box-item) key)
   (let ((max-position (length (text view))))
@@ -248,7 +328,9 @@
           ((eq :up key)
            (setf (cursor-position view) 0))
           ((eq :down key)
-           (setf (cursor-position view) max-position)))))
+           (setf (cursor-position view) max-position))))
+  ;; update mark
+  (setf (mark-position view) (cursor-position view)))
 
 ;;;; ui-menu-item ==============================================================
 
@@ -574,13 +656,14 @@
     (ui-add-child box (update-layout buttons-group))
     (update-layout box)))
 
-#|
+#| xxxx
 (show-ui-content
  (make-dialog-box
   (list (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
                                       :text "Label 1")
         (make-instance 'ui-choice-button :ui-w *ui-popup-menu-width*
 ;;                                         :choice-index 0
+                                         :text "Pulldown"
                                          :choices #("Choice 0" "Best Choice 1" "Choice 2"))
         (make-instance 'ui-label-item :ui-w *ui-popup-menu-width*
                                       :text "Label 2")
@@ -1164,12 +1247,21 @@
     (gl:vertex (- (+ x w) inset)    (+ y inset))
     (gl:end)))
 
+(defun draw-text-selection (x0 x1 y)
+  (let ((x-lo (min x0 x1))
+        (x-hi (max x0 x1))
+        (y-lo (+ y 3))
+        (y-hi (- (+ y *ui-button-item-height*) 4)))
+    (gl:color 0.7 0.7 1.0 1.0)
+    (draw-rect-fill x-lo y-lo (- x-hi x-lo) (- y-hi y-lo))))
+
 (defun draw-cursor (x y)
   (let ((x0 (- x 3))
         (x1 (+ x 2))
-        (y0 (+ y 3))
+        (y0 (+ y 5))
         (y1 (- (+ y *ui-button-item-height*) 4)))
     (when (not (ui-is-clipped? x0 y0 x1 y1))
+      (gl:color 0.0 0.0 0.0 1.0)
       (gl:line-width *ui-border-width*)
       (gl:begin :lines)
       (gl:vertex x y0)
@@ -1224,9 +1316,6 @@
 
   (:method ((view ui-outliner-item) x-offset y-offset)
     (when (is-visible? view)
-
-;      (print (list view (text view) x-offset y-offset))
-      
       (draw-ui-view view x-offset y-offset)
       (with-accessors ((x ui-x) (y ui-y))
           view
@@ -1294,6 +1383,10 @@
               (local-y (+ y y-offset)))
           (render-text local-x (+ 16 local-y) (text view))
           (when (eq view *ui-keyboard-focus*)
+            (when (not (= (cursor-position view) (mark-position view)))
+              (draw-text-selection (+ local-x (* *ui-font-width* (cursor-position view)))
+                                   (+ local-x (* *ui-font-width* (mark-position view)))
+                                   local-y))
             (draw-cursor (+ local-x (* *ui-font-width* (cursor-position view))) local-y))))))
 
   (:method :after ((view ui-group) x-offset y-offset)

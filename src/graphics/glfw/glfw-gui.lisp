@@ -365,17 +365,38 @@
          (setf (is-visible? (elt *current-choice-menu-and-pos* 0)) nil)
          (unregister-choice-menu))
         (*ui-keyboard-focus*  ;handle text box input, do this first as it overrides other bindings
-         (cond ((and (eq :v key) (member :super mod-keys))
-                (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
-               ((and (eq :c key) (member :super mod-keys))
-                (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
-               ((and (eq :x key) (member :super mod-keys))
-                (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
-               ((eq :backspace key)
-                (do-backspace-input *ui-keyboard-focus* mod-keys))
-               ((member key '(:left :right :up :down))
-                (do-arrow-input *ui-keyboard-focus* key))
-               ))
+         (cond
+           ;; emacs bindings (just for fun)
+           ((and (eq :f key) (member :control mod-keys))
+            (do-arrow-input *ui-keyboard-focus* :right))
+           ((and (eq :b key) (member :control mod-keys))
+            (do-arrow-input *ui-keyboard-focus* :left))
+           ((and (eq :a key) (member :control mod-keys))
+            (do-arrow-input *ui-keyboard-focus* :up))
+           ((and (eq :e key) (member :control mod-keys))
+            (do-arrow-input *ui-keyboard-focus* :down))
+           ((and (eq :d key) (member :control mod-keys))
+            (do-delete-forward-input *ui-keyboard-focus*))
+           ((and (eq :k key) (member :control mod-keys))
+            (do-kill-line-input *ui-keyboard-focus*))
+           ((and (eq :y key) (member :control mod-keys))
+            (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
+           ;; cut and paste
+           ((and (eq :v key) (member :super mod-keys))
+            (do-paste-input *ui-keyboard-focus* (glfw:get-clipboard-string)))
+           ((and (eq :c key) (member :super mod-keys))
+            (glfw:set-clipboard-string (do-copy-input *ui-keyboard-focus*)))
+           ((and (eq :x key) (member :super mod-keys))
+            (glfw:set-clipboard-string (do-cut-input *ui-keyboard-focus*)))
+           ((and (eq :a key) (member :super mod-keys))
+            (do-select-all *ui-keyboard-focus*))
+           ;; backspace
+           ((eq :backspace key)
+            (do-backspace-input *ui-keyboard-focus* mod-keys))
+           ;; arrow navigation
+           ((member key '(:left :right :up :down))
+            (do-arrow-input *ui-keyboard-focus* key))
+           ))
         (*ui-interactive-mode*          ;interactive mode: send keyboard events to scene interactor
          (if (eq :escape key)           ;escape exits interactive mode
              (setf *ui-interactive-mode* nil)
@@ -473,7 +494,6 @@
   (setf *current-choice-menu-and-pos* (list menu x y)))
 
 (defun unregister-choice-menu ()
-  (print 'unregister-choice-menu)
   (setf *current-choice-menu-and-pos* nil))
 
 (defun highlight-ui-item-under-mouse (ui-view x y)
@@ -501,7 +521,6 @@
                                        (elt *current-choice-menu-and-pos* 1)  ;menu global x
                                        (elt *current-choice-menu-and-pos* 2)) ;menu global y
                      (find-ui-at-point ui-view x y))))
-;  (let ((ui-item (find-ui-at-point ui-view x y)))
     (if (and ui-item (is-active? ui-item))
         (progn
           (do-action ui-item x y button modifiers)
@@ -530,8 +549,13 @@
         (do-action-ui-item-under-mouse (ui-contents *scene-view*) x y button modifiers))))
 
 (defun mouse-dragged (x y dx dy)
-  (declare (ignore x y))
 ;;  (format t "mouse-dragged dx: ~a, dy: ~a, mod: ~a~%" dx dy *current-mouse-modifier*)
+  (if *current-highlighted-ui-item*
+      (do-drag-action *current-highlighted-ui-item* x y dx dy)
+      (do-3d-navigation x y dx dy)))
+
+(defun do-3d-navigation (x y dx dy)
+  (declare (ignore x y))
   (cond ((eq :control *current-mouse-modifier*) ;user-defined mouse binding
          (when (mouse-binding *scene-view*)
            (funcall (mouse-binding *scene-view*) (scene *scene-view*) dx dy)))
