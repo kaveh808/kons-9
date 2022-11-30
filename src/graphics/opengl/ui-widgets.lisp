@@ -220,12 +220,13 @@
 ;;; TODO ++ do not insert modifier key text
 ;;; TODO ++ draw cursor when is *ui-keyboard-focus*
 ;;; TODO ++ arrow keys
-;;; TODO -- mark region
+;;; TODO ++ mark region
 ;;; + shift-click
-;;; - drag
+;;; + drag
 ;;; - double click -- not handled by glfw?
 ;;; + alt A (select all)
-;;; TODO -- emacs bindings -- C-a, C-e, C-d
+;;; TODO ++ emacs bindings -- C-a, C-e, C-d, C-k, C-y
+;;; TODO -- handle text that is wider than text-box -- clip text to widget?
 
 (defun insert-string (string insertion position)
   (concatenate 'string
@@ -300,6 +301,23 @@
                     (decf (mark-position view))))))
           (t                            ;text selected
            (remove-selected-text view)))))
+
+(defmethod do-delete-forward-input ((view ui-text-box-item))
+  (let ((pos (cursor-position view))
+        (mark (mark-position view)))
+    (cond ((= pos mark)                 ;no text selection
+           (when (< pos (length (text view)))
+             (setf (text view) (concatenate 'string
+                                            (subseq (text view) 0 pos)
+                                            (subseq (text view) (1+ pos) (length (text view)))))))
+          (t                            ;text selected
+           (remove-selected-text view)))))
+
+(defmethod do-kill-line-input ((view ui-text-box-item))
+  (let ((pos (cursor-position view)))
+    (when (< pos (length (text view)))
+      (setf (text view) (subseq (text view) 0 pos)))
+    (setf (mark-position view) pos)))
 
 (defmethod do-arrow-input ((view ui-text-box-item) key)
   (let ((max-position (length (text view))))
