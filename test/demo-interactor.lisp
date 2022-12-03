@@ -202,7 +202,7 @@ Combine interaction and animators. Make entire snake body explode.
 Play field is hardwired to 50x50 units. Hitting the edge is a crash.
 |#
 
-(format t "  interactor 4...~%") (finish-output)
+(format t "  interactor 5...~%") (finish-output)
 
 (defun init-field-boundary (field)
   (dotimes (i (array-dimension field 0))
@@ -260,6 +260,92 @@ Play field is hardwired to 50x50 units. Hitting the edge is a crash.
                                                            (add-shape *scene*
                                                                       (translate-to (make-cube 0.5) loc))
                                                            (setf (aref field i j) t)))))))))
+    (setf (interactor *scene*) interactor)))
+
+#|
+(Demo 06 interactor) Conway's Game of Life =====================================
+
+User selects initial pattern using number keys.
+|#
+
+(format t "  interactor 6...~%") (finish-output)
+
+(defparameter *field*     (make-array '(20 20) :initial-element 0))
+(defparameter *field-aux* (make-array '(20 20) :initial-element 0))
+         
+(defun init-field-random ()
+  (dotimes (i (array-dimension *field* 0))
+    (dotimes (j (array-dimension *field* 1))
+      (setf (aref *field* i j) (if (< (random 1.0) 0.5) 1 0)))))
+
+(defun cell-value (i j)
+  (let* ((idim (array-dimension *field* 0))
+         (jdim (array-dimension *field* 1))
+         (i2 (cond ((= i   -1) (1- idim))
+                   ((= i idim)         0)
+                   (t                  i)))
+         (j2 (cond ((= j   -1) (1- jdim))
+                   ((= j jdim)         0)
+                   (t                  j))))
+    (aref *field* i2 j2)))
+
+(defun num-live-neighbors (i j)
+  (+ (cell-value (1- i) (1- j))
+     (cell-value     i  (1- j))
+     (cell-value (1+ i) (1- j))
+     (cell-value (1- i)     j)
+     (cell-value (1+ i)     j)
+     (cell-value (1- i) (1+ j))
+     (cell-value     i  (1+ j))
+     (cell-value (1+ i) (1+ j))))
+
+(defun next-step ()
+  (dotimes (i (array-dimension *field* 0))
+    (dotimes (j (array-dimension *field* 1))
+      (let ((neighbors (num-live-neighbors i j)))
+        (setf (aref *field-aux* i j)
+              (cond ((and (= 1 (aref *field* i j))
+                          (or (= 2 neighbors) (= 3 neighbors)))
+                     1)
+                    ((and (= 0 (aref *field* i j))
+                          (= 3 neighbors))
+                     1)
+                    (t 0))))))
+  (let ((tmp *field*))
+    (setf *field* *field-aux*)
+    (setf *field-aux* tmp)))
+
+(defun field-point (i j)
+  (p! (- i (/ (array-dimension *field* 0) 2))
+      0
+      (- j (/ (array-dimension *field* 1) 2))))
+
+(defun field-points ()
+  (let ((points (make-array 0 :adjustable t :fill-pointer 0)))
+    (dotimes (i (array-dimension *field* 0))
+      (dotimes (j (array-dimension *field* 1))
+        (when (= 1 (aref *field* i j))
+          (vector-push-extend (field-point i j) points))))
+    points))
+
+(with-clear-scene
+  (let* ((cube (scale-by (make-cube 1.0) (p! 1 .2 1)))
+         (instancer (make-point-instancer-group nil cube))
+         (interactor (make-instance 'interactor
+                                    :setup-fn (lambda ()
+                                                (init-field-random))
+                                    :update-fn (lambda (key key-mods)
+                                                 (declare (ignore key-mods))
+                                                 ;; timing for gameplay
+                                                 (sleep 0.05)
+                                                 ;; get keyboard input
+                                                 (cond ((eq :1 key) (init-field-random))
+                                                       )
+                                                 ;; do action
+                                                 (next-step)
+                                                 (setf (point-source instancer)
+                                                       (make-point-cloud (field-points)))))))
+    (add-shape *scene* instancer)
     (setf (interactor *scene*) interactor)))
 
 
