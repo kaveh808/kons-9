@@ -1,14 +1,16 @@
 # Installing kons-9: Linux
 
-This document describes how to install and configure kons-9 for local development and experimentation on Linux. These instructions assume you're using Ubuntu 20.04. Other Linux versions may require some changes to the installation.
+This document describes how to install and configure kons-9 for local development and experimentation on Linux. These instructions assume you're using Ubuntu 20.04. Other Linux versions may require some changes to the installation procedure.
 
-## II. Prerequisites
+The instructions assume that you're familiar with installing software on Ubuntu systems, and that you're comfortable with the Linux terminal and command-line tools.
 
-This section describes the prerequisites for installing and configuring kons-9 on Ubuntu 20,04; in other words, it describes what should already be installed and configured before you start. Please check over the list of prerequisites and make sure they're all installed and properly configred before you try to install and use knos-9.
+## I. Prerequisites
+
+This section describes the prerequisites for installing and configuring kons-9 on Ubuntu 20,04. In other words, it describes what should already be installed and configured before you start. Please check over the list of prerequisites and make sure they're all installed and properly configured before you try to install and use kons-9.
 
 ### git
 
-These instructions assume that you have the git revision-control system installed and configured. In most cases, Ubuntu 20.04 installs git as part of the OS installation. You can test whether it's installed by opening a terminal window and typing
+We assume that you have the git revision-control system installed and configured. In most cases, Ubuntu 20.04 installs git as part of installing the OS. You can test whether it's installed by opening a terminal window and typing
 
 ``` bash
 $ git --version
@@ -66,7 +68,7 @@ If the install was successful then you should see a message similar to the follo
 
 ``` bash
 $ sbcl
-This is SBCL 2.2.10, an implementation of ANSI Common Lisp.
+This is SBCL 2.0.1.debian, an implementation of ANSI Common Lisp.
 More information about SBCL is available at <http://www.sbcl.org/>.
 
 SBCL is free software, provided as is, with absolutely no warranty.
@@ -77,7 +79,7 @@ distribution for more information.
 
 ```
 
-SBCL prints its banner message waits for you to enter expressions to evaluate. The asterisk ('*') is the SBCL prompt.
+SBCL prints its banner message and then waits for you to enter expressions to evaluate. The asterisk ('*') is the SBCL prompt.
 
 ### quicklisp
 
@@ -85,7 +87,9 @@ kons-9 relies on [quicklisp](https://www.quicklisp.org/beta/) to find and load d
 
 ### GNU Emacs
 
-There are several editors that provide support for working with Common Lisp, but by far the most commonly-used one is GNU Emacs. These instructions assume that you have a recent version of GNU Emacs installed and configured to your liking.
+There are several editors that provide support for working with Common Lisp, but by far the most commonly-used one is GNU Emacs. We assume that you have a recent version of GNU Emacs installed and configured to your liking.
+
+You can use a different editor to work with SBCL and kons-9, but some details of the process will differ from our description. Those details are outside the scope of these instructions. You might want to use GNU Emacs to get started, even if you intend to later use a different editor.
 
 Emacs may not necessarily be installed on your Ubuntu system by default, but it's easy to install it using apt.
 
@@ -101,7 +105,7 @@ Then use apt to install GNU Emacs:
 $ sudo apt install emacs27
 ```
 
-Here we assume you want to install `emacs27`, a recent version of GNU Emacs that isn't the very most recent one. To find out which versions of Emacs your system can install, first update the package index as shown above, then use apt-cache search to list the available versions of Emacs:
+Here we assume you want to install `emacs27`, a recent version of GNU Emacs that isn't the  most recent one. To find out which versions of Emacs your system can install, first update the package index as shown above, then use apt-cache search to list the available versions of Emacs:
 
 ``` bash
 $ sudo apt-cache search emacs
@@ -155,7 +159,19 @@ SLIME consists of two parts:
 1. The SLIME package loads in Emacs and provides a user interface for Lisp.
 2. The SWANK package loads into your Common Lisp implementation and provides communication features that enable SLIME to talk to it and control it.
 
+To use SLIME with GNU Emacs, you must first tell Emacs to load the SLIME package. You can do that by adding a few lines of Lisp code to your Emacs init file.
 
+Using your favorite editor, open or create the file `~/.emacs`. At the bottom of the file, add the following text:
+
+```lisp
+(add-to-list 'load-path "/home/<USERNAME>/quicklisp/dists/quicklisp/software/slime-v2.27")
+(require 'slime-autoloads)
+(setq inferior-lisp-program "/bin/sbcl")
+```
+
+Edit the first line to correct it for your system. Replace `<USERNAME>` with your username. Replace `slime-v2.27` with the name of the SLIME directory that quicklisp installed.
+
+If you're installing on Ubuntu 20.04, and if you installed SBCL using apt, then the name of the SBCL executable in the last line should be correct. If you're using a different version of Linux, or if you installed SBCL manually to a different location, then you'll need to change that last line to reflect where the SBCL executable is.
 
 ### GLFW
 
@@ -188,5 +204,7 @@ $ git clone https://github.com/kaveh808/kons-9.git
 
 
 ## III. Smoke test
+
+
 
 ## IV. Contacts and sources of help
