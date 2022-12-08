@@ -12,8 +12,8 @@
 
 (defmethod setup-interactor ((interactor interactor))
   (when (setup-fn interactor)
-    (funcall (setup-fn interactor))))
-
+    (funcall (setup-fn interactor)))
+  (setf (setup-done? interactor) t))
 
 (defmethod update-interactor ((interactor interactor) key key-mods)
   (when (not (setup-done? interactor))

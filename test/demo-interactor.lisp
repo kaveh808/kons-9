@@ -202,7 +202,7 @@ Combine interaction and animators. Make entire snake body explode.
 Play field is hardwired to 50x50 units. Hitting the edge is a crash.
 |#
 
-(format t "  interactor 4...~%") (finish-output)
+(format t "  interactor 5...~%") (finish-output)
 
 (defun init-field-boundary (field)
   (dotimes (i (array-dimension field 0))
@@ -262,6 +262,276 @@ Play field is hardwired to 50x50 units. Hitting the edge is a crash.
                                                            (setf (aref field i j) t)))))))))
     (setf (interactor *scene*) interactor)))
 
+#|
+(Demo 06 interactor) Conway's Game of Life =====================================
+
+User selects initial pattern using number keys.
+|#
+
+(format t "  interactor 6...~%") (finish-output)
+
+(progn
+  (defparameter *field*     (make-array '(20 20) :initial-element 0))
+  (defparameter *field-aux* (make-array '(20 20) :initial-element 0))
+         
+  (defun init-field-random ()
+    (dotimes (i (array-dimension *field* 0))
+      (dotimes (j (array-dimension *field* 1))
+        (setf (aref *field* i j) (if (< (random 1.0) 0.5) 1 0)))))
+
+  (defun init-field-clear ()
+    (dotimes (i (array-dimension *field* 0))
+      (dotimes (j (array-dimension *field* 1))
+        (setf (aref *field* i j) 0))))
+
+  (defun init-field (coords)
+    (let* ((i (floor (/ (array-dimension *field* 0) 2)))
+           (j (floor (/ (array-dimension *field* 1) 2)))
+           (centered-coords (mapcar (lambda (coord) (list (+ i (first coord)) (+ j (second coord))))
+                                    coords)))
+      (dolist (coord centered-coords)
+        (setf (aref *field* (first coord) (second coord)) 1))))
+
+  (defun init-field-glider ()
+    (init-field '((0 0) (1 1) (1 2) (0 2) (-1 2))))
+
+  (defun init-field-light-spaceship ()
+    (init-field '((1 0) (2 0) (3 0) (4 0) (0 1) (4 1) (4 2) (0 3) (3 3))))
+
+  (defun init-field-medium-spaceship ()
+    (init-field '((1 0) (2 0) (3 0) (4 0) (5 0) (0 1) (5 1) (5 2) (0 3) (4 3) (2 4))))
+
+  (defun init-field-heavy-spaceship ()
+    (init-field '((1 0) (2 0) (3 0) (4 0) (5 0) (6 0) (0 1) (6 1) (6 2) (0 3) (5 3) (2 4) (3 4))))
+
+  (defun num-live-neighbors (i j)
+    (let* ((idim (array-dimension *field* 0))
+           (jdim (array-dimension *field* 1))
+           (i-1 (mod (1- i) idim))
+           (i+1 (mod (1+ i) idim))
+           (j-1 (mod (1- j) jdim))
+           (j+1 (mod (1+ j) jdim)))
+      (+ (aref *field* i-1 j-1)
+         (aref *field* i   j-1)
+         (aref *field* i+1 j-1)
+         (aref *field* i-1 j  )
+         (aref *field* i+1 j  )
+         (aref *field* i-1 j+1)
+         (aref *field* i   j+1)
+         (aref *field* i+1 j+1))))
+
+  (defun update-field ()
+    (dotimes (i (array-dimension *field* 0))
+      (dotimes (j (array-dimension *field* 1))
+        (let ((neighbors (num-live-neighbors i j)))
+          (setf (aref *field-aux* i j)
+                (cond ((and (= 1 (aref *field* i j)) (or (= 2 neighbors) (= 3 neighbors)))
+                       1)
+                      ((and (= 0 (aref *field* i j)) (= 3 neighbors))
+                       1)
+                      (t 0))))))
+    (let ((tmp *field*))
+      (setf *field* *field-aux*)
+      (setf *field-aux* tmp)))
+  
+  (defun field-points ()
+    (let ((points (make-array 0 :adjustable t :fill-pointer 0))
+          (idim (array-dimension *field* 0))
+          (jdim (array-dimension *field* 1)))
+      (dotimes (i idim)
+        (dotimes (j jdim)
+          (when (= 1 (aref *field* i j))
+            (vector-push-extend (p! (- i (/ idim 2)) 0 (- j (/ jdim 2)))
+                                points))))
+      points))
+  
+  (with-clear-scene
+    (let* ((cube (scale-by (make-cube 1.0) (p! 1 .2 1)))
+           (instancer (make-point-instancer-group nil cube))
+           (interactor (make-instance 'interactor
+                                      :setup-fn (lambda ()
+                                                  (init-field-random)
+                                                  (format t "~%")
+                                                  (format t "0: clear field~%")
+                                                  (format t "1: random field~%")
+                                                  (format t "2: glider~%")
+                                                  (format t "3: light spaceship~%")
+                                                  (format t "4: medium spaceship~%")
+                                                  (format t "5: heavy spaceship~%"))
+                                      :update-fn (lambda (key key-mods)
+                                                   (declare (ignore key-mods))
+                                                   ;; timing for gameplay
+                                                   (sleep 0.05)
+                                                   ;; get keyboard input
+                                                   (cond ((eq :0 key) (init-field-clear))
+                                                         ((eq :1 key) (init-field-random))
+                                                         ((eq :2 key) (init-field-glider))
+                                                         ((eq :3 key) (init-field-light-spaceship))
+                                                         ((eq :4 key) (init-field-medium-spaceship))
+                                                         ((eq :5 key) (init-field-heavy-spaceship))
+                                                         )
+                                                   ;; do action
+                                                   (update-field)
+                                                   (setf (point-source instancer)
+                                                         (make-point-cloud (field-points)))))))
+      (add-shape *scene* instancer)
+      (setf (interactor *scene*) interactor))))
+
+
+#|
+(Demo 07 interactor) Conway's Game of Life in 3D ===============================
+
+User selects initial pattern using number keys.
+|#
+
+(format t "  interactor 7...~%") (finish-output)
+
+(progn
+  (defparameter *field-3d*     (make-array '(20 20 20) :initial-element 0))
+  (defparameter *field-3d-aux* (make-array '(20 20 20) :initial-element 0))
+         
+  (defun init-field-3d-random ()
+    (dotimes (i (array-dimension *field-3d* 0))
+      (dotimes (j (array-dimension *field-3d* 1))
+        (dotimes (k (array-dimension *field-3d* 2))
+          (setf (aref *field-3d* i j k) (if (< (random 1.0) 0.0625) 1 0))))))
+
+  (defun init-field-3d-clear ()
+    (dotimes (i (array-dimension *field-3d* 0))
+      (dotimes (j (array-dimension *field-3d* 1))
+        (dotimes (k (array-dimension *field-3d* 2))
+          (setf (aref *field-3d* i j k) 0)))))
+
+  (defun init-field-3d (coords)
+    (let* ((i (floor (/ (array-dimension *field-3d* 0) 2)))
+           (j (floor (/ (array-dimension *field-3d* 1) 2)))
+           (k (floor (/ (array-dimension *field-3d* 2) 2)))
+           (centered-coords (mapcar (lambda (coord)
+                                      (list (+ i (elt coord 0))
+                                            (+ j (elt coord 1))
+                                            (+ k (elt coord 2))))
+                                    coords)))
+      (dolist (coord centered-coords)
+        (setf (aref *field-3d* (elt coord 0) (elt coord 1) (elt coord 2)) 1))))
+
+  (defun init-field-3d-stairs ()
+    (init-field-3d '((0 0 0) (1 0 0) (1 1 0) (0 1 1))))
+
+  (defun init-field-3d-tube ()
+    (init-field-3d '((-1 2 0) (0 2 0) (1 2 0)
+                     (-2 1 0) (2 1 0)
+                     (-2 0 0) (2 0 0)
+                     (-2 -1 0) (2 -1 0)
+                     (-1 -2 0) (0 -2 0) (1 -2 0))))
+
+  (defun init-field-3d-cube ()
+    (init-field-3d '(( 1  2  1) ( 2  1  1) ( 1  1  2)
+                     (-1  2  1) (-2  1  1) (-1  1  2)
+                     (-1  2 -1) (-2  1 -1) (-1  1 -2)
+                     ( 1  2 -1) ( 2  1 -1) ( 1  1 -2)
+                     ( 1 -2  1) ( 2 -1  1) ( 1 -1  2)
+                     (-1 -2  1) (-2 -1  1) (-1 -1  2)
+                     (-1 -2 -1) (-2 -1 -1) (-1 -1 -2)
+                     ( 1 -2 -1) ( 2 -1 -1) ( 1 -1 -2))))
+
+  (defun num-live-neighbors-3d (i j k)
+    (let* ((idim (array-dimension *field-3d* 0))
+           (jdim (array-dimension *field-3d* 1))
+           (kdim (array-dimension *field-3d* 2))
+           (i-1 (mod (1- i) idim))
+           (i+1 (mod (1+ i) idim))
+           (j-1 (mod (1- j) jdim))
+           (j+1 (mod (1+ j) jdim))
+           (k-1 (mod (1- k) kdim))
+           (k+1 (mod (1+ k) kdim)))
+      (+ (aref *field-3d* i-1 j-1 k-1)
+         (aref *field-3d* i   j-1 k-1)
+         (aref *field-3d* i+1 j-1 k-1)
+         (aref *field-3d* i-1 j   k-1)
+         (aref *field-3d* i   j   k-1)
+         (aref *field-3d* i+1 j   k-1)
+         (aref *field-3d* i-1 j+1 k-1)
+         (aref *field-3d* i   j+1 k-1)
+         (aref *field-3d* i+1 j+1 k-1)
+         (aref *field-3d* i-1 j-1 k  )
+         (aref *field-3d* i   j-1 k  )
+         (aref *field-3d* i+1 j-1 k  )
+         (aref *field-3d* i-1 j   k  )
+         (aref *field-3d* i+1 j   k  )
+         (aref *field-3d* i-1 j+1 k  )
+         (aref *field-3d* i   j+1 k  )
+         (aref *field-3d* i+1 j+1 k  )
+         (aref *field-3d* i-1 j-1 k+1)
+         (aref *field-3d* i   j-1 k+1)
+         (aref *field-3d* i+1 j-1 k+1)
+         (aref *field-3d* i-1 j   k+1)
+         (aref *field-3d* i   j   k+1)
+         (aref *field-3d* i+1 j   k+1)
+         (aref *field-3d* i-1 j+1 k+1)
+         (aref *field-3d* i   j+1 k+1)
+         (aref *field-3d* i+1 j+1 k+1))))
+
+  (defun update-field-3d ()
+    (dotimes (i (array-dimension *field-3d* 0))
+      (dotimes (j (array-dimension *field-3d* 1))
+        (dotimes (k (array-dimension *field-3d* 2))
+          (let ((neighbors (num-live-neighbors-3d i j k)))
+            (setf (aref *field-3d-aux* i j k)
+                  (cond ((and (= 1 (aref *field-3d* i j k)) (or (= 5 neighbors) (= 6 neighbors)))
+                         1)
+                        ((and (= 0 (aref *field-3d* i j k)) (= 4 neighbors))
+                         1)
+                        (t 0)))))))
+    (let ((tmp *field-3d*))
+      (setf *field-3d* *field-3d-aux*)
+      (setf *field-3d-aux* tmp)))
+
+  (defun field-3d-points ()
+    (let* ((points (make-array 0 :adjustable t :fill-pointer 0))
+           (idim (array-dimension *field-3d* 0))
+           (jdim (array-dimension *field-3d* 1))
+           (kdim (array-dimension *field-3d* 2))
+           (idim/2 (/ idim 2))
+           (jdim/2 (/ jdim 2))
+           (kdim/2 (/ kdim 2)))
+      (dotimes (i idim)
+        (dotimes (j jdim)
+          (dotimes (k kdim)
+            (when (= 1 (aref *field-3d* i j k))
+              (vector-push-extend (p! (- i idim/2) (- j jdim/2) (- k kdim/2))
+                                  points)))))
+      points))
+
+  (with-clear-scene
+    (let* ((cube (scale-by (make-cube 1.0) (p! 1 1 1)))
+           (instancer (make-point-instancer-group nil cube))
+           (interactor (make-instance 'interactor
+                                      :setup-fn (lambda ()
+                                                  (init-field-3d-random)
+                                                  (format t "~%")
+                                                  (format t "0: clear field~%")
+                                                  (format t "1: random field~%")
+                                                  (format t "2: stairs~%")
+                                                  (format t "3: tube~%")
+                                                  (format t "4: cube~%"))
+                                      :update-fn (lambda (key key-mods)
+                                                   (declare (ignore key-mods))
+                                                   ;; timing for gameplay
+                                                   (sleep 0.05)
+                                                   ;; get keyboard input
+                                                   (cond ((eq :0 key) (init-field-3d-clear))
+                                                         ((eq :1 key) (init-field-3d-random))
+                                                         ((eq :2 key) (init-field-3d-stairs))
+                                                         ((eq :3 key) (init-field-3d-tube))
+                                                         ((eq :4 key) (init-field-3d-cube))
+                                                         )
+                                                   ;; do action
+                                                   (update-field-3d)
+                                                   (setf (point-source instancer)
+                                                         (make-point-cloud (field-3d-points)))))))
+      (add-shape *scene* instancer)
+      (setf (interactor *scene*) interactor)))
+  )
 
 #|
 END ============================================================================
