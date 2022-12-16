@@ -70,6 +70,9 @@
   (make-curve (make-sine-curve-points period frequency x-scale y-scale num-segments)
               nil))
 
+(defun make-star-curve (num-spikes outer-diameter inner-diameter num-segments)
+  (make-curve (make-star-points num-spikes outer-diameter inner-diameter num-segments)))
+
 #|
 (defun make-3-point-arc (p0 p1 p2 num-segments)
   ...)

@@ -96,6 +96,16 @@
   (make-sine-curve-points (period poly) (frequency poly)
                           (x-scale poly) (y-scale poly) (num-segments poly)))
 
+(def-procedural-curve
+    star
+    ((num-spikes 5)
+     (outer-diameter 3.0)
+     (inner-diameter 1.0))
+  ()
+  ((num-spikes :number) (outer-diameter :number) (inner-diameter :number))
+  (make-star-points (num-spikes poly) (outer-diameter poly) (inner-diameter poly) (num-segments poly)))
+
+
 
 ;;;; gui =======================================================================
 
@@ -127,6 +137,10 @@
                      obj))                     
     (ct-make-shape :P "Spiral"
                    (let ((obj (make-spiral .2 2.0 -1.0 4 64)))
+                     (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
+                     obj))                     
+    (ct-make-shape :T "Star"
+                   (let ((obj (make-star 5 3.0 1.0 1)))
                      (show-ui-content (make-scene-item-editor obj #'compute-procedural-node))
                      obj))                     
     table))

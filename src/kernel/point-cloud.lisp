@@ -131,6 +131,32 @@
         (setf (aref points i) (p! (* x-scale (/ angle (* frequency rad-period))) (* y-scale (sin angle)) 0))))
     points))
 
+(defun make-star-points (num-spikes outer-diameter inner-diameter num-segments)
+  (let* ((num-points (* 2 num-spikes num-segments))
+         (points (make-array num-points :fill-pointer 0))
+         (outer-radius (/ outer-diameter 2.0))
+         (inner-radius (/ inner-diameter 2.0))
+         (angle-delta (/ 2pi num-spikes 2)))
+    (loop for i below (* 2 num-spikes) by 2
+          do (let* ((angle-0 (*         i                      angle-delta))
+                    (angle-1 (*      (+ i 1)                   angle-delta))
+                    (angle-2 (* (mod (+ i 2) (* 2 num-spikes)) angle-delta))
+                    (p0 (p! (* (sin angle-0) outer-radius) (* (cos angle-0) outer-radius) 0))
+                    (p1 (p! (* (sin angle-1) inner-radius) (* (cos angle-1) inner-radius) 0))
+                    (p2 (p! (* (sin angle-2) outer-radius) (* (cos angle-2) outer-radius) 0))
+                    (line-0 (make-line-points p0 p1 num-segments))
+                    (line-1 (make-line-points p1 p2 num-segments)))
+               ;; (print (list i (+ i 1) (mod (+ i 2) (* 2 num-spikes))))
+               ;; (print line-0)
+               ;; (print line-1)
+               (dotimes (j (1- (length line-0))) ;don't push last point to avoid duplicates
+                 (vector-push (aref line-0 j) points))
+               (dotimes (j (1- (length line-1))) ;don't push last point to avoid duplicates
+                 (vector-push (aref line-1 j) points))))
+    ;; (print points)
+    (nreverse points)))                 ;return ccw points
+  
+  
 (defun make-random-points (num bounds-lo bounds-hi)
   (let ((points (make-array num)))
     (dotimes (i num)

@@ -94,6 +94,13 @@ The CURVE class represents open or closed paths in 3D space.
   (add-shape *scene* (translate-to (make-circle-curve 3.0  4) (p! 0 0  2.0)))
   (add-shape *scene* (translate-to (make-circle-curve 3.0  3) (p! 0 0  4.0))))
 
+(with-clear-scene
+  (add-shape *scene* (translate-to (make-star-curve 5 3.0 2.5 1) (p! 0 0 -4.0)))
+  (add-shape *scene* (translate-to (make-star-curve 5 3.0 2.0 2) (p! 0 0 -2.0)))
+  (add-shape *scene* (translate-to (make-star-curve 5 3.0 1.5 3) (p! 0 0  0.0)))
+  (add-shape *scene* (translate-to (make-star-curve 5 3.0 1.0 4) (p! 0 0  2.0)))
+  (add-shape *scene* (translate-to (make-star-curve 5 3.0 0.5 5) (p! 0 0  4.0))))
+
 #|
 (Demo 05 kernel) polyhedral objects ============================================
 
