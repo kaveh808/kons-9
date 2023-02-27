@@ -91,6 +91,7 @@
    (:file "src/plugins/procedural-curve")
    (:file "src/plugins/scalar-field")
    (:file "src/plugins/isosurface")
+   (:file "src/plugins/sdf")
    (:file "src/plugins/instancer-shape")
    (:file "src/plugins/manager-group")
    (:file "src/plugins/particle")
