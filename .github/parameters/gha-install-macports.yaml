@@ -1,0 +1,7 @@
+variants:
+  deselect: x11
+ports:
+  - name: sbcl
+    select: fancy
+  - name: cl-quicklisp
+  - name: glfw
