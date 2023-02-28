@@ -17,6 +17,7 @@ functions and the like.
                     "demo-sweep-mesh"
                     "demo-animation"
                     "demo-isosurface"
+                    "demo-sdf"
                     "demo-flex-animator"
                     "demo-boid-system"
                     "demo-misc")))
