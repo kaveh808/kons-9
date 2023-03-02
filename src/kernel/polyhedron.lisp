@@ -180,7 +180,7 @@
               (setf (gethash (point->list p) hash) count)
               (setf (aref new-refs i) count))
             (setf (aref new-refs i) j))))
-    (let ((new-points (make-array (1+ (apply #'max (coerce new-refs 'list)))))
+    (let ((new-points (make-array (1+ (reduce #'max new-refs))))
           (new-faces (make-array (length (faces polyh)))))
       (do-array (i p (points polyh))
         (setf (aref new-points (aref new-refs i)) p))

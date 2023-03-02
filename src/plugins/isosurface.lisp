@@ -1,5 +1,7 @@
 (in-package #:kons-9)
 
+;(declaim (optimize speed))
+
 ;;;; marching cubes algorithm ==================================================
 ;;;; downloaded from web, original copyright included below
 

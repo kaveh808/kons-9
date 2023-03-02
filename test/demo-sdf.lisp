@@ -19,14 +19,14 @@ In these demos we use a signed distance function with APPLY-FIELD-FUNCTION
 to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 |#
 
-;;; display settings for SDF scenes
+;;; settings for SDF scenes
 (progn
   (setf *do-smooth-shading?* t)
   (setf *display-wireframe?* nil)
   (setf *display-points?* nil)
   ;; turn off backface culling as isosurfaces are reversed for some reason
   (setf *do-backface-cull?* nil)
-  (defparameter *sdf-grid-size* 50))
+  (defparameter *sdf-grid-size* 100))
 
 #|
 (Demo 01 sdf) sd-sphere ========================================================
@@ -202,11 +202,11 @@ to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 (format t "  sdf 15...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
                                       (lambda (p)
-                                        (let ((d1 (sd-capped-cylinder
-                                                   (transform-point p (make-z-rotation-matrix (/ pi 4)))
-                                                   1.0 .25))
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
                                               (d2 (sd-sphere p 0.75)))
                                           (sd-op-union d1 d2)))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
@@ -219,11 +219,11 @@ to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 (format t "  sdf 16...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
                                       (lambda (p)
-                                        (let ((d1 (sd-capped-cylinder
-                                                   (transform-point p (make-z-rotation-matrix (/ pi 4)))
-                                                   1.0 .25))
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
                                               (d2 (sd-sphere p 0.75)))
                                           (sd-op-subtraction d1 d2)))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
@@ -236,11 +236,11 @@ to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 (format t "  sdf 17...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
                                       (lambda (p)
-                                        (let ((d1 (sd-capped-cylinder
-                                                   (transform-point p (make-z-rotation-matrix (/ pi 4)))
-                                                   1.0 .25))
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
                                               (d2 (sd-sphere p 0.75)))
                                           (sd-op-intersection d1 d2)))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
@@ -253,11 +253,11 @@ to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 (format t "  sdf 18...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
                                       (lambda (p)
-                                        (let ((d1 (sd-capped-cylinder
-                                                   (transform-point p (make-z-rotation-matrix (/ pi 4)))
-                                                   1.0 .25))
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
                                               (d2 (sd-sphere p 0.75)))
                                           (sd-op-smooth-union d1 d2 0.2)))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
@@ -270,11 +270,11 @@ to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 (format t "  sdf 19...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
                                       (lambda (p)
-                                        (let ((d1 (sd-capped-cylinder
-                                                   (transform-point p (make-z-rotation-matrix (/ pi 4)))
-                                                   1.0 .25))
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
                                               (d2 (sd-sphere p 0.75)))
                                           (sd-op-smooth-subtraction d1 d2 0.2)))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
@@ -287,13 +287,38 @@ to set the values of a SCALAR-FIELD, then generate an ISOSURFACE from the field.
 (format t "  sdf 20...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
                                       (lambda (p)
-                                        (let ((d1 (sd-capped-cylinder
-                                                   (transform-point p (make-z-rotation-matrix (/ pi 4)))
-                                                   1.0 .25))
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
                                               (d2 (sd-sphere p 0.75)))
                                           (sd-op-smooth-intersection d1 d2 0.2)))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
     (add-shape *scene* iso))
   )
+
+#|
+Profiling test
+
+(require :sb-sprof)
+
+(with-clear-scene
+  (let* ((mtx (make-z-rotation-matrix (/ pi 4)))
+         (field (apply-field-function (make-scalar-field *sdf-grid-size* *sdf-grid-size* *sdf-grid-size*)
+                                      (lambda (p)
+                                        (let ((d1 (sd-capped-cylinder (transform-point p mtx)
+                                                                      1.0 .25))
+                                              (d2 (sd-sphere p 0.75)))
+                                          (sd-op-smooth-union d1 d2 0.2)))))
+         (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0))))
+
+    (sb-sprof:with-profiling (:max-samples 1000
+                              :report :flat
+                              :loop t)
+      (generate-isosurface (make-instance 'isosurface :field field :threshold 0.0)))
+    
+    (add-shape *scene* iso))
+  )
+
+|#
