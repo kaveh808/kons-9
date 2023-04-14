@@ -127,7 +127,7 @@ in this and demos below, update the *EXAMPLE-XYZ-FILENAME* for your setup.")
 (format t "  mol import...~%") (finish-output)
 
 (defparameter *example-mol-filename* 
-  (nth 1 (list (asdf:system-relative-pathname "kons-9" "test/data/caffeine.mol")
+  (nth 0 (list (asdf:system-relative-pathname "kons-9" "test/data/caffeine.mol")
                (asdf:system-relative-pathname "kons-9" "test/data/cholesterol.mol")))
   "An example molecule structure filename used in demonstrations for the MOL-IMPORT facility.
 You can find mol files at
