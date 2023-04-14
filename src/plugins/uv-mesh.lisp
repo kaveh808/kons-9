@@ -270,6 +270,11 @@
                          (make-line-curve (p! 0 0 0) (p! 0 height 0) height-segments)
                          :taper taper))
 
+(defun make-cylinder-uv-mesh-between-points (diameter p1 p2 radial-segments height-segments &key (taper 1.0))
+  (sweep-extrude-uv-mesh (make-circle-curve diameter radial-segments)
+                         (make-line-curve p1 p2 height-segments)
+                         :taper taper))
+
 (defun make-cone-uv-mesh (diameter height radial-segments height-segments)
   (make-cylinder-uv-mesh diameter height radial-segments height-segments :taper 0.0))
 
