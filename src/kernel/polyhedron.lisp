@@ -127,7 +127,14 @@
   (allocate-point-colors polyh)
   (do-array (i p (points polyh))
     (let ((n (aref (point-normals polyh) i)))
-      (setf (aref (point-colors polyh) i) (funcall color-fn p n)))))
+      (setf (aref (point-colors polyh) i) (funcall color-fn p n))))
+  polyh)
+
+(defmethod set-point-colors-uniform ((polyh polyhedron) color)
+  (allocate-point-colors polyh)
+  (dotimes (i (length (point-colors polyh)))
+    (setf (aref (point-colors polyh) i) color))
+  polyh)
 
 (defun make-polyhedron (points faces &key (name nil) (mesh-type 'polyhedron))
   (make-instance mesh-type :name name

@@ -100,6 +100,7 @@
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")
    (:file "src/plugins/stl")
+   (:file "src/plugins/molecule")
    ))
 
 (asdf:defsystem #:kons-9/testsuite

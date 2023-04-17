@@ -98,16 +98,51 @@ Make sure you have opened the graphics window by doing:
   (first (list (asdf:system-relative-pathname "kons-9" "test/data/cow.obj")
                (asdf:system-relative-pathname "kons-9" "test/data/teapot.obj")))
   "An example object filename used in demonstrations for the OBJ-IMPORT facility.
-
 You can find obj files at
-
   https://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
-
 in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
 
 (with-clear-scene
   (add-shape *scene*
              (import-obj *example-obj-filename*)))
+
+;;; xyz molecule import --------------------------------------------------------
+
+(format t "  xyz import...~%") (finish-output)
+
+(defparameter *example-xyz-filename* 
+  (nth 1 (list (asdf:system-relative-pathname "kons-9" "test/data/benzoic-acid.xyz")
+               (asdf:system-relative-pathname "kons-9" "test/data/caffeine.xyz")))
+  "An example molecule structure filename used in demonstrations for the XYZ-IMPORT facility.
+You can find xyz files at
+  https://github.com/nutjunkie/IQmol3/tree/master/share/fragments/Molecules
+in this and demos below, update the *EXAMPLE-XYZ-FILENAME* for your setup.")
+
+(with-clear-scene
+  (add-shape *scene*
+             (import-xyz *example-xyz-filename*)))
+
+;;; mol molecule import --------------------------------------------------------
+
+(format t "  mol import...~%") (finish-output)
+
+(defparameter *example-mol-filename* 
+  (nth 0 (list (asdf:system-relative-pathname "kons-9" "test/data/caffeine.mol")
+               (asdf:system-relative-pathname "kons-9" "test/data/cholesterol.mol")))
+  "An example molecule structure filename used in demonstrations for the MOL-IMPORT facility.
+You can find mol files at
+  https://github.com/nutjunkie/IQmol3/tree/master/share/fragments/Molecules
+in this and demos below, update the *EXAMPLE-MOL-FILENAME* for your setup.")
+
+;;; show molecule atoms only (no bonds)
+(with-clear-scene
+  (add-shape *scene*
+             (import-mol *example-mol-filename*)))
+
+;;; show molecule bonds
+(with-clear-scene
+  (add-shape *scene*
+             (import-mol *example-mol-filename* :show-bonds? t)))
 
 ;;; point-instancer-group ------------------------------------------------------------
 
