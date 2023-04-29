@@ -96,6 +96,7 @@
    (:file "src/plugins/manager-group")
    (:file "src/plugins/particle")
    (:file "src/plugins/l-system")
+   (:file "src/plugins/growth")
    (:file "src/plugins/poly-mesh")
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")

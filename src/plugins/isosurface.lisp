@@ -519,11 +519,14 @@
   (threshold-cell-points (field iso) (threshold iso)))
 
 (defmethod iso-field-cell-size ((iso isosurface))
-  (with-accessors ((x-dim x-dim) (y-dim y-dim) (z-dim z-dim) (lo bounds-lo) (hi bounds-hi))
-      (field iso)
-    (let* ((size (p! (1- x-dim) (1- y-dim) (1- z-dim)))
-           (dim (p-from-to lo hi)))
-      (p/ dim size))))
+  (field-cell-size (field iso)))
+
+;; (defmethod iso-field-cell-size ((iso isosurface))
+;;   (with-accessors ((x-dim x-dim) (y-dim y-dim) (z-dim z-dim) (lo bounds-lo) (hi bounds-hi))
+;;       (field iso)
+;;     (let* ((size (p! (1- x-dim) (1- y-dim) (1- z-dim)))
+;;            (dim (p-from-to lo hi)))
+;;       (p/ dim size))))
 
 ;;;; point-source-protocol =====================================================
 

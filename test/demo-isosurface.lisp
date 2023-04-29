@@ -46,7 +46,7 @@ a SCALAR-FIELD. The POINT-SOURCE-FIELD-FN has a 1/r^2 falloff from its points.
   (let* ((p-cloud (make-point-cloud (make-grid-points 2 2 2 (p! -0.5 -0.5 -0.5) (p! 0.5 0.5 0.5))))
          (field (apply-field-function (make-scalar-field 40 40 40)
                                       (point-source-field-fn p-cloud
-                                                             :strength 1.0 :falloff 1.2)))
+                                                             (one-over-r-squared-value-fn 1.0 1.0))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 9.0))))
     (add-shape *scene* iso))
   )
@@ -64,7 +64,7 @@ Similar to Demo 02, but using custom field bounds and a random point source.
                                                          :bounds-lo (p! -4 -2 -4)
                                                          :bounds-hi (p! 4 2 4))
                                       (point-source-field-fn p-cloud
-                                                             :strength 1.0 :falloff 1.0)))
+                                                             (one-over-r-squared-value-fn 1.0 1.0))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 8.0))))
     (add-shape *scene* iso))
   )
@@ -81,7 +81,8 @@ Press 'space' to run the animation.
 (with-clear-scene
   (let* ((p-cloud (make-point-cloud (make-grid-points 2 2 2 (p! -0.5 -0.5 -0.5) (p! 0.5 0.5 0.5))))
          (field (apply-field-function (make-scalar-field 40 40 40)
-                                      (point-source-field-fn p-cloud :strength 1.0 :falloff 1.2)))
+                                      (point-source-field-fn p-cloud
+                                                             (one-over-r-squared-value-fn 1.0 1.0))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 20.0))))
     (add-shape *scene* iso)
     ;; set end frame
@@ -118,7 +119,7 @@ Press 'space' to run the animation.
                                                          :bounds-lo (p! -4 -2 -4)
                                                          :bounds-hi (p! 4 2 4))
                                       (point-source-field-fn p-cloud
-                                                             :strength 1.0 :falloff 1.0)))
+                                                             (one-over-r-squared-value-fn 1.0 1.0))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 8.0))))
     (add-shape *scene* iso)
     ;; add animator
@@ -128,8 +129,7 @@ Press 'space' to run the animation.
                                             (randomize-points p-cloud (p! .1 0 .1))
                                             (apply-field-function field
                                                                   (point-source-field-fn p-cloud
-                                                                                         :strength 1.0
-                                                                                         :falloff 1.0))
+                                                                                         (one-over-r-squared-value-fn 1.0 1.0)))
                                             (generate-isosurface iso)))))
   )
 
@@ -150,7 +150,7 @@ segments.
   (let* ((curve (make-line-curve (p! -0.5 -0.5 -0.5) (p! 0.5 0.5 0.5) 1))
          (field (apply-field-function (make-scalar-field 40 40 40)
                                       (curve-source-field-fn curve
-                                                             :strength 1.0 :falloff 1.2)))
+                                                             (one-over-r-squared-value-fn 1.0 1.2))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 9.0))))
     (add-shape *scene* iso))
   )
@@ -168,7 +168,7 @@ Similar to Demo 06 but with a sine curve.
                                                          :bounds-lo (p! -1 -2 -1)
                                                          :bounds-hi (p!  3  2  1))
                                       (curve-source-field-fn curve
-                                                             :strength 1.0 :falloff 1.2)))
+                                                             (one-over-r-squared-value-fn 1.0 1.2))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 16.0))))
     (add-shape *scene* iso))
   )
@@ -186,7 +186,7 @@ Use a polyhedron as a curve source.
                                                          :bounds-lo (p! -2 -2 -2)
                                                          :bounds-hi (p!  2  2  2))
                                       (curve-source-field-fn polyh
-                                                             :strength 1.0 :falloff 1.2)))
+                                                             (one-over-r-squared-value-fn 1.0 1.2))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 80.0))))
     (add-shape *scene* iso))
   )
@@ -204,7 +204,7 @@ Use a polyhedron as a curve source.
                                                          :bounds-lo (p! -2 -2 -2)
                                                          :bounds-hi (p!  2  2  2))
                                       (curve-source-field-fn polyh
-                                                             :strength 1.0 :falloff 1.2)))
+                                                             (one-over-r-squared-value-fn 1.0 1.2))))
          (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 10.0))))
     (add-shape *scene* iso)
     ;; set end frame
@@ -244,7 +244,7 @@ Use a particle system as a curve source.
                                                            :bounds-lo (p! -3 0 -3)
                                                            :bounds-hi (p!  3 6  3))
                                         (curve-source-field-fn p-sys
-                                                               :strength 1.0 :falloff 1.2)))
+                                                               (one-over-r-squared-value-fn 1.0 1.2))))
            (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 100.0))))
       (add-shape *scene* iso))))
 
@@ -317,7 +317,8 @@ Press 'space' to run the animation.
 (with-clear-scene
   (let* ((p-cloud (make-point-cloud (make-grid-points 2 2 2 (p! -0.5 -0.5 -0.5) (p! 0.5 0.5 0.5))))
          (field (apply-field-function (make-scalar-field 40 40 40)
-                                      (point-source-field-fn p-cloud :strength 1.0 :falloff 1.2)))
+                                      (point-source-field-fn p-cloud
+                                                             (one-over-r-squared-value-fn 1.0 1.2))))
          (iso (make-instance 'isosurface :field field :threshold 20.0))
          (vox (make-voxel-grid iso)))
     (add-shape *scene* vox)

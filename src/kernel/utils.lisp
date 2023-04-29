@@ -195,3 +195,13 @@
 (defun clamp (x lo hi)
   (max lo (min x hi)))
 
+(defun bounded-value (value min-value max-value) ;min and max values can be nil (no bound)
+  (cond ((and min-value max-value)
+         (min max-value (max min-value value)))
+        (min-value
+         (max min-value value))
+        (max-value
+         (min max-value value))
+        (t value)))
+                          
+

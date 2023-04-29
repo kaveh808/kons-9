@@ -43,6 +43,10 @@
   (compute-face-normals hfield)
   (compute-point-normals hfield))
 
+;;; NOTE -- array must have size > 1 in all dimensions
+(defmethod height-at-point ((hfield heightfield) p)
+  (funcall (height-fn hfield) (p:x p) (p:z p)))
+
 ;;;; gui =======================================================================
 
 (defun heightfield-command-table ()
