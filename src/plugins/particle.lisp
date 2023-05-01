@@ -164,6 +164,22 @@
                                 (p:length (vel ptcl)))) ;redirect vel but keep magnitude
       (setf (pos ptcl) new-pos-on-polyh))))
 
+;;;; scalar-field-particle ====================================================
+
+(defclass scalar-field-particle (particle)
+  ((field :accessor field :initarg :field :initform nil)))
+
+(defmethod copy-particle-data ((dst scalar-field-particle) (src scalar-field-particle))
+  (call-next-method)
+  (setf (field dst) (field src)))
+
+(defmethod update-position ((ptcl scalar-field-particle))
+  (update-velocity ptcl)
+  (let ((field-value (field-value-at-point (field ptcl) (pos ptcl))))
+    (if (<= field-value 0.0)
+        (setf (is-alive? ptcl) nil)
+        (setf (pos ptcl) (p:+ (pos ptcl) (vel ptcl))))))
+
 ;;;; dynamic-particle ====================================================
 
 (defclass dynamic-particle (particle)

@@ -44,7 +44,7 @@ Mix and match shapes and color schemes as desired.
 ;;; rainbow color based on height
 (set-point-colors-by-xyz *superq*
                          (lambda (p)
-                           (c-rainbow (clamp (tween (p:x p) -2 2) 0.0 1.0))))
+                           (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))
 
 ;;; rainbow color based on UV parameters
 (set-point-colors-by-uv *superq*

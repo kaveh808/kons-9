@@ -172,7 +172,7 @@ Generate an ISOSURFACE from the POLY-STRAND.
                                                            :bounds-lo (p! -2.2 -2.2 -2.2)
                                                            :bounds-hi (p!  2.2  2.2  2.2))
                                         (curve-source-field-fn poly
-                                                               :strength 1.0 :falloff 1.2)))
+                                                               (one-over-r-squared-value-fn 1.0 1.2))))
            (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 100.0))))
       (add-shape *scene* iso)
       ;;; optional -- save as OBJ file
@@ -211,7 +211,7 @@ Press 'space' a few times to advance frame. Note: frame update is slow.
                                                            :bounds-lo (p! -2.2 -2.2 -2.2)
                                                            :bounds-hi (p!  2.2  2.2  2.2))
                                         (curve-source-field-fn poly
-                                                               :strength 1.0 :falloff 1.2)))
+                                                               (one-over-r-squared-value-fn 1.0 1.2))))
            (iso (make-instance 'isosurface :field field :threshold 100.0))
            (vox (make-voxel-grid iso)))
       (add-shape *scene* vox)
@@ -222,9 +222,8 @@ Press 'space' a few times to advance frame. Note: frame update is slow.
                                                     (apply-field-function
                                                      field
                                                      (curve-source-field-fn poly
-                                                                            :strength 1.0
-                                                                            :falloff 1.2))))))
-            (add-motion *scene* field-anim)))))
+                                                                            (one-over-r-squared-value-fn 1.0 1.2)))))))
+        (add-motion *scene* field-anim)))))
 
                                                                   
 #|

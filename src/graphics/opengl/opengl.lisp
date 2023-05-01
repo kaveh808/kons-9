@@ -216,6 +216,9 @@
   (gl:push-matrix)
   (gl:mult-matrix (matrix->vector matrix))) ;is order correct?
 
+(defun 3d-pop-matrix ()
+  (gl:pop-matrix))
+
 (defun 3d-draw-marker (size)
   (gl:color 1.0 1.0 0.0)
   (gl:line-width (* 2 (line-thickness *drawing-settings*)))
@@ -277,8 +280,41 @@
         (gl:end)))
     (gl-set-color (shading-color *drawing-settings*))))    ;reset color
 
-(defun 3d-pop-matrix ()
-  (gl:pop-matrix))
+(defun 3d-draw-grid (dims lo hi color)
+  (with-gl-disable :lighting
+    (gl-set-color color)
+    (when (and dims lo hi)
+      (let ((nx (aref dims 0))
+            (ny (aref dims 1))
+            (nz (aref dims 2))
+            (x0 (p:x lo))
+            (y0 (p:y lo))
+            (z0 (p:z lo))
+            (x1 (p:x hi))
+            (y1 (p:y hi))
+            (z1 (p:z hi)))
+        (gl:begin :lines)
+
+        (dotimes (i nx)
+          (let ((x (lerp (/ i (1- nx)) x0 x1)))
+            (dotimes (j ny)
+              (let ((y (lerp (/ j (1- ny)) y0 y1)))
+                (gl:vertex x y z0) (gl:vertex x y z1)))))
+                
+        (dotimes (i nx)
+          (let ((x (lerp (/ i (1- nx)) x0 x1)))
+            (dotimes (k nz)
+              (let ((z (lerp (/ k (1- nz)) z0 z1)))
+                (gl:vertex x y0 z) (gl:vertex x y1 z)))))
+                
+        (dotimes (j ny)
+          (let ((y (lerp (/ j (1- ny)) y0 y1)))
+            (dotimes (k nz)
+              (let ((z (lerp (/ k (1- nz)) z0 z1)))
+                (gl:vertex x0 y z) (gl:vertex x1 y z)))))
+                
+        (gl:end)))
+    (gl-set-color (shading-color *drawing-settings*))))    ;reset color
 
 (defun 3d-draw-curve (points is-closed? &optional (line-width (line-thickness *drawing-settings*)))
   (with-gl-disable :lighting

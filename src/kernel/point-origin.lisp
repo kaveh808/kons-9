@@ -152,6 +152,11 @@
 ;; 	nil
 ;; 	t)))
 
+(defun point-in-bounds? (p lo hi)
+  (and (<= (p:x lo) (p:x p) (p:x hi))
+       (<= (p:y lo) (p:y p) (p:y hi))
+       (<= (p:z lo) (p:z p) (p:z hi))))
+       
 (defun points-bounds (point-array)
   (when (= 0 (length point-array))
     (return-from points-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
