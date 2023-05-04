@@ -117,6 +117,18 @@
 			       (:file "point-cloud")))
  		 (:file "entrypoint")))))
 
+(asdf:defsystem #:kons-9/api-docs
+  :description "Kons-9 API: exported symbols and online documentation."
+  :depends-on (:kons-9 :mgl-pax)
+  :components
+  ((:file "src/api/api")))
+
+(asdf:defsystem #:kons-9/api-types
+  :description "Kons-9 API: Lisp type declarations for API functions."
+  :depends-on (:kons-9)
+  :components
+  ((:file "src/api/types")))
+
 #+nil (asdf:load-system :kons-9)
 
 #+nil (trivial-main-thread:call-in-main-thread
