@@ -51,7 +51,8 @@
 (defmethod initialize-instance :after ((boid grazer) &rest initargs)
   (declare (ignore initargs))
   (setf (shape-fn boid) (lambda ()
-                          (let* ((shape (make-box .4 .4 .8)))
+                          (let* ((shape (make-shape-group (list (make-box .4 .4 .8)
+                                                                (rotate-by (make-circle-curve (* 2 (detection-dist boid)) 32) (p! 90 0 0))))))
                             (setf (heading boid) (rand2 -180 180))
                             (rotate-to shape (p! 0 (heading boid) 0))
                             shape)))
@@ -99,20 +100,24 @@
   (:default-initargs
    :energy-use 0.02
    :food-type 'grazer
-   :detection-dist 2.0
+   :detection-dist 3.0
    :idle-speed 0.15
-   :top-speed 0.3))
+   :top-speed 0.4))
 
 (defmethod initialize-instance :after ((boid predator) &rest initargs)
   (declare (ignore initargs))
-  (setf (shape-fn boid) (lambda ()
-                          (let* ((shape (make-pyramid-uv-mesh .6 1.2 1 1)))
-                            (rotate-to shape (p! 90 0 0))
-                            (freeze-transform shape)
+  (setf (shape-fn boid)
+        (lambda ()
+          (let ((shape (make-shape-group
+                        (list (freeze-transform (rotate-by (make-pyramid-uv-mesh .6 1.2 1 1) (p! 90 0 0)))
+                              (rotate-by (make-circle-curve (* 2 (detection-dist boid)) 32) (p! 90 0 0))))))
+                            
+;;                            (rotate-to shape (p! 90 0 0))
+;;                            (freeze-transform shape)
 ;;                            (setf (show-axis shape) 1.0)
-                            (setf (heading boid) (rand2 -180 180))
-                            (rotate-to shape (p! 0 (heading boid) 0))
-                            shape))))
+            (setf (heading boid) (rand2 -180 180))
+            (rotate-to shape (p! 0 (heading boid) 0))
+            shape))))
 
 ;;;; boid-system ==========================================================
 
@@ -153,13 +158,14 @@
                                     ((> (p:z trans)  10) (- (p:z trans) (p:z size)))
                                     (t (p:z trans))))))))
 
-(defmethod spawn-boids ((self boid-system) class num)
+(defmethod spawn-boids ((self boid-system) class num
+                        &optional (loc-fn (lambda (sys) (p-rand2 (bounds-min sys) (bounds-max sys)))))
   (dotimes (i num)
     (let* ((boid (make-instance class))
 	   (shape (funcall (shape-fn boid))))
       (setf (boid-system boid) self)
       (setf (shape boid) shape)
-      (translate-by shape (p-rand2 (bounds-min self) (bounds-max self)))
+      (translate-by shape (funcall loc-fn self))
       (add-child self boid)             ;add motion child
       (add-child (shape self) shape)))) ;add shape child
 

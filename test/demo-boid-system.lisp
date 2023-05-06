@@ -35,10 +35,11 @@ Press 'space' to run the animation.
     (spawn-boids b-sys 'vegetation 40)
     (spawn-boids b-sys 'grazer 10)
     (spawn-boids b-sys 'predator 2)
-    ;; spawn new vegetation
+    ;; spawn new boids
     (setf (spawn-new-boids-fn b-sys)
           (lambda (sys)
-            (when (< (rand1 1.0) 0.1)
+            ;; spawn vegetation
+            (when (< (rand1 1.0) 0.01)
               (spawn-boids sys 'vegetation 1))))
     ;; add to scene
     (add-motion *scene* b-sys)
