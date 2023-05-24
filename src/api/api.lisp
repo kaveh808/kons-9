@@ -11,6 +11,11 @@
 (defmacro doc (object doc-type doc-string)
   `(setf (documentation ,object ',doc-type) ,(string-left-trim '(#\newline) doc-string)))
 
+(defun pax-dynenv (transcribe)
+  "Dynamic environment for MGL-PAX transcripts."
+  (let ((*random-state* (sb-ext:seed-random-state 0)))
+    (funcall transcribe)))
+
 ;;; API Reference
 
 (pax:defsection @api (:title "Kons-9 API Reference")
@@ -88,24 +93,23 @@ by Gábor Melis.")
 (doc 'p-smooth-lerp function "
 Return a point interpolated smoothly (cubic) between P1 and P2 by factor F.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (loop with p1 = (p! 0 0 0)
       with p2 = (p! 0 0 1)
       for f from 0.0 to 1.0 by 0.1
       do (print (p-smooth-lerp f p1 p2)))
 ..
-.. #(0.0 0.0 0.0)
-.. #(0.0 0.0 0.028)
-.. #(0.0 0.0 0.104)
-.. #(0.0 0.0 0.216)
-.. #(0.0 0.0 0.352)
-.. #(0.0 0.0 0.5)
-.. #(0.0 0.0 0.648)
-.. #(0.0 0.0 0.7840001)
-.. #(0.0 0.0 0.896)
-.. #(0.0 0.0 0.9720001)
+.. #(0.0 0.0 0.0) 
+.. #(0.0 0.0 0.028) 
+.. #(0.0 0.0 0.104) 
+.. #(0.0 0.0 0.216) 
+.. #(0.0 0.0 0.352) 
+.. #(0.0 0.0 0.5) 
+.. #(0.0 0.0 0.648) 
+.. #(0.0 0.0 0.7840001) 
+.. #(0.0 0.0 0.896) 
+.. #(0.0 0.0 0.9720001) 
 => NIL
-
 ```
 ")
 
@@ -113,16 +117,16 @@ Return a point interpolated smoothly (cubic) between P1 and P2 by factor F.
 Return a new point with a uniform random number in [-AMOUNT,AMOUNT] added to
 each of the coordinates of P.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (loop repeat 5
       with p = (p! 0 0 0)
       do (print (p-jitter p 0.1)))
 ..
-.. #(-0.015892074 -0.09005993 -0.007281564)
-.. #(-0.013628766 -0.035423063 -0.08748648)
-.. #(-0.0026499256 0.05349622 -0.022806786)
-.. #(-0.04921451 0.092438884 0.039513953)
-.. #(0.055951603 0.097014 -0.032807752)
+.. #(-0.080474615 -0.06286216 -0.013924263) 
+.. #(0.03770628 -0.05889466 0.043178223) 
+.. #(-0.08204675 0.03890068 0.06946192) 
+.. #(-0.05057454 -0.041642357 0.05375267) 
+.. #(0.07503488 0.019013837 0.056709193) 
 => NIL
 ```
 ")
@@ -141,42 +145,39 @@ each of the coordinates of P.
 (doc 'p-rand function "
 Return a random vector with magnitude MAG.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (dotimes (i 5)
  (print (p-rand 10.0)))
 ..
-.. #(8.721577 -4.890044 0.14691272)
-.. #(-6.748556 -5.864832 -4.4789214)
-.. #(-6.0299535 0.17271549 7.9755774)
-.. #(1.810133 8.698843 -4.588415)
-.. #(-6.610375 6.457787 3.8209844)
+.. #(-7.8083973 -6.0994725 -1.351062) 
+.. #(4.587864 -7.165933 5.253656) 
+.. #(-7.17671 3.4026814 6.0759025) 
+.. #(-5.9680557 -4.9140115 6.34309) 
+.. #(7.819659 1.9815011 5.9098725) 
 => NIL
-
 ```
 ")
 
 (doc 'p-rand1 function "
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (values (p-rand1 (p! 10 0 0))
         (p-rand1 (p! 10 0 0) (p! 0 0 100)))
-=> #(0.8208256 0.0 0.0)
-=> #(-1.5418701 0.0 100.0)
-
+=> #(-8.0474615 0.0 0.0)
+=> #(-6.286216 0.0 100.0)
 ```
 ")
 
 (doc 'p-rand2 function "
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (dotimes (i 5)
   (print (p-rand2 +origin+ (p! 1 10 100))))
 ..
-.. #(0.5472082 9.946655 86.98675)
-.. #(0.3072058 6.212449 65.826645)
-.. #(0.19817531 2.2756863 37.87581)
-.. #(0.8526037 5.9077573 49.116753)
-.. #(0.113173604 5.919751 54.794872)
+.. #(0.097626925 1.8568921 43.03787) 
+.. #(0.6885314 2.055267 71.58911) 
+.. #(0.089766264 6.945034 84.73096) 
+.. #(0.2471273 2.9178822 76.87633) 
+.. #(0.8751744 5.9506917 78.3546) 
 => NIL
-
 ```
 ")
 
@@ -216,27 +217,27 @@ Return a random vector with magnitude MAG.
 Construct a new point object.")
 
 (doc 'p+ function "
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (p+ (p! 1 2 3)
     (p! 10 20 30))
 => #(11.0 22.0 33.0)
 ```")
 
 (doc 'p- function "
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (p- (p! 1 2 3) 1)
 => #(0.0 1.0 2.0)
 ```")
 
 (doc 'p* function "
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (p* (p! 1 2 3)
     (p! 10 20 30))
 => #(10.0 40.0 90.0)
 ```")
 
 (doc 'p/ function "
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (p/ (p! 1 2 3) 2)
 => #(0.5 1.0 1.5)
 ```")
@@ -267,41 +268,36 @@ Construct a new point object.")
 
 (doc 'c-red function "
 Return the red component of color C.
-
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (c-red (c! 0.1 0.2 0.3))
 => 0.1
-
 ```
 ")
 
 (doc 'c-green function "
 Return the green component of color C.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (c-green (c! 0.1 0.2 0.3))
 => 0.2
-
 ```
 ")
 
 (doc 'c-blue function "
 Return the blue component of color C.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (c-blue (c! 0.1 0.2 0.3))
 => 0.3
-
 ```
 ")
 
 (doc 'c-alpha function "
 Return the alpha component of color C.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (c-alpha (c! 0.1 0.2 0.3 0.4))
 => 0.4
-
 ```
 ")
 
@@ -314,40 +310,37 @@ Destructively set the alpha value of C to ALPHA.")
 (doc 'c-lerp function "
 Return a color linearly interpolated by factor F between C1 and C2.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (c-lerp 0.5 (c! 0 0 0 0) (c! 0.2 0.4 0.6 0.8))
 => #(0.1 0.2 0.3 0.4)
-
 ```
 ")
 
 (doc 'c-rand function "
 Return an opaque color with uniform RGB channel values.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (dotimes (i 3)
   (print (c-rand)))
 ..
-.. #(0.8987992 0.7864139 0.79885733 1.0)
-.. #(0.33613765 0.39076257 0.20800936 1.0)
-.. #(0.45029986 0.5191544 0.37873483 1.0)
+.. #(0.097626925 0.18568921 0.43037868 1.0) 
+.. #(0.6885314 0.20552671 0.7158911 1.0) 
+.. #(0.089766264 0.6945034 0.8473096 1.0) 
 => NIL
-
 ```
 ")
 
 (doc 'c-rand-with-alpha function "
 Return a color with uniform random RGB and alpha values.
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
 (dotimes (i 3)
   (print (c-rand-with-alpha)))
 ..
-.. #(0.564777 0.8026259 0.25154138 0.43752754)
-.. #(0.5176456 0.29399824 0.5838525 0.17650497)
-.. #(0.1909852 0.15405178 0.6489651 0.350994)
+.. #(0.097626925 0.18568921 0.43037868 0.6885314) 
+.. #(0.20552671 0.7158911 0.089766264 0.6945034) 
+.. #(0.8473096 0.2471273 0.29178822 0.7687633) 
 => NIL
-
 ```
 ")
 
@@ -549,7 +542,7 @@ Return a color with uniform random RGB and alpha values.
   (ct-subtable pax:macro)
   "Here is an example of constructing a command table:
 
-```cl-transcript
+```cl-transcript (:dynenv pax-dynenv)
    (let ((table (make-instance 'command-table :title \"Example\")))
      ;; note: these macros depend on the variable name 'table'
      (ct-entry :C \"Make a Cube\" (make-cube 2.0))
