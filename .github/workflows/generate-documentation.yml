@@ -1,0 +1,35 @@
+name: Publish to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  publish-api-docs:
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Nix
+        uses: nixbuild/nix-quick-install-action@v22
+      - name: Check out
+        uses: actions/checkout@v1
+      - name: Build HTML API documentation with MGL-PAX
+        run: nix --experimental-features "nix-command flakes" build .#api-html
+      - name: Workaround File Permissions # See (https://github.com/actions/deploy-pages/issues/58)
+        run: cp -r -L --no-preserve=mode,ownership result artifact
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: 'artifact'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

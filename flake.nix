@@ -86,6 +86,7 @@
       in {
         apps.default = { type = "app"; program = "${run-kons-9}/bin/run-kons-9"; };
         apps.test    = { type = "app"; program = "${test-kons-9}/bin/test-kons-9"; };
+        packages.default  = run-kons-9;
         packages.api-html = api-html;
       }
     );
