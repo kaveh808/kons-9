@@ -97,3 +97,47 @@ review the [quick introduction to Confidence][confidence-intro].
 
   [confidence-home]: https://github.com/melusina-org/cl-confidence
   [confidence-intro]: https://github.com/melusina-org/cl-confidence/blob/main/example/example.lisp
+
+## API reference
+
+The [Kons-9 API reference manual](https://kaveh808.github.io/kons-9) is a work-in-progress.
+
+This manual is generated using the [PAX](https://melisgl.github.io/mgl-pax-world/mgl-pax-manual.html) framework and the directives in [`src/api/api.lisp`](src/api/api.lisp).
+
+Updates are automatically published from the `main` branch using Github Actions.
+
+Please contribute to the documentation as you study the Kons-9 source code!
+
+### Building the documentation
+
+Build the documentation in HTML format from a Kons-9 Lisp image:
+
+```
+(require :kons-9/api-docs)
+(pax:update-asdf-system-html-docs kons-9::@api :kons-9)
+```
+
+See [PAX: Utilities for Generating Documentation](https://melisgl.github.io/mgl-pax-world/mgl-pax-manual.html#toc-8-9-utilities-for-generating-documentation). See also [PAX: Documenting in Emacs](https://melisgl.github.io/mgl-pax-world/mgl-pax-manual.html#toc-8-2-documenting-in-emacs) for live Emacs-based documentation browsing.
+
+### Updating API example transcripts
+
+PAX automatically verifies that all examples produce their expected results (see [PAX: Transcripts](https://melisgl.github.io/mgl-pax-world/mgl-pax-manual.html#toc-9-transcripts)). If the consistency checks fail then so will the documentation build and its associated Github Action.
+
+To update a transcript, or create a new one, place the point immediately after the example code inside a docstring and run the Emacs command `mgl-pax-transcribe-last-expression` (see [PAX: Transcribing with Emacs](https://melisgl.github.io/mgl-pax-world/mgl-pax-manual.html#toc-9-2-transcribing-with-emacs)). See the examples in [`api.lisp`](src/api/api.lisp) for reference.
+
+PAX transcripts should be formatted using this markdown syntax:
+
+    ```cl-transcript (:dynenv pax-dynenv)
+    ...lisp code...
+    ```
+
+The `cl-transcript` directive tells PAX to make consistency checks.
+
+The `:dynenv` directive ensures that the checks are made in a suitable environment e.g. with a fixed random seed.
+
+#### Pitfalls
+
+1. PAX transcript consistency-checks are sensitive to whitespace. Be careful not to edit the whitespace in the generated example output or else the consistency checks will fail. (Be careful of Emacs modes like `ws-butler` potentially causing problems by overzealously stripping trailing whitespace from inside string literals.)
+
+2. PAX emacs commands only started respecting the `:dynenv` directive in version 0.2.1 which at this time of writing has not yet landed in Quicklisp. If you update transcripts using an older version of the PAX Emacs Lisp code the environment (random seed) won't be locked down and the consistency checks might fail.
+
