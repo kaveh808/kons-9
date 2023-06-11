@@ -38,7 +38,7 @@
     (translate-to shape (p! x y z))
     (add-shape (scene *scene-view*) shape)))
 
-(defun demo-opengl-picking ()
+(defun add-demo-shapes-to-scene ()
   (mapcar
    #'demo-cube
    `(
