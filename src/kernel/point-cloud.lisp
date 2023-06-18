@@ -37,12 +37,6 @@
               (get-bounds p-cloud)))
         (get-bounds p-cloud))))
 
-(defmethod get-bounds-world ((p-cloud point-cloud))
-  (multiple-value-bind (lo hi) (get-bounds p-cloud)
-    (let ((m (transform-matrix (transform p-cloud))))
-      (values (vector3*matrix4 lo m)
-              (vector3*matrix4 hi m)))))
-
 (defun make-point-cloud (points)
   (make-instance 'point-cloud :points points))
 
