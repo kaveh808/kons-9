@@ -11,4 +11,5 @@
 (define-testcase run-all-tests ()
   "Run all available tests."
   (testsuite-utils)
-  (testsuite-point-cloud))
+  (testsuite-point-cloud)
+  (testsuite-ray-triangle))
