@@ -118,6 +118,22 @@
 (defmethod face-points-array ((polyh polyhedron) (face list))
   (coerce (face-points-list polyh face) 'vector))
 
+(defmethod triangles-list ((polyh polyhedron) &key (matrix nil))
+  (let ((triangles '())
+        (tri-polyh (if (is-triangulated-polyhedron? polyh)
+                       polyh
+                       (triangulate-polyhedron polyh))))
+    (flet ((transform-if (xs) (if matrix (transform-points xs matrix) xs)))
+      (do-array (_ face (faces tri-polyh))
+        (push (transform-if (face-points-array tri-polyh face)) triangles)))
+    triangles))
+
+(defmethod triangles-array ((polyh polyhedron) &key (matrix nil))
+  (coerce (triangles-list polyh :matrix matrix) 'vector))
+
+(defmethod triangles-world-array ((polyh polyhedron))
+  (triangles-array polyh :matrix (transform-matrix (transform polyh))))
+
 (defmethod reverse-face-normals ((polyh polyhedron))
   (dotimes (i (length (face-normals polyh)))
     (setf (aref (face-normals polyh) i) (p:negate (aref (face-normals polyh) i))))
