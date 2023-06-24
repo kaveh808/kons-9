@@ -69,9 +69,9 @@
                  (:file "glyph-zpb-ttf")
                  (:file "font-zpb-ttf")))
    ;; app user interface
+   (:file "src/graphics/object-picking")
    (:file "src/graphics/glfw/command-table")
    (:file "src/graphics/glfw/application-widgets")
-   (:file "src/graphics/opengl/opengl-picking")
    (:file "src/graphics/glfw/glfw-gui")
    (:file "src/graphics/opengl/text-common")
    (:file "src/graphics/opengl/text-opengl-common")

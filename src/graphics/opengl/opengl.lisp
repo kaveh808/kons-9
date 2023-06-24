@@ -167,31 +167,6 @@
   (gl:material :front-and-back :specular spec)
   (gl:material :front-and-back :shininess shine))
   
-(defun gl-get-camera-position ()
-  (let* ((inverse-matrix (origin.dmat4:invert (gl:get-double :modelview-matrix)))
-         (position (origin.dmat4:get-translation inverse-matrix)))
-    (values
-     (elt position 0)
-     (elt position 1)
-     (elt position 2))))
-
-(defun gl-unproject-to-far-plane (canvas-x canvas-y)
-  (glu:un-project canvas-x canvas-y 1.d0))
-
-(defun debug-gl-draw-ray (x y z)
-  (gl:line-width 4.0)
-  (gl:begin :lines)
-  (gl:color 1.0 1.0 0.0 1.0)
-  (gl:vertex 0.0 0.0 0.0)
-  (gl:vertex x y z)
-  (gl:end))
-
-(defun gl-mouse-picking-ray (canvas-x canvas-y)
-  (multiple-value-bind (x y z) (gl-unproject-to-far-plane canvas-x canvas-y)
-    (multiple-value-bind (cx cy cz) (gl-get-camera-position)
-      (debug-gl-draw-ray x y z)
-      (values cx cy cz x y z))))
-
 (defun 3d-update-light-settings ()
   (if *do-backface-cull?*
       (progn
@@ -533,4 +508,27 @@
   (gl:enable :blend)
 )
 
+;;; ray  =======================================================================
 
+(defun gl-get-camera-position ()
+  (let* ((inverse-matrix (origin.dmat4:invert (gl:get-double :modelview-matrix)))
+         (position (origin.dmat4:get-translation inverse-matrix)))
+    (p-vec position)))
+
+(defun gl-unproject-to-far-plane (screen-x screen-y)
+  (multiple-value-bind (x y z)
+      (glu:un-project screen-x screen-y 1.d0)
+    (p! x y z)))
+
+(defun gl-get-picking-ray-coords (screen-x screen-y)
+  (let ((from (gl-get-camera-position))
+        (to (gl-unproject-to-far-plane screen-x screen-y)))
+    (values from to)))
+
+(defun 3d-draw-ray (to &optional (from '(0 0 0)))
+  (gl:line-width 2.0)
+  (gl:begin :lines)
+  (gl:color 1.0 0.8 0 0.4)
+  (apply #'gl:vertex (coerce from 'list))
+  (apply #'gl:vertex (coerce to 'list))
+  (gl:end))

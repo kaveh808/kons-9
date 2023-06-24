@@ -7,7 +7,6 @@
 (defparameter *ui-interactive-mode* nil)
 (defparameter *current-highlighted-ui-item* nil)
 (defparameter *current-choice-menu-and-pos* nil) ;nil or (menu x y)
-(defparameter *do-mouse-pick* nil)
 
 (defparameter *scene-view* nil)
 
@@ -297,13 +296,8 @@
   (when (scene view)
     (draw (scene view)))
   (3d-cleanup-render)
-  (when *do-mouse-pick*
-    (setf *do-mouse-pick* nil)
-    (opengl-pick
-     *current-mouse-pos-x*
-     (- (second *window-size*) *current-mouse-pos-y*)
-     (shape-root (scene view))
-     ))
+  (when-pick-requested
+    (do-picking-and-draw-ray view))
   (when *display-axes?*
     (draw-world-axes))
   (when *display-ground-plane?*
@@ -487,7 +481,7 @@
            (mouse-click (first pos) (second pos) button mod-keys)))))
 
 (glfw:def-cursor-pos-callback cursor-position-callback (window x y)
-  (setf *do-mouse-pick* t)
+  (make-pick-request)
   ;;  (format t "mouse x: ~a, y: ~a~%" x y)
   (let ((dx (- x *current-mouse-pos-x*))
         (dy (- y *current-mouse-pos-y*)))
@@ -729,4 +723,21 @@
      (setf (ui-contents-scroll *scene-view*) 0)
      ))
 
+;;;; object picking ============================================================
+
+(defmacro with-ray-at-current-mouse-pos ((ray) &body body)
+  (let ((g-from (gensym))
+        (g-to (gensym)))
+    `(multiple-value-bind (,g-from ,g-to)
+         (gl-get-picking-ray-coords *current-mouse-pos-x*
+                         ;; OpenGL origin is bottom-left, win origin is top-left
+                         (- (second *window-size*) *current-mouse-pos-y*))
+       (let ((,ray (make-instance 'ray :from ,g-from :to ,g-to)))
+         ,@body))))
+
+(defun do-picking-and-draw-ray (view)
+  (with-ray-at-current-mouse-pos (ray)
+    (apply #'handle-pick-request ray view '())
+    (when (picking-ray-visible-p)
+      (3d-draw-ray (to ray)))))
 
