@@ -49,8 +49,8 @@
 (defmethod get-bounds-world ((self shape))
   (multiple-value-bind (lo hi) (get-bounds self)
     (let ((m (transform-matrix (transform self))))
-      (values (vector3*matrix4 lo m)
-              (vector3*matrix4 hi m)))))
+      (values (transform-point lo m)
+              (transform-point hi m)))))
 
 (defmethod center-at-origin ((self shape))
   (multiple-value-bind (bounds-lo bounds-hi)
