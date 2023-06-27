@@ -56,6 +56,7 @@
    (:file "src/kernel/clobber")
    (:file "src/kernel/ray-triangle-intersect")
    (:file "src/kernel/ray")
+   (:file "src/kernel/object-picking")
    (:file "src/kernel/main")
    ;; font libraries -- tmp until we use 3b-bmfont
    (:module "lib/JMC-font-libs/font-master"
@@ -69,7 +70,6 @@
                  (:file "glyph-zpb-ttf")
                  (:file "font-zpb-ttf")))
    ;; app user interface
-   (:file "src/graphics/object-picking")
    (:file "src/graphics/glfw/command-table")
    (:file "src/graphics/glfw/application-widgets")
    (:file "src/graphics/glfw/glfw-gui")

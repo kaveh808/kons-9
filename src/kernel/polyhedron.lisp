@@ -119,6 +119,8 @@
   (coerce (face-points-list polyh face) 'vector))
 
 (defmethod triangles-list ((polyh polyhedron) &key (matrix nil))
+  ;; TODO: this function will only work for convex polyhedrons but it should
+  ;; work for all cases.
   (let ((triangles '())
         (tri-polyh (if (is-triangulated-polyhedron? polyh)
                        polyh
