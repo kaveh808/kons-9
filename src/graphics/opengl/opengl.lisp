@@ -521,6 +521,5 @@
     (p! x y z)))
 
 (defun gl-get-picking-ray-coords (screen-x screen-y)
-  (let ((from (gl-get-camera-position))
-        (to (gl-unproject-to-far-plane screen-x screen-y)))
-    (values from to)))
+  (values (gl-get-camera-position)
+          (gl-unproject-to-far-plane screen-x screen-y)))
