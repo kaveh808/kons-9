@@ -524,11 +524,3 @@
   (let ((from (gl-get-camera-position))
         (to (gl-unproject-to-far-plane screen-x screen-y)))
     (values from to)))
-
-(defun 3d-draw-ray (to &optional (from '(0 0 0)))
-  (gl:line-width 2.0)
-  (gl:begin :lines)
-  (gl:color 1.0 0.8 0 0.4)
-  (apply #'gl:vertex (coerce from 'list))
-  (apply #'gl:vertex (coerce to 'list))
-  (gl:end))

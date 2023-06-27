@@ -1,10 +1,8 @@
 (in-package #:kons-9)
 
 (defparameter *object-pick-requested* nil)
-(defparameter *object-picking-ray-visible* t)
 
-(defmacro picking-ray-visible-p ()
-  '*object-picking-ray-visible*)
+;;;; utils =====================================================================
 
 (defmacro make-pick-request ()
   `(setf *object-pick-requested* t))
@@ -13,6 +11,8 @@
   `(when *object-pick-requested*
      (setf *object-pick-requested* nil)
      ,@body))
+
+;;;; intersect =================================================================
 
 (defun intersect-shape-triangles (ray shape)
   (let ((min nil))
@@ -46,11 +46,12 @@
     (let ((xs-hit (mapcar #'cdr xs-hit-distances)))
       (values xs-hit xs-miss))))
 
+;;;; pick ======================================================================
+
 (defun handle-pick-request (ray view)
   (flet ((select (shape) (setf (is-selected? shape) t))
          (unselect (shape) (setf (is-selected? shape) nil)))
     (multiple-value-bind (xs-hit xs-miss) (get-hit-results ray (scene view))
-
       (unless (null xs-hit)
         (select (car xs-hit))
         (mapc #'unselect (cdr xs-hit)))

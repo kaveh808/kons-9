@@ -289,6 +289,17 @@
     table))
 
 
+(defmacro with-ray-at-current-mouse-pos ((ray) &body body)
+  (let ((g-from (gensym))
+        (g-to (gensym)))
+    `(multiple-value-bind (,g-from ,g-to)
+         (gl-get-picking-ray-coords
+          *current-mouse-pos-x*
+          ;; OpenGL origin is bottom-left, win origin is top-left
+          (- (second *window-size*) *current-mouse-pos-y*))
+       (let ((,ray (make-instance 'ray :from ,g-from :to ,g-to)))
+         ,@body))))
+
 (defmethod draw-scene-view ((view scene-view))
   (3d-setup-buffer)
   (3d-setup-projection)
@@ -296,12 +307,16 @@
   (when (scene view)
     (draw (scene view)))
   (3d-cleanup-render)
-  (when-pick-requested
-    (do-picking-and-draw-ray view))
   (when *display-axes?*
     (draw-world-axes))
   (when *display-ground-plane?*
     (draw-ground-plane))
+
+  ;; object picking
+
+  (when-pick-requested
+    (with-ray-at-current-mouse-pos (ray)
+      (apply #'handle-pick-request ray view '())))
 
   ;; display ui layer
 
@@ -723,21 +738,4 @@
      (setf (ui-contents-scroll *scene-view*) 0)
      ))
 
-;;;; object picking ============================================================
-
-(defmacro with-ray-at-current-mouse-pos ((ray) &body body)
-  (let ((g-from (gensym))
-        (g-to (gensym)))
-    `(multiple-value-bind (,g-from ,g-to)
-         (gl-get-picking-ray-coords *current-mouse-pos-x*
-                         ;; OpenGL origin is bottom-left, win origin is top-left
-                         (- (second *window-size*) *current-mouse-pos-y*))
-       (let ((,ray (make-instance 'ray :from ,g-from :to ,g-to)))
-         ,@body))))
-
-(defun do-picking-and-draw-ray (view)
-  (with-ray-at-current-mouse-pos (ray)
-    (apply #'handle-pick-request ray view '())
-    (when (picking-ray-visible-p)
-      (3d-draw-ray (to ray)))))
 
