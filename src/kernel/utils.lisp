@@ -148,6 +148,11 @@
 (defun vec-last (vec)
   (aref vec (1- (length vec))))
 
+(defun list-subtract (list-1 list-2)
+  (remove-if
+   (lambda (el) (member el list-2))
+   list-1))
+
 ;;;; math ======================================================================
 
 (defconstant 2pi (* 2 pi))

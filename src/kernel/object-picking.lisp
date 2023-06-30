@@ -35,22 +35,40 @@
 
 (defun pick (ray multi-select scene)
   (multiple-value-bind (xs-hit xs-miss) (intersect ray scene)
-    (when *picking-selector*
-      (update-scene-selection (current-selection scene)
-        (funcall *picking-selector* :xs-hit xs-hit
-                                    :xs-miss xs-miss
-                                    :xs-current current-selection
-                                    )))))
+    (update-scene-selection (current-selection scene)
+      (funcall (choose-picking-selector multi-select)
+               :xs-hit xs-hit
+               :xs-miss xs-miss
+               :xs-current current-selection
+               ))))
 
-;; object selection functions ==================================================
+(defun choose-picking-selector (multi-select)
+  (when (functionp *picking-selector*)
+    (return-from choose-picking-selector *picking-selector*))
 
-(defmacro use-picking-selector (f)
-  `(setf *picking-selector* ,f))
+  (if multi-select
+      #'picking-selector-click-multi
+      #'picking-selector-click-1))
 
-(defun picking-selector-closest-item (&key xs-hit xs-miss xs-current)
-  (declare (ignore xs-miss xs-current))
-  (when (car xs-hit)
-    (list (car xs-hit))))
+;; picking selector functions ==================================================
 
+(let ((prev-xs-hit nil)
+      (i -1))
+  (defun picking-selector-click-1 (&key xs-hit xs-miss xs-current)
+    (declare (ignore xs-miss xs-current))
+    (flet ((next-i ()
+             (setf i (mod (+ 1 i) (length xs-hit)))
+             i))
+      (when (not (equal prev-xs-hit xs-hit))
+        (setf prev-xs-hit xs-hit)
+        (setf i -1))
 
-(use-picking-selector #'picking-selector-closest-item)
+      (when (not (null xs-hit))
+        (list (elt xs-hit (next-i)))))))
+
+(defun picking-selector-click-multi (&key xs-hit xs-miss xs-current)
+  (declare (ignore xs-miss))
+  (let ((xs-hit-unselected (list-subtract xs-hit xs-current)))
+    (if (null xs-hit-unselected)
+        xs-current
+        (cons (car xs-hit-unselected) xs-current))))
