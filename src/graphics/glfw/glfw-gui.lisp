@@ -7,7 +7,6 @@
 (defparameter *ui-interactive-mode* nil)
 (defparameter *current-highlighted-ui-item* nil)
 (defparameter *current-choice-menu-and-pos* nil) ;nil or (menu x y)
-(defparameter *object-pick-requested* nil)
 
 (defparameter *scene-view* nil)
 
@@ -45,25 +44,17 @@
 
 ;;;; utils =====================================================================
 
-(defmacro make-pick-request ()
-  `(setf *object-pick-requested* t))
 
-(defmacro when-pick-requested (&body body)
-  `(when *object-pick-requested*
-     (setf *object-pick-requested* nil)
-     ,@body))
+(defun win-to-screen-xy (win-x win-y)
+  ;; In `screen space` (also for OpenGL) origin is in the botton-left. In window
+  ;; space, origin is in the top-left. So, screen-x is same as win-x but we need
+  ;; to translate win-y to get screen-y.
+  (values
+   win-x
+   (- (second *window-size*) win-y)))
 
-(defmacro with-ray-at-current-mouse-pos ((ray) &body body)
-  (let ((g-from (gensym))
-        (g-to (gensym)))
-    `(multiple-value-bind (,g-from ,g-to)
-         (gl-get-picking-ray-coords
-          *current-mouse-pos-x*
-          ;; OpenGL origin is bottom-left, win origin is top-left
-          (- (second *window-size*) *current-mouse-pos-y*))
-       (let ((,ray (make-instance 'ray :from ,g-from :to ,g-to)))
-         ,@body))))
-
+(defun shift-key-p (modifier-keys)
+  (not (not (find :shift modifier-keys))))
 
 ;;;; scene-view ================================================================
 
@@ -326,9 +317,8 @@
 
   ;; object picking
 
-  (when-pick-requested
-    (with-ray-at-current-mouse-pos (ray)
-      (pick ray view)))
+  (when-pick-requested (ray multi-select)
+    (pick ray multi-select (scene view)))
 
   ;; display ui layer
 
@@ -505,10 +495,11 @@
     (setf *current-mouse-pos-y* (second pos))
     (setf *current-mouse-modifier* (and mod-keys (car mod-keys)))
     (cond ((eq action :press)
-           (mouse-click (first pos) (second pos) button mod-keys)))))
+           (mouse-click (first pos) (second pos) button mod-keys)))
+    (multiple-value-bind (x y) (win-to-screen-xy (first pos) (second pos))
+      (make-pick-request x y (shift-key-p mod-keys)))))
 
 (glfw:def-cursor-pos-callback cursor-position-callback (window x y)
-  (make-pick-request)
   ;;  (format t "mouse x: ~a, y: ~a~%" x y)
   (let ((dx (- x *current-mouse-pos-x*))
         (dy (- y *current-mouse-pos-y*)))
