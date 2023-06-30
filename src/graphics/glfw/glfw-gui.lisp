@@ -44,6 +44,18 @@
 
 ;;;; utils =====================================================================
 
+(let ((mouse-moved "undefined"))
+
+  (defun simple-click-disturbed ()
+    (setf mouse-moved t))
+
+  (defun simple-click-left-p (button action)
+    (when (eq button :left)
+      (when (eq action :press)
+        (setf mouse-moved nil))
+      (when (eq action :release)
+        (eq mouse-moved nil))))
+  )
 
 (defun win-to-screen-xy (win-x win-y)
   ;; In `screen space` (also for OpenGL) origin is in the botton-left. In window
@@ -496,8 +508,9 @@
     (setf *current-mouse-modifier* (and mod-keys (car mod-keys)))
     (cond ((eq action :press)
            (mouse-click (first pos) (second pos) button mod-keys)))
-    (multiple-value-bind (x y) (win-to-screen-xy (first pos) (second pos))
-      (make-pick-request x y (shift-key-p mod-keys)))))
+    (when (simple-click-left-p button action)
+      (multiple-value-bind (x y) (win-to-screen-xy (first pos) (second pos))
+        (make-pick-request x y (shift-key-p mod-keys))))))
 
 (glfw:def-cursor-pos-callback cursor-position-callback (window x y)
   ;;  (format t "mouse x: ~a, y: ~a~%" x y)
@@ -509,7 +522,8 @@
       (cond ((eq action :press)
              (mouse-dragged x y dx dy))
             (t
-             (mouse-moved x y dx dy))))))
+             (mouse-moved x y dx dy)))))
+  (simple-click-disturbed))
 
 (defun register-choice-menu (menu x y)
   (setf *current-choice-menu-and-pos* (list menu x y)))
