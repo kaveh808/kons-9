@@ -54,6 +54,6 @@
                   (push (cons distance shape) xs-hit-distances)
                   (push shape xs-miss))))
           xs-all)
-    (stable-sort xs-hit-distances #'< :key #'car)
+    (setf xs-hit-distances (stable-sort xs-hit-distances #'< :key #'car))
     (let ((xs-hit (mapcar #'cdr xs-hit-distances)))
       (values xs-hit xs-miss))))
