@@ -42,6 +42,32 @@
   view)
 |#
 
+;;;; utils =====================================================================
+
+(let ((mouse-moved "undefined"))
+
+  (defun simple-click-disturbed ()
+    (setf mouse-moved t))
+
+  (defun simple-click-left-p (button action)
+    (when (eq button :left)
+      (when (eq action :press)
+        (setf mouse-moved nil))
+      (when (eq action :release)
+        (eq mouse-moved nil))))
+  )
+
+(defun win-to-screen-xy (win-x win-y)
+  ;; In `screen space` (also for OpenGL) origin is in the botton-left. In window
+  ;; space, origin is in the top-left. So, screen-x is same as win-x but we need
+  ;; to translate win-y to get screen-y.
+  (values
+   win-x
+   (- (second *window-size*) win-y)))
+
+(defun shift-key-p (modifier-keys)
+  (not (not (find :shift modifier-keys))))
+
 ;;;; scene-view ================================================================
 
 (defclass-kons-9 scene-view ()
@@ -301,6 +327,11 @@
   (when *display-ground-plane?*
     (draw-ground-plane))
 
+  ;; object picking
+
+  (when-pick-requested (ray multi-select)
+    (pick ray multi-select (scene view)))
+
   ;; display ui layer
 
   (2d-setup-projection (first *window-size*) (second *window-size*))
@@ -476,7 +507,10 @@
     (setf *current-mouse-pos-y* (second pos))
     (setf *current-mouse-modifier* (and mod-keys (car mod-keys)))
     (cond ((eq action :press)
-           (mouse-click (first pos) (second pos) button mod-keys)))))
+           (mouse-click (first pos) (second pos) button mod-keys)))
+    (when (simple-click-left-p button action)
+      (multiple-value-bind (x y) (win-to-screen-xy (first pos) (second pos))
+        (make-pick-request x y (shift-key-p mod-keys))))))
 
 (glfw:def-cursor-pos-callback cursor-position-callback (window x y)
   ;;  (format t "mouse x: ~a, y: ~a~%" x y)
@@ -488,7 +522,8 @@
       (cond ((eq action :press)
              (mouse-dragged x y dx dy))
             (t
-             (mouse-moved x y dx dy))))))
+             (mouse-moved x y dx dy)))))
+  (simple-click-disturbed))
 
 (defun register-choice-menu (menu x y)
   (setf *current-choice-menu-and-pos* (list menu x y)))

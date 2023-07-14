@@ -54,6 +54,9 @@
    (:file "src/kernel/scene-duplicate")
    (:file "src/kernel/protocol")
    (:file "src/kernel/clobber")
+   (:file "src/kernel/ray-triangle-intersect")
+   (:file "src/kernel/ray")
+   (:file "src/kernel/object-picking")
    (:file "src/kernel/main")
    ;; font libraries -- tmp until we use 3b-bmfont
    (:module "lib/JMC-font-libs/font-master"
@@ -115,7 +118,8 @@
 		 (:file "assertions")
  		 (:module "kernel"
  		  :components ((:file "utils")
-			       (:file "point-cloud")))
+			       (:file "point-cloud")
+                               (:file "ray-triangle-intersect")))
  		 (:file "entrypoint")))))
 
 (asdf:defsystem #:kons-9/api-docs

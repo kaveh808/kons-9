@@ -508,4 +508,18 @@
   (gl:enable :blend)
 )
 
+;;; ray  =======================================================================
 
+(defun gl-get-camera-position ()
+  (let* ((inverse-matrix (origin.dmat4:invert (gl:get-double :modelview-matrix)))
+         (position (origin.dmat4:get-translation inverse-matrix)))
+    (p-vec position)))
+
+(defun gl-unproject-to-far-plane (screen-x screen-y)
+  (multiple-value-bind (x y z)
+      (glu:un-project screen-x screen-y 1.d0)
+    (p! x y z)))
+
+(defun gl-get-picking-ray-coords (screen-x screen-y)
+  (values (gl-get-camera-position)
+          (gl-unproject-to-far-plane screen-x screen-y)))
