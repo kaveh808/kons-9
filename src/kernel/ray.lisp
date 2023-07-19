@@ -31,8 +31,10 @@
             (setf min-distance distance)))))
     min-distance))
 
+;;; ignore shapes for which the method is not defined; do not throw error
 (defmethod intersect ((self ray) (shape shape))
-  (error "INTERSECT not implemented"))
+  nil)
+;;  (error "INTERSECT not implemented"))
 
 (defmethod intersect ((self ray) (polyh polyhedron))
   (multiple-value-bind (lo hi) (get-bounds-world polyh)
