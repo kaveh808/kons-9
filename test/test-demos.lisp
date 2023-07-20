@@ -10,6 +10,7 @@ functions and the like.
 
 (let ((demo-files '("demo-kernel"
                     "demo-procedural-curve"
+                    "demo-parametric-curve"
                     "demo-uv-mesh"
                     "demo-superquadric"
                     "demo-heightfield"

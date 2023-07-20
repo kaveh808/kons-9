@@ -37,8 +37,14 @@
               (get-bounds p-cloud)))
         (get-bounds p-cloud))))
 
-(defun make-point-cloud (points)
-  (make-instance 'point-cloud :points points))
+(defun make-point-cloud (points &optional (colors nil))
+  (make-instance 'point-cloud :points points :point-colors colors))
+
+(defmethod append-point ((p-cloud point-cloud) point &optional (color nil))
+  (vector-push-extend point (points p-cloud))
+  (when (point-colors p-cloud)
+    (vector-push-extend (or color (shading-color *drawing-settings*)) (point-colors p-cloud)))
+  p-cloud)
 
 (defmethod freeze-transform ((p-cloud point-cloud))
   (transform-point-array! (points p-cloud) (transform-matrix (transform p-cloud)))
