@@ -441,8 +441,8 @@ Animate the scene and evaluate the expression below again to see updated
 matrices.
 |#
 (let ((paths (get-shape-paths *scene* (find-shape-by-name *scene* 'tetra))))
-  (pprint (shape-global-matrix *scene* (first paths)))
-  (pprint (shape-global-matrix *scene* (second paths))))
+  (pprint (shape-path-global-matrix *scene* (first paths)))
+  (pprint (shape-path-global-matrix *scene* (second paths))))
 
 #|
 Find motions by name.

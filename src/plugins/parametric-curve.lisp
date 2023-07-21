@@ -71,7 +71,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
 
 ;;; parametric-curve shape functions ----------------------------------------------------
 
-;;; just a fun mathematical curve
+;;; just a fun mathematical curve -- https://en.wikipedia.org/wiki/Butterfly_curve_(transcendental)
 (defun make-butterfly-curve (num-segments)
   (let ((points (make-array num-segments))
         (angle-delta (/ (* 12 pi) num-segments)))
@@ -84,4 +84,38 @@ NOTE: This won't work with the existing procedural mixin set up, because
                   (* (cos angle) radius)
                   0))))
     (make-curve points)))
+
+;;; the two functions below are inspired by spirograph curves
+
+;;; hypotrochoid curve -- https://en.wikipedia.org/wiki/Hypotrochoid
+;;; NOTE: fixed-r and rolling-r must be integer values due to lcm calculation
+;;; resulting curve is scaled by 1/fixed-r
+(defun make-hypotrochoid-curve (fixed-r rolling-r dist num-segments)
+  (let* ((points (make-array num-segments))
+         (total-sweep (* 2 pi (/ (lcm fixed-r rolling-r) fixed-r)))
+         (theta-delta (/ total-sweep num-segments)))
+    (dotimes (i num-segments)
+      (let* ((theta (* i theta-delta))
+             (angle (* (/ (- fixed-r rolling-r) rolling-r) theta)))
+        (setf (aref points i)
+              (p! (+ (* (- fixed-r rolling-r) (cos theta)) (* dist (cos angle)))
+                  (- (* (- fixed-r rolling-r) (sin theta)) (* dist (sin angle)))
+                  0))))
+    (scale-by (make-curve points) (/ 1.0 fixed-r))))
+
+;;; epitrochoid curve -- https://en.wikipedia.org/wiki/Epitrochoid
+;;; NOTE: fixed-r and rolling-r must be integer values due to lcm calculation
+;;; resulting curve is scaled by 1/fixed-r
+(defun make-epitrochoid-curve (fixed-r rolling-r dist num-segments)
+  (let* ((points (make-array num-segments))
+         (total-sweep (* 2 pi (/ (lcm fixed-r rolling-r) fixed-r)))
+         (theta-delta (/ total-sweep num-segments)))
+    (dotimes (i num-segments)
+      (let* ((theta (* i theta-delta))
+             (angle (* (/ (+ fixed-r rolling-r) rolling-r) theta)))
+        (setf (aref points i)
+              (p! (- (* (+ fixed-r rolling-r) (cos theta)) (* dist (cos angle)))
+                  (- (* (+ fixed-r rolling-r) (sin theta)) (* dist (sin angle)))
+                  0))))
+    (scale-by (make-curve points) (/ 1.0 fixed-r))))
 

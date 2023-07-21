@@ -204,6 +204,9 @@
 (defmethod get-shape-paths ((scene scene) (item scene-item))
   (get-shape-paths-aux scene item))
 
+(defmethod get-shape-first-path ((scene scene) (item scene-item))
+  (first (get-shape-paths-aux scene item)))
+
 (defgeneric get-shape-paths-aux (obj item)
   
   (:method ((scene scene) item)
@@ -234,20 +237,24 @@
 
 ;;; shape-path matrix ----------------------------------------------------------
 
-(defmethod shape-global-matrix ((scene scene) shape-path)
-  (let ((matrix-list (get-shape-matrix-list scene shape-path)))
+(defmethod shape-global-matrix ((scene scene) shape)
+ (shape-path-global-matrix scene (get-shape-first-path scene shape)))
+
+;;; we need to reverse the order of the matrix-list to get the correct transformation
+(defmethod shape-path-global-matrix ((scene scene) shape-path)
+  (let ((matrix-list (reverse (get-shape-path-matrix-list scene shape-path))))
     (if matrix-list
         (apply #'matrix-multiply-n matrix-list)
         (error "Shape not found for scene path ~a" shape-path))))
 
-(defgeneric get-shape-matrix-list (obj shape-path)
+(defgeneric get-shape-path-matrix-list (obj shape-path)
   
   (:method ((scene scene) shape-path)
     (if (null shape-path)
         (make-id-matrix)
         (let ((child (find (first shape-path) (children (shape-root scene)) :key #'name)))
           (if child
-              (get-shape-matrix-list child (rest shape-path))
+              (get-shape-path-matrix-list child (rest shape-path))
               nil))))
 
   (:method ((group shape-group) shape-path)
@@ -256,7 +263,7 @@
         (let* ((child (find (first shape-path) (children group) :key #'name)))
           (if child
               (cons (transform-matrix (transform group))
-                    (get-shape-matrix-list child (rest shape-path)))
+                    (get-shape-path-matrix-list child (rest shape-path)))
               nil))))
 
   (:method ((shape shape) shape-path)
@@ -264,6 +271,14 @@
         (list (transform-matrix (transform shape)))
         nil))
   )
+
+;;; shape-path global point ----------------------------------------------------
+
+(defmethod shape-global-point ((scene scene) shape point)
+  (shape-path-global-point scene (get-shape-first-path scene shape) point))
+
+(defmethod shape-path-global-point ((scene scene) shape-path point)
+  (transform-point point (shape-path-global-matrix scene shape-path)))
 
 ;;;; scene motion hierarchy functions ==========================================
 
