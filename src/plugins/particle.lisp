@@ -254,9 +254,10 @@
   (when *display-points?*
     (draw-points p-sys nil)))
 
+;;; TODO -- support point colors
 (defmethod draw-wireframe ((p-sys particle-system))
   (do-array (i ptcl (particles p-sys))
-    (3d-draw-curve (points ptcl) nil)))
+    (3d-draw-curve (points ptcl) nil nil)))
 
 (defmethod draw-live-points ((p-sys particle-system) use-point-colors?)
   (declare (ignore use-point-colors?))  ;TODO -- maybe implement later

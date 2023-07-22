@@ -22,8 +22,22 @@ Make sure you have opened the graphics window by doing:
 (with-clear-scene
   (add-shape *scene* (make-butterfly-curve 1024)))
 
+;;; assign point colors
+(with-clear-scene
+  (let ((curve (add-shape *scene* (make-butterfly-curve 1024))))
+    (set-point-colors-by-xyz curve
+                             (lambda (p)
+                               (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))))
+
+
 (with-clear-scene
   (add-shape *scene* (make-hypotrochoid-curve 5 3 5 128)))
+
+;;; assign point colors
+(with-clear-scene
+  (let ((curve (add-shape *scene* (make-hypotrochoid-curve 5 3 5 128))))
+    (set-point-colors-by-order curve
+                               (lambda (f) (c-rainbow f)))))
 
 ;; special case -- ellipse
 (with-clear-scene
@@ -35,40 +49,48 @@ Make sure you have opened the graphics window by doing:
 (with-clear-scene
   (add-shape *scene* (make-epitrochoid-curve 9 7 5 512)))
 
-;;; spirograph-like setup ------------------------------------------------------
+;;; spirograph -----------------------------------------------------------------
 
 (with-clear-scene
-  (let* ((ring-radius 2.5)
-         (gear-radius 0.7)
-         (arm-length 0.5)
-         (gear-inside-ring? t)
-         (rotation-increment 5)
-         (gear-rotation-step (* (/ ring-radius gear-radius)
-                                rotation-increment
-                                (if gear-inside-ring? -1.0 1.0)))
-         (gear-offset (if gear-inside-ring?
-                          (- ring-radius gear-radius)
-                          (+ ring-radius gear-radius)))
-         (curve (make-instance 'curve :is-closed-curve? nil))
-         (gear (make-circle (* 2 gear-radius) 16))
-         (arm (make-line-curve (p! 0 0 0) (p! 0 arm-length 0) 1))
-         (gear-assembly (translate-by (make-shape-group (list gear arm))
-                                       (p! 0 gear-offset 0)))
-         (top-assembly (make-shape-group (list gear-assembly)))
-         (anim (make-instance 'animator
-                              :update-fn (lambda ()
-                                           (rotate-by top-assembly (p! 0 0 rotation-increment))
-                                           (rotate-by gear-assembly (p! 0 0 gear-rotation-step))
-                                           (append-point curve
-                                                         (shape-global-point *scene*
-                                                                             gear
-                                                                             (p! 0 arm-length 0)))
-                                           ))))
-    (setf (end-frame *scene*) 10000)
-    (add-shape *scene* top-assembly)
-    (add-shape *scene* (make-circle (* 2 ring-radius) 64))
-    (add-shape *scene* curve)
-    (add-motion *scene* anim)))
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (make-spirograph *scene* 2.5 0.7 0.6 t  0.0 5.0))
+
+;;; hold down space key in 3D view to run animation
+
+;;; run complete cycle
+(update-scene *scene* 505)
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (let ((curve (make-spirograph *scene* 2.5 0.3 0.6 t  0.0 2.0)))
+    (update-scene *scene* 541)             ;run complete cycle
+    (set-point-colors-by-order curve
+                               (lambda (f) (c-rainbow f)))))
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (make-spirograph *scene* 2.5 0.7 0.6 t  0.0 5.0 :color (c-rainbow 0.0))
+  (make-spirograph *scene* 2.5 0.7 0.6 t  3.0 5.0 :color (c-rainbow 0.25))
+  (make-spirograph *scene* 2.5 0.7 0.6 t  6.0 5.0 :color (c-rainbow 0.5))
+  (make-spirograph *scene* 2.5 0.7 0.6 t  9.0 5.0 :color (c-rainbow 0.75))
+  (make-spirograph *scene* 2.5 0.7 0.6 t 12.0 5.0 :color (c-rainbow 1.0))
+  (make-spirograph *scene* 2.5 0.3 0.25 nil 0.0 2.5 :color (c! 1 0 0))
+  (make-spirograph *scene* 2.75 0.35 0.2 nil 0.0 2.5 :color (c! 0 1 0))
+  (make-spirograph *scene* 2.5 0.4 0.6 nil 0.0 2.5 :color (c! 0 0 1))
+  )
+
+;;; hold down space key in 3D view to run animation
+
+;;; run complete cycle
+(update-scene *scene* 1010)
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (let ((curve (make-spirograph *scene* 2.5 0.3 0.6 t  0.0 2.0)))
+    (update-scene *scene* 542)             ;run complete cycle
+    (set-point-colors-by-xyz (add-shape *scene* (make-sweep-mesh (make-circle .2 6) 0 curve 0))
+                             (lambda (p)
+                               (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))))
 
 ;;;; END ========================================================================
 

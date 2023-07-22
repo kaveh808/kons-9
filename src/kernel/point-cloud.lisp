@@ -43,7 +43,7 @@
 (defmethod append-point ((p-cloud point-cloud) point &optional (color nil))
   (vector-push-extend point (points p-cloud))
   (when (point-colors p-cloud)
-    (vector-push-extend (or color (shading-color *drawing-settings*)) (point-colors p-cloud)))
+    (vector-push-extend (or color (fg-color *drawing-settings*)) (point-colors p-cloud)))
   p-cloud)
 
 (defmethod freeze-transform ((p-cloud point-cloud))
@@ -51,18 +51,30 @@
   (reset-transform (transform p-cloud))
   p-cloud)
 
-(defmethod allocate-point-colors ((p-cloud point-cloud))
+(defmethod allocate-point-colors ((p-cloud point-cloud)
+                                  &optional (color (fg-color *drawing-settings*)))
   (setf (point-colors p-cloud) (make-array (length (points p-cloud))
-                                           :initial-element (shading-color *drawing-settings*))))
-  
+                                           :adjustable t :fill-pointer t
+                                           :initial-element color))
+  p-cloud)
+
 (defmethod reset-point-colors ((p-cloud point-cloud))
   (allocate-point-colors p-cloud)
   p-cloud)
+
+(defmethod set-point-colors ((p-cloud point-cloud) color)
+  (allocate-point-colors p-cloud color))
 
 (defmethod set-point-colors-by-xyz ((p-cloud point-cloud) color-fn)
   (allocate-point-colors p-cloud)
   (do-array (i p (points p-cloud))
     (setf (aref (point-colors p-cloud) i) (funcall color-fn p))))
+
+(defmethod set-point-colors-by-order ((p-cloud point-cloud) color-fn)
+  (allocate-point-colors p-cloud)
+  (let ((n (length (points p-cloud))))
+    (do-array (i p (points p-cloud))
+      (setf (aref (point-colors p-cloud) i) (funcall color-fn (/ i n))))))
 
 ;;; point generator functions --------------------------------------------------
 
