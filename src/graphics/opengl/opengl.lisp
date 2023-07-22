@@ -316,7 +316,7 @@
         (gl:end)))
     (gl-set-color (shading-color *drawing-settings*))))    ;reset color
 
-(defun 3d-draw-curve (points is-closed? &optional (line-width (line-thickness *drawing-settings*)))
+(defun 3d-draw-curve (points point-colors is-closed? &optional (line-width (line-thickness *drawing-settings*)))
   (with-gl-disable :lighting
     (gl-set-fg-color)
     (gl:line-width line-width)
@@ -324,8 +324,11 @@
         (gl:begin :line-loop)
         (gl:begin :line-strip))
     (do-array (i p points)
+      (when point-colors
+        (gl-set-color (aref point-colors i)))
       (gl:vertex (p:x p) (p:y p) (p:z p)))
-    (gl:end)))
+    (gl:end)
+    (gl-set-fg-color)))
 
 (defun 3d-draw-points (points point-colors &key (highlight? nil))
   (with-gl-disable :lighting

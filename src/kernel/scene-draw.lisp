@@ -88,7 +88,7 @@
 
 ;;; curve helper methods -----------------------------------------------------
 (defmethod draw-wireframe ((curve curve))
-  (3d-draw-curve (points curve) (is-closed-curve? curve)))
+  (3d-draw-curve (points curve) (point-colors curve) (is-closed-curve? curve)))
 
 ;;; polyhedron helper methods --------------------------------------------------
 
