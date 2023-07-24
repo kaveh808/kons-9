@@ -35,7 +35,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
   (when (show-control-hull? curve)
     (let ((hull (vector (cv0 curve) (cv1 curve) (cv2 curve) (cv3 curve))))
       (when *display-wireframe?*
-        (3d-draw-curve hull nil (secondary-line-thickness *drawing-settings*)))
+        (3d-draw-curve hull nil nil (secondary-line-thickness *drawing-settings*)))
       (when *display-points?*
         (3d-draw-points hull nil)))))
 
