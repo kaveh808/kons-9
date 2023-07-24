@@ -119,7 +119,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
                   0))))
     (scale-by (make-curve points) (/ 1.0 fixed-r))))
 
-;;; spirograph-like setup ------------------------------------------------------
+;;; spirograph-like setups -----------------------------------------------------
 
 (defun make-spirograph (scene ring-radius gear-radius arm-length gear-inside-ring?
                         rotation-offset rotation-increment &key (show-assembly? nil) (color nil))
@@ -147,6 +147,55 @@ NOTE: This won't work with the existing procedural mixin set up, because
                              (rotate-by gear-assembly (p! 0 0 gear-rotation-step))
                              (append-point curve
                                            (shape-global-point scene gear pen-location)
+                                           color)))))
+    (add-shape scene top-assembly)
+    (add-shape scene ring)
+    (setf (is-visible? top-assembly) show-assembly?)
+    (setf (is-visible? ring) show-assembly?)
+    (add-shape scene curve)
+    (add-motion scene anim)
+    curve))
+
+;;; "double" spirograph setup with two gears rolling on each other
+;;; this setup is not physically possible
+
+(defun make-spirograph-double (scene ring-radius gear-1-radius gear-2-radius arm-length
+                               gear-1-inside-ring? gear-2-inside-gear-1?
+                               rotation-offset rotation-increment &key (show-assembly? nil) (color nil))
+  (let* ((gear-1-rotation-step (* (/ ring-radius gear-1-radius)
+                                  rotation-increment
+                                  (if gear-1-inside-ring? -1.0 1.0)))
+         (gear-1-offset (if gear-1-inside-ring?
+                            (- ring-radius gear-1-radius)
+                            (+ ring-radius gear-1-radius)))
+         (gear-2-rotation-step (* (/ gear-1-radius gear-2-radius)
+                                  gear-1-rotation-step
+                                  (if gear-2-inside-gear-1? -1.0 1.0)))
+         (gear-2-offset (if gear-2-inside-gear-1?
+                            (- gear-1-radius gear-2-radius)
+                            (+ gear-1-radius gear-2-radius)))
+         (ring (make-circle (* 2 ring-radius) 64))
+         (gear-1 (make-circle (* 2 gear-1-radius) 16))
+         (gear-2 (make-circle (* 2 gear-2-radius) 16))
+         (pen-location (p! 0 arm-length 0))
+         (arm (make-line-curve (p! 0 0 0) pen-location 1))
+         (gear-2-assembly (translate-by (make-shape-group (list gear-2 arm))
+                                        (p! 0 gear-2-offset 0)))
+         (gear-1-assembly (translate-by (make-shape-group (list gear-1 gear-2-assembly))
+                                        (p! 0 gear-1-offset 0)))
+         (top-assembly (make-shape-group (list gear-1-assembly)))
+         ;; generated curve with point colors
+         (curve (allocate-point-colors (make-instance 'curve :is-closed-curve? nil)))
+         (anim (make-instance
+                'animator
+                :setup-fn (lambda ()
+                            (rotate-by top-assembly (p! 0 0 rotation-offset)))
+                :update-fn (lambda ()
+                             (rotate-by top-assembly (p! 0 0 rotation-increment))
+                             (rotate-by gear-1-assembly (p! 0 0 gear-1-rotation-step))
+                             (rotate-by gear-2-assembly (p! 0 0 gear-2-rotation-step))
+                             (append-point curve
+                                           (shape-global-point scene gear-2 pen-location)
                                            color)))))
     (add-shape scene top-assembly)
     (add-shape scene ring)
