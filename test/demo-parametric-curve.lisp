@@ -92,5 +92,49 @@ Make sure you have opened the graphics window by doing:
                              (lambda (p)
                                (c-rainbow (clamp (tween (p:y p) -2 2) 0.0 1.0))))))
 
+;;; "double" spirograph --------------------------------------------------------
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (make-spirograph-double *scene* 2.5 0.7 0.5 0.6 t nil  0.0 2.0 :show-assembly? t))
+
+;;; hold down space key in 3D view to run animation
+
+;;; run complete cycle
+(update-scene *scene* 1264)
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (make-spirograph-double *scene* 2.5 0.7 0.2 0.6 t nil  0.0 1.0 :show-assembly? t))
+
+;;; hold down space key in 3D view to run animation
+
+;;; run complete cycle
+(update-scene *scene* 5042)
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (make-spirograph-double *scene* 2.5 0.7 0.2 0.3 nil nil  0.0 1.0 :show-assembly? t))
+
+;;; hold down space key in 3D view to run animation
+
+;;; run complete cycle
+(update-scene *scene* 5042)
+
+(with-clear-scene
+  (setf (end-frame *scene*) 10000)      ;arbitrarily long scene duration
+  (make-spirograph-double *scene* 2.5 0.7 0.5 0.6 t nil  0.0 2.0 :color (c-rainbow 0.00))
+  (make-spirograph-double *scene* 2.5 0.7 0.5 0.6 t nil  3.0 2.0 :color (c-rainbow 0.25))
+  (make-spirograph-double *scene* 2.5 0.7 0.5 0.6 t nil  6.0 2.0 :color (c-rainbow 0.50))
+  (make-spirograph-double *scene* 2.5 0.7 0.5 0.6 t nil  9.0 2.0 :color (c-rainbow 0.75))
+  (make-spirograph-double *scene* 2.5 0.7 0.5 0.6 t nil 12.0 2.0 :color (c-rainbow 1.00))
+  )
+
+;;; hold down space key in 3D view to run animation
+
+;;; run complete cycle
+(update-scene *scene* 1264)
+
+
 ;;;; END ========================================================================
 
