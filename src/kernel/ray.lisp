@@ -46,16 +46,3 @@
         ;; of intersecting with triangles.
         (intersect-triangles self (triangles-world-array polyh))))))
 
-(defmethod intersect ((self ray) (scene scene))
-  (let ((xs-hit-distances '())
-        (xs-miss '())
-        (xs-all (find-shapes scene #'identity)))
-    (mapc (lambda (shape)
-            (let ((distance (intersect self shape)))
-              (if distance
-                  (push (cons distance shape) xs-hit-distances)
-                  (push shape xs-miss))))
-          xs-all)
-    (setf xs-hit-distances (stable-sort xs-hit-distances #'< :key #'car))
-    (let ((xs-hit (mapcar #'cdr xs-hit-distances)))
-      (values xs-hit xs-miss))))
