@@ -56,6 +56,7 @@
    (:file "src/kernel/clobber")
    (:file "src/kernel/ray-triangle-intersect")
    (:file "src/kernel/ray")
+   (:file "src/kernel/selection-cone")
    (:file "src/kernel/object-picking")
    (:file "src/kernel/main")
    ;; font libraries -- tmp until we use 3b-bmfont
