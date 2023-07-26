@@ -204,3 +204,61 @@ NOTE: This won't work with the existing procedural mixin set up, because
     (add-shape scene curve)
     (add-motion scene anim)
     curve))
+
+;;; spirograph setup with spring and mass attached to arm
+
+(defun make-spirograph-spring (scene ring-radius gear-radius arm-length gear-inside-ring?
+                               rotation-offset rotation-increment
+                               spring-rest-length spring-end-mass spring-stiffness
+                               &key (show-assembly? nil) (color nil)
+                                 (do-collisions? nil) (force-fields '()))
+  (let* ((gear-rotation-step (* (/ ring-radius gear-radius)
+                                rotation-increment
+                                (if gear-inside-ring? -1.0 1.0)))
+         (gear-offset (if gear-inside-ring?
+                          (- ring-radius gear-radius)
+                          (+ ring-radius gear-radius)))
+         (ring (make-circle (* 2 ring-radius) 64))
+         (gear (make-circle (* 2 gear-radius) 16))
+         (pen-location (p! 0 arm-length 0))
+         (arm (make-line-curve (p! 0 0 0) pen-location 1))
+         (gear-assembly (translate-by (make-shape-group (list gear arm))
+                                      (p! 0 gear-offset 0)))
+         (top-assembly (make-shape-group (list gear-assembly)))
+         ;; spring
+         (spring (make-line-curve (p! 0 (+ gear-offset arm-length) 0)
+                                  (p! 0 (+ gear-offset arm-length spring-rest-length) 0)
+                                  1))
+         (flex-anim (make-flex-animator spring))
+         ;; generated curve with point colors
+         (curve (allocate-point-colors (make-instance 'curve :is-closed-curve? nil)))
+         (anim (make-instance
+                'animator
+                :setup-fn (lambda ()
+                            (rotate-by top-assembly (p! 0 0 rotation-offset)))
+                :update-fn (lambda ()
+                             (rotate-by top-assembly (p! 0 0 rotation-increment))
+                             (rotate-by gear-assembly (p! 0 0 gear-rotation-step))
+                             (let ((loc (shape-global-point scene gear pen-location)))
+                               (p-set! (aref (points spring) 0) (p:x loc) (p:y loc) (p:z loc)))
+                             (append-point curve
+                                           (aref (points spring) 1)
+                                           color)))))
+    ;; spring
+    (set-point-colors spring (c! 1 0 0))
+    (setf (pinned? (aref (vertices flex-anim) 0)) t)
+    (set-flex-vertex-attr flex-anim 'do-collisions? do-collisions?)
+    (set-flex-vertex-attr flex-anim 'mass spring-end-mass)
+    (set-flex-spring-attr flex-anim 'stiffness spring-stiffness)
+    (set-flex-spring-attr flex-anim 'rest-length spring-rest-length)
+    (setf (force-fields flex-anim) force-fields)
+    (add-shape scene spring)
+    (add-motion scene flex-anim)
+    ;; spirograph
+    (add-shape scene top-assembly)
+    (add-shape scene ring)
+    (setf (is-visible? top-assembly) show-assembly?)
+    (setf (is-visible? ring) show-assembly?)
+    (add-shape scene curve)
+    (add-motion scene anim)
+    curve))
