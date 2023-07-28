@@ -10,14 +10,14 @@
 
 (defun intersect-aabb (ray point-min point-max)
   (origin.geometry:raycast-aabb
-   (origin.geometry.ray:ray :origin (from ray) :direction (to ray))
+   (origin.geometry.ray:ray-from-points :from (from ray) :to (to ray))
    (origin.geometry.aabb:aabb-from-min/max
     :min point-min :max point-max)))
 
 (defun intersect-triangle (ray p0 p1 p2)
   (intersect/triangle
    (origin.geometry.triangle:triangle p0 p1 p2)
-   (origin.geometry.ray:ray :origin (from ray) :direction (to ray))))
+   (origin.geometry.ray:ray-from-points :from (from ray) :to (to ray))))
 
 (defun intersect-triangles (ray triangles)
   (let ((min-distance nil))
