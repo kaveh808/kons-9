@@ -13,21 +13,22 @@
 (defparameter *debug-object-picking-selection-cone* nil)
 
 (defmacro make-pick-request (x y multi-select)
-  `(when *picking-enabled*
-     (setf *picking-request* (list ,x ,y ,multi-select))))
+  (when *picking-enabled*
+    `(setf *picking-request* (list ,x ,y ,multi-select))))
 
 (defmacro when-pick-requested ((from to multi-select) &body body)
-  `(progn
-     (when *picking-request*
-       (let ((screen-x (elt *picking-request* 0))
-             (screen-y (elt *picking-request* 1))
-             (,multi-select (elt *picking-request* 2)))
-         (multiple-value-bind (,from ,to)
-             (gl-get-picking-ray-coords screen-x screen-y)
-           (setf *picking-request* nil)
-           ,@body)))
-     (when *debug-object-picking-selection-cone*
-       (draw-previous-selection-cone))))
+  (when *picking-enabled*
+    `(progn
+       (when *picking-request*
+         (let ((screen-x (elt *picking-request* 0))
+               (screen-y (elt *picking-request* 1))
+               (,multi-select (elt *picking-request* 2)))
+           (multiple-value-bind (,from ,to)
+               (gl-get-picking-ray-coords screen-x screen-y)
+             (setf *picking-request* nil)
+             ,@body)))
+       (when *debug-object-picking-selection-cone*
+         (draw-previous-selection-cone)))))
 
 ;; Given a scene, the below macro gets the currently selected items. It then
 ;; sets the scene selection to those items returned by the body form.
