@@ -10,7 +10,10 @@
 ;; intersected. Setting the below debug flag to true causes the selection cone
 ;; to be drawn along with the points of intersection. Note: The selection cone
 ;; only becomes visible once the scene is rotated immediately after a pick.
-(defparameter *debug-object-picking-selection-cone* nil)
+(defparameter *debug-object-picking-selection-cone* ())
+
+;; Similarly for debugging ray intersection
+(defparameter *debug-object-picking-ray* ())
 
 (defmacro make-pick-request (x y multi-select)
   (when *picking-enabled*
@@ -28,7 +31,9 @@
              (setf *picking-request* nil)
              ,@body)))
        (when *debug-object-picking-selection-cone*
-         (draw-previous-selection-cone)))))
+         (draw-previous-selection-cone))
+       (when *debug-object-picking-ray*
+         (draw-previous-ray)))))
 
 ;; Given a scene, the below macro gets the currently selected items. It then
 ;; sets the scene selection to those items returned by the body form.
@@ -67,6 +72,8 @@
 (defun intersect-shapes (ray cone shapes)
   (when *debug-object-picking-selection-cone*
     (set-previous-selection-cone-and-intersects cone))
+  (when *debug-object-picking-ray*
+    (set-previous-ray ray))
   (let ((xs-hit-distances '())
         (xs-miss '()))
     (mapc (lambda (shape)
