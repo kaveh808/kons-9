@@ -4,17 +4,36 @@
 (defparameter *picking-request* nil)
 (defparameter *picking-selector* nil)
 
-(defmacro make-pick-request (x y multi-select)
-  `(when *picking-enabled*
-     (setf *picking-request* (list ,x ,y ,multi-select))))
+(defparameter *object-picking-selection-cone-angle* (/ PI 180))
 
-(defmacro when-pick-requested ((ray multi-select) &body body)
-  `(when *picking-request*
-     (let ((,multi-select (elt *picking-request* 2))
-           (,ray (make-ray (elt *picking-request* 0)
-                           (elt *picking-request* 1))))
-       (setf *picking-request* nil)
-       ,@body)))
+;; While debugging, it can be useful to see what is actually being
+;; intersected. Setting the below debug flag to true causes the selection cone
+;; to be drawn along with the points of intersection. Note: The selection cone
+;; only becomes visible once the scene is rotated immediately after a pick.
+(defparameter *debug-object-picking-selection-cone* ())
+
+;; Similarly for debugging ray intersection
+(defparameter *debug-object-picking-ray* ())
+
+(defmacro make-pick-request (x y multi-select)
+  (when *picking-enabled*
+    `(setf *picking-request* (list ,x ,y ,multi-select))))
+
+(defmacro when-pick-requested ((from to multi-select) &body body)
+  (when *picking-enabled*
+    `(progn
+       (when *picking-request*
+         (let ((screen-x (elt *picking-request* 0))
+               (screen-y (elt *picking-request* 1))
+               (,multi-select (elt *picking-request* 2)))
+           (multiple-value-bind (,from ,to)
+               (gl-get-picking-ray-coords screen-x screen-y)
+             (setf *picking-request* nil)
+             ,@body)))
+       (when *debug-object-picking-selection-cone*
+         (draw-previous-selection-cone))
+       (when *debug-object-picking-ray*
+         (draw-previous-ray)))))
 
 ;; Given a scene, the below macro gets the currently selected items. It then
 ;; sets the scene selection to those items returned by the body form.
@@ -29,18 +48,43 @@
            (dolist (item ,g-new-selection)
              (add-to-selection ,g-scene item)))))))
 
-(defun make-ray (screen-x screen-y)
-  (multiple-value-bind (from to) (gl-get-picking-ray-coords screen-x screen-y)
-    (make-instance 'ray :from from :to to)))
+(defun pick (from to multi-select scene)
+  (flet ((make-ray () (make-instance 'ray :from from :to to))
+         (make-cone ()
+           (make-instance 'selection-cone
+                          :from from
+                          :to to
+                          :angle *object-picking-selection-cone-angle*)))
+    (let ((shapes (find-shapes scene #'identity)))
+      (multiple-value-bind (xs-hit xs-miss)
+          (intersect-shapes (make-ray) (make-cone) shapes)
+        (update-scene-selection (current-selection scene)
+          (funcall (choose-picking-selector multi-select)
+                   :xs-hit xs-hit
+                   :xs-miss xs-miss
+                   :xs-current current-selection))))))
 
-(defun pick (ray multi-select scene)
-  (multiple-value-bind (xs-hit xs-miss) (intersect ray scene)
-    (update-scene-selection (current-selection scene)
-      (funcall (choose-picking-selector multi-select)
-               :xs-hit xs-hit
-               :xs-miss xs-miss
-               :xs-current current-selection
-               ))))
+(defun intersect-shape (ray cone shape)
+  (if (typep shape 'curve)
+      (intersect cone shape)
+      (intersect ray shape)))
+
+(defun intersect-shapes (ray cone shapes)
+  (when *debug-object-picking-selection-cone*
+    (set-previous-selection-cone-and-intersects cone))
+  (when *debug-object-picking-ray*
+    (set-previous-ray ray))
+  (let ((xs-hit-distances '())
+        (xs-miss '()))
+    (mapc (lambda (shape)
+            (let ((distance (intersect-shape ray cone shape)))
+              (if distance
+                  (push (cons distance shape) xs-hit-distances)
+                  (push shape xs-miss))))
+          shapes)
+    (setf xs-hit-distances (stable-sort xs-hit-distances #'< :key #'car))
+    (let ((xs-hit (mapcar #'cdr xs-hit-distances)))
+      (values xs-hit xs-miss))))
 
 (defun choose-picking-selector (multi-select)
   (when (functionp *picking-selector*)

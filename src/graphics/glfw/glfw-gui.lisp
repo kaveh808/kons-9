@@ -329,8 +329,8 @@
 
   ;; object picking
 
-  (when-pick-requested (ray multi-select)
-    (pick ray multi-select (scene view)))
+  (when-pick-requested (ray-from ray-to multi-select)
+    (pick ray-from ray-to multi-select (scene view)))
 
   ;; display ui layer
 

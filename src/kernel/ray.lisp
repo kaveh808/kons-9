@@ -1,5 +1,7 @@
 (in-package #:kons-9)
 
+(defparameter *previous-selection-ray* nil)
+
 (defclass ray ()
   ((from :initarg :from :reader from)
    (to :initarg :to :reader to)))
@@ -31,6 +33,26 @@
             (setf min-distance distance)))))
     min-distance))
 
+;;;; display ray (useful for debugging) ========================================
+
+(defun set-previous-ray (ray)
+  (setf *previous-selection-ray* ray))
+
+(defun draw-previous-ray ()
+  (when *previous-selection-ray*
+    (gl:line-width 1)
+    (gl:color 1.0 0.8 0.0)
+    (gl:shade-model :flat)
+    (gl:disable :lighting)
+    (flet ((v (vec3) (apply #'gl:vertex (coerce vec3 'list))))
+      (gl:begin :lines)
+      (v (from *previous-selection-ray*))
+      (v (to *previous-selection-ray*))
+      (gl:end))))
+
+
+;;;; intersect routines ========================================================
+
 ;;; ignore shapes for which the method is not defined; do not throw error
 (defmethod intersect ((self ray) (shape shape))
   nil)
@@ -46,16 +68,3 @@
         ;; of intersecting with triangles.
         (intersect-triangles self (triangles-world-array polyh))))))
 
-(defmethod intersect ((self ray) (scene scene))
-  (let ((xs-hit-distances '())
-        (xs-miss '())
-        (xs-all (find-shapes scene #'identity)))
-    (mapc (lambda (shape)
-            (let ((distance (intersect self shape)))
-              (if distance
-                  (push (cons distance shape) xs-hit-distances)
-                  (push shape xs-miss))))
-          xs-all)
-    (setf xs-hit-distances (stable-sort xs-hit-distances #'< :key #'car))
-    (let ((xs-hit (mapcar #'cdr xs-hit-distances)))
-      (values xs-hit xs-miss))))
