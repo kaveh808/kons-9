@@ -13,7 +13,7 @@
 ;;;; constant-force-field ======================================================
 
 (defclass constant-force-field (force-field)
-  ((force-vector :accessor force-vector :initarg :force-vector :initform (p! 0 -9.81 0))))
+  ((force-vector :accessor force-vector :initarg :force-vector :initform (p! 0 0 0))))
 
 (defmethod field-value ((field constant-force-field) point time)
   (declare (ignore point time))
@@ -33,13 +33,25 @@
         (p! 0 0 0)
         (p:scale dir (/ (magnitude field) (* dist dist))))))
 
-;;;; noise-force-field =========================================================
+;;;; time-varying-force-field ==================================================
 
-(defclass noise-force-field (force-field)
+(defclass time-varying-force-field (constant-force-field)
   ((noise-frequency :accessor noise-frequency :initarg :noise-frequency :initform 1.0)
    (noise-amplitude :accessor noise-amplitude :initarg :noise-amplitude :initform 1.0)))
 
-(defmethod field-value ((field noise-force-field) point time)
+(defmethod field-value ((field time-varying-force-field) point time)
+  (declare (ignore point))
+  (p+ (force-vector field)
+      (p:scale (float-noise-gradient (* time (noise-frequency field)))
+               (noise-amplitude field))))
+
+;;;; 3d-noise-force-field =========================================================
+
+(defclass 3d-noise-force-field (force-field)
+  ((noise-frequency :accessor noise-frequency :initarg :noise-frequency :initform 1.0)
+   (noise-amplitude :accessor noise-amplitude :initarg :noise-amplitude :initform 1.0)))
+
+(defmethod field-value ((field 3d-noise-force-field) point time)
   (declare (ignore time))
   (p:scale (noise-gradient (p:scale point (noise-frequency field)))
            (noise-amplitude field)))

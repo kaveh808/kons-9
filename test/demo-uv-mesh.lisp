@@ -150,7 +150,7 @@ Create a group of UV-MESH shapes along a PARTICLE-SYSTEM.
 
 (with-clear-scene
   (let* ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .2 -.2) (p! .2 .5 .2) 'particle
-                                                 :update-angle (range-float (/ pi 8) (/ pi 16)))))
+                                                 :update-angle (range-float 20.0 10.0))))
     (setf (name p-sys) 'p-system)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)))
