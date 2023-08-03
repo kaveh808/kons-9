@@ -218,7 +218,7 @@ Use a polyhedron as a curve source.
                                :update-fn (lambda ()
                                             (setf (threshold iso)
                                                   (lerp (tween (current-frame *scene*) 0 60)
-                                                        10.0 80.0))
+                                                        10.0 200.0))
                                            (generate-isosurface iso)))))
   )
 
@@ -230,26 +230,62 @@ Use a particle system as a curve source.
 (format t "  isosurface 10...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point (p! 0 3 0) 10 (p! -.2 -.2 -.2) (p! .2 .2 .2)
-                                     'particle
-                                     :update-angle (range-float (/ pi 8) (/ pi 16))
-                                     :life-span 10)))
+  (let ((p-sys (make-particle-system-from-point (p! 0 0 0) 6 (p! -.2 .0 -.0) (p! .2 .0 .0)
+                                     'dynamic-particle
+                                     :spawn-angle (range-float 10.0 5.0)
+                                     :update-angle (range-float 10.0 5.0)
+                                     :life-span 10
+                                     :force-fields (list (make-instance 'constant-force-field
+                                                                        :force-vector (p! 0 .02 0))))))
     ;; add particle system to scene as both a shape and a motion
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
     ;;; run animation
-    (update-scene *scene* 15)
+    (update-scene *scene* 30)
     ;;; create field and isosurface from particle paths (curves)
     (let* ((field (apply-field-function (make-scalar-field 40 40 40
-                                                           :bounds-lo (p! -3 0 -3)
-                                                           :bounds-hi (p!  3 6  3))
+                                                           :bounds-lo (p! -7 -1 -7)
+                                                           :bounds-hi (p!  7 11  7))
                                         (curve-source-field-fn p-sys
-                                                               (one-over-r-squared-value-fn 1.0 1.2))))
-           (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 100.0))))
+                                                               (one-over-r-squared-value-fn 1.0 1.0))))
+           (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 70.0))))
       (add-shape *scene* iso))))
 
 #|
-(Demo 11 isosurface) signed distance functions =================================
+(Demo 11 isosurface) dynamic particle system with an attractor force field =======
+
+Use a particle system as a curve source.
+|#
+
+(format t "  isosurface 11...~%") (finish-output)
+
+(with-clear-scene
+  (let ((p-sys (make-particle-system-from-point-source
+                (make-circle-curve 4 8)
+                nil
+;;                (lambda (v) (p:scale (p:normalize (p+ v (p-rand))) 0.4))
+                'dynamic-particle
+                :life-span -1 ;infinite life-span
+                :do-collisions? nil
+                :force-fields (list (make-instance 'attractor-force-field
+                                                   :location (p! 0 0 0)
+                                                   :magnitude 1.2)))))
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)
+        ;;; run animation
+    (update-scene *scene* 60)
+    ;;; create field and isosurface from particle paths (curves)
+    (let* ((field (apply-field-function (make-scalar-field 40 40 40
+                                                           :bounds-lo (p! -15 -15 -8)
+                                                           :bounds-hi (p!  15  15  8))
+                                        (curve-source-field-fn p-sys
+                                                               (one-over-r-squared-value-fn 1.0 1.0))))
+           (iso (generate-isosurface (make-instance 'isosurface :field field :threshold 4.0))))
+      (add-shape *scene* iso)
+      )))
+
+#|
+(Demo 12 isosurface) signed distance functions =================================
 
 Use signed distance functions with APPLY-FIELD-FUNCTION to set the values of
 a SCALAR-FIELD.
@@ -289,7 +325,7 @@ Comment in the desired function.
   )
 
 #|
-(Demo 12 isosurface) voxel grid ================================================
+(Demo 13 isosurface) voxel grid ================================================
 
 Visualize an ISOSURFACE as a VOXEL-GRID-SHAPE. Note the isosurface does not
 need to be generated.
@@ -305,7 +341,7 @@ need to be generated.
   )
 
 #|
-(Demo 13 isosurface) voxel grid, animating isosurface threshold ================
+(Demo 14 isosurface) voxel grid, animating isosurface threshold ================
 
 Animate the threshold value of the ISOSURFACE and visualize as a
 VOXEL-GRID-SHAPE. Note the isosurface does not need to be generated.
