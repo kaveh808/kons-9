@@ -168,7 +168,7 @@ in this and demos below, update the *EXAMPLE-MOL-FILENAME* for your setup.")
 (with-clear-scene
   (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0.1 0)))
                                       (p! 0 .2 0) 10 -1 'particle
-                                      :update-angle (range-float (/ pi 8) (/ pi 16))
+                                      :update-angle (range-float 20.0 10.0)
                                       :life-span (rand1 5 10))))
                                         ;    (setf (draw-live-points-only? p-sys) nil)
     (setf (name p-sys) 'p-system)
@@ -187,7 +187,7 @@ in this and demos below, update the *EXAMPLE-MOL-FILENAME* for your setup.")
 (with-clear-scene
   (let* ((p-sys (make-particle-system (make-point-cloud (vector (p! 0 0.1 0)))
                                       (p! 0 .2 0) 10 -1 'particle
-                                      :update-angle (range-float (/ pi 8) (/ pi 16))
+                                      :update-angle (range-float 20.0 10.0)
                                       :life-span (rand1 5 10)))
          (shape (make-point-instancer-group p-sys
                                             (make-octahedron .2))))

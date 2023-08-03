@@ -83,7 +83,7 @@ with the particle system.
                                                         (lambda (v) (p:scale v 0.2))
                                                         'particle
                                       :life-span (round (rand2 5 10))
-                                      :update-angle (range-float (/ pi 16) (/ pi 32))))
+                                      :update-angle (range-float 20.0 10.0)))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.1 6) p-sys
                                                   :taper 1.0 :twist 0.0)))
     (add-shape *scene* p-source)
@@ -107,7 +107,7 @@ The mesh automatically grows with the particle system.
          (p-sys (make-particle-system-from-point (p! 0 3.0 0) 1 (p! -.5 0 -.5) (p! .5 0 .5)
                                                  'climbing-particle
                                                  :support-polyh shape
-                                                 :update-angle (range-float (/ pi 8) (/ pi 16))
+                                                 :update-angle (range-float 20.0 10.0)
                                                  :life-span -1))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                   :taper 1.0 :twist 0.0)))
