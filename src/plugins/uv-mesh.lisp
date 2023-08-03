@@ -65,7 +65,7 @@
   (compute-polyhedron-mesh mesh)
   (compute-face-normals mesh)
   (compute-point-normals mesh)
-  (allocate-point-colors mesh)
+  (allocate-point-colors mesh (c! 1 1 1))
   mesh)
 
 ;; (defun 2d-array-to-list (array)
