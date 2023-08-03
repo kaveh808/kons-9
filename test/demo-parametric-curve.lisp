@@ -155,8 +155,10 @@ Make sure you have opened the graphics window by doing:
   (make-spirograph-spring *scene* 2.5 0.7 0.6 t 0.0 2.0 2.0 1.0 0.5
                           :show-assembly? t :color (c! 0 0 1)
                           :do-collisions? nil
-                          :force-fields (list (make-instance 'constant-force-field
-                                                             :force-vector (p! .1 0 0)))))
+                          :force-fields (list (make-instance 'time-varying-force-field
+                                                             :force-vector (p! 0 0 0)
+                                                             :noise-frequency 10.0
+                                                             :noise-amplitude 8.0))))
 ;;; hold down space key in 3D view to run animation
 
 ;;; run simulation
@@ -168,8 +170,11 @@ Make sure you have opened the graphics window by doing:
   (make-spirograph-spring *scene* 2.5 0.7 0.6 t 0.0 2.0 2.0 1.0 0.5
                           :show-assembly? t :color (c! 0 0 1)
                           :do-collisions? t
-                          :force-fields (list (make-instance 'constant-force-field
-                                                             :force-vector (p! .1 0 0)))))
+                          :force-fields (list (make-instance 'time-varying-force-field
+                                                             :force-vector (p! 0 0 0)
+                                                             :noise-frequency 10.0
+                                                             :noise-amplitude 8.0))))
+
 ;;; hold down space key in 3D view to run animation
 
 ;;; run simulation

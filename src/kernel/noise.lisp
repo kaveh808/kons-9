@@ -91,6 +91,9 @@
                 (* y1 (+ (* x0 p012) (* x1 p112) (* x2 p212)))
                 (* y2 (+ (* x0 p022) (* x1 p122) (* x2 p222))))))))
 
+(defun float-noise (v)
+  (noise (p! v 0 0)))
+
 (defun turbulence (p n-octaves)
   (let ((sum 0.0)
         (scale 1.0))
@@ -107,6 +110,9 @@
          (dy (- (noise (p! x (+ y delta) z)) (noise (p! x (- y delta) z))))
          (dz (- (noise (p! x y (+ z delta))) (noise (p! x y (- z delta))))))
     (p! dx dy dz)))
+
+(defun float-noise-gradient (v &optional (delta 0.01))
+  (noise-gradient (p! v 0 0) delta))
 
 (defun color-noise (p &optional (delta 0.01))
   (let ((pn (p:normalize (noise-gradient p delta))))

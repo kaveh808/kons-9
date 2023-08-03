@@ -194,7 +194,7 @@ force field.
                  'dynamic-particle
                  :life-span -1 ;infinite life-span
                  :do-collisions? nil
-                 :force-fields (list (make-instance 'noise-force-field
+                 :force-fields (list (make-instance '3d-noise-force-field
                                                     :noise-frequency 0.2
                                                     :noise-amplitude 0.2)))))
     (add-shape *scene* shape)
@@ -346,6 +346,36 @@ Create a row particle systems with varrying attributes.
 ;;; hold down space key in 3D view to run animation
 
 (update-scene *scene* 30)               ;do update for batch testing
+
+
+#|
+(Demo 14 particle) dynamic particle system =====================================
+
+Dynamic particles growing from a superquadric with a time-varying force field.
+|#
+
+(format t "  particle-system 14...~%") (finish-output)
+
+(with-clear-scene
+  (let ((p-source (freeze-transform (make-superquadric 16 8 2.0 1.0 1.0))))
+    (setf (point-source-use-face-centers? p-source) t) ;comment out to use poly points
+    (let ((p-sys (make-particle-system-from-point-source
+                  p-source
+                  (lambda (v) (p:scale v 0.2))
+                  'dynamic-particle
+                  :life-span -1 ;infinite life-span
+                  :do-collisions? nil
+                  :force-fields (list (make-instance 'time-varying-force-field
+                                                     :force-vector (p! 0 -0.0 0)
+                                                     :noise-frequency 100
+                                                     :noise-amplitude 4.0)))))
+      (add-shape *scene* p-source)
+      (add-shape *scene* p-sys)
+      (add-motion *scene* p-sys))))
+;;; hold down space key in 3D view to run animation
+
+;;; for automated testing
+(update-scene *scene* 30)
 
 
 #|
