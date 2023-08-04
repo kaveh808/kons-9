@@ -31,7 +31,7 @@ Create 10 particles from a point. The particles split after their life-span of
 (format t "  particle-system 01...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.1 0 -.1) (p! .1 .2 .1)
+  (let ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.1 .1 -.1) (p! .1 .2 .1)
                                                 'particle
                                                 :life-span 5)))
     (add-shape *scene* p-sys)
@@ -72,7 +72,9 @@ Provide function to modify particle initial velocities.
 
 (with-clear-scene
   (let ((p-sys (make-particle-system-from-point-source (make-circle-curve 2 16)
-                                                       (lambda (v) (p:normalize (p+ v (p! 0 2 0))))
+                                                       (lambda (v)
+                                                         (declare (ignore v))
+                                                         (p-rand 0.1))
                                                        'particle
                                                        :life-span 5)))
     (add-shape *scene* p-sys)
@@ -113,7 +115,7 @@ collisions with ground plane.
 (format t "  particle-system 05...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point (p! 0 1 0) 10 (p! -.2 0 -.2) (p! .2 .5 .2)
+  (let ((p-sys (make-particle-system-from-point (p! 0 1 0) 10 (p! -.2 .1 -.2) (p! .2 .3 .2)
                                                 'dynamic-particle
                                                 :life-span 20
                                                 :do-collisions? t
@@ -135,7 +137,7 @@ Create dynamic particles with wriggle effect.
 (format t "  particle-system 06...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point (p! 0 1 0) 10 (p! -.2 0 -.2) (p! .2 .5 .2)
+  (let ((p-sys (make-particle-system-from-point (p! 0 1 0) 10 (p! -.2 .1 -.2) (p! .2 .3 .2)
                                                 'dynamic-particle
                                                 :life-span 20
                                                 :update-angle (range-float 20.0 10.0)
@@ -376,6 +378,34 @@ Dynamic particles growing from a superquadric with a time-varying force field.
 
 ;;; for automated testing
 (update-scene *scene* 30)
+
+#|
+(Demo 15 particle) particle system from a point source =========================
+
+Create particles from a point source (3d grid).
+|#
+
+(format t "  particle-system 15...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-point-cloud (make-grid-points 5 5 5 (p! -5 -5 -5) (p! 5 5 5))))
+         (p-sys (make-particle-system-from-point-source
+                 shape
+                 (lambda (v)
+                   (declare (ignore v))
+                   (p! 0 0 0))
+                 'dynamic-particle
+                 :life-span -1
+                 :do-collisions? nil
+                 :force-fields (list (make-instance '3d-noise-force-field
+                                                    :noise-frequency 0.2
+                                                    :noise-amplitude 1.0)))))
+    (add-shape *scene* shape)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
 
 
 #|

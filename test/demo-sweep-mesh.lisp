@@ -58,8 +58,9 @@ with the particle system.
 
 (with-clear-scene
   (let* (;(p-gen (make-grid-uv-mesh 8 8 24 24))
-         (p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .5 .2) 'particle
-                                                 :update-angle (range-float (/ pi 8) (/ pi 16))))
+         (p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .5 .2)
+                                                 'particle
+                                                 :update-angle (range-float 20.0 10.0)))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.5 6)
                                                   p-sys
                                                   :taper 0.0 :twist 2pi)))
@@ -119,3 +120,28 @@ The mesh automatically grows with the particle system.
 ;;; suggestion: turn off filled display for a better view (TAB, D, 1)
 
 (update-scene *scene* 240)               ;do update for batch testing
+
+#|
+(Demo 06 sweep-mesh) animate a sweep-mesh-group ================================
+
+Create a SWEEP-MESH-GROUP along a PARTICLE-SYSTEM. The mesh automatically grows
+with the particle system.
+|#
+
+(format t "  sweep-mesh 6...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .8 .2)
+                                                 'dynamic-particle
+                                                 :life-span -1 ;infinite life-span
+                                                 :do-collisions? t
+                                                 :force-fields (list (make-instance 'constant-force-field
+                                                                                    :force-vector (p! 0 -0.05 0)))))
+         (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.5 6)
+                                                  p-sys
+                                                  :taper 0.0 :twist 2pi)))
+    (setf (name sweep-mesh-group) 'sweep-group)
+    (add-shape *scene* sweep-mesh-group)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
