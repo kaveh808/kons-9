@@ -20,6 +20,19 @@
         (face-centers polyh)
         (call-next-method))))
 
+(defgeneric source-point-colors (obj)
+  
+  (:method ((obj t)) 
+    (error "Method SOURCE-POINT-COLORS not implemented for object ~a" obj))
+
+  (:method ((p-cloud point-cloud))
+    (point-colors p-cloud))
+
+  (:method ((polyh polyhedron))
+    (if (point-source-use-face-centers? polyh)
+        nil                             ;TODO -- provide some color values
+        (call-next-method))))
+
 (defgeneric source-directions (obj)
 
   (:method ((obj t)) 

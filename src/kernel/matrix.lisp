@@ -39,6 +39,12 @@
                           (list (aref matrix 2 0) (aref matrix 2 1) (aref matrix 2 2) (aref matrix 2 3))
                           (list (aref matrix 3 0) (aref matrix 3 1) (aref matrix 3 2) (aref matrix 3 3)))))
 
+(defun make-matrix-from-vector (vec)
+  (make-matrix-with (list (list (aref vec  0) (aref vec  1) (aref vec  2) (aref vec  3))
+                          (list (aref vec  4) (aref vec  5) (aref vec  6) (aref vec  7))
+                          (list (aref vec  8) (aref vec  9) (aref vec 10) (aref vec 11))
+                          (list (aref vec 12) (aref vec 13) (aref vec 14) (aref vec 15)))))
+  
 ;;; transformation matrices
 
 (defun make-translation-matrix (point)
