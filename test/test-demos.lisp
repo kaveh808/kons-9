@@ -22,6 +22,7 @@ functions and the like.
                     "demo-flex-animator"
                     "demo-boid-system"
                     "demo-growth"
+                    "demo-sprite"
                     "demo-misc")))
   (dolist (filename demo-files)
     (format t "Testing file ~a...~%" filename)

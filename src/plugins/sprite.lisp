@@ -1,29 +1,18 @@
 (in-package #:kons-9)
 
-;;;; sprite ====================================================================
+;;;; sprite-instancer ==========================================================
 
-;;;; A sprite is a shape which always faces the camera.
+#|
+A sprite is a shape which always faces the camera. Since sprites often
+have transparency, a SPRITE-INSTANCER sorts its instances from back to front.
+We do not currently handle the case of sorting between multiple
+SPRITE-INSTANCERs. Sprites should be added to a scene after other shapes for
+the z-buffer to work properly.
+|#
 
 (defclass-kons-9 sprite-instancer (shape)
   ((geometry nil)
    (point-source nil)))
-
-;; (defmethod printable-data ((self uv-mesh))
-;;   (strcat (call-next-method) (format nil ", dims (~a ~a)" (u-dim self) (v-dim self))))
-
-;; (defmethod copy-instance-data ((dst uv-mesh) (src uv-mesh))
-;;   (error "COPY-INSTANCE-DATA not implemented for UV-MESH"))
-
-;;; + problem displaying with other shapes in scene
-;;; - optimize by reducing calls to gl:get-float
-;;; + write wrapper for (gl:get-float :modelview-matrix)
-;;; + need to keep colors in sync with points
-;;; + instance sprites on particles
-;;; + test update-color-fn
-;;; - add colors to demo-particles
-;;; - karl sims waterfall
-;;;   - collider shapes
-;;;   - particle-shape intersection
 
 ;;; from https://www.reddit.com/r/lisp/comments/15l4mvg/sorting_two_sequences_in_sync_in_cl/
 (defun reorder (x ord)

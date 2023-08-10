@@ -407,6 +407,73 @@ Create particles from a point source (3d grid).
 
 (update-scene *scene* 20)               ;do update for batch testing
 
+#|
+(Demo 16 particle) particle system with varying colors =========================
+
+Set particle colors randomly.
+|#
+
+(format t "  particle-system 16...~%") (finish-output)
+
+(with-clear-scene
+  (let ((p-sys (make-particle-system-from-point
+                (p! 0 1 0) 10 (p! -.2 .1 -.2) (p! .2 .3 .2)
+                'dynamic-particle
+                :life-span 20
+                :update-color-fn (particle-random-color-fn)
+                :do-collisions? t
+                :elasticity 0.8
+                :force-fields (list (make-instance 'constant-force-field
+                                                   :force-vector (p! 0 -.02 0))))))
+    (setf (draw-live-points-only? p-sys) nil)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)
+    ))
+
+#|
+(Demo 17 particle) particle system with varying colors =========================
+
+Set particle colors based on velocity.
+|#
+
+(format t "  particle-system 17...~%") (finish-output)
+
+(with-clear-scene
+  (let ((p-sys (make-particle-system-from-point
+                (p! -3 3 0) 100 (p! .1 0 -.1) (p! .2 .02 .1)
+                'dynamic-particle
+                :life-span -1
+                :update-color-fn (particle-velocity-color-fn 0.0 (c! 0 0 1) 0.25 (c! 1 1 1))
+                :do-collisions? t
+                :elasticity 0.8
+                :force-fields (list (make-instance 'constant-force-field
+                                                   :force-vector (p! 0 -.02 0))))))
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)
+    ))
+
+#|
+(Demo 18 particle) particle system with varying colors =========================
+
+Set particle colors based on velocity and draw as streaks.
+|#
+
+(format t "  particle-system 18...~%") (finish-output)
+
+(with-clear-scene
+  (let ((p-sys (make-particle-system-from-point
+                (p! -3 3 0) 100 (p! .1 0 -.1) (p! .2 .02 .1)
+                'dynamic-particle
+                :life-span 20
+                :update-color-fn (particle-velocity-color-fn 0.0 (c! 0 0 1) 0.5 (c! 1 1 1))
+                :do-collisions? t
+                :elasticity 0.8
+                :force-fields (list (make-instance 'constant-force-field
+                                                   :force-vector (p! 0 -.02 0))))))
+    (setf (draw-as-streaks? p-sys) t)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)
+    ))
 
 #|
 END ============================================================================
