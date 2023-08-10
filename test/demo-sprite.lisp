@@ -69,7 +69,7 @@ Some functions which generate basic sprites.
 
 (with-clear-scene
   (let ((p-sys (make-particle-system-from-point
-                (p! -3 5 0) 100 (p! .1 0 -.1) (p! .2 .02 .1)
+                (p! -3 3 0) 100 (p! .1 0 -.1) (p! .2 .02 .1)
                 'dynamic-particle
                 :life-span -1
                 :update-color-fn (particle-velocity-color-fn 0.0 (c! 0 0 1) 0.5 (c! 1 1 1))
@@ -78,13 +78,14 @@ Some functions which generate basic sprites.
                 :force-fields (list (make-instance 'constant-force-field
                                                    :force-vector (p! 0 -.02 0))))))
     (setf (draw-live-points-only? p-sys) t)
+    (setf (draw-as-streaks? p-sys) t)
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
 
-    (add-shape *scene* (make-instance
-                        'sprite-instancer
-                        :geometry (make-circle-curve .25 16)
-                        :point-source p-sys))
+    ;; (add-shape *scene* (make-instance
+    ;;                     'sprite-instancer
+    ;;                     :geometry (make-circle-curve .25 16)
+    ;;                     :point-source p-sys))
     ))
 
 #|

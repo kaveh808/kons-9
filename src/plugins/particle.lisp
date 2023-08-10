@@ -253,7 +253,8 @@
   ((particles (make-array 0 :adjustable t :fill-pointer t))
    (max-generations -1) ; -1 = no maximum
    (use-point-colors? t)
-   (draw-live-points-only? t)))
+   (draw-live-points-only? t)
+   (draw-as-streaks? nil)))
 
 (defmethod print-object ((self particle-system) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -278,7 +279,15 @@
 
 (defmethod draw-wireframe ((p-sys particle-system))
   (do-array (i ptcl (particles p-sys))
-    (3d-draw-curve (points ptcl) (if (use-point-colors? p-sys) (point-colors ptcl) nil) nil)))
+    (if (draw-as-streaks? p-sys)
+        (let* ((i0 (1- (length (points ptcl))))
+               (i1 (max 0 (1- i0))))
+          (3d-draw-curve (vector (aref (points ptcl) i0) (aref (points ptcl) i1))
+                         (if (use-point-colors? p-sys)
+                             (vector (aref (point-colors ptcl) i0) (aref (point-colors ptcl) i1))
+                             nil)
+                         nil))
+        (3d-draw-curve (points ptcl) (if (use-point-colors? p-sys) (point-colors ptcl) nil) nil))))
 
 (defmethod draw-live-points ((p-sys particle-system))
   (let ((visible-points (make-array 0 :adjustable t :fill-pointer t))
