@@ -135,6 +135,10 @@ Assign point colors to the UV-MESH by uv.
 (set-point-colors-by-uv (find-shape-by-name *scene* 'mesh)
                         (lambda (u v) (declare (ignore u)) (c-rainbow v)))
 #|
+Draw points as colored.
+|#
+(setf (draw-colored-points? (find-shape-by-name *scene* 'mesh)) t)
+#|
 Assign point colors to the UV-MESH by xyz.
 |#
 (set-point-colors-by-xyz (find-shape-by-name *scene* 'mesh)

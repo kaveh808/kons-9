@@ -4,7 +4,8 @@
 
 (defclass point-cloud (shape)
   ((points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t))
-   (point-colors :accessor point-colors :initarg :point-colors :initform nil)))
+   (point-colors :accessor point-colors :initarg :point-colors :initform nil)
+   (draw-colored-points? :accessor draw-colored-points? :initarg :draw-colored-points? :initform nil)))
 
 (defmethod printable-data ((self point-cloud))
   (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))
