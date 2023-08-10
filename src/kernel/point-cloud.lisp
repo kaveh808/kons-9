@@ -68,13 +68,16 @@
 (defmethod set-point-colors-by-xyz ((p-cloud point-cloud) color-fn)
   (allocate-point-colors p-cloud)
   (do-array (i p (points p-cloud))
-    (setf (aref (point-colors p-cloud) i) (funcall color-fn p))))
+    (setf (aref (point-colors p-cloud) i) (funcall color-fn p)))
+  p-cloud)
 
 (defmethod set-point-colors-by-order ((p-cloud point-cloud) color-fn)
   (allocate-point-colors p-cloud)
   (let ((n (length (points p-cloud))))
     (do-array (i p (points p-cloud))
-      (setf (aref (point-colors p-cloud) i) (funcall color-fn (/ i n))))))
+      (declare (ignore p))
+      (setf (aref (point-colors p-cloud) i) (funcall color-fn (/ i n)))))
+  p-cloud)
 
 ;;; point generator functions --------------------------------------------------
 

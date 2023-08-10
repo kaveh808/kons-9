@@ -37,7 +37,7 @@ NOTE: This won't work with the existing procedural mixin set up, because
       (when *display-wireframe?*
         (3d-draw-curve hull nil nil (secondary-line-thickness *drawing-settings*)))
       (when *display-points?*
-        (3d-draw-points hull nil)))))
+        (3d-draw-points hull)))))
 
 ;;; bezier-curve class =========================================================
 

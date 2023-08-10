@@ -73,8 +73,10 @@
     (vector (c-255! 255 0 0) (c-255! 255 127 0) (c-255! 255 255 0) (c-255! 0 255 0)
             (c-255! 0 0 255) (c-255! 75 0 130) (c-255! 148 0 211))))
 
-(defun c-rainbow (f)
+(defun c-rainbow (f &optional (alpha 1.0))
   (let ((rainbow-value (* f 6.0)))
     (multiple-value-bind (i frac)
         (floor rainbow-value)
-      (c-lerp frac (aref +rainbow+ i) (aref +rainbow+ (min (1+ i) 6))))))
+      (let ((col (c-lerp frac (aref +rainbow+ i) (aref +rainbow+ (min (1+ i) 6)))))
+        (c-set-alpha col alpha)
+        col))))

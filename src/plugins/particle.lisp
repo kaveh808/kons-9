@@ -55,6 +55,7 @@
 (defclass-kons-9 particle ()
   ((pos (p! 0 0 0))
    (vel (p! 0 0 0))
+   (col (c! 0 0 0 1))
    (is-alive? t)
    (generation 1)
    (life-span -1) ; -1 = immortal
@@ -63,7 +64,10 @@
    ;; size, color, alpha
    
    (points (make-array 0 :adjustable t :fill-pointer t))
+   (point-colors (make-array 0 :adjustable t :fill-pointer t))
 ;;   (behaviors (make-array 0 :adjustable t :fill-pointer t))
+
+   (update-color-fn nil)
    
    (update-angle (range-float 0.0 0))
 
@@ -91,6 +95,21 @@
   (setf (spawn-velocity-factor ptcl) (range-mutate (spawn-velocity-factor ptcl) factor))
   ptcl)
 
+(defun particle-random-color-fn ()
+  (lambda (ptcl)
+    (declare (ignore ptcl))
+    (c-rand)))
+
+(defun particle-velocity-color-fn (vel-1 col-1 vel-2 col-2)
+  (lambda (ptcl)
+    (c-lerp (clamp (tween (p:length (vel ptcl)) vel-1 vel-2) 0.0 1.0)
+            col-1
+            col-2)))
+
+(defmethod update-color ((ptcl particle))
+  (when (update-color-fn ptcl)
+    (setf (col ptcl) (funcall (update-color-fn ptcl) ptcl))))
+
 (defmethod update-velocity ((ptcl particle))
   (let* ((vel (vel ptcl))
          (rnd (p-rand))
@@ -110,6 +129,7 @@
           (< (age ptcl) (life-span ptcl)))
       (progn
         (update-position ptcl)
+        (update-color ptcl)
         (incf (age ptcl)))
       (setf (is-alive? ptcl) nil)))
 
@@ -127,7 +147,8 @@
                               :vel (spawn-velocity ptcl)
                               :generation (1+ (generation ptcl))
                               :life-span (* (life-span ptcl)
-                                            (range-value (spawn-life-span-factor ptcl))))))
+                                            (range-value (spawn-life-span-factor ptcl)))
+                              :update-color-fn (update-color-fn ptcl))))
     (copy-particle-data child ptcl)   ;transfer data
     (when (spawn-mutate? ptcl)
         (mutate-particle child 1.0))
@@ -231,7 +252,9 @@
 (defclass-kons-9 particle-system (shape animator)
   ((particles (make-array 0 :adjustable t :fill-pointer t))
    (max-generations -1) ; -1 = no maximum
-   (draw-live-points-only? :initform t)))
+   (use-point-colors? t)
+   (draw-live-points-only? t)
+   (draw-as-streaks? nil)))
 
 (defmethod print-object ((self particle-system) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -252,26 +275,34 @@
   (when *display-wireframe?*
     (draw-wireframe p-sys))
   (when *display-points?*
-    (draw-points p-sys nil)))
+    (draw-points p-sys)))
 
-;;; TODO -- support point colors
 (defmethod draw-wireframe ((p-sys particle-system))
   (do-array (i ptcl (particles p-sys))
-    (3d-draw-curve (points ptcl) nil nil)))
+    (if (draw-as-streaks? p-sys)
+        (let* ((i0 (1- (length (points ptcl))))
+               (i1 (max 0 (1- i0))))
+          (3d-draw-curve (vector (aref (points ptcl) i0) (aref (points ptcl) i1))
+                         (if (use-point-colors? p-sys)
+                             (vector (aref (point-colors ptcl) i0) (aref (point-colors ptcl) i1))
+                             nil)
+                         nil))
+        (3d-draw-curve (points ptcl) (if (use-point-colors? p-sys) (point-colors ptcl) nil) nil))))
 
-(defmethod draw-live-points ((p-sys particle-system) use-point-colors?)
-  (declare (ignore use-point-colors?))  ;TODO -- maybe implement later
-  (let ((visible-points '()))
+(defmethod draw-live-points ((p-sys particle-system))
+  (let ((visible-points (make-array 0 :adjustable t :fill-pointer t))
+        (visible-point-colors (make-array 0 :adjustable t :fill-pointer t)))
     (do-array-if (i ptcl #'is-alive? (particles p-sys))
-      (push (pos ptcl) visible-points))
-    (3d-draw-points (make-array (length visible-points) :initial-contents visible-points)
-                    nil)))
+      (vector-push-extend (pos ptcl) visible-points)
+      (when (use-point-colors? p-sys)
+        (vector-push-extend (col ptcl) visible-point-colors)))
+    (3d-draw-points visible-points (if (use-point-colors? p-sys) visible-point-colors nil))))
 
-(defmethod draw-points ((p-sys particle-system) use-point-colors?)
+(defmethod draw-points ((p-sys particle-system))
   (if (draw-live-points-only? p-sys)
-      (draw-live-points p-sys use-point-colors?)
+      (draw-live-points p-sys)
       (do-array (i ptcl (particles p-sys))
-        (3d-draw-points (points ptcl) nil))))
+        (3d-draw-points (points ptcl) (if (use-point-colors? p-sys) (point-colors ptcl) nil)))))
 
 (defmethod draw-normals ((p-sys particle-system))
   ;; do nothing
@@ -280,6 +311,7 @@
 (defmethod add-particle ((p-sys particle-system) ptcl)
   (vector-push-extend ptcl (particles p-sys))
   (vector-push-extend (pos ptcl) (points ptcl))   ;store initial pos in points
+  (vector-push-extend (col ptcl) (point-colors ptcl))   ;store initial pos in points
   p-sys)
 
 (defmethod update-motion ((p-sys particle-system) parent-absolute-timing)
@@ -289,12 +321,20 @@
               (<= (generation ptcl) (max-generations p-sys)))
       (when (is-alive? ptcl)
         (update-particle ptcl)
-        (vector-push-extend (pos ptcl) (points ptcl)))
+        (vector-push-extend (pos ptcl) (points ptcl))
+        (vector-push-extend (col ptcl) (point-colors ptcl)))
       (dolist (child (do-spawn ptcl))
         (add-particle p-sys child)))))
 
 (defmethod points ((p-sys particle-system))
-  (apply #'concatenate 'vector (map 'list #'points (particles p-sys))))
+  (if (draw-live-points-only? p-sys)
+      (map 'vector #'pos (particles p-sys))
+      (apply #'concatenate 'vector (map 'list #'points (particles p-sys)))))
+
+(defmethod point-colors ((p-sys particle-system))
+  (if (draw-live-points-only? p-sys)
+      (map 'vector #'col (particles p-sys))
+      (apply #'concatenate 'vector (map 'list #'point-colors (particles p-sys)))))
 
 (defmethod curves ((p-sys particle-system))
   (map 'list #'points (particles p-sys)))
@@ -312,6 +352,9 @@
 
 (defmethod source-points ((p-sys particle-system))
   (points p-sys))
+
+(defmethod source-point-colors ((p-sys particle-system))
+  (point-colors p-sys))
 
 (defmethod source-directions ((p-sys particle-system))
   (apply #'concatenate 'vector (map

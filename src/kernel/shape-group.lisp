@@ -35,11 +35,13 @@
 
 (defmethod set-point-colors-by-xyz ((group shape-group) color-fn)
   (do-children (child group)
-    (set-point-colors-by-xyz child color-fn)))
+    (set-point-colors-by-xyz child color-fn))
+  group)
 
 (defmethod set-point-colors-by-point-and-normal ((group shape-group) color-fn)
   (do-children (child group)
-    (set-point-colors-by-point-and-normal child color-fn)))
+    (set-point-colors-by-point-and-normal child color-fn))
+  group)
 
 ;;;; modeling with groups ======================================================
 

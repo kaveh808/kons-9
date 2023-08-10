@@ -86,7 +86,7 @@
        result)))
 
 (defun gl-set-color (col)
-  (gl:color (c-red col) (c-green col) (c-blue col)))
+  (gl:color (c-red col) (c-green col) (c-blue col) (c-alpha col)))
 
 (defun gl-set-fg-color ()
   (gl-set-color (fg-color *drawing-settings*)))
@@ -188,7 +188,20 @@
     (gl:clear-color (c-red bg-color) (c-green bg-color) (c-blue bg-color) 0.0)
     (gl:clear :color-buffer-bit :depth-buffer-bit)
     (gl:enable :depth-test)
-    (gl:cull-face :back)))
+    (gl:cull-face :back)
+    ;; for sprite transparency
+    (gl:blend-func :src-alpha :one-minus-src-alpha)
+    (gl:blend-func :src-alpha :one-minus-src-alpha)
+    ;; (gl:blend-equation-separate :func-add :func-add)
+    ;; (gl:blend-func-separate :src-alpha :one-minus-src-alpha :one :one-minus-src-alpha)
+    (gl:enable :blend)
+    ))
+
+  ;;   (gl:blend-fun
+
+  ;; (#_glBlendEquationSeparate #$GL_FUNC_ADD #$GL_FUNC_ADD)
+  ;; (#_glBlendFuncSeparate #$GL_SRC_ALPHA #$GL_ONE_MINUS_SRC_ALPHA #$GL_ONE #$GL_ONE_MINUS_SRC_ALPHA)
+
 
 (defun 3d-setup-projection ()
   (gl:matrix-mode :projection)
@@ -207,14 +220,21 @@
   (gl-set-fg-color)
   (gl:flush))
 
+(defun gl-get-float (param)
+  (gl:get-float param))
+
 ;;; 3d display =================================================================
 
 (defun 3d-translate (p)
   (gl:translate (p:x p) (p:y p) (p:z p)))
 
-(defun 3d-push-matrix (matrix)
+(defun 3d-push-matrix (&optional (matrix nil))
   (gl:push-matrix)
-  (gl:mult-matrix (matrix->vector matrix))) ;is order correct?
+  (when matrix
+    (gl:mult-matrix (matrix->vector matrix))))
+
+(defun 3d-load-matrix (matrix)
+  (gl:load-matrix (matrix->vector matrix)))
 
 (defun 3d-pop-matrix ()
   (gl:pop-matrix))
@@ -329,6 +349,14 @@
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)
     (gl-set-fg-color)))
+
+(defun 3d-draw-filled-curve (points)
+  (with-gl-disable :lighting
+    (gl:polygon-mode :front-and-back :fill)
+    (gl:begin :polygon)
+    (do-array (i p points)
+      (gl:vertex (p:x p) (p:y p) (p:z p)))
+    (gl:end)))
 
 (defun 3d-draw-points (points point-colors &key (highlight? nil))
   (with-gl-disable :lighting

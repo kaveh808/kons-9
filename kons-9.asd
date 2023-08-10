@@ -101,6 +101,7 @@
    (:file "src/plugins/particle")
    (:file "src/plugins/l-system")
    (:file "src/plugins/growth")
+   (:file "src/plugins/sprite")
    (:file "src/plugins/poly-mesh")
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")
