@@ -31,6 +31,7 @@ the z-buffer to work properly.
 ;;     (values (reorder p order)
 ;;             (reorder c order))))
 
+;;; sprites are instanced at drawing time
 (defmethod draw ((instancer sprite-instancer))
   (when (and (geometry instancer) (point-source instancer))
     (let* ((view-mtx (gl-get-float :modelview-matrix)) ; array[16]

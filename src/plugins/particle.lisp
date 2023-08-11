@@ -254,7 +254,11 @@
    (max-generations -1) ; -1 = no maximum
    (use-point-colors? t)
    (draw-live-points-only? t)
-   (draw-as-streaks? nil)))
+   (draw-as-streaks? nil)
+   (particle-class 'particle)
+   (particle-initargs nil)
+   (emitter-fn nil)
+   (emitter-vel-fn nil)))
 
 (defmethod print-object ((self particle-system) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -316,13 +320,32 @@
 
 (defmethod update-motion ((p-sys particle-system) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
+  ;; emit any new poarticles
+  (let* ((p-source (if (emitter-fn p-sys) (funcall (emitter-fn p-sys)) nil))
+         (points (if p-source (source-points p-source) nil))
+         (velocities (if p-source
+                         (if (emitter-vel-fn p-sys)
+                             (map 'vector (emitter-vel-fn p-sys) (source-directions p-source))
+                             (source-directions p-source))
+                         nil)))
+    (when (and points velocities)
+      (loop for p across points
+            for v across velocities
+            do (add-particle p-sys (apply #'make-instance
+                                          (particle-class p-sys)
+                                          :pos p
+                                          :vel v
+                                          (particle-initargs p-sys))))))
+  ;; for each particle
   (do-array (i ptcl (particles p-sys))
     (when (or (= -1 (max-generations p-sys))
               (<= (generation ptcl) (max-generations p-sys)))
+      ;; update live particles
       (when (is-alive? ptcl)
         (update-particle ptcl)
         (vector-push-extend (pos ptcl) (points ptcl))
         (vector-push-extend (col ptcl) (point-colors ptcl)))
+      ;; spawn new particles
       (dolist (child (do-spawn ptcl))
         (add-particle p-sys child)))))
 
@@ -374,6 +397,23 @@
   (make-list (length (particles p-sys)) :initial-element nil)) ;always open
 
 ;;;; create particle systems ===================================================
+
+(defun make-particle-system-with-emitter (p-source-fn vel-fn particle-class &rest particle-initargs)
+  (let* ((p-source (funcall p-source-fn))
+         (points (source-points p-source))
+         (velocities (if vel-fn
+                         (map 'vector vel-fn (source-directions p-source))
+                         (source-directions p-source)))
+         (p-sys (apply #'make-particle-system-aux
+                       points
+                       velocities
+                       particle-class
+                       particle-initargs)))
+    (setf (particle-class p-sys) particle-class)
+    (setf (particle-initargs p-sys) particle-initargs)
+    (setf (emitter-fn p-sys) p-source-fn)
+    (setf (emitter-vel-fn p-sys) vel-fn)
+    p-sys))
 
 (defun make-particle-system-from-point-source (p-source vel-fn particle-class &rest particle-initargs)
   (apply #'make-particle-system-aux

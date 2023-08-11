@@ -23,7 +23,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 1...~%") (finish-output)
+(format t "  sprite 01...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-instance
@@ -38,7 +38,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 2...~%") (finish-output)
+(format t "  sprite 02...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-instance
@@ -56,7 +56,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 3...~%") (finish-output)
+(format t "  sprite 03...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-sphere-uv-mesh 4.0 8 16))
@@ -77,7 +77,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 4...~%") (finish-output)
+(format t "  sprite 04...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-instance
@@ -93,7 +93,7 @@ Randomly varying particle colors. The sprites take their position and color from
 the particles.
 |#
 
-(format t "  sprite 5...~%") (finish-output)
+(format t "  sprite 05...~%") (finish-output)
 
 (with-clear-scene
   (let ((p-sys (make-particle-system-from-point
@@ -113,6 +113,45 @@ the particles.
                         :geometry (make-circle-curve .25 16)
                         :point-source p-sys))
     ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+
+#|
+(Demo 06 sprite) sprites generated from particle system ========================
+
+Particle system with emitter.
+|#
+
+(format t "  sprite 06...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-circle-curve 2 64))
+         (p-sys (make-particle-system-with-emitter (lambda () shape)
+                                                   (lambda (v)
+                                                     (declare (ignore v))
+                                                     (p-rand 0.025))
+                                                   'particle
+                                                   :life-span -1
+                                                   :update-color-fn (lambda (ptcl)
+                                                                      (declare (ignore ptcl))
+                                                                      (c! 0 1 0 0.05))
+                                                   :update-angle (range-float 10.0 5.0))))
+    (setf (draw-as-streaks? p-sys) t)
+    (add-shape *scene* shape)
+    (add-motion *scene* p-sys)
+
+    (add-shape *scene* (make-instance
+                        'sprite-instancer
+                        :geometry (make-circle-curve .5 16)
+                        :point-source p-sys))
+    ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+
 
 #|
 END ============================================================================

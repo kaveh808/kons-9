@@ -245,9 +245,9 @@ Generating particles from polyhedron face centroids (as opposed to vertices).
     (let* ((p-sys (make-particle-system-from-point-source p-source
                                                           (lambda (v) (p:scale v 0.1))
                                                           'particle
-                                        :life-span 10
-                                        :update-angle (range-float 10.0 5.0)
-                                        :spawn-angle (range-float 45.0 22.5)))
+                                                          :life-span 10
+                                                          :update-angle (range-float 10.0 5.0)
+                                                          :spawn-angle (range-float 45.0 22.5)))
            (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                     :taper 0.0 :twist 0.0)))
       (add-shape *scene* p-source)
@@ -474,6 +474,54 @@ Set particle colors based on velocity and draw as streaks.
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
     ))
+
+#|
+(Demo 19 particle) particle system from points on surface of a polyhedron  =====
+
+|#
+
+(format t "  particle-system 19...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-sphere-uv-mesh 2.0 8 16)) 
+         (p-sys (make-particle-system-from-point-source (generate-point-cloud shape 100.0)
+                                                        (lambda (v)
+                                                          (p:scale v 0.1))
+                                                        'particle
+                                                        :life-span 20
+                                                        :update-angle (range-float 10.0 5.0)
+                                                        :spawn-angle (range-float 20.0 10.0))))
+    (add-shape *scene* shape)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+#|
+(Demo 20 particle) particle system with emitter ================================
+
+|#
+
+(format t "  particle-system 20...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-circle-curve 2 16))
+         (p-sys (make-particle-system-with-emitter (lambda () shape)
+                                                   (lambda (v)
+                                                     (declare (ignore v))
+                                                     (p-rand 0.05))
+                                                   'particle
+                                                   :life-span -1
+                                                   :update-angle (range-float 10.0 5.0))))
+    (setf (draw-as-streaks? p-sys) t)
+    (add-shape *scene* shape)
+    (add-shape *scene* p-sys)
+    (add-motion *scene* p-sys)))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
 
 #|
 END ============================================================================
