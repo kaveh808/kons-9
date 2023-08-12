@@ -74,7 +74,8 @@
 
   (:method ((dst point-cloud) (src point-cloud))
     (call-next-method)
-    (copy-array-slot points))
+    (copy-array-slot points)
+    (copy-array-slot point-colors))
 
   (:method ((dst curve) (src curve))
     (call-next-method)
@@ -85,7 +86,6 @@
     (copy-array-slot faces)
     (copy-array-slot face-normals)
     (copy-array-slot point-normals)
-    (copy-array-slot point-colors)
     (copy-simple-slot show-normals))
 
   (:method ((dst transform) (src transform))

@@ -71,6 +71,7 @@
    
    (update-angle (range-float 0.0 0))
 
+   (do-spawn? t)
    (spawn-done? nil)
    (spawn-mutate? nil)
    (spawn-number-children (range-float 2 0))
@@ -105,6 +106,14 @@
     (c-lerp (clamp (tween (p:length (vel ptcl)) vel-1 vel-2) 0.0 1.0)
             col-1
             col-2)))
+
+(defun particle-age-color-fn (col-1 col-2)
+  (lambda (ptcl)
+    (if (= -1 (life-span ptcl))
+        col-1
+        (c-lerp (/ (age ptcl) (life-span ptcl))
+                col-1
+                col-2))))
 
 (defmethod update-color ((ptcl particle))
   (when (update-color-fn ptcl)
@@ -155,7 +164,8 @@
     child))
 
 (defmethod do-spawn ((ptcl particle))
-  (if (and (not (= -1 (life-span ptcl)))
+  (if (and (do-spawn? ptcl)
+           (not (= -1 (life-span ptcl)))
            (>= (age ptcl) (life-span ptcl))
            (not (spawn-done? ptcl)))
       (progn

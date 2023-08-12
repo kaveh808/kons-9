@@ -49,6 +49,11 @@
   (compute-face-normals polyh)
   (compute-point-normals polyh))  
 
+;;; TODO -- not tested (also in point-cloud.lisp)
+;; (defmethod world-space-duplicate :after ((polyh polyhedron))
+;;   (compute-face-normals polyh)
+;;   (compute-point-normals polyh))  
+
 (defmethod face-center ((polyh polyhedron) face)
   (apply #'p-average (face-points-list polyh face)))
 

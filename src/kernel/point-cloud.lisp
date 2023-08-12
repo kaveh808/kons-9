@@ -17,6 +17,14 @@
   (points-bounds (points p-cloud)))
 
 ;;; TODO -- not tested
+(defmethod world-space-points ((p-cloud point-cloud))
+  (if (scene p-cloud)
+      (let* ((matrix (shape-global-matrix (scene p-cloud) p-cloud))
+             (world-space-points (transform-points (points p-cloud) matrix)))
+        world-space-points)
+      (points p-cloud)))
+        
+;;; TODO -- not tested
 (defmethod get-global-bounds ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
     (warn "POINT-CLOUD ~a does not have any points. Using default bounds values." p-cloud)
@@ -52,6 +60,14 @@
   (reset-transform (transform p-cloud))
   p-cloud)
 
+;;; TODO -- not tested (also in polyhedron.lisp)
+;; (defmethod world-space-duplicate ((p-cloud point-cloud))
+;;   (let ((dup (duplicate p-cloud))
+;;         (matrix (shape-global-matrix (scene p-cloud) p-cloud)))
+;;     (transform-point-array! (points dup) matrix)
+;;     (reset-transform (transform dup))
+;;     dup))
+    
 (defmethod allocate-point-colors ((p-cloud point-cloud)
                                   &optional (color (fg-color *drawing-settings*)))
   (setf (point-colors p-cloud) (make-array (length (points p-cloud))

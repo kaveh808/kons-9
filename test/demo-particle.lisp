@@ -510,7 +510,7 @@ Set particle colors based on velocity and draw as streaks.
          (p-sys (make-particle-system-with-emitter (lambda () shape)
                                                    (lambda (v)
                                                      (declare (ignore v))
-                                                     (p-rand 0.05))
+                                                     (p-rand 0.1))
                                                    'particle
                                                    :life-span -1
                                                    :update-angle (range-float 10.0 5.0))))
