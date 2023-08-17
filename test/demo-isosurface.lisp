@@ -265,7 +265,7 @@ Use a particle system as a curve source.
                 (make-circle-curve 4 8)
 ;;                :vel-fn (lambda (v) (p:scale (p:normalize (p+ v (p-rand))) 0.4))
                 :particle-class 'dynamic-particle
-                :particle-initargs `(:life-span -1 ;infinite life-span
+                :particle-initargs `(:life-span nil ;infinite life-span
                                      :do-collisions? nil
                                      :force-fields ,(list (make-instance 'attractor-force-field
                                                                          :location (p! 0 0 0)

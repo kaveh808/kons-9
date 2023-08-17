@@ -58,7 +58,7 @@
    (col (c! 0 0 0 1))
    (is-alive? t)
    (generation 1)
-   (life-span -1) ; -1 = immortal
+   (life-span nil) ; nil = infinite life-span
    (age 0)
 
    ;; size
@@ -109,7 +109,7 @@
 
 (defun particle-age-color-fn (col-1 col-2)
   (lambda (ptcl)
-    (if (= -1 (life-span ptcl))
+    (if (null (life-span ptcl))
         col-1
         (c-lerp (/ (age ptcl) (life-span ptcl))
                 col-1
@@ -117,7 +117,7 @@
 
 (defun particle-age-alpha-fn (alpha-1 alpha-2)
   (lambda (ptcl)
-    (let ((alpha (if (= -1 (life-span ptcl))
+    (let ((alpha (if (null (life-span ptcl))
                      alpha-1
                      (lerp (/ (age ptcl) (max 1 (1- (life-span ptcl))))
                            alpha-1
@@ -144,7 +144,7 @@
              (update-velocity ptcl))))
 
 (defmethod update-particle ((ptcl particle))
-  (if (or (= -1 (life-span ptcl))
+  (if (or (null (life-span ptcl))
           (< (age ptcl) (life-span ptcl)))
       (progn
         (update-position ptcl)
@@ -176,7 +176,7 @@
 
 (defmethod do-spawn ((ptcl particle))
   (if (and (do-spawn? ptcl)
-           (not (= -1 (life-span ptcl)))
+           (life-span ptcl)
            (>= (age ptcl) (life-span ptcl))
            (not (spawn-done? ptcl)))
       (progn
@@ -506,7 +506,7 @@
                  p-source
                  :vel-fn (lambda (v) (p:scale v 0.2))
                  :particle-class 'dynamic-particle
-                 :particle-initargs `(:life-span -1
+                 :particle-initargs `(:life-span nil
                                       :force-fields ,(list (make-instance 'constant-force-field
                                                                           :force-vector (p! 0 -.02 0)))))))
      (add-motion scene p-sys)
@@ -519,7 +519,7 @@
                  p-source
                  :vel-fn (lambda (v) (p:scale v 0.2))
                  :particle-class 'particle
-                 :particle-initargs `(:life-span -1
+                 :particle-initargs `(:life-span nil
                                       :update-angle ,(range-float 20.0 10.0)))))
     (add-motion scene p-sys)
     p-sys))

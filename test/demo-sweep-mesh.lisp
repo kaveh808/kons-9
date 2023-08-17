@@ -106,11 +106,12 @@ The mesh automatically grows with the particle system.
   (let* ((shape (triangulate-polyhedron (make-cube-sphere 6.0 3)))
          ;(shape (triangulate-polyhedron (make-cube 6)))
          ;(shape (triangulate-polyhedron (make-grid-uv-mesh 6 6 1 1)))
-         (p-sys (make-particle-system-from-point (p! 0 3.0 0) 1 (p! -.5 0 -.5) (p! .5 0 .5)
-                                                 :particle-class 'climbing-particle
-                                                 :particle-initargs `(:life-span -1
-                                                                      :support-polyh ,shape
-                                                                      :update-angle ,(range-float 20.0 10.0))))
+         (p-sys (make-particle-system-from-point
+                 (p! 0 3.0 0) 1 (p! -.5 0 -.5) (p! .5 0 .5)
+                 :particle-class 'climbing-particle
+                 :particle-initargs `(:life-span nil
+                                      :support-polyh ,shape
+                                      :update-angle ,(range-float 20.0 10.0))))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                   :taper 1.0 :twist 0.0)))
     (add-shape *scene* shape)
@@ -135,7 +136,7 @@ with the particle system.
   (let* ((p-sys (make-particle-system-from-point
                  (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .8 .2)
                  :particle-class 'dynamic-particle
-                 :particle-initargs `(:life-span -1
+                 :particle-initargs `(:life-span nil
                                       :do-collisions? t
                                       :force-fields ,(list (make-instance 'constant-force-field
                                                                           :force-vector (p! 0 -0.05 0))))))

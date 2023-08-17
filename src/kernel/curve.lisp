@@ -33,7 +33,6 @@
     (p:normalize (p:- (aref points i2) (aref points i1)))))
 
 (defun curve-tangents-aux (points &optional (is-closed? nil))
-  (when (= 
   (let ((tangents (make-array (length points))))
     (do-array (i p points)
       (declare (ignore p))

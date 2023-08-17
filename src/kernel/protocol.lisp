@@ -37,82 +37,28 @@
                       (make-array-with-fn n (lambda () (c! 0 0 0))))
                   (point-normals polyh))))))
 
+;; (defgeneric source-random-directions (obj)
+;;   (:method ((obj t))
+;;     (let ((dir (make-array (length (source-points obj)))))
+;;       (dotimes (i (length dir))
+;;         (setf (aref dir i) (p-rand)))
+;;       dir)))
 
-(defun random-directions-arrayx (n)
-  (let ((dir (make-array n)))
-    (dotimes (i n)
-      (setf (aref dir i) (p-rand)))
-    dir))
+;; (defgeneric source-radial-directions (obj)
+;;   (:method ((obj t)) 
+;;     (map 'vector #'p:normalize (source-points obj))))
 
-
-(defgeneric source-pointsx (obj)
-  
-  (:method ((obj t)) 
-    (error "Method SOURCE-POINTS not implemented for object ~a" obj))
-
-  (:method ((p-cloud point-cloud))
-    (points p-cloud))
-
-  (:method ((polyh polyhedron))
-    (if (point-source-use-face-centers? polyh)
-        (face-centers polyh)
-        (call-next-method))))
-
-(defgeneric source-point-colorsx (obj)
-  
-  (:method ((obj t)) 
-    (error "Method SOURCE-POINT-COLORS not implemented for object ~a" obj))
-
-  (:method ((p-cloud point-cloud))
-    (point-colors p-cloud))
-
-  (:method ((polyh polyhedron))
-    (if (point-source-use-face-centers? polyh)
-        nil                             ;TODO -- provide some color values
-        (call-next-method))))
-
-(defgeneric source-directionsx (obj)
-
-  (:method ((obj t)) 
-    (error "Method SOURCE-DIRECTIONS not implemented for object ~a" obj))
-
-  (:method ((p-cloud point-cloud))
-    ;; arbitrarily return (1 1 1) for use as velocity multiplier
-    ;; (make-array (length (points p-cloud))
-    ;;             :initial-element (p! 1 1 1)))
-;;    (source-radial-directions p-cloud))
-    (source-random-directionsx p-cloud))
-  
-  (:method ((curve curve))
-    (curve-tangents curve))
-
-  (:method ((polyh polyhedron))
-    (if (point-source-use-face-centers? polyh)
-        (face-normals polyh)
-        (point-normals polyh))))
-
-(defgeneric source-random-directionsx (obj)
-  (:method ((obj t))
-    (let ((dir (make-array (length (source-points obj)))))
-      (dotimes (i (length dir))
-        (setf (aref dir i) (p-rand)))
-      dir)))
-
-(defgeneric source-radial-directionsx (obj)
-  (:method ((obj t)) 
-    (map 'vector #'p:normalize (source-points obj))))
-
-(defgeneric source-closest-pointx (obj point)
-  (:method ((obj t) point)
-    (let* ((points (source-points obj))
-           (min-dist (p-dist point (aref points 0)))
-           (closest-index 0))
-      (do-array (i p points)
-        (let ((dist (p-dist point p)))
-          (when (< dist min-dist)
-            (setf min-dist dist)
-            (setf closest-index i))))
-      (aref points closest-index))))
+;; (defgeneric source-closest-point (obj point)
+;;   (:method ((obj t) point)
+;;     (let* ((points (source-points obj))
+;;            (min-dist (p-dist point (aref points 0)))
+;;            (closest-index 0))
+;;       (do-array (i p points)
+;;         (let ((dist (p-dist point p)))
+;;           (when (< dist min-dist)
+;;             (setf min-dist dist)
+;;             (setf closest-index i))))
+;;       (aref points closest-index))))
 
 ;;;; curve-source-protocol =====================================================
 

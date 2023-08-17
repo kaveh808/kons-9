@@ -196,7 +196,7 @@ Simulate particles in orbit.
                 (make-circle-curve 4 16)
                 :vel-fn (lambda (vel) (p:scale (p:normalize (p+ vel (p-rand))) 0.2))
                 :particle-class 'dynamic-particle
-                :particle-initargs `(:life-span -1 ;infinite life-span
+                :particle-initargs `(:life-span nil ;infinite life-span
                                      :do-collisions? nil
                                      :force-fields ,(list (make-instance 'attractor-force-field
                                                                          :location (p! 0 0 0)
@@ -226,7 +226,7 @@ force field.
                  shape
                  :vel-fn (lambda (vel) (p:scale vel 0.05))
                  :particle-class 'dynamic-particle
-                 :particle-initargs `(:life-span -1 ;infinite life-span
+                 :particle-initargs `(:life-span nil ;infinite life-span
                                       :do-collisions? nil
                                       :force-fields ,(list (make-instance '3d-noise-force-field
                                                                           :noise-frequency 0.2
@@ -254,7 +254,7 @@ Climbing particles which follow the surface of a shape.
          (p-sys (make-particle-system-from-point
                  (p! 0 3.5 0) 20 (p! -.5 0 -.5) (p! .5 0 .5)
                  :particle-class 'climbing-particle
-                 :particle-initargs `(:life-span -1 ;infinite lifespan
+                 :particle-initargs `(:life-span nil ;infinite lifespan
                                       :support-polyh ,shape
                                       :update-angle ,(range-float 45.0 22.5)))))
     (add-shape *scene* shape)
@@ -332,7 +332,7 @@ Dynamic particles growing from a superquadric with a gravity force field.
                   p-source
                   :vel-fn (lambda (v) (p:scale v 0.2))
                   :particle-class 'dynamic-particle
-                  :particle-initargs `(:life-span -1 ;infinite life-span
+                  :particle-initargs `(:life-span nil ;infinite life-span
                                        :do-collisions? t
                                        :force-fields ,(list (make-instance 'constant-force-field
                                                                            :force-vector (p! 0 -0.05 0)))))))
@@ -407,7 +407,7 @@ Dynamic particles growing from a superquadric with a time-varying force field.
                   p-source
                   :vel-fn (lambda (v) (p:scale v 0.2))
                   :particle-class 'dynamic-particle
-                  :particle-initargs `(:life-span -1 ;infinite life-span
+                  :particle-initargs `(:life-span nil ;infinite life-span
                                        :do-collisions? nil
                                        :force-fields ,(list (make-instance 'time-varying-force-field
                                                                            :force-vector (p! 0 -0.0 0)
@@ -438,7 +438,7 @@ Create particles from a point source (3d grid).
                    (declare (ignore v))
                    (p! 0 0 0))
                  :particle-class 'dynamic-particle
-                 :particle-initargs `(:life-span -1 ;infinite life-span
+                 :particle-initargs `(:life-span nil ;infinite life-span
                                       :do-collisions? nil
                                       :force-fields ,(list (make-instance '3d-noise-force-field
                                                                           :noise-frequency 0.5
@@ -485,7 +485,7 @@ Set particle colors based on velocity.
   (let ((p-sys (make-particle-system-from-point
                 (p! -3 3 0) 100 (p! .1 0 -.1) (p! .2 .02 .1)
                 :particle-class 'dynamic-particle
-                :particle-initargs `(:life-span -1 ;infinite life-span
+                :particle-initargs `(:life-span nil ;infinite life-span
                                      :update-color-fn ,(particle-velocity-color-fn 0.0 (c! 0 0 1) 0.25 (c! 1 1 1))
                                      :do-collisions? t
                                      :elasticity 0.8
@@ -531,7 +531,7 @@ Set particle colors based on velocity and draw as streaks.
                  (generate-point-cloud shape 100.0)
                  :vel-fn (lambda (v) (p:scale v 0.1))
                  :particle-class 'particle
-                 :particle-initargs `(:life-span -1
+                 :particle-initargs `(:life-span nil
                                       :update-angle ,(range-float 10.0 5.0)))))
     (add-shape *scene* shape)
     (add-shape *scene* p-sys)
@@ -552,7 +552,7 @@ Set particle colors based on velocity and draw as streaks.
          (p-sys (make-particle-system-with-emitter (lambda () shape)
                                                    :vel-fn (lambda (v) (p:scale v .1))
                                                    :particle-class 'particle
-                                                   :particle-initargs `(:life-span -1
+                                                   :particle-initargs `(:life-span nil
                                                                         :update-angle ,(range-float 10.0 5.0)))))
     (setf (draw-as-streaks? p-sys) t)
     (add-shape *scene* shape)
@@ -574,7 +574,7 @@ Set particle colors based on velocity and draw as streaks.
          (p-sys (make-particle-system-with-emitter (lambda () shape)
                                                    :vel-fn (lambda (v) (p:scale v .1))
                                                    :particle-class 'particle
-                                                   :particle-initargs `(:life-span -1
+                                                   :particle-initargs `(:life-span nil
                                                                         :update-angle ,(range-float 10.0 5.0)))))
     (setf (draw-as-streaks? p-sys) t)
     (setf (use-point-colors? p-sys) nil) ;point colors are white by default, ignore them

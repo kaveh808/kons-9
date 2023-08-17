@@ -133,7 +133,7 @@ Particle system with emitter.
                            (declare (ignore v))
                            (p-rand 0.025))
                  :particle-class 'particle
-                 :particle-initargs `(:life-span -1
+                 :particle-initargs `(:life-span nil
                                       :update-color-fn ,(lambda (ptcl)
                                                           (declare (ignore ptcl))
                                                           (c! 0 1 0 0.05))
