@@ -36,7 +36,9 @@
   `(setf (,slot dst) (p:copy (,slot src))))
 
 (defmacro copy-array-slot (slot)
-  `(setf (,slot dst) (map 'vector #'duplicate (,slot src))))
+  `(if (,slot src)                      ;if array does not exist, set duplicate to nil
+       (setf (,slot dst) (map 'vector #'duplicate (,slot src)))
+       (setf (,slot dst) nil)))
 
 (defmacro copy-list-slot (slot)
   `(setf (,slot dst) (mapcar #'duplicate (,slot src))))

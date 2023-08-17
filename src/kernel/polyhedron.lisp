@@ -60,6 +60,12 @@
 (defmethod face-centers ((polyh polyhedron))
   (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
 
+(defmethod face-color ((polyh polyhedron) face)
+  (apply #'c-average (face-colors-list polyh face)))
+
+(defmethod face-colors ((polyh polyhedron))
+  (map 'vector #'(lambda (f) (face-color polyh f)) (faces polyh)))
+
 ;; no checking, asssumes well-formed faces
 (defmethod face-normal ((polyh polyhedron) face)
   (cond ((< (length face) 3)
@@ -110,11 +116,11 @@
           (p:normalize (aref (point-normals polyh) n)))))
 
 (defmethod face-points-list ((polyh polyhedron) (i integer))
-  (mapcar #'(lambda (pref) (aref (points polyh) pref))
+  (mapcar (lambda (pref) (aref (points polyh) pref))
           (aref (faces polyh) i)))
 
 (defmethod face-points-list ((polyh polyhedron) (face list))
-  (mapcar #'(lambda (pref) (aref (points polyh) pref))
+  (mapcar (lambda (pref) (aref (points polyh) pref))
           face))
 
 (defmethod face-points-array ((polyh polyhedron) (i integer))
@@ -122,6 +128,13 @@
 
 (defmethod face-points-array ((polyh polyhedron) (face list))
   (coerce (face-points-list polyh face) 'vector))
+
+(defmethod face-colors-list ((polyh polyhedron) (face list))
+  (if (point-colors polyh)
+      (mapcar (lambda (pref) (aref (point-colors polyh) pref))
+              face)
+      (mapcar (lambda (pref) (declare (ignore pref)) (c! 1 1 1))
+              face)))
 
 (defmethod triangles-list ((polyh polyhedron) &key (matrix nil))
   ;; TODO: this function will only work for convex polyhedrons but it should
@@ -240,6 +253,7 @@
         (push (random-barycentric-point p0 p1 p2) points))
       points)))
 
+;;; TODO -- generate point colors and directions (from normals)
 (defmethod generate-point-cloud ((polyh polyhedron) &optional (density 1.0))
   (let* ((tri-polyh (if (is-triangulated-polyhedron? polyh)
                         polyh

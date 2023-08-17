@@ -533,6 +533,7 @@
 (defmethod provides-point-source-protocol? ((iso isosurface))
   t)
 
+;;; TODO xxx
 (defmethod source-points ((iso isosurface))
   (if (point-source-use-volume? iso)
       (iso-field-points iso)

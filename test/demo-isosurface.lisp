@@ -230,13 +230,14 @@ Use a particle system as a curve source.
 (format t "  isosurface 10...~%") (finish-output)
 
 (with-clear-scene
-  (let ((p-sys (make-particle-system-from-point (p! 0 0 0) 6 (p! -.2 .0 -.0) (p! .2 .0 .0)
-                                     'dynamic-particle
-                                     :spawn-angle (range-float 10.0 5.0)
-                                     :update-angle (range-float 10.0 5.0)
+  (let ((p-sys (make-particle-system-from-point
+                (p! 0 0 0) 6 (p! -.2 .0 -.0) (p! .2 .0 .0)
+                :particle-class 'dynamic-particle
+                :particle-initargs `(:spawn-angle ,(range-float 10.0 5.0)
+                                     :update-angle ,(range-float 10.0 5.0)
                                      :life-span 10
-                                     :force-fields (list (make-instance 'constant-force-field
-                                                                        :force-vector (p! 0 .02 0))))))
+                                     :force-fields ,(list (make-instance 'constant-force-field
+                                                                         :force-vector (p! 0 .02 0)))))))
     ;; add particle system to scene as both a shape and a motion
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
@@ -262,14 +263,13 @@ Use a particle system as a curve source.
 (with-clear-scene
   (let ((p-sys (make-particle-system-from-point-source
                 (make-circle-curve 4 8)
-                nil
-;;                (lambda (v) (p:scale (p:normalize (p+ v (p-rand))) 0.4))
-                'dynamic-particle
-                :life-span -1 ;infinite life-span
-                :do-collisions? nil
-                :force-fields (list (make-instance 'attractor-force-field
-                                                   :location (p! 0 0 0)
-                                                   :magnitude 1.2)))))
+;;                :vel-fn (lambda (v) (p:scale (p:normalize (p+ v (p-rand))) 0.4))
+                :particle-class 'dynamic-particle
+                :particle-initargs `(:life-span -1 ;infinite life-span
+                                     :do-collisions? nil
+                                     :force-fields ,(list (make-instance 'attractor-force-field
+                                                                         :location (p! 0 0 0)
+                                                                         :magnitude 1.2))))))
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
         ;;; run animation

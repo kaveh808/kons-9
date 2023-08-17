@@ -18,9 +18,11 @@
 (defun c-set-rgb (c1 c2)
   (setf (aref c1 0) (aref c2 0))
   (setf (aref c1 1) (aref c2 1))
-  (setf (aref c1 2) (aref c2 2)))
+  (setf (aref c1 2) (aref c2 2))
+  c1)
 (defun c-set-alpha (c alpha)
-  (setf (aref c 3) alpha))
+  (setf (aref c 3) alpha)
+  c)
 
 #+nil
 (defun c-lerp (f c1 c2)
@@ -58,6 +60,15 @@
 
 (defun c-jitter (c c-delta)
   (c+ c (map 'vector #'(lambda (a) (rand1 a)) c-delta)))
+
+(defun c/ (c val)
+  (c! (/ (c-red c) val) (/ (c-green c) val) (/ (c-blue c) val)))
+
+(defun c-center (colors)
+  (c/ (reduce #'c+ colors) (length colors)))
+
+(defun c-average (&rest colors)
+  (c-center colors))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
 

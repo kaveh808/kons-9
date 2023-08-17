@@ -7,7 +7,45 @@
   (:method ((p-cloud point-cloud)) t)
   )
 
-(defgeneric source-points (obj)
+(defgeneric point-source-data (obj)
+  
+  (:method ((obj t))
+    (error "Method POINT-SOURCE-DATA not implemented for object ~a" obj))
+
+  (:method ((p-cloud point-cloud))
+    (let ((n (length (points p-cloud))))
+      (values (points p-cloud)
+              (or (point-colors p-cloud)
+                  (make-array-with-fn n (lambda () (c! 0 0 0))))
+              (make-array-with-fn n #'p-rand))))
+    
+  (:method ((curve curve))
+    (let ((n (length (points curve))))
+      (values (points curve)
+              (or (point-colors curve)
+                  (make-array-with-fn n (lambda () (c! 0 0 0))))
+              (curve-tangents curve))))
+    
+  (:method ((polyh polyhedron))
+    (let ((n (length (points polyh))))
+      (if (point-source-use-face-centers? polyh)
+          (values (face-centers polyh)
+                  (face-colors polyh)
+                  (face-normals polyh))
+          (values (points polyh)
+                  (or (point-colors polyh)
+                      (make-array-with-fn n (lambda () (c! 0 0 0))))
+                  (point-normals polyh))))))
+
+
+(defun random-directions-arrayx (n)
+  (let ((dir (make-array n)))
+    (dotimes (i n)
+      (setf (aref dir i) (p-rand)))
+    dir))
+
+
+(defgeneric source-pointsx (obj)
   
   (:method ((obj t)) 
     (error "Method SOURCE-POINTS not implemented for object ~a" obj))
@@ -20,7 +58,7 @@
         (face-centers polyh)
         (call-next-method))))
 
-(defgeneric source-point-colors (obj)
+(defgeneric source-point-colorsx (obj)
   
   (:method ((obj t)) 
     (error "Method SOURCE-POINT-COLORS not implemented for object ~a" obj))
@@ -33,7 +71,7 @@
         nil                             ;TODO -- provide some color values
         (call-next-method))))
 
-(defgeneric source-directions (obj)
+(defgeneric source-directionsx (obj)
 
   (:method ((obj t)) 
     (error "Method SOURCE-DIRECTIONS not implemented for object ~a" obj))
@@ -43,7 +81,7 @@
     ;; (make-array (length (points p-cloud))
     ;;             :initial-element (p! 1 1 1)))
 ;;    (source-radial-directions p-cloud))
-    (source-random-directions p-cloud))
+    (source-random-directionsx p-cloud))
   
   (:method ((curve curve))
     (curve-tangents curve))
@@ -53,18 +91,18 @@
         (face-normals polyh)
         (point-normals polyh))))
 
-(defgeneric source-random-directions (obj)
+(defgeneric source-random-directionsx (obj)
   (:method ((obj t))
     (let ((dir (make-array (length (source-points obj)))))
       (dotimes (i (length dir))
         (setf (aref dir i) (p-rand)))
       dir)))
 
-(defgeneric source-radial-directions (obj)
+(defgeneric source-radial-directionsx (obj)
   (:method ((obj t)) 
     (map 'vector #'p:normalize (source-points obj))))
 
-(defgeneric source-closest-point (obj point)
+(defgeneric source-closest-pointx (obj point)
   (:method ((obj t) point)
     (let* ((points (source-points obj))
            (min-dist (p-dist point (aref points 0)))

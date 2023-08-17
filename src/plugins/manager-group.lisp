@@ -33,7 +33,7 @@
 (defmethod compute-procedural-node ((self point-instancer-group))
   (remove-all-children self)
   (when (point-source self)
-    (let ((points (source-points (point-source self))))
+    (let ((points (point-source-data (point-source self))))
       (dotimes (i (length points))
         (add-child self (translate-to (make-shape-group (list (instance-shape self)))
                                       (aref points i)))))))
