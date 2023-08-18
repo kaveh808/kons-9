@@ -613,5 +613,42 @@ Set particle colors based on velocity and draw as streaks.
 
 
 #|
+(Demo 24 particle) particle system from a particle system ======================
+
+Create particles from another particle system.
+|#
+
+(format t "  particle-system 24...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-circle-curve 2.0 16))
+         (p-sys-1 (make-particle-system-from-point-source shape
+                                                          :vel-fn (lambda (vel) (p:scale vel 0.1))
+                                                          :particle-class 'particle
+                                                          :particle-initargs `(:life-span nil
+                                                                               :update-angle ,(range-float 10.0 5.0))))
+         (p-sys-2 (make-particle-system-with-emitter (lambda () p-sys-1)
+                                                    :vel-fn (lambda (v) (p:scale v .1))
+                                                    :particle-class 'particle
+                                                    :particle-initargs `(:life-span 10
+                                                                         :do-spawn? nil
+                                                                         :update-angle ,(range-float 10.0 5.0)))))
+    (setf (draw-live-points-only? p-sys-1) nil) ;emait from curves
+    (setf (draw-as-streaks? p-sys-2) t)
+    (add-shape *scene* shape)
+    (add-shape *scene* p-sys-1)
+    (add-motion *scene* p-sys-1)
+    (add-shape *scene* p-sys-2)
+    (add-motion *scene* p-sys-2)))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+;;; particle from particle
+;;; -- with sweep mesh
+;;; curve source
+;;; point source with density (nil = use points)?
+
+#|
 END ============================================================================
 |#

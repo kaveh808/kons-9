@@ -304,7 +304,7 @@ force field.
                                        :do-spawn? nil
                                        :do-collisions? nil
                                        :update-color-fn ,(particle-age-alpha-fn 0.1 0.0)
-                                                                              :update-angle ,(range-float 10.0 5.0)))))
+                                       :update-angle ,(range-float 10.0 5.0)))))
       (add-shape *scene* shape)
 ;      (add-shape *scene* p-sys)
       (add-motion *scene* p-sys)
@@ -317,6 +317,53 @@ force field.
 ;;; hold down space key in 3D view to run animation
 
 (update-scene *scene* 60)               ;do update for batch testing
+
+
+#|
+(Demo 11 sprite) sprites from particle system from a particle system ===========
+
+Create sprites on particles from another particle system.
+|#
+
+(format t "  sprite 11...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (freeze-transform (rotate-by (make-circle-curve 2.0 16) (p! 90 0 0))))
+         (p-sys-1 (make-particle-system-from-point-source
+                   shape
+                   :vel-fn (lambda (vel) (p:scale vel 0.1))
+                   :particle-class 'particle
+                   :particle-initargs `(:life-span nil
+                                        :update-angle ,(range-float 10.0 5.0))))
+         (p-sys-2 (make-particle-system-with-emitter
+                   (lambda () p-sys-1)
+                   :vel-fn (lambda (v) (p:scale v .1))
+                   :col-fn (lambda (c) (declare (ignore c)) (c! 1 1 0 0.1))
+                   :particle-class 'dynamic-particle
+                   :particle-initargs `(:life-span 20
+                                        :do-spawn? nil
+                                        :update-color-fn ,(particle-age-color-fn
+                                                           (c! 1 1 0 0.1)
+                                                           (c! 1 0 0 0.0))
+                                        :do-collisions? nil
+                                        :force-fields ,(list (make-instance 'constant-force-field
+                                                                            :force-vector (p! 0 .02 0)))))))
+    (setf (draw-live-points-only? p-sys-1) nil) ;emait from curves
+    (setf (draw-as-streaks? p-sys-2) t)
+    (add-shape *scene* shape)
+;;    (add-shape *scene* p-sys-1)
+    (add-motion *scene* p-sys-1)
+;;    (add-shape *scene* p-sys-2)
+    (add-motion *scene* p-sys-2)
+
+    (add-shape *scene* (make-instance
+                        'sprite-instancer
+                        :geometry (make-circle-curve .5 16)
+                        :point-source p-sys-2))
+    ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
 
 #|
 END ============================================================================

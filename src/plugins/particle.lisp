@@ -395,8 +395,6 @@
 (defmethod provides-point-source-protocol? ((p-sys particle-system))
   t)
 
-;;; TODO xxx
-
 (defmethod point-source-data ((p-sys particle-system))
   (values (points p-sys)
           (point-colors p-sys)
