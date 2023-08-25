@@ -14,8 +14,7 @@
 
 (defmethod initialize-instance :after ((polyh polyhedron) &rest initargs)
   (declare (ignore initargs))
-  (compute-face-normals polyh)
-  (compute-point-normals polyh))
+  (compute-normals polyh))
 
 (defmethod empty-polyhedron ((polyh polyhedron))
   (setf (points polyh) (make-array 0 :adjustable t :fill-pointer t))
@@ -46,8 +45,7 @@
         (vector-push-extend (nreverse p-refs) (faces polyh))))))
 
 (defmethod freeze-transform :after ((polyh polyhedron))
-  (compute-face-normals polyh)
-  (compute-point-normals polyh))  
+  (compute-normals polyh))
 
 ;;; TODO -- not tested (also in point-cloud.lisp)
 ;; (defmethod world-space-duplicate :after ((polyh polyhedron))
@@ -86,6 +84,11 @@
                (p0 (aref (points polyh) (elt face 0)))
                (p1 (aref (points polyh) (elt face 1))))
            (triangle-normal center p0 p1)))))
+
+(defmethod compute-normals ((polyh polyhedron))
+  (compute-face-normals polyh)
+  (compute-point-normals polyh)
+  polyh)
 
 (defmethod compute-face-normals ((polyh polyhedron))
   (setf (face-normals polyh)
@@ -207,6 +210,24 @@
                   (incf pref))
                 (push face faces)))))
         (refine-polyhedron (make-polyhedron (coerce points 'vector) (coerce faces 'vector)) (1- levels)))))
+
+(defmethod displace-points-along-normals ((polyh polyhedron) distance &key (randomize nil))
+  (let ((points (points polyh))
+        (normals (point-normals polyh)))
+    (do-array (i p points)
+      (setf (aref points i) (p+ p (p* (aref normals i) (if randomize
+                                                           (random distance)
+                                                           distance)))))
+    (compute-normals polyh)))
+
+(defmethod fractalize-polyhedron ((polyh polyhedron) distance &optional (levels 1))
+  (let ((new-polyh polyh)
+        (dist distance))
+    (dotimes (i levels)
+      (setf new-polyh (refine-polyhedron new-polyh))
+      (displace-points-along-normals new-polyh dist :randomize t)
+      (setf dist (/ dist 2.0)))
+    new-polyh))
 
 (defmethod merge-points ((polyh polyhedron))
   (when (or (= 0 (length (points polyh)))
@@ -483,6 +504,4 @@
   (let ((polyh (refine-polyhedron (make-cube side :name name :mesh-type mesh-type) subdiv-levels))
         (radius (/ side 2)))
     (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
-    (compute-face-normals polyh)
-    (compute-point-normals polyh)
-    polyh))
+    (compute-normals polyh)))

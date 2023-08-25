@@ -644,6 +644,7 @@ Create particles from another particle system.
 
 (update-scene *scene* 20)               ;do update for batch testing
 
+;;; TODO
 ;;; particle from particle
 ;;; -- with sweep mesh
 ;;; curve source
