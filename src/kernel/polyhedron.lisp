@@ -211,22 +211,32 @@
                 (push face faces)))))
         (refine-polyhedron (make-polyhedron (coerce points 'vector) (coerce faces 'vector)) (1- levels)))))
 
-(defmethod displace-points-along-normals ((polyh polyhedron) distance &key (randomize nil))
+(defun point-array-hash (point-array)
+  (let ((hash (make-hash-table :test 'equal)))
+    (do-array (i p point-array)
+      (setf (gethash (point->list p) hash) t))
+    hash))
+  
+(defmethod displace-points-along-normals ((polyh polyhedron) distance
+                                          &key (randomize nil) (fixed-point-array nil))
   (let ((points (points polyh))
-        (normals (point-normals polyh)))
+        (normals (point-normals polyh))
+        (hash (if fixed-point-array (point-array-hash fixed-point-array) nil)))
     (do-array (i p points)
-      (setf (aref points i) (p+ p (p* (aref normals i) (if randomize
-                                                           (random distance)
-                                                           distance)))))
+      (when (or (null hash) (null (gethash (point->list p) hash)))
+        (setf (aref points i) (p+ p (p* (aref normals i) (if randomize
+                                                             (rand1 distance)
+                                                             distance))))))
     (compute-normals polyh)))
 
 (defmethod fractalize-polyhedron ((polyh polyhedron) distance &optional (levels 1))
   (let ((new-polyh polyh)
         (dist distance))
     (dotimes (i levels)
-      (setf new-polyh (refine-polyhedron new-polyh))
-      (displace-points-along-normals new-polyh dist :randomize t)
-      (setf dist (/ dist 2.0)))
+      (let ((old-points (points new-polyh))) ;only displace new points, not existing ones
+        (setf new-polyh (refine-polyhedron new-polyh))
+        (displace-points-along-normals new-polyh dist :randomize t :fixed-point-array old-points)
+        (setf dist (/ dist 2.0))))
     new-polyh))
 
 (defmethod merge-points ((polyh polyhedron))

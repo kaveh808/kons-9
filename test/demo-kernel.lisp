@@ -132,7 +132,7 @@ A cube turned into a sphere.
 Fractalize a polyhedron (cube).
 |#
 (with-clear-scene
-  (add-shape *scene* (fractalize-polyhedron (make-cube 2.0) 1.0 5)))
+  (add-shape *scene* (fractalize-polyhedron (make-cube 2.0) 0.5 5)))
 
 #|
 Fractalize a polyhedron (plane).
@@ -140,7 +140,7 @@ Fractalize a polyhedron (plane).
 (with-clear-scene
   (add-shape *scene* (fractalize-polyhedron
                       (freeze-transform (rotate-by (make-square-polyhedron 6.0)
-                                                                         (p! -90 0 0)))
+                                                   (p! -90 0 0)))
                       1.0 7)))
 
 #|
