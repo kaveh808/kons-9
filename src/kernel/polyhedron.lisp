@@ -229,15 +229,27 @@
                                                              distance))))))
     (compute-normals polyh)))
 
-(defmethod fractalize-polyhedron ((polyh polyhedron) distance &optional (levels 1))
+(defmethod fractalize-polyhedron ((polyh polyhedron) displacement &optional (levels 1))
   (let ((new-polyh polyh)
-        (dist distance))
+        (disp displacement))
     (dotimes (i levels)
       (let ((old-points (points new-polyh))) ;only displace new points, not existing ones
         (setf new-polyh (refine-polyhedron new-polyh))
-        (displace-points-along-normals new-polyh dist :randomize t :fixed-point-array old-points)
-        (setf dist (/ dist 2.0))))
+        (displace-points-along-normals new-polyh disp :randomize t :fixed-point-array old-points)
+        (setf disp (/ disp 2.0))))
     new-polyh))
+
+;;; return array of all fractal levels of polyhedron
+(defmethod fractalize-polyhedron-into-array ((polyh polyhedron) displacement &optional (levels 1))
+  (let* ((polyh-array (make-array levels))
+         (displ displacement)
+         (curr-polyh polyh))
+    (dotimes (i levels)
+      (let ((level-polyh (if (= 0 i) polyh (fractalize-polyhedron curr-polyh displ 1))))
+        (setf (aref polyh-array i) level-polyh)
+        (setf curr-polyh level-polyh)
+        (setf displ (/ displ 2.0))))
+    polyh-array))
 
 (defmethod merge-points ((polyh polyhedron))
   (when (or (= 0 (length (points polyh)))
