@@ -85,10 +85,10 @@
         (make-particle-system-from-point p
                                          ;1 (p! 0 .5 0) (p! 0 .5 0)
                                          4 (p! -.2 .2 -.2) (p! .2 .4 .2)
-                                         'scalar-field-particle ;grow particles in scalar-field
-                                         :field (field (environment grass))
-                                         :update-angle (range-float 10.0 5.0)
-                                         ))
+                                         :particle-class 'scalar-field-particle
+                                         :particle-initargs `(:field ,(field (environment grass))
+                                                              :update-angle ,(range-float 10.0 5.0)
+                                                              )))
   (add-child grass
              (make-sweep-mesh-group (make-circle 0.5 4) (p-system grass) :taper 0.0 :twist 0.0)))
 
@@ -108,7 +108,7 @@
                         :operation :add))
 
 (defun growth-shadow-field-fn (point-source amount extent)
-  (let ((points (source-points point-source)))
+  (let ((points (point-source-data point-source)))
     (lambda (p)
       (let ((val 0))
         (do-array (i source-p points)

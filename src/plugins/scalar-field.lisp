@@ -179,7 +179,7 @@
       mag)))
 
 (defun point-source-field-fn (point-source &optional (value-fn #'one-over-r-squared-value-fn))
-  (let ((points (source-points point-source)))
+  (let ((points (point-source-data point-source)))
     (lambda (p)
       (let ((val 0))
         (do-array (i source-p points)

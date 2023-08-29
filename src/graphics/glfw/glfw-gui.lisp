@@ -318,14 +318,14 @@
 (defmethod draw-scene-view ((view scene-view))
   (3d-setup-buffer)
   (3d-setup-projection)
-  (3d-update-light-settings)
-  (when (scene view)
-    (draw (scene view)))
-  (3d-cleanup-render)
   (when *display-axes?*
     (draw-world-axes))
   (when *display-ground-plane?*
     (draw-ground-plane))
+  (3d-update-light-settings)
+  (when (scene view)
+    (draw (scene view)))
+  (3d-cleanup-render)
 
   ;; object picking
 

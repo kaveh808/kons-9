@@ -14,8 +14,7 @@
 
 (defmethod initialize-instance :after ((polyh polyhedron) &rest initargs)
   (declare (ignore initargs))
-  (compute-face-normals polyh)
-  (compute-point-normals polyh))
+  (compute-normals polyh))
 
 (defmethod empty-polyhedron ((polyh polyhedron))
   (setf (points polyh) (make-array 0 :adjustable t :fill-pointer t))
@@ -46,14 +45,24 @@
         (vector-push-extend (nreverse p-refs) (faces polyh))))))
 
 (defmethod freeze-transform :after ((polyh polyhedron))
-  (compute-face-normals polyh)
-  (compute-point-normals polyh))  
+  (compute-normals polyh))
+
+;;; TODO -- not tested (also in point-cloud.lisp)
+;; (defmethod world-space-duplicate :after ((polyh polyhedron))
+;;   (compute-face-normals polyh)
+;;   (compute-point-normals polyh))  
 
 (defmethod face-center ((polyh polyhedron) face)
   (apply #'p-average (face-points-list polyh face)))
 
 (defmethod face-centers ((polyh polyhedron))
   (map 'vector #'(lambda (f) (face-center polyh f)) (faces polyh)))
+
+(defmethod face-color ((polyh polyhedron) face)
+  (apply #'c-average (face-colors-list polyh face)))
+
+(defmethod face-colors ((polyh polyhedron))
+  (map 'vector #'(lambda (f) (face-color polyh f)) (faces polyh)))
 
 ;; no checking, asssumes well-formed faces
 (defmethod face-normal ((polyh polyhedron) face)
@@ -75,6 +84,11 @@
                (p0 (aref (points polyh) (elt face 0)))
                (p1 (aref (points polyh) (elt face 1))))
            (triangle-normal center p0 p1)))))
+
+(defmethod compute-normals ((polyh polyhedron))
+  (compute-face-normals polyh)
+  (compute-point-normals polyh)
+  polyh)
 
 (defmethod compute-face-normals ((polyh polyhedron))
   (setf (face-normals polyh)
@@ -105,11 +119,11 @@
           (p:normalize (aref (point-normals polyh) n)))))
 
 (defmethod face-points-list ((polyh polyhedron) (i integer))
-  (mapcar #'(lambda (pref) (aref (points polyh) pref))
+  (mapcar (lambda (pref) (aref (points polyh) pref))
           (aref (faces polyh) i)))
 
 (defmethod face-points-list ((polyh polyhedron) (face list))
-  (mapcar #'(lambda (pref) (aref (points polyh) pref))
+  (mapcar (lambda (pref) (aref (points polyh) pref))
           face))
 
 (defmethod face-points-array ((polyh polyhedron) (i integer))
@@ -117,6 +131,13 @@
 
 (defmethod face-points-array ((polyh polyhedron) (face list))
   (coerce (face-points-list polyh face) 'vector))
+
+(defmethod face-colors-list ((polyh polyhedron) (face list))
+  (if (point-colors polyh)
+      (mapcar (lambda (pref) (aref (point-colors polyh) pref))
+              face)
+      (mapcar (lambda (pref) (declare (ignore pref)) (c! 1 1 1))
+              face)))
 
 (defmethod triangles-list ((polyh polyhedron) &key (matrix nil))
   ;; TODO: this function will only work for convex polyhedrons but it should
@@ -190,6 +211,46 @@
                 (push face faces)))))
         (refine-polyhedron (make-polyhedron (coerce points 'vector) (coerce faces 'vector)) (1- levels)))))
 
+(defun point-array-hash (point-array)
+  (let ((hash (make-hash-table :test 'equal)))
+    (do-array (i p point-array)
+      (setf (gethash (point->list p) hash) t))
+    hash))
+  
+(defmethod displace-points-along-normals ((polyh polyhedron) distance
+                                          &key (randomize nil) (fixed-point-array nil))
+  (let ((points (points polyh))
+        (normals (point-normals polyh))
+        (hash (if fixed-point-array (point-array-hash fixed-point-array) nil)))
+    (do-array (i p points)
+      (when (or (null hash) (null (gethash (point->list p) hash)))
+        (setf (aref points i) (p+ p (p* (aref normals i) (if randomize
+                                                             (rand1 distance)
+                                                             distance))))))
+    (compute-normals polyh)))
+
+(defmethod fractalize-polyhedron ((polyh polyhedron) displacement &optional (levels 1))
+  (let ((new-polyh polyh)
+        (disp displacement))
+    (dotimes (i levels)
+      (let ((old-points (points new-polyh))) ;only displace new points, not existing ones
+        (setf new-polyh (refine-polyhedron new-polyh))
+        (displace-points-along-normals new-polyh disp :randomize t :fixed-point-array old-points)
+        (setf disp (/ disp 2.0))))
+    new-polyh))
+
+;;; return array of all fractal levels of polyhedron
+(defmethod fractalize-polyhedron-into-array ((polyh polyhedron) displacement &optional (levels 1))
+  (let* ((polyh-array (make-array levels))
+         (displ displacement)
+         (curr-polyh polyh))
+    (dotimes (i levels)
+      (let ((level-polyh (if (= 0 i) polyh (fractalize-polyhedron curr-polyh displ 1))))
+        (setf (aref polyh-array i) level-polyh)
+        (setf curr-polyh level-polyh)
+        (setf displ (/ displ 2.0))))
+    polyh-array))
+
 (defmethod merge-points ((polyh polyhedron))
   (when (or (= 0 (length (points polyh)))
             (= 0 (length (faces polyh))))
@@ -235,6 +296,7 @@
         (push (random-barycentric-point p0 p1 p2) points))
       points)))
 
+;;; TODO -- generate point colors and directions (from normals)
 (defmethod generate-point-cloud ((polyh polyhedron) &optional (density 1.0))
   (let* ((tri-polyh (if (is-triangulated-polyhedron? polyh)
                         polyh
@@ -464,6 +526,4 @@
   (let ((polyh (refine-polyhedron (make-cube side :name name :mesh-type mesh-type) subdiv-levels))
         (radius (/ side 2)))
     (setf (points polyh) (map 'vector (lambda (p) (p-sphericize p radius)) (points polyh)))
-    (compute-face-normals polyh)
-    (compute-point-normals polyh)
-    polyh))
+    (compute-normals polyh)))

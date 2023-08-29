@@ -153,6 +153,12 @@
    (lambda (el) (member el list-2))
    list-1))
 
+(defun make-array-with-fn (dim initial-element-fn)
+  (let ((array (make-array dim)))
+    (dotimes (i dim)
+      (setf (aref array i) (funcall initial-element-fn)))
+    array))
+
 ;;;; math ======================================================================
 
 (defconstant 2pi (* 2 pi))

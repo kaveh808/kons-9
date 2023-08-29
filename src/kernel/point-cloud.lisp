@@ -4,7 +4,8 @@
 
 (defclass point-cloud (shape)
   ((points :accessor points :initarg :points :initform (make-array 0 :adjustable t :fill-pointer t))
-   (point-colors :accessor point-colors :initarg :point-colors :initform nil)))
+   (point-colors :accessor point-colors :initarg :point-colors :initform nil)
+   (draw-colored-points? :accessor draw-colored-points? :initarg :draw-colored-points? :initform nil)))
 
 (defmethod printable-data ((self point-cloud))
   (strcat (call-next-method) (format nil ", ~a points" (length (points self)))))
@@ -15,6 +16,14 @@
     (return-from get-bounds (values (p! -1 -1 -1) (p! 1 1 1))))
   (points-bounds (points p-cloud)))
 
+;;; TODO -- not tested
+(defmethod world-space-points ((p-cloud point-cloud))
+  (if (scene p-cloud)
+      (let* ((matrix (shape-global-matrix (scene p-cloud) p-cloud))
+             (world-space-points (transform-points (points p-cloud) matrix)))
+        world-space-points)
+      (points p-cloud)))
+        
 ;;; TODO -- not tested
 (defmethod get-global-bounds ((p-cloud point-cloud))
   (when (= 0 (length (points p-cloud)))
@@ -51,6 +60,14 @@
   (reset-transform (transform p-cloud))
   p-cloud)
 
+;;; TODO -- not tested (also in polyhedron.lisp)
+;; (defmethod world-space-duplicate ((p-cloud point-cloud))
+;;   (let ((dup (duplicate p-cloud))
+;;         (matrix (shape-global-matrix (scene p-cloud) p-cloud)))
+;;     (transform-point-array! (points dup) matrix)
+;;     (reset-transform (transform dup))
+;;     dup))
+    
 (defmethod allocate-point-colors ((p-cloud point-cloud)
                                   &optional (color (fg-color *drawing-settings*)))
   (setf (point-colors p-cloud) (make-array (length (points p-cloud))

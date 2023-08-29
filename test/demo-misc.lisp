@@ -275,4 +275,34 @@ in this and demos below, update the *EXAMPLE-MOL-FILENAME* for your setup.")
            (make-shape-group (sweep-extrude (make-circle 0.5 6)
                                             (find-shape-by-name *scene* 'cube))))
 
+;;; polyhedron fractalize and variant-manager-group ----------------------------
+
+(defun make-animated-fractal-scene (polyh displacement levels)
+  (let ((group (make-instance 'variant-manager-group
+                              :children (fractalize-polyhedron-into-array polyh
+                                                                          displacement
+                                                                          levels))))
+    (compute-procedural-node group)     ;need to manually trigger compute node after creation
+    (add-shape *scene* group)
+    (add-motion *scene* 
+                (make-instance 'animator
+                               :setup-fn (lambda () (setf (visible-index group) 0))
+                               :update-fn (lambda () (setf (visible-index group)
+                                                           (current-frame *scene*)))))
+    (setf (end-frame *scene*) (1- (length (children group))))))
+
+(with-clear-scene
+  (let* ((base-polyh (freeze-transform (rotate-by (make-square-polyhedron 6.0) (p! -90 0 0)))))
+    (make-animated-fractal-scene base-polyh 2.0 7)))
+
+;;; press space key in 3D view to show next fractal level
+;;; press [ to return to base shape (frame 0)
+
+(with-clear-scene
+  (let* ((base-polyh (make-cube 4.0)))
+    (make-animated-fractal-scene base-polyh 1.0 7)))
+
+;;; press space key in 3D view to show next fractal level
+;;; press [ to return to base shape (frame 0)
+
 ;;;; END ========================================================================

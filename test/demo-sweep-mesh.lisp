@@ -59,8 +59,8 @@ with the particle system.
 (with-clear-scene
   (let* (;(p-gen (make-grid-uv-mesh 8 8 24 24))
          (p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .5 .2)
-                                                 'particle
-                                                 :update-angle (range-float 20.0 10.0)))
+                                                :particle-class 'particle
+                                                :particle-initargs `(:update-angle ,(range-float 20.0 10.0))))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.5 6)
                                                   p-sys
                                                   :taper 0.0 :twist 2pi)))
@@ -80,11 +80,12 @@ with the particle system.
 
 (with-clear-scene
   (let* ((p-source (make-cube-sphere 2 2))
-         (p-sys (make-particle-system-from-point-source p-source
-                                                        (lambda (v) (p:scale v 0.2))
-                                                        'particle
-                                      :life-span (round (rand2 5 10))
-                                      :update-angle (range-float 20.0 10.0)))
+         (p-sys (make-particle-system-from-point-source
+                 p-source
+                 :vel-fn (lambda (v) (p:scale v 0.2))
+                 :particle-class 'particle
+                 :particle-initargs `(:life-span ,(round (rand2 5 10))
+                                      :update-angle ,(range-float 20.0 10.0))))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.1 6) p-sys
                                                   :taper 1.0 :twist 0.0)))
     (add-shape *scene* p-source)
@@ -105,11 +106,12 @@ The mesh automatically grows with the particle system.
   (let* ((shape (triangulate-polyhedron (make-cube-sphere 6.0 3)))
          ;(shape (triangulate-polyhedron (make-cube 6)))
          ;(shape (triangulate-polyhedron (make-grid-uv-mesh 6 6 1 1)))
-         (p-sys (make-particle-system-from-point (p! 0 3.0 0) 1 (p! -.5 0 -.5) (p! .5 0 .5)
-                                                 'climbing-particle
-                                                 :support-polyh shape
-                                                 :update-angle (range-float 20.0 10.0)
-                                                 :life-span -1))
+         (p-sys (make-particle-system-from-point
+                 (p! 0 3.0 0) 1 (p! -.5 0 -.5) (p! .5 0 .5)
+                 :particle-class 'climbing-particle
+                 :particle-initargs `(:life-span nil
+                                      :support-polyh ,shape
+                                      :update-angle ,(range-float 20.0 10.0))))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.2 6) p-sys
                                                   :taper 1.0 :twist 0.0)))
     (add-shape *scene* shape)
@@ -131,12 +133,13 @@ with the particle system.
 (format t "  sweep-mesh 6...~%") (finish-output)
 
 (with-clear-scene
-  (let* ((p-sys (make-particle-system-from-point (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .8 .2)
-                                                 'dynamic-particle
-                                                 :life-span -1 ;infinite life-span
-                                                 :do-collisions? t
-                                                 :force-fields (list (make-instance 'constant-force-field
-                                                                                    :force-vector (p! 0 -0.05 0)))))
+  (let* ((p-sys (make-particle-system-from-point
+                 (p! 0 0 0) 10 (p! -.2 .4 -.2) (p! .2 .8 .2)
+                 :particle-class 'dynamic-particle
+                 :particle-initargs `(:life-span nil
+                                      :do-collisions? t
+                                      :force-fields ,(list (make-instance 'constant-force-field
+                                                                          :force-vector (p! 0 -0.05 0))))))
          (sweep-mesh-group (make-sweep-mesh-group (make-circle 0.5 6)
                                                   p-sys
                                                   :taper 0.0 :twist 2pi)))

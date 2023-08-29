@@ -84,7 +84,9 @@
 ;;; point-cloud helper methods -------------------------------------------------
 
 (defmethod draw-points ((p-cloud point-cloud))
-  (3d-draw-points (points p-cloud) (point-colors p-cloud)))
+  (3d-draw-points (points p-cloud) (if (draw-colored-points? p-cloud)
+                                       (point-colors p-cloud)
+                                       nil)))
 
 ;;; curve helper methods -----------------------------------------------------
 (defmethod draw-wireframe ((curve curve))

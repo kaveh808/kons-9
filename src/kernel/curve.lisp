@@ -13,6 +13,8 @@
   (let ((len (length points))
 	i1
 	i2)
+    (when (= len 1)
+      (return-from curve-point-tangent (p! 0 0 0)))
     (if (= len 2)
 	(progn (setf i1 0)
 	       (setf i2 1))

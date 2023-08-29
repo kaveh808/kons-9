@@ -58,10 +58,10 @@
    (col (c! 0 0 0 1))
    (is-alive? t)
    (generation 1)
-   (life-span -1) ; -1 = immortal
+   (life-span nil) ; nil = infinite life-span
    (age 0)
 
-   ;; size, color, alpha
+   ;; size
    
    (points (make-array 0 :adjustable t :fill-pointer t))
    (point-colors (make-array 0 :adjustable t :fill-pointer t))
@@ -71,6 +71,7 @@
    
    (update-angle (range-float 0.0 0))
 
+   (do-spawn? t)
    (spawn-done? nil)
    (spawn-mutate? nil)
    (spawn-number-children (range-float 2 0))
@@ -106,6 +107,24 @@
             col-1
             col-2)))
 
+(defun particle-age-color-fn (col-1 col-2)
+  (lambda (ptcl)
+    (if (null (life-span ptcl))
+        col-1
+        (c-lerp (/ (age ptcl) (life-span ptcl))
+                col-1
+                col-2))))
+
+(defun particle-age-alpha-fn (alpha-1 alpha-2)
+  (lambda (ptcl)
+    (let ((alpha (if (null (life-span ptcl))
+                     alpha-1
+                     (lerp (/ (age ptcl) (max 1 (1- (life-span ptcl))))
+                           alpha-1
+                           alpha-2)))
+          (col (col ptcl)))
+      (c! (c-red col) (c-green col) (c-blue col) alpha))))
+
 (defmethod update-color ((ptcl particle))
   (when (update-color-fn ptcl)
     (setf (col ptcl) (funcall (update-color-fn ptcl) ptcl))))
@@ -125,7 +144,7 @@
              (update-velocity ptcl))))
 
 (defmethod update-particle ((ptcl particle))
-  (if (or (= -1 (life-span ptcl))
+  (if (or (null (life-span ptcl))
           (< (age ptcl) (life-span ptcl)))
       (progn
         (update-position ptcl)
@@ -144,6 +163,7 @@
 (defmethod spawn-particle ((ptcl particle))
   (let ((child (make-instance (type-of ptcl)
                               :pos (pos ptcl)
+                              :col (col ptcl)
                               :vel (spawn-velocity ptcl)
                               :generation (1+ (generation ptcl))
                               :life-span (* (life-span ptcl)
@@ -155,7 +175,8 @@
     child))
 
 (defmethod do-spawn ((ptcl particle))
-  (if (and (not (= -1 (life-span ptcl)))
+  (if (and (do-spawn? ptcl)
+           (life-span ptcl)
            (>= (age ptcl) (life-span ptcl))
            (not (spawn-done? ptcl)))
       (progn
@@ -254,7 +275,11 @@
    (max-generations -1) ; -1 = no maximum
    (use-point-colors? t)
    (draw-live-points-only? t)
-   (draw-as-streaks? nil)))
+   (draw-as-streaks? nil)
+   (particle-class 'particle)
+   (particle-initargs nil)
+   (emitter-fn nil)
+   (emitter-vel-fn nil)))
 
 (defmethod print-object ((self particle-system) stream)
   (print-unreadable-object (self stream :type t :identity t)
@@ -316,13 +341,33 @@
 
 (defmethod update-motion ((p-sys particle-system) parent-absolute-timing)
   (declare (ignore parent-absolute-timing))
+  ;; emit any new poarticles
+  (let* ((p-source (if (emitter-fn p-sys) (funcall (emitter-fn p-sys)) nil)))
+    (when p-source
+      (multiple-value-bind (pos col vel)
+          (point-source-data p-source)
+        (let ((vel-2 (if (emitter-vel-fn p-sys)
+                         (map 'vector (emitter-vel-fn p-sys) vel)
+                         vel)))
+          (loop for p across pos
+                for c across col
+                for v across vel-2
+                do (add-particle p-sys (apply #'make-instance
+                                              (particle-class p-sys)
+                                              :pos p
+                                              :col c
+                                              :vel v
+                                              (particle-initargs p-sys))))))))
+  ;; for each particle
   (do-array (i ptcl (particles p-sys))
     (when (or (= -1 (max-generations p-sys))
               (<= (generation ptcl) (max-generations p-sys)))
+      ;; update live particles
       (when (is-alive? ptcl)
         (update-particle ptcl)
         (vector-push-extend (pos ptcl) (points ptcl))
         (vector-push-extend (col ptcl) (point-colors ptcl)))
+      ;; spawn new particles
       (dolist (child (do-spawn ptcl))
         (add-particle p-sys child)))))
 
@@ -350,18 +395,16 @@
 (defmethod provides-point-source-protocol? ((p-sys particle-system))
   t)
 
-(defmethod source-points ((p-sys particle-system))
-  (points p-sys))
-
-(defmethod source-point-colors ((p-sys particle-system))
-  (point-colors p-sys))
-
-(defmethod source-directions ((p-sys particle-system))
-  (apply #'concatenate 'vector (map
-                                'list
-                                (lambda (ptcl) (curve-tangents-aux (points ptcl) nil))
-                                (particles p-sys))))
-
+(defmethod point-source-data ((p-sys particle-system))
+  (values (points p-sys)
+          (point-colors p-sys)
+          (if (> (length (points p-sys)) 0)
+              (apply #'concatenate 'vector (map
+                                            'list
+                                            (lambda (ptcl) (curve-tangents-aux (points ptcl) nil))
+                                            (particles p-sys)))
+              #())))
+          
 ;;;; curve-source-protocol =====================================================
 
 (defmethod provides-curve-source-protocol? ((p-sys particle-system))
@@ -375,32 +418,76 @@
 
 ;;;; create particle systems ===================================================
 
-(defun make-particle-system-from-point-source (p-source vel-fn particle-class &rest particle-initargs)
-  (apply #'make-particle-system-aux
-         (source-points p-source)
-         (if vel-fn
-             (map 'vector vel-fn (source-directions p-source))
-             (source-directions p-source))
-         particle-class
-         particle-initargs))
+(defun make-particle-system-with-emitter (p-source-fn &key (vel-fn nil) (col-fn nil)
+                                                        (particle-class 'particle) (particle-initargs nil))
+  (multiple-value-bind (pos col vel)
+      (point-source-data (funcall p-source-fn))
+    (let* ((p-sys (apply #'make-particle-system-aux
+                         pos
+                         (if col-fn
+                             (map 'vector col-fn col)
+                             col)
+                         (if vel-fn
+                             (map 'vector vel-fn vel)
+                             vel)
+                         particle-class
+                         particle-initargs)))
+      (setf (particle-class p-sys) particle-class)
+      (setf (particle-initargs p-sys) particle-initargs)
+      (setf (emitter-fn p-sys) p-source-fn)
+      (setf (emitter-vel-fn p-sys) vel-fn)
+      p-sys)))
 
-(defun make-particle-system-from-point (point num min-vel max-vel particle-class &rest particle-initargs)
+#|
+
+           (apply #'make-particle-system-aux
+                       points
+                       velocities
+                       particle-class
+                       particle-initargs)))
+    (setf (particle-class p-sys) particle-class)
+    (setf (particle-initargs p-sys) particle-initargs)
+    (setf (emitter-fn p-sys) p-source-fn)
+    (setf (emitter-vel-fn p-sys) vel-fn)
+    p-sys))
+|#
+
+(defun make-particle-system-from-point-source (p-source &key (vel-fn nil) (col-fn nil)
+                                                          (particle-class 'particle) (particle-initargs nil))
+  (multiple-value-bind (pos col vel)
+      (point-source-data p-source)
+    (apply #'make-particle-system-aux
+           pos
+           (if col-fn
+               (map 'vector col-fn col)
+               col)
+           (if vel-fn
+               (map 'vector vel-fn vel)
+               vel)
+           particle-class
+           particle-initargs)))
+
+(defun make-particle-system-from-point (point num min-vel max-vel 
+                                        &key (particle-class 'particle) (particle-initargs nil))
   (let ((pnts (make-array num))
+        (cols (make-array num :initial-element (c! 0 0 0)))
         (vels (make-array num)))
     (dotimes (i num)
       (setf (aref pnts i) (p:copy point))
       (setf (aref vels i) (p-rand2 min-vel max-vel)))
     (apply #'make-particle-system-aux
            pnts
+           cols
            vels
            particle-class
            particle-initargs)))
 
-(defun make-particle-system-aux (points velocities particle-class &rest initargs)
+(defun make-particle-system-aux (points colors velocities particle-class &rest initargs)
   (let ((p-sys (make-instance 'particle-system)))
     (loop for p across points
+          for c across colors
           for v across velocities
-          do (add-particle p-sys (apply #'make-instance particle-class :pos p :vel v initargs)))
+          do (add-particle p-sys (apply #'make-instance particle-class :pos p :col c :vel v initargs)))
     p-sys))
 
 ;;;; gui =======================================================================
@@ -415,11 +502,11 @@
          (p-source (selected-shape scene))
          (p-sys (make-particle-system-from-point-source
                  p-source
-                 (lambda (v) (p:scale v 0.2))
-                 'dynamic-particle
-                 :life-span -1
-                 :force-fields (list (make-instance 'constant-force-field
-                                                    :force-vector (p! 0 -.02 0))))))
+                 :vel-fn (lambda (v) (p:scale v 0.2))
+                 :particle-class 'dynamic-particle
+                 :particle-initargs `(:life-span nil
+                                      :force-fields ,(list (make-instance 'constant-force-field
+                                                                          :force-vector (p! 0 -.02 0)))))))
      (add-motion scene p-sys)
     p-sys))
 
@@ -428,10 +515,10 @@
          (p-source (selected-shape scene))
          (p-sys (make-particle-system-from-point-source
                  p-source
-                 (lambda (v) (p:scale v 0.2))
-                 'particle
-                 :life-span -1
-                 :update-angle (range-float 20.0 10.0))))
+                 :vel-fn (lambda (v) (p:scale v 0.2))
+                 :particle-class 'particle
+                 :particle-initargs `(:life-span nil
+                                      :update-angle ,(range-float 20.0 10.0)))))
     (add-motion scene p-sys)
     p-sys))
 

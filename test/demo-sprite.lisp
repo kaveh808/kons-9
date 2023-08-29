@@ -23,7 +23,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 1...~%") (finish-output)
+(format t "  sprite 01...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-instance
@@ -38,7 +38,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 2...~%") (finish-output)
+(format t "  sprite 02...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-instance
@@ -56,7 +56,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 3...~%") (finish-output)
+(format t "  sprite 03...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-sphere-uv-mesh 4.0 8 16))
@@ -77,7 +77,7 @@ The demos below demonstrate examples of generating SPRITE instances.
 
 |#
 
-(format t "  sprite 4...~%") (finish-output)
+(format t "  sprite 04...~%") (finish-output)
 
 (with-clear-scene
   (add-shape *scene* (make-instance
@@ -93,18 +93,18 @@ Randomly varying particle colors. The sprites take their position and color from
 the particles.
 |#
 
-(format t "  sprite 5...~%") (finish-output)
+(format t "  sprite 05...~%") (finish-output)
 
 (with-clear-scene
   (let ((p-sys (make-particle-system-from-point
                 (p! 0 1 0) 10 (p! -.1 .1 -.1) (p! .1 .3 .1)
-                'dynamic-particle
-                :life-span 20
-                :update-color-fn (particle-random-color-fn)
-                :do-collisions? t
-                :elasticity 0.8
-                :force-fields (list (make-instance 'constant-force-field
-                                                   :force-vector (p! 0 -.02 0))))))
+                :particle-class 'dynamic-particle
+                :particle-initargs `(:life-span 20
+                                     :update-color-fn ,(particle-random-color-fn)
+                                     :do-collisions? t
+                                     :elasticity 0.8
+                                     :force-fields ,(list (make-instance 'constant-force-field
+                                                                         :force-vector (p! 0 -.02 0)))))))
     (add-shape *scene* p-sys)
     (add-motion *scene* p-sys)
 
@@ -113,6 +113,257 @@ the particles.
                         :geometry (make-circle-curve .25 16)
                         :point-source p-sys))
     ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+#|
+(Demo 06 sprite) sprites generated from particle system ========================
+
+Particle system with emitter.
+|#
+
+(format t "  sprite 06...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-circle-curve 2 64))
+         (p-sys (make-particle-system-with-emitter
+                 (lambda () shape)
+                 :vel-fn (lambda (v)
+                           (declare (ignore v))
+                           (p-rand 0.025))
+                 :particle-class 'particle
+                 :particle-initargs `(:life-span nil
+                                      :update-color-fn ,(lambda (ptcl)
+                                                          (declare (ignore ptcl))
+                                                          (c! 0 1 0 0.05))
+                                      :update-angle ,(range-float 10.0 5.0)))))
+    (setf (draw-as-streaks? p-sys) t)
+    (add-shape *scene* shape)
+    (add-motion *scene* p-sys)
+
+    (add-shape *scene* (make-instance
+                        'sprite-instancer
+                        :geometry (make-circle-curve .5 16)
+                        :point-source p-sys))
+    ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+#|
+(Demo 07 sprite) sprites generated from particle system ========================
+
+Particle system with static (non-animated) emitter in world space and gravity.
+Particle color animated based on age.
+|#
+
+(format t "  sprite 07...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (translate-to (make-circle-curve 2 64) (p! 0 3 0)))
+         (p-sys (make-particle-system-with-emitter
+                 (lambda () (freeze-transform (duplicate shape)))
+                 :vel-fn (lambda (v)
+                           (declare (ignore v))
+                           (p-rand 0.05))
+                 :col-fn (lambda (c)
+                           (declare (ignore c))
+                           (c! 0 1 0 0.05))
+                 :particle-class 'dynamic-particle
+                 :particle-initargs `(:life-span 50
+                                      :do-spawn? nil
+                                      :update-color-fn ,(particle-age-color-fn
+                                                         (c! 0 1 0 0.05)
+                                                         (c! 0 1 0 0.0))
+                                      :do-collisions? t
+                                      :elasticity 0.5
+                                      :force-fields ,(list (make-instance 'constant-force-field
+                                                                          :force-vector (p! 0 -.01 0)))))))
+    (add-shape *scene* shape)
+    (add-motion *scene* p-sys)
+
+    (add-shape *scene* (make-instance
+                        'sprite-instancer
+                        :geometry (make-circle-curve .5 16)
+                        :point-source p-sys))
+    ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+#|
+(Demo 08 sprite) sprites generated from particle system ========================
+
+Particle system with animated emitter in world space and gravity. Particle color
+animated based on age.
+|#
+
+(format t "  sprite 08...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (translate-to (make-circle-curve 2 64) (p! 0 -2 0)))
+         (p-sys (make-particle-system-with-emitter
+                 (lambda () (freeze-transform (duplicate shape)))
+                 :vel-fn (lambda (v)
+                           (declare (ignore v))
+                           (p-rand 0.05))
+                 :col-fn (lambda (c)
+                           (declare (ignore c))
+                           (c! 0 0 0 0.1))
+                 :particle-class 'dynamic-particle
+                 :particle-initargs `(:life-span 30
+                                      :do-spawn? nil
+                                      :update-color-fn ,(particle-age-color-fn
+                                                         (c! 0 0 0 0.1)
+                                                         (c! 1 1 1 0.0))
+                                      :do-collisions? nil
+                                      :force-fields ,(list (make-instance 'constant-force-field
+                                                                          :force-vector (p! 0 .02 0)))))))
+    
+    ;; animate emitter shape
+    (add-motion *scene*
+                (make-instance 'animator
+                               :setup-fn (lambda ()
+                                           (translate-to shape
+                                                         (p! 0.0 -2 0)))
+                               :update-fn (lambda ()
+                                            (translate-to shape
+                                                          (p! (* 4.0 (sin (* 3.0 (current-time *scene*)))) -2 0)))))
+
+    (setf (draw-as-streaks? p-sys) t)
+    (add-shape *scene* shape)
+    (add-motion *scene* p-sys)
+
+    (add-shape *scene* (make-instance
+                        'sprite-instancer
+                        :geometry (make-circle-curve .5 16)
+                        :point-source p-sys))
+    ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+#|
+(Demo 09 sprite) sprites generated from particle system with emitter, colors ===
+
+|#
+
+(format t "  sprite 09...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (make-sphere-uv-mesh 2.0 8 16)))
+    (setf (draw-colored-points? shape) t)
+    (set-point-colors-by-xyz shape (lambda (p) (c-rainbow (clamp (tween (p:y p) -1.0 1.0) 0.0 1.0))))
+    (let ((p-sys (make-particle-system-with-emitter
+                  (lambda () shape)
+                  :vel-fn (lambda (v) (p:scale v .1))
+                  :col-fn (lambda (c) (c-set-alpha c 0.1))
+                  :particle-class 'particle
+                  :particle-initargs `(:life-span 20
+                                       :do-spawn? nil
+                                       :update-angle ,(range-float 10.0 5.0)
+                                       :update-color-fn ,(particle-age-alpha-fn 0.1 0.0)))))
+      (setf (draw-as-streaks? p-sys) t)
+      (add-shape *scene* shape)
+;      (add-shape *scene* p-sys)
+      (add-motion *scene* p-sys)
+
+      (add-shape *scene* (make-instance
+                          'sprite-instancer
+                          :geometry (make-circle-curve .5 16)
+                          :point-source p-sys)))))
+
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
+
+#|
+(Demo 10 sprite) sprite from dynamic particle system with a noise force field ==
+
+Dynamic particles growing from a height field under the influence of a noise
+force field.
+|#
+
+(format t "  sprite 10...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (freeze-transform
+                 (translate-by (make-heightfield 21 21 (p! -5 0 -5) (p! 5 0 5)
+                                                 :height-fn (lambda (x z)
+                                                              (* 4 (turbulence (p! x 0 z) 4))))
+                               (p! 0 -1.5 0)))))
+;    (setf (draw-colored-points? shape) t)
+    (set-point-colors-by-xyz shape (lambda (p) (c-rainbow (clamp (tween (p:y p) 0.0 1.5) 0.0 1.0))))
+    (let ((p-sys (make-particle-system-with-emitter
+                  (lambda () shape)
+                  :vel-fn (lambda (v) (p:scale v .1))
+                  :col-fn (lambda (c) (c-set-alpha c 0.1))
+                  :particle-class 'dynamic-particle
+                  :particle-initargs `(:life-span 20
+                                       :do-spawn? nil
+                                       :do-collisions? nil
+                                       :update-color-fn ,(particle-age-alpha-fn 0.1 0.0)
+                                       :update-angle ,(range-float 10.0 5.0)))))
+      (add-shape *scene* shape)
+;      (add-shape *scene* p-sys)
+      (add-motion *scene* p-sys)
+
+      (add-shape *scene* (make-instance
+                          'sprite-instancer
+                          :geometry (make-circle-curve .5 16)
+                          :point-source p-sys)))))
+
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 60)               ;do update for batch testing
+
+
+#|
+(Demo 11 sprite) sprites from particle system from a particle system ===========
+
+Create sprites on particles from another particle system.
+|#
+
+(format t "  sprite 11...~%") (finish-output)
+
+(with-clear-scene
+  (let* ((shape (freeze-transform (rotate-by (make-circle-curve 2.0 16) (p! 90 0 0))))
+         (p-sys-1 (make-particle-system-from-point-source
+                   shape
+                   :vel-fn (lambda (vel) (p:scale vel 0.1))
+                   :particle-class 'particle
+                   :particle-initargs `(:life-span nil
+                                        :update-angle ,(range-float 10.0 5.0))))
+         (p-sys-2 (make-particle-system-with-emitter
+                   (lambda () p-sys-1)
+                   :vel-fn (lambda (v) (p:scale v .1))
+                   :col-fn (lambda (c) (declare (ignore c)) (c! 1 1 0 0.1))
+                   :particle-class 'dynamic-particle
+                   :particle-initargs `(:life-span 20
+                                        :do-spawn? nil
+                                        :update-color-fn ,(particle-age-color-fn
+                                                           (c! 1 1 0 0.1)
+                                                           (c! 1 0 0 0.0))
+                                        :do-collisions? nil
+                                        :force-fields ,(list (make-instance 'constant-force-field
+                                                                            :force-vector (p! 0 .02 0)))))))
+    (setf (draw-live-points-only? p-sys-1) nil) ;emait from curves
+    (setf (draw-as-streaks? p-sys-2) t)
+    (add-shape *scene* shape)
+;;    (add-shape *scene* p-sys-1)
+    (add-motion *scene* p-sys-1)
+;;    (add-shape *scene* p-sys-2)
+    (add-motion *scene* p-sys-2)
+
+    (add-shape *scene* (make-instance
+                        'sprite-instancer
+                        :geometry (make-circle-curve .5 16)
+                        :point-source p-sys-2))
+    ))
+;;; hold down space key in 3D view to run animation
+
+(update-scene *scene* 20)               ;do update for batch testing
 
 #|
 END ============================================================================
