@@ -22,7 +22,7 @@ Make sure you have opened the graphics window by doing:
 (with-clear-scene
   (add-shape *scene* (make-butterfly-curve 1024)))
 
-;;; poly-mesh ------------------------------------------------------------------
+;;; poly-mesh select components ------------------------------------------------
 
 (with-clear-scene
   (add-shape *scene* (translate-by (make-cube 2.0 :name 'cube :mesh-type 'poly-mesh) (p! 0 1 0))))
@@ -39,7 +39,62 @@ Make sure you have opened the graphics window by doing:
   (select-face (find-shape-by-name *scene* 'cube) 2)
   (select-face (find-shape-by-name *scene* 'cube) 5))
 
+;;; poly-mesh select vertex neighbors ------------------------------------------
 
+;;; select vertex neighbor vertices
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-vertex mesh 0)
+    (let* ((vertex (aref (pm-vertices mesh) 0)))
+      (dolist (v (pm-vertex-vertices vertex))
+        (setf (selected? v) t)))))
+  
+;;; select vertex neighbor edges
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-vertex mesh 0)
+    (let* ((vertex (aref (pm-vertices mesh) 0)))
+      (dolist (e (pm-vertex-edges vertex))
+        (setf (selected? e) t)))))
+  
+;;; select vertex neighbor faces
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-vertex mesh 0)
+    (let* ((vertex (aref (pm-vertices mesh) 0)))
+      (dolist (f (pm-vertex-faces vertex))
+        (setf (selected? f) t)))))
+  
+;;; select edge neighbor faces
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-edge mesh 0)
+    (let* ((edge (aref (pm-edges mesh) 0)))
+      (dolist (f (pm-edge-faces edge))
+        (setf (selected? f) t)))))
+  
+;;; select face neighbor edges
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-face mesh 0)
+    (let* ((face (aref (pm-faces mesh) 0)))
+      (dolist (e (pm-face-edges face))
+        (setf (selected? e) t)))))
+  
+;;; select face neighbor faces
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-face mesh 0)
+    (let* ((face (aref (pm-faces mesh) 0)))
+      (dolist (f (pm-face-faces face))
+        (setf (selected? f) t)))))
+  
 ;;; l-system ------------------------------------------------------------------
 
 (format t "  l-system...~%") (finish-output)
@@ -301,6 +356,14 @@ in this and demos below, update the *EXAMPLE-MOL-FILENAME* for your setup.")
 (with-clear-scene
   (let* ((base-polyh (make-cube 4.0)))
     (make-animated-fractal-scene base-polyh 1.0 7)))
+
+;;; press space key in 3D view to show next fractal level
+;;; press [ to return to base shape (frame 0)
+
+
+(with-clear-scene
+  (let* ((base-polyh (make-dodecahedron 6.0)))
+    (make-animated-fractal-scene base-polyh 0.5 6)))
 
 ;;; press space key in 3D view to show next fractal level
 ;;; press [ to return to base shape (frame 0)
