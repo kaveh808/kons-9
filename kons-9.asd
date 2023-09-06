@@ -102,6 +102,7 @@
    (:file "src/plugins/growth")
    (:file "src/plugins/sprite")
    (:file "src/plugins/poly-mesh")
+   (:file "src/plugins/subdiv-mesh")
    (:file "src/plugins/usd")
    (:file "src/plugins/obj")
    (:file "src/plugins/stl")

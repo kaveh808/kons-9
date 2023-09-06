@@ -95,6 +95,23 @@ Make sure you have opened the graphics window by doing:
       (dolist (f (pm-face-faces face))
         (setf (selected? f) t)))))
   
+;;; subdiv-mesh ----------------------------------------------------------------
+
+(with-clear-scene
+  (let ((mesh (translate-to (make-cube 2.0 :name 'cube :mesh-type 'subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :name 'square :mesh-type 'subdiv-mesh)
+                            (p! 4 0 0))))
+;    (randomize-points mesh (p! 1 1 1))
+    (add-shape *scene* mesh)
+    (let* ((subdiv (subdivide-mesh mesh)))
+      (add-shape *scene* subdiv)
+      (randomize-points subdiv (p! .5 .5 .5))
+;      (randomize-points subdiv (p! 0 0 1))
+      (let ((subdiv2 (subdivide-mesh subdiv 4)))
+        (add-shape *scene* subdiv2)
+        (translate-to subdiv2 (p! -4 0 0))
+        ))))
+
 ;;; l-system ------------------------------------------------------------------
 
 (format t "  l-system...~%") (finish-output)

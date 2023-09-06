@@ -4,6 +4,8 @@
 
 ;;; half edge data structures for topological operations on meshes
 ;;; http://what-when-how.com/advanced-methods-in-computer-graphics/mesh-processing-advanced-methods-in-computer-graphics-part-2/
+;;;
+;;; https://onrendering.com/data/papers/catmark/HalfedgeCatmullClark.pdf
 
 (defclass pm-vertex ()
   ((point :accessor point :initarg :point :initform (p! 0 0 0))
