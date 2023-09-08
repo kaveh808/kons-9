@@ -98,19 +98,69 @@ Make sure you have opened the graphics window by doing:
 ;;; subdiv-mesh ----------------------------------------------------------------
 
 (with-clear-scene
-  (let ((mesh (translate-to (make-cube 2.0 :name 'cube :mesh-type 'subdiv-mesh)
-                            ;(make-square-polyhedron 2.0 :name 'square :mesh-type 'subdiv-mesh)
+  (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'refine-subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :mesh-type 'refine-subdiv-mesh)
                             (p! 4 0 0))))
-;    (randomize-points mesh (p! 1 1 1))
     (add-shape *scene* mesh)
     (let* ((subdiv (subdivide-mesh mesh)))
       (add-shape *scene* subdiv)
-      (randomize-points subdiv (p! .5 .5 .5))
-;      (randomize-points subdiv (p! 0 0 1))
+      (randomize-points subdiv (p! .25 .25 .25))
       (let ((subdiv2 (subdivide-mesh subdiv 4)))
         (add-shape *scene* subdiv2)
         (translate-to subdiv2 (p! -4 0 0))
         ))))
+
+(with-clear-scene
+  (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'smooth-subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :mesh-type 'smooth-subdiv-mesh)
+                            (p! 4 0 0))))
+    (add-shape *scene* mesh)
+    (let* ((subdiv (subdivide-mesh mesh)))
+      (add-shape *scene* subdiv)
+      (randomize-points subdiv (p! .25 .25 .25))
+      (let ((subdiv2 (subdivide-mesh subdiv 4)))
+        (add-shape *scene* subdiv2)
+        (translate-to subdiv2 (p! -4 0 0))
+        ))))
+
+(with-clear-scene
+  (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'fractal-subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :mesh-type 'fractal-subdiv-mesh)
+                            (p! 2 0 0))))
+    (add-shape *scene* mesh)
+    (setf (vertex-displacement mesh) 0.4)
+    (let* ((subdiv (subdivide-mesh mesh 5)))
+      (add-shape *scene* subdiv)
+        (translate-to subdiv (p! -2 0 0))
+      )))
+
+;;; animated subdivide-mesh ----------------------------------------------------
+
+(defun make-animated-subdiv-scene (mesh levels)
+  (let ((group (make-instance 'variant-manager-group
+                              :children (subdivide-mesh-into-array mesh levels))))
+    (compute-procedural-node group)     ;need to manually trigger compute node after creation
+    (add-shape *scene* group)
+    (add-motion *scene* 
+                (make-instance 'animator
+                               :setup-fn (lambda () (setf (visible-index group) 0))
+                               :update-fn (lambda () (setf (visible-index group)
+                                                           (current-frame *scene*)))))
+    (setf (end-frame *scene*) (1- (length (children group))))))
+
+(with-clear-scene
+  (let* ((base-mesh (freeze-transform (rotate-by (make-square-polyhedron 6.0 :mesh-type 'fractal-subdiv-mesh) (p! -90 0 0)))))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
+    (randomize-points base-mesh (p! 1 1 1))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'refine-subdiv-mesh)))
+    (randomize-points base-mesh (p! 1 1 1))
+    (make-animated-subdiv-scene base-mesh 7)))
 
 ;;; l-system ------------------------------------------------------------------
 

@@ -19,7 +19,8 @@
    (selected? nil)))
   
 (defclass-kons-9 sm-edge ()
-  ((is-boundary-edge? nil)))
+  (;(sharpness 0);;; TODO - sharp creases
+   (is-boundary-edge? nil)))
 
 (defclass-kons-9 sm-half-edge ()
   ((mesh nil)
@@ -40,6 +41,9 @@
 (defmethod initialize-instance :after ((mesh subdiv-mesh) &rest initargs)
   (declare (ignore initargs))
   (initialize-topology mesh))
+
+(defmethod compute-subdiv-points ((mesh subdiv-mesh) (subdiv subdiv-mesh))
+  (error "SUBDIV-MESH ~a has no COMPUTE-SUBDIV-POINTS method defined" mesh))
 
 (defmethod add-vertex ((mesh subdiv-mesh) (vertex sm-vertex))
   (vector-push-extend vertex (sm-vertices mesh)))
@@ -69,11 +73,21 @@
   (let* ((e0 (sm-half-edge (sm-nth-vertex mesh v)))
          (e e0))
     (loop :do (setf e (prev-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
-          :collect e
-          :while (not (eq e e0)))))
+          :collect (sm-nth-half-edge mesh e)
+          :while (not (= e e0)))))
+
+(defmethod sm-vertex-edges ((mesh subdiv-mesh) v)
+  (mapcar (lambda (e) (sm-nth-edge mesh (edge e)))
+          (sm-vertex-half-edges mesh v)))
+
+;;; TODO - sharp creases
+;; (defmethod sm-vertex-sharpness ((mesh subdiv-mesh) v)
+;;   (let ((edge-sharpness-list (mapcar #'sharpness (sm-vertex-edges mesh v))))
+;;     (/ (reduce #'+ edge-sharpness-list) (length edge-sharpness-list))))
 
 (defmethod sm-vertex-vertices ((mesh subdiv-mesh) v)
-  (mapcar (lambda (e) (vertex (sm-nth-half-edge mesh e))) (sm-vertex-half-edges mesh v)))
+  (mapcar (lambda (e) (sm-nth-vertex mesh (vertex e)))
+          (sm-vertex-half-edges mesh v)))
 
   ;; (let* ((e0 (sm-half-edge (sm-nth-vertex mesh v)))
   ;;        (e e0))
@@ -226,6 +240,16 @@
               (= (pair-half-edge e1) (pair-half-edge e2))
               ))))
 
+;;; return array of all levels of a subdiv-mesh
+(defmethod subdivide-mesh-into-array ((mesh subdiv-mesh) &optional (levels 1))
+  (let* ((mesh-array (make-array levels))
+         (curr-mesh mesh))
+    (dotimes (i levels)
+      (let ((level-mesh (if (= 0 i) mesh (subdivide-mesh curr-mesh 1))))
+        (setf (aref mesh-array i) level-mesh)
+        (setf curr-mesh level-mesh)))
+    mesh-array))
+
 (defmethod subdivide-mesh ((mesh subdiv-mesh) &optional (levels 1))
   (if (<= levels 0)
       mesh
@@ -240,7 +264,7 @@
          (ne (+ (* 2 (length (sm-edges mesh)))
                 (faces-num-points-refs mesh)))
          (nhe (* 4 (length (sm-half-edges mesh))))
-         (subdiv (make-instance 'subdiv-mesh
+         (subdiv (make-instance (class-name (class-of mesh)) ;'subdiv-mesh
                                 :sm-vertices (make-array-with-fn nv (lambda ()
                                                                       (make-instance 'sm-vertex)))
                                 :sm-faces (make-array-with-fn nf (lambda ()
@@ -330,9 +354,7 @@
       (setf (faces subdiv) prefs))
 
     ;; compute point locations
-    (set-subdiv-face-vertex-points mesh subdiv)
-    (set-subdiv-edge-vertex-points mesh subdiv)
-    (set-subdiv-vertex-vertex-points mesh subdiv)
+    (compute-subdiv-points mesh subdiv)
     (setf (points subdiv) (map 'vector #'point (sm-vertices subdiv)))
     (compute-normals subdiv)
     subdiv))
@@ -353,49 +375,6 @@
           :while (not (eq h0 h)))
     n))
 
-(defun set-subdiv-face-vertex-points (mesh subdiv)
-  (do-array (x h (sm-half-edges mesh))
-    (let ((m (half-edge-cycle-length mesh h))
-          (v (vertex h))
-          (i (+ (length (sm-vertices mesh)) (face h))))
-      (setf (point (sm-nth-vertex subdiv i)) (p+ (point (sm-nth-vertex subdiv i))
-                                                 (p/ (point (sm-nth-vertex mesh v)) m))))))
-
-(defun set-subdiv-edge-vertex-points (mesh subdiv)
-  (do-array (x h (sm-half-edges mesh))
-    (if (is-boundary-edge? (sm-nth-edge mesh (edge h)))
-        (let ((v0 (vertex h))
-              (v1 (vertex (sm-nth-half-edge mesh (next-half-edge h))))
-              (j (+ (length (sm-vertices mesh)) (length (sm-faces mesh)) (edge h))))
-          (setf (point (sm-nth-vertex subdiv j))
-                (p+ (point (sm-nth-vertex subdiv j))
-                    (p/ (p+ (point (sm-nth-vertex mesh v0))
-                            (point (sm-nth-vertex mesh v1)))
-                        2))))
-        (let ((v (vertex h))
-              (i (+ (length (sm-vertices mesh)) (face h)))
-              (j (+ (length (sm-vertices mesh)) (length (sm-faces mesh)) (edge h))))
-          (setf (point (sm-nth-vertex subdiv j))
-                (p+ (point (sm-nth-vertex subdiv j))
-                    (p/ (p+ (point (sm-nth-vertex mesh v))
-                            (point (sm-nth-vertex subdiv i)))
-                        4)))))))
-
-(defun set-subdiv-vertex-vertex-points (mesh subdiv)
-  (do-array (x h (sm-half-edges mesh))
-    (let ((v (vertex h)))
-      (if (is-boundary-vertex? (sm-nth-vertex mesh v))
-          (setf (point (sm-nth-vertex subdiv v))
-                (point (sm-nth-vertex mesh v)))
-          (let ((n (half-edge-valence mesh h))
-                (i (+ (length (sm-vertices mesh)) (face h)))
-                (j (+ (length (sm-vertices mesh)) (length (sm-faces mesh)) (edge h))))
-            (setf (point (sm-nth-vertex subdiv v))
-                  (p+ (point (sm-nth-vertex subdiv v))
-                      (p/ (p+ (p+ (p* (point (sm-nth-vertex subdiv j)) 4)
-                                  (p:negate (point (sm-nth-vertex subdiv i))))
-                              (p* (point (sm-nth-vertex mesh v)) (- n 3)))
-                          (* n n)))))))))
 
 #|
 (defmethod verify-topology ((mesh subdiv-mesh))
