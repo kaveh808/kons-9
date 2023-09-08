@@ -255,109 +255,114 @@
       mesh
       (subdivide-mesh (subdivide-mesh-1 mesh) (1- levels))))
 
-;;; based on fig. 3 of above paper
+(defmethod make-subdivided-mesh ((mesh subdiv-mesh))
+  (let* ((nv  (+ (length (sm-vertices mesh)) (length (sm-edges mesh)) (length (sm-faces mesh))))
+         (nf  (* 4 (length (sm-faces mesh))))
+         (ne  (+ (* 2 (length (sm-edges mesh))) (faces-num-points-refs mesh)))
+         (nhe (* 4 (length (sm-half-edges mesh)))))
+    (make-instance (class-name (class-of mesh)) ;subdiv should be same class as mesh
+                   :sm-vertices   (make-array-with-fn nv  (lambda () (make-instance 'sm-vertex)))
+                   :sm-faces      (make-array-with-fn nf  (lambda () (make-instance 'sm-face)))
+                   :sm-edges      (make-array-with-fn ne  (lambda () (make-instance 'sm-edge)))
+                   :sm-half-edges (make-array-with-fn nhe (lambda () (make-instance 'sm-half-edge))))))
+
 (defmethod subdivide-mesh-1 ((mesh subdiv-mesh))
-  (let* ((nv (+ (length (sm-vertices mesh))
-                (length (sm-edges mesh))
-                (length (sm-faces mesh))))
-         (nf (* 4 (length (sm-faces mesh))))
-         (ne (+ (* 2 (length (sm-edges mesh)))
-                (faces-num-points-refs mesh)))
-         (nhe (* 4 (length (sm-half-edges mesh))))
-         (subdiv (make-instance (class-name (class-of mesh)) ;'subdiv-mesh
-                                :sm-vertices (make-array-with-fn nv (lambda ()
-                                                                      (make-instance 'sm-vertex)))
-                                :sm-faces (make-array-with-fn nf (lambda ()
-                                                                   (make-instance 'sm-face)))
-                                :sm-edges (make-array-with-fn ne (lambda ()
-                                                                   (make-instance 'sm-edge)))
-                                :sm-half-edges (make-array-with-fn nhe (lambda ()
-                                                                         (make-instance 'sm-half-edge))))))
-    ;; edge subdivision references
-    (do-array (h e (sm-half-edges mesh))
-      (let ((e0 (sm-nth-half-edge subdiv (+ (* 4 h) 0)))
-            (e1 (sm-nth-half-edge subdiv (+ (* 4 h) 1)))
-            (e2 (sm-nth-half-edge subdiv (+ (* 4 h) 2)))
-            (e3 (sm-nth-half-edge subdiv (+ (* 4 h) 3)))
-            (vd (length (sm-vertices mesh)))
-            (fd (length (sm-faces mesh)))
-            (ed (length (sm-edges mesh))))
-        ;; pair rule
-        (setf (pair-half-edge e0)
-              (if (= -1 (pair-half-edge e)) ;boundary
-                  -1
-                  (+ (* 4 (next-half-edge (sm-nth-half-edge mesh (pair-half-edge e)))) 3)))
-        (setf (pair-half-edge e1) (+ (* 4 (next-half-edge e)) 2))
-        (setf (pair-half-edge e2) (+ (* 4 (prev-half-edge e)) 1))
-        (setf (pair-half-edge e3)
-              (if (= -1 (pair-half-edge (sm-nth-half-edge mesh (prev-half-edge e)))) ;boundary
-                  -1
-                  (+ (* 4 (pair-half-edge (sm-nth-half-edge mesh (prev-half-edge e)))) 0)))
-        ;; next rule
-        (setf (next-half-edge e0) (+ (* 4 h) 1))
-        (setf (next-half-edge e1) (+ (* 4 h) 2))
-        (setf (next-half-edge e2) (+ (* 4 h) 3))
-        (setf (next-half-edge e3) (+ (* 4 h) 0))
-        ;; prev rule
-        (setf (prev-half-edge e0) (+ (* 4 h) 3))
-        (setf (prev-half-edge e1) (+ (* 4 h) 0))
-        (setf (prev-half-edge e2) (+ (* 4 h) 1))
-        (setf (prev-half-edge e3) (+ (* 4 h) 2))
-        ;; vertex rule
-        (setf (vertex e0) (vertex e))
-        (setf (vertex e1) (+ vd fd (edge e)))
-        (setf (vertex e2) (+ vd (face e)))
-        (setf (vertex e3) (+ vd fd (edge (sm-nth-half-edge mesh (prev-half-edge e)))))
-        ;; TODO -- are these necessary?
-        (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e0))) (+ (* 4 h) 0)) ;set vertex half-edge
-        (setf (vertex-type  (sm-nth-vertex subdiv (vertex e0))) :vertex)
-        (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e1))) (+ (* 4 h) 1)) ;set vertex half-edge
-        (setf (vertex-type  (sm-nth-vertex subdiv (vertex e1))) :edge)
-        (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e2))) (+ (* 4 h) 2)) ;set vertex half-edge
-        (setf (vertex-type  (sm-nth-vertex subdiv (vertex e2))) :face)
-        (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e3))) (+ (* 4 h) 3)) ;set vertex half-edge
-        (setf (vertex-type  (sm-nth-vertex subdiv (vertex e3))) :edge)
-        ;; edge rule
-        (let* ((hprime (prev-half-edge e))
-               (eprime (sm-nth-half-edge mesh hprime)))
-          (setf (edge e0) (if (> h (pair-half-edge e))
-                              (* 2 (edge e))
-                              (+ (* 2 (edge e)) 1)))
-          (setf (edge e1) (+ (* 2 ed) h))
-          (setf (edge e2) (+ (* 2 ed) hprime))
-          (setf (edge e3) (if (> hprime (pair-half-edge eprime))
-                              (+ (* 2 (edge eprime)) 1)
-                              (* 2 (edge eprime)))))
-        ;; face rule
-        (setf (face e0) h)
-        (setf (face e1) h)
-        (setf (face e2) h)
-        (setf (face e3) h)
-        (setf (sm-half-edge (sm-nth-face subdiv h)) (* 4 h)) ;set face half-edge
-        ))
-
-    ;; set edge and vertex boundary flags
-    (do-array (i e (sm-half-edges subdiv))
-      (when (= -1 (pair-half-edge e))
-        (setf (is-boundary-edge? (sm-nth-edge subdiv (edge e))) t)
-        (setf (is-boundary-vertex? (sm-nth-vertex subdiv (vertex e))) t)))
-
-    ;; build polyhedron faces
-    (let* ((num-faces (length (sm-faces subdiv)))
-           (prefs (make-array num-faces)))
-      (dotimes (i num-faces)
-        (setf (aref prefs i)            ;faces are quads
-              (list (vertex (sm-nth-half-edge subdiv (+ (* 4 i) 0)))
-                    (vertex (sm-nth-half-edge subdiv (+ (* 4 i) 1)))
-                    (vertex (sm-nth-half-edge subdiv (+ (* 4 i) 2)))
-                    (vertex (sm-nth-half-edge subdiv (+ (* 4 i) 3))))))
-      (setf (faces subdiv) prefs))
-
-    ;; compute point locations
+  (let ((subdiv (make-subdivided-mesh mesh)))
+    (compute-subdiv-topology mesh subdiv)
+    ;; build faces before computing points as algorithm may require polyhedron normals (e.g. fractals)
+    (build-polyhedron-faces subdiv)
     (compute-subdiv-points mesh subdiv)
-    (setf (points subdiv) (map 'vector #'point (sm-vertices subdiv)))
-    (compute-normals subdiv)
+    (set-polyhedron-points subdiv)
     subdiv))
+
+;;; based on fig. 3 of above paper
+(defmethod compute-subdiv-topology ((mesh subdiv-mesh) (subdiv subdiv-mesh))
+  ;; edge subdivision references
+  (do-array (h e (sm-half-edges mesh))
+    (let ((e0 (sm-nth-half-edge subdiv (+ (* 4 h) 0)))
+          (e1 (sm-nth-half-edge subdiv (+ (* 4 h) 1)))
+          (e2 (sm-nth-half-edge subdiv (+ (* 4 h) 2)))
+          (e3 (sm-nth-half-edge subdiv (+ (* 4 h) 3)))
+          (vd (length (sm-vertices mesh)))
+          (fd (length (sm-faces mesh)))
+          (ed (length (sm-edges mesh))))
+      ;; pair rule
+      (setf (pair-half-edge e0)
+            (if (= -1 (pair-half-edge e)) ;boundary
+                -1
+                (+ (* 4 (next-half-edge (sm-nth-half-edge mesh (pair-half-edge e)))) 3)))
+      (setf (pair-half-edge e1) (+ (* 4 (next-half-edge e)) 2))
+      (setf (pair-half-edge e2) (+ (* 4 (prev-half-edge e)) 1))
+      (setf (pair-half-edge e3)
+            (if (= -1 (pair-half-edge (sm-nth-half-edge mesh (prev-half-edge e)))) ;boundary
+                -1
+                (+ (* 4 (pair-half-edge (sm-nth-half-edge mesh (prev-half-edge e)))) 0)))
+      ;; next rule
+      (setf (next-half-edge e0) (+ (* 4 h) 1))
+      (setf (next-half-edge e1) (+ (* 4 h) 2))
+      (setf (next-half-edge e2) (+ (* 4 h) 3))
+      (setf (next-half-edge e3) (+ (* 4 h) 0))
+      ;; prev rule
+      (setf (prev-half-edge e0) (+ (* 4 h) 3))
+      (setf (prev-half-edge e1) (+ (* 4 h) 0))
+      (setf (prev-half-edge e2) (+ (* 4 h) 1))
+      (setf (prev-half-edge e3) (+ (* 4 h) 2))
+      ;; vertex rule
+      (setf (vertex e0) (vertex e))
+      (setf (vertex e1) (+ vd fd (edge e)))
+      (setf (vertex e2) (+ vd (face e)))
+      (setf (vertex e3) (+ vd fd (edge (sm-nth-half-edge mesh (prev-half-edge e)))))
+      ;; TODO -- are these necessary?
+      (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e0))) (+ (* 4 h) 0)) ;set vertex half-edge
+      (setf (vertex-type  (sm-nth-vertex subdiv (vertex e0))) :vertex)
+      (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e1))) (+ (* 4 h) 1)) ;set vertex half-edge
+      (setf (vertex-type  (sm-nth-vertex subdiv (vertex e1))) :edge)
+      (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e2))) (+ (* 4 h) 2)) ;set vertex half-edge
+      (setf (vertex-type  (sm-nth-vertex subdiv (vertex e2))) :face)
+      (setf (sm-half-edge (sm-nth-vertex subdiv (vertex e3))) (+ (* 4 h) 3)) ;set vertex half-edge
+      (setf (vertex-type  (sm-nth-vertex subdiv (vertex e3))) :edge)
+      ;; edge rule
+      (let* ((hprime (prev-half-edge e))
+             (eprime (sm-nth-half-edge mesh hprime)))
+        (setf (edge e0) (if (> h (pair-half-edge e))
+                            (* 2 (edge e))
+                            (+ (* 2 (edge e)) 1)))
+        (setf (edge e1) (+ (* 2 ed) h))
+        (setf (edge e2) (+ (* 2 ed) hprime))
+        (setf (edge e3) (if (> hprime (pair-half-edge eprime))
+                            (+ (* 2 (edge eprime)) 1)
+                            (* 2 (edge eprime)))))
+      ;; face rule
+      (setf (face e0) h)
+      (setf (face e1) h)
+      (setf (face e2) h)
+      (setf (face e3) h)
+      (setf (sm-half-edge (sm-nth-face subdiv h)) (* 4 h)) ;set face half-edge
+      ))
+
+  ;; set edge and vertex boundary flags
+  (do-array (i e (sm-half-edges subdiv))
+    (when (= -1 (pair-half-edge e))
+      (setf (is-boundary-edge? (sm-nth-edge subdiv (edge e))) t)
+      (setf (is-boundary-vertex? (sm-nth-vertex subdiv (vertex e))) t)))
+  subdiv)
+
+(defmethod build-polyhedron-faces ((mesh subdiv-mesh))
+  (let* ((num-faces (length (sm-faces mesh)))
+         (prefs (make-array num-faces)))
+    (dotimes (i num-faces)
+      (setf (aref prefs i)            ;faces are quads
+            (list (vertex (sm-nth-half-edge mesh (+ (* 4 i) 0)))
+                  (vertex (sm-nth-half-edge mesh (+ (* 4 i) 1)))
+                  (vertex (sm-nth-half-edge mesh (+ (* 4 i) 2)))
+                  (vertex (sm-nth-half-edge mesh (+ (* 4 i) 3))))))
+    (setf (faces mesh) prefs))
+  mesh)
+
+(defmethod set-polyhedron-points ((mesh subdiv-mesh))
+  (setf (points mesh) (map 'vector #'point (sm-vertices mesh)))
+  (compute-normals mesh)
+  mesh)
 
 (defmethod half-edge-cycle-length ((mesh subdiv-mesh) h)
   (let ((m 1)

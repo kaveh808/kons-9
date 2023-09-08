@@ -97,6 +97,7 @@ Make sure you have opened the graphics window by doing:
   
 ;;; subdiv-mesh ----------------------------------------------------------------
 
+;; refine-subdiv-mesh
 (with-clear-scene
   (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'refine-subdiv-mesh)
                             ;(make-square-polyhedron 2.0 :mesh-type 'refine-subdiv-mesh)
@@ -110,6 +111,7 @@ Make sure you have opened the graphics window by doing:
         (translate-to subdiv2 (p! -4 0 0))
         ))))
 
+;; smooth-subdiv-mesh
 (with-clear-scene
   (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'smooth-subdiv-mesh)
                             ;(make-square-polyhedron 2.0 :mesh-type 'smooth-subdiv-mesh)
@@ -123,6 +125,7 @@ Make sure you have opened the graphics window by doing:
         (translate-to subdiv2 (p! -4 0 0))
         ))))
 
+;; fractal-subdiv-mesh
 (with-clear-scene
   (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'fractal-subdiv-mesh)
                             ;(make-square-polyhedron 2.0 :mesh-type 'fractal-subdiv-mesh)
@@ -148,19 +151,36 @@ Make sure you have opened the graphics window by doing:
                                                            (current-frame *scene*)))))
     (setf (end-frame *scene*) (1- (length (children group))))))
 
+;; fractal-subdiv-mesh
 (with-clear-scene
   (let* ((base-mesh (freeze-transform (rotate-by (make-square-polyhedron 6.0 :mesh-type 'fractal-subdiv-mesh) (p! -90 0 0)))))
     (make-animated-subdiv-scene base-mesh 7)))
 
+;; smooth-subdiv-mesh
 (with-clear-scene
   (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
     (randomize-points base-mesh (p! 1 1 1))
     (make-animated-subdiv-scene base-mesh 7)))
 
+;; refine-subdiv-mesh
 (with-clear-scene
   (let* ((base-mesh (make-cube 4.0 :mesh-type 'refine-subdiv-mesh)))
     (randomize-points base-mesh (p! 1 1 1))
     (make-animated-subdiv-scene base-mesh 7)))
+
+;; multi-shape scene
+(with-clear-scene
+  (let* ((base-mesh-1 (freeze-transform (translate-to (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)
+                                                      (p! -5 0 0))))
+         (base-mesh-2 (freeze-transform (translate-to (make-cube 4.0 :mesh-type 'refine-subdiv-mesh)
+                                                      (p!  0 0 0))))
+         (base-mesh-3 (freeze-transform (translate-to (make-cube 4.0 :mesh-type 'fractal-subdiv-mesh)
+                                                      (p!  5 0 0)))))
+    (setf (vertex-displacement base-mesh-3) 0.5)
+    (make-animated-subdiv-scene base-mesh-1 7)
+    (make-animated-subdiv-scene base-mesh-2 7)
+    (make-animated-subdiv-scene base-mesh-3 7)
+    ))
 
 ;;; l-system ------------------------------------------------------------------
 
