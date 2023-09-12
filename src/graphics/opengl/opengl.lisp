@@ -384,7 +384,7 @@
     (if highlight?
         (progn
           (gl-set-sel-color)
-          (gl:line-width (* 2 (line-thickness *drawing-settings*))))
+          (gl:line-width (* 3 (line-thickness *drawing-settings*))))
         (progn
           (gl-set-fg-color)
           (gl:line-width (line-thickness *drawing-settings*))))

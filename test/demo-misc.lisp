@@ -108,8 +108,7 @@ Make sure you have opened the graphics window by doing:
       (randomize-points subdiv (p! .25 .25 .25))
       (let ((subdiv2 (subdivide-mesh subdiv 4)))
         (add-shape *scene* subdiv2)
-        (translate-to subdiv2 (p! -4 0 0))
-        ))))
+        (translate-to subdiv2 (p! -4 0 0))))))
 
 ;; smooth-subdiv-mesh
 (with-clear-scene
@@ -122,8 +121,7 @@ Make sure you have opened the graphics window by doing:
       (randomize-points subdiv (p! .25 .25 .25))
       (let ((subdiv2 (subdivide-mesh subdiv 4)))
         (add-shape *scene* subdiv2)
-        (translate-to subdiv2 (p! -4 0 0))
-        ))))
+        (translate-to subdiv2 (p! -4 0 0))))))
 
 ;; fractal-subdiv-mesh
 (with-clear-scene
@@ -134,8 +132,7 @@ Make sure you have opened the graphics window by doing:
     (setf (vertex-displacement mesh) 0.4)
     (let* ((subdiv (subdivide-mesh mesh 5)))
       (add-shape *scene* subdiv)
-        (translate-to subdiv (p! -2 0 0))
-      )))
+        (translate-to subdiv (p! -2 0 0)))))
 
 ;;; animated subdivide-mesh ----------------------------------------------------
 
@@ -160,6 +157,24 @@ Make sure you have opened the graphics window by doing:
 (with-clear-scene
   (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
     (randomize-points base-mesh (p! 1 1 1))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh with edge sharpness
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
+    (select-edges base-mesh '(0 1 2 3 4 5 6 7))
+    (map 'vector
+         (lambda (e) (setf (sharpness e) 8.0))
+         (selected-edges base-mesh))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh with fractional edge sharpness
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
+    (select-edges base-mesh '(0 1 2 3)) ;4 5 6 7))
+    (map 'vector
+         (lambda (e) (setf (sharpness e) 1.2))
+         (selected-edges base-mesh))
     (make-animated-subdiv-scene base-mesh 7)))
 
 ;; refine-subdiv-mesh
