@@ -9,7 +9,7 @@
   ((mesh nil)
    (point (p! 0 0 0))
    (sm-half-edge nil)
-   (vertex-type nil)                    ; :vertex, :edge, :face
+   (vertex-type nil)                    ; :vertex, :edge, :face -- TODO -- not used
    (is-boundary-vertex? nil)
    (selected? nil)))
   
@@ -74,7 +74,6 @@
   (let* ((e0 (sm-half-edge (sm-nth-vertex mesh v)))
          (e e0))
     (loop :do (setf e (next-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
-;;    (loop :do (setf e (prev-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
           :collect (sm-nth-half-edge mesh e)
           :while (not (= e e0)))))
 
@@ -82,7 +81,6 @@
   (let* ((e0 (sm-half-edge (sm-nth-vertex mesh v)))
          (e e0))
     (loop :do (setf e (next-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
-;;    (loop :do (setf e (prev-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
           :collect e
           :while (not (= e e0)))))
 
@@ -94,38 +92,19 @@
   (mapcar (lambda (e) (edge e))
           (sm-vertex-half-edges mesh v)))
 
-;;; TODO - sharp creases
-;; (defmethod sm-vertex-sharpness ((mesh subdiv-mesh) v)
-;;   (let ((edge-sharpness-list (mapcar #'sharpness (sm-vertex-edges mesh v))))
-;;     (/ (reduce #'+ edge-sharpness-list) (length edge-sharpness-list))))
-
 (defmethod sm-vertex-crease-edges ((mesh subdiv-mesh) v)
   (remove-if (lambda (e) (<= (sharpness e) 0.0)) (sm-vertex-edges mesh v)))
-
 
 (defmethod sm-vertex-vertices ((mesh subdiv-mesh) v)
   (mapcar (lambda (e) (sm-nth-vertex mesh (vertex e)))
           (sm-vertex-half-edges mesh v)))
 
-  ;; (let* ((e0 (sm-half-edge (sm-nth-vertex mesh v)))
-  ;;        (e e0))
-  ;;   (loop :do (setf e (prev-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
-  ;;         :collect (vertex (sm-nth-half-edge mesh e))
-  ;;         :while (not (eq e e0)))))
-
 (defmethod sm-vertex-faces ((mesh subdiv-mesh) v)
   (mapcar (lambda (e) (face (sm-nth-half-edge mesh e))) (sm-vertex-half-edges mesh v)))
-
-  ;; (let* ((e0 (sm-half-edge (sm-nth-vertex mesh v)))
-  ;;        (e e0))
-  ;;   (loop :do (setf e (prev-half-edge (sm-nth-half-edge mesh (pair-half-edge (sm-nth-half-edge mesh e)))))
-  ;;         :collect (face (sm-nth-half-edge mesh e))
-  ;;         :while (not (eq e e0)))))
 
 (defmethod sm-edge-vertices ((mesh subdiv-mesh) e)
   (let* ((h0 (sm-half-edge e))
          (h1 (next-half-edge (sm-nth-half-edge mesh h0))))
-;;    (print (list e h0 h1 (vertex (sm-nth-half-edge mesh h0)) (vertex (sm-nth-half-edge mesh h1))))
     (list (sm-nth-vertex mesh (vertex (sm-nth-half-edge mesh h0)))
           (sm-nth-vertex mesh (vertex (sm-nth-half-edge mesh h1))))))
 
@@ -289,8 +268,8 @@
 
 (defmethod make-subdivided-mesh ((mesh subdiv-mesh))
   (let* ((nv  (+ (length (sm-vertices mesh)) (length (sm-edges mesh)) (length (sm-faces mesh))))
-         (nf  (* 4 (length (sm-faces mesh))))
-         (ne  (+ (* 2 (length (sm-edges mesh))) (faces-num-points-refs mesh)))
+         (nf  (faces-num-points-refs mesh))
+         (ne  (+ (* 2 (length (sm-edges mesh))) nf))
          (nhe (* 4 (length (sm-half-edges mesh)))))
     (make-instance (class-name (class-of mesh)) ;subdiv should be same class as mesh
                    :sm-vertices   (make-array-with-fn nv  (lambda () (make-instance 'sm-vertex)))
@@ -423,21 +402,32 @@
 (defmethod select-vertex ((mesh subdiv-mesh) i)
   (setf (selected? (aref (sm-vertices mesh) i)) t))
 
+(defmethod unselect-vertex ((mesh subdiv-mesh) i)
+  (setf (selected? (aref (sm-vertices mesh) i)) nil))
+
 (defmethod select-face ((mesh subdiv-mesh) i)
   (setf (selected? (aref (sm-faces mesh) i)) t))
+
+(defmethod unselect-face ((mesh subdiv-mesh) i)
+  (setf (selected? (aref (sm-faces mesh) i)) nil))
 
 (defmethod select-edge ((mesh subdiv-mesh) i)
   (setf (selected? (aref (sm-edges mesh) i)) t))
 
+(defmethod unselect-edge ((mesh subdiv-mesh) i)
+  (setf (selected? (aref (sm-edges mesh) i)) nil))
+
 (defmethod select-edges ((mesh subdiv-mesh) edges)
   (map 'vector (lambda (e) (select-edge mesh e)) edges))
+
+(defmethod unselect-all-edges ((mesh subdiv-mesh))
+  (map 'vector (lambda (e) (setf (selected? e) nil)) (sm-edges mesh)))
 
 (defmethod selected-edges ((mesh subdiv-mesh))
   (remove-if (lambda (e) (not (selected? e))) (sm-edges mesh)))
 
 
 (defmethod draw ((mesh subdiv-mesh))
-;  (print-topology mesh) 
   (call-next-method)
   (when (is-visible? mesh)
     (draw-selected-faces mesh)
@@ -499,8 +489,4 @@
              (error "VERIFY-TOPOLOGY -- pair-half-edge mismatch ~a ~a" edge (pair-half-edge edge))))
   t)
 |#
-
-;;; print topology
-;;; add levels to subdiv-mesh
-;;; do subdivision
 

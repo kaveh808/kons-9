@@ -48,7 +48,6 @@
                         4)))))))
 
 ;;; sharp creases
-
 (defun smooth-edge-vertex-crease-point (mesh half-edge)
   (let ((v0 (vertex half-edge))
         (v1 (vertex (sm-nth-half-edge mesh (next-half-edge half-edge)))))
@@ -58,16 +57,17 @@
   
 (defun set-smooth-edge-vertex-crease-points (mesh subdiv)
   (do-array (x h (sm-half-edges mesh))
-    (let ((sharpness (sharpness (sm-nth-edge mesh (edge h))))
-          (crease-point (smooth-edge-vertex-crease-point mesh h))
-          (j (+ (length (sm-vertices mesh)) (length (sm-faces mesh)) (edge h))))
-      (cond ((>= sharpness 1.0)         ;same as boundary case, set to crease point
-             (setf (point (sm-nth-vertex subdiv j)) crease-point))
-            ((> sharpness 0.0)          ;lerp smooth and crease points
-             (setf (point (sm-nth-vertex subdiv j))
-                   (p:lerp (point (sm-nth-vertex subdiv j))
-                           crease-point
-                           sharpness)))))))
+    (when (not (is-boundary-edge? (sm-nth-edge mesh (edge h))))
+      (let ((sharpness (sharpness (sm-nth-edge mesh (edge h))))
+            (crease-point (smooth-edge-vertex-crease-point mesh h))
+            (j (+ (length (sm-vertices mesh)) (length (sm-faces mesh)) (edge h))))
+        (cond ((>= sharpness 1.0)         ;same as boundary case, set to crease point
+               (setf (point (sm-nth-vertex subdiv j)) crease-point))
+              ((> sharpness 0.0)          ;lerp smooth and crease points
+               (setf (point (sm-nth-vertex subdiv j))
+                     (p:lerp (point (sm-nth-vertex subdiv j))
+                             crease-point
+                             sharpness))))))))
 
 (defun set-smooth-vertex-vertex-points (mesh subdiv)
   (do-array (x h (sm-half-edges mesh))
@@ -101,17 +101,18 @@
   
 (defun set-smooth-vertex-vertex-crease-points (mesh subdiv)
   (do-array (x h (sm-half-edges mesh))
-    (let* ((sharpness (sharpness (sm-nth-edge mesh (edge h))))
-           (crease-point (smooth-vertex-vertex-crease-point mesh h))
-           (v (vertex h)))
-      (when crease-point
-        (cond ((>= sharpness 1.0)         ;same as boundary case, set to crease point
-               (setf (point (sm-nth-vertex subdiv v)) crease-point))
-              ((> sharpness 0.0)          ;lerp smooth and crease points
-               (setf (point (sm-nth-vertex subdiv v))
-                     (p:lerp (point (sm-nth-vertex subdiv v))
-                             crease-point
-                             sharpness))))))))
+    (when (not (is-boundary-vertex? (sm-nth-vertex mesh (vertex h))))
+      (let* ((sharpness (sharpness (sm-nth-edge mesh (edge h))))
+             (crease-point (smooth-vertex-vertex-crease-point mesh h))
+             (v (vertex h)))
+        (when crease-point
+          (cond ((>= sharpness 1.0)         ;same as boundary case, set to crease point
+                 (setf (point (sm-nth-vertex subdiv v)) crease-point))
+                ((> sharpness 0.0)          ;lerp smooth and crease points
+                 (setf (point (sm-nth-vertex subdiv v))
+                       (p:lerp (point (sm-nth-vertex subdiv v))
+                               crease-point
+                               sharpness)))))))))
 
 (defun set-smooth-vertex-vertex-crease-points-SAV (mesh subdiv)
   (do-array (x h (sm-half-edges mesh))

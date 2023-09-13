@@ -168,13 +168,43 @@ Make sure you have opened the graphics window by doing:
          (selected-edges base-mesh))
     (make-animated-subdiv-scene base-mesh 7)))
 
-;; smooth-subdiv-mesh with fractional edge sharpness
+;; smooth-subdiv-mesh with fractional edge sharpness -- cube
 (with-clear-scene
   (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
     (select-edges base-mesh '(0 1 2 3)) ;4 5 6 7))
     (map 'vector
          (lambda (e) (setf (sharpness e) 1.2))
          (selected-edges base-mesh))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh with fractional edge sharpness -- grid
+(with-clear-scene
+  (let ((uv-mesh (make-grid-uv-mesh 6.0 6.0 2 2)))
+    (setf (aref (points uv-mesh) 4) (p! 0 2 0))
+    (let ((base-mesh (make-instance 'smooth-subdiv-mesh :points (points uv-mesh) :faces (faces uv-mesh))))
+      (unselect-all-edges base-mesh)
+      (select-edges base-mesh '(1 4))
+      (map 'vector (lambda (e) (setf (sharpness e) 3.5)) (selected-edges base-mesh))
+      (unselect-all-edges base-mesh)
+      (select-edges base-mesh '(2 9))
+      (map 'vector (lambda (e) (setf (sharpness e) 0.5)) (selected-edges base-mesh))
+      (make-animated-subdiv-scene base-mesh 7))))
+
+;; smooth-subdiv-mesh with fractional edge sharpness -- octahedron
+(with-clear-scene
+  (let ((base-mesh (make-octahedron 6.0 :mesh-type 'smooth-subdiv-mesh)))
+    ;; equator ring
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(2 3 9 10))
+    (map 'vector (lambda (e) (setf (sharpness e) 8.0)) (selected-edges base-mesh))
+    ;; vertical ring 1
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(1 4 6 7))
+    (map 'vector (lambda (e) (setf (sharpness e) 2.5)) (selected-edges base-mesh))
+    ;; vertical ring 2
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(0 5 8 11))
+    (map 'vector (lambda (e) (setf (sharpness e) 0.5)) (selected-edges base-mesh))
     (make-animated-subdiv-scene base-mesh 7)))
 
 ;; refine-subdiv-mesh
@@ -196,6 +226,43 @@ Make sure you have opened the graphics window by doing:
     (make-animated-subdiv-scene base-mesh-2 7)
     (make-animated-subdiv-scene base-mesh-3 7)
     ))
+
+;; multi-shape scene
+;; TODO -- slow to create, profile code (probably building half-edge structure)
+(with-clear-scene
+  (let* ((filename (asdf:system-relative-pathname "kons-9" "test/data/cow.obj"))
+         (polyh-1 (import-obj filename))
+         (polyh-2 (import-obj filename))
+         (polyh-3 (import-obj filename))
+         (base-mesh-1 (freeze-transform (translate-to (make-instance 'smooth-subdiv-mesh
+                                                                     :points (points polyh-1)
+                                                                     :faces (faces polyh-1))
+                                                      (p! 0 0 -5))))
+         (base-mesh-2 (freeze-transform (translate-to (make-instance 'refine-subdiv-mesh
+                                                                     :points (points polyh-2)
+                                                                     :faces (faces polyh-2))
+                                                      (p! 0 0  0))))
+         (base-mesh-3 (freeze-transform (translate-to (make-instance 'fractal-subdiv-mesh
+                                                                     :points (points polyh-3)
+                                                                     :faces (faces polyh-3))
+                                                      (p! 0 0  5)))))
+    (setf (vertex-displacement base-mesh-3) 0.05)
+    (make-animated-subdiv-scene base-mesh-1 3)
+    (make-animated-subdiv-scene base-mesh-2 3)
+    (make-animated-subdiv-scene base-mesh-3 3)
+    ))
+
+(defparameter *example-obj-filename* 
+  (first (list 
+               (asdf:system-relative-pathname "kons-9" "test/data/teapot.obj")))
+  "An example object filename used in demonstrations for the OBJ-IMPORT facility.
+You can find obj files at
+  https://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
+in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
+
+(with-clear-scene
+  (add-shape *scene*
+             (import-obj *example-obj-filename*)))
 
 ;;; l-system ------------------------------------------------------------------
 
