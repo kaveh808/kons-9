@@ -19,7 +19,8 @@
    #:zpb-ttf                            ;for font libraries
    #:cl-vectors                         ;for font libraries
    #:origin
-   #:clobber) 
+   #:clobber
+   #:shasht) 
   :serial t
   :components
   ((:file "src/package")
