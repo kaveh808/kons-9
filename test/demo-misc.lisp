@@ -193,10 +193,6 @@ Make sure you have opened the graphics window by doing:
 ;; smooth-subdiv-mesh with fractional edge sharpness -- octahedron
 (with-clear-scene
   (let ((base-mesh (make-octahedron 6.0 :mesh-type 'smooth-subdiv-mesh)))
-    ;; equator ring
-    (unselect-all-edges base-mesh)
-    (select-edges base-mesh '(2 3 9 10))
-    (map 'vector (lambda (e) (setf (sharpness e) 8.0)) (selected-edges base-mesh))
     ;; vertical ring 1
     (unselect-all-edges base-mesh)
     (select-edges base-mesh '(1 4 6 7))
@@ -205,6 +201,11 @@ Make sure you have opened the graphics window by doing:
     (unselect-all-edges base-mesh)
     (select-edges base-mesh '(0 5 8 11))
     (map 'vector (lambda (e) (setf (sharpness e) 0.5)) (selected-edges base-mesh))
+    ;; equator ring
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(2 3 9 10))
+    (map 'vector (lambda (e) (setf (sharpness e) 8.0)) (selected-edges base-mesh))
+    ;; create scene
     (make-animated-subdiv-scene base-mesh 7)))
 
 ;; refine-subdiv-mesh
@@ -229,6 +230,7 @@ Make sure you have opened the graphics window by doing:
 
 ;; multi-shape scene
 ;; TODO -- slow to create, profile code (probably building half-edge structure)
+#|
 (with-clear-scene
   (let* ((filename (asdf:system-relative-pathname "kons-9" "test/data/cow.obj"))
          (polyh-1 (import-obj filename))
@@ -251,6 +253,7 @@ Make sure you have opened the graphics window by doing:
     (make-animated-subdiv-scene base-mesh-2 3)
     (make-animated-subdiv-scene base-mesh-3 3)
     ))
+|#
 
 (defparameter *example-obj-filename* 
   (first (list 

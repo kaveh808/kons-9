@@ -114,24 +114,6 @@
                                crease-point
                                sharpness)))))))))
 
-(defun set-smooth-vertex-vertex-crease-points-SAV (mesh subdiv)
-  (do-array (x h (sm-half-edges mesh))
-    (let* ((v (vertex h))
-           (vtx (sm-nth-vertex mesh v))
-           (crease-edges (sm-vertex-crease-edges mesh v)))
-      (cond ((> (length crease-edges) 2) ;corner vertex
-             (setf (point (sm-nth-vertex subdiv v))
-                   (p:copy (point vtx))))
-            ((= (length crease-edges) 2) ;vertex on crease
-             (let ((edge-point-0 (point (sm-edge-other-vertex mesh (elt crease-edges 0) vtx)))
-                   (edge-point-1 (point (sm-edge-other-vertex mesh (elt crease-edges 1) vtx))))
-               ;; equation 9 in Pixar paper
-               (setf (point (sm-nth-vertex subdiv v))
-                     (p/ (p+ (p+ (p* (point vtx) 6)
-                                 edge-point-0)
-                             edge-point-1)
-                         8.0))))
-            (t nil)))))
 (defmethod sm-edge-other-vertex ((mesh subdiv-mesh) (edge sm-edge) (vertex sm-vertex))
   (let* ((vertices (sm-edge-vertices mesh edge)))
     (cond ((eq vertex (elt vertices 0))
@@ -140,7 +122,6 @@
            (elt vertices 0))
           (t (error "Vertex ~a is not on edge ~a" vertex edge)))))
 
-;;; TODO - sharp creases
 (defun set-smooth-subdiv-edge-sharpness (mesh subdiv)
   (do-array (i e (sm-edges mesh))
     (setf (sharpness (sm-nth-edge subdiv (* 2 i))) (1- (sharpness e)))
