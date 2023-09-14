@@ -256,7 +256,7 @@ Make sure you have opened the graphics window by doing:
 |#
 
 (defparameter *example-obj-filename* 
-  (first (list 
+  (first (list (asdf:system-relative-pathname "kons-9" "test/data/cow.obj")
                (asdf:system-relative-pathname "kons-9" "test/data/teapot.obj")))
   "An example object filename used in demonstrations for the OBJ-IMPORT facility.
 You can find obj files at
