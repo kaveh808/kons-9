@@ -22,7 +22,7 @@ Make sure you have opened the graphics window by doing:
 (with-clear-scene
   (add-shape *scene* (make-butterfly-curve 1024)))
 
-;;; poly-mesh ------------------------------------------------------------------
+;;; poly-mesh select components ------------------------------------------------
 
 (with-clear-scene
   (add-shape *scene* (translate-by (make-cube 2.0 :name 'cube :mesh-type 'poly-mesh) (p! 0 1 0))))
@@ -39,6 +39,233 @@ Make sure you have opened the graphics window by doing:
   (select-face (find-shape-by-name *scene* 'cube) 2)
   (select-face (find-shape-by-name *scene* 'cube) 5))
 
+;;; poly-mesh select vertex neighbors ------------------------------------------
+
+;;; select vertex neighbor vertices
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-vertex mesh 0)
+    (let* ((vertex (aref (pm-vertices mesh) 0)))
+      (dolist (v (pm-vertex-vertices vertex))
+        (setf (selected? v) t)))))
+  
+;;; select vertex neighbor edges
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-vertex mesh 0)
+    (let* ((vertex (aref (pm-vertices mesh) 0)))
+      (dolist (e (pm-vertex-edges vertex))
+        (setf (selected? e) t)))))
+  
+;;; select vertex neighbor faces
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-vertex mesh 0)
+    (let* ((vertex (aref (pm-vertices mesh) 0)))
+      (dolist (f (pm-vertex-faces vertex))
+        (setf (selected? f) t)))))
+  
+;;; select edge neighbor faces
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-edge mesh 0)
+    (let* ((edge (aref (pm-edges mesh) 0)))
+      (dolist (f (pm-edge-faces edge))
+        (setf (selected? f) t)))))
+  
+;;; select face neighbor edges
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-face mesh 0)
+    (let* ((face (aref (pm-faces mesh) 0)))
+      (dolist (e (pm-face-edges face))
+        (setf (selected? e) t)))))
+  
+;;; select face neighbor faces
+(with-clear-scene
+  (let ((mesh (make-dodecahedron 4.0 :mesh-type 'poly-mesh)))
+    (add-shape *scene* mesh)
+    (select-face mesh 0)
+    (let* ((face (aref (pm-faces mesh) 0)))
+      (dolist (f (pm-face-faces face))
+        (setf (selected? f) t)))))
+  
+;;; subdiv-mesh ----------------------------------------------------------------
+
+;; refine-subdiv-mesh
+(with-clear-scene
+  (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'refine-subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :mesh-type 'refine-subdiv-mesh)
+                            (p! 4 0 0))))
+    (add-shape *scene* mesh)
+    (let* ((subdiv (subdivide-mesh mesh)))
+      (add-shape *scene* subdiv)
+      (randomize-points subdiv (p! .25 .25 .25))
+      (let ((subdiv2 (subdivide-mesh subdiv 4)))
+        (add-shape *scene* subdiv2)
+        (translate-to subdiv2 (p! -4 0 0))))))
+
+;; smooth-subdiv-mesh
+(with-clear-scene
+  (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'smooth-subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :mesh-type 'smooth-subdiv-mesh)
+                            (p! 4 0 0))))
+    (add-shape *scene* mesh)
+    (let* ((subdiv (subdivide-mesh mesh)))
+      (add-shape *scene* subdiv)
+      (randomize-points subdiv (p! .25 .25 .25))
+      (let ((subdiv2 (subdivide-mesh subdiv 4)))
+        (add-shape *scene* subdiv2)
+        (translate-to subdiv2 (p! -4 0 0))))))
+
+;; fractal-subdiv-mesh
+(with-clear-scene
+  (let ((mesh (translate-to (make-cube 2.0 :mesh-type 'fractal-subdiv-mesh)
+                            ;(make-square-polyhedron 2.0 :mesh-type 'fractal-subdiv-mesh)
+                            (p! 2 0 0))))
+    (add-shape *scene* mesh)
+    (setf (vertex-displacement mesh) 0.4)
+    (let* ((subdiv (subdivide-mesh mesh 5)))
+      (add-shape *scene* subdiv)
+        (translate-to subdiv (p! -2 0 0)))))
+
+;;; animated subdivide-mesh ----------------------------------------------------
+
+(defun make-animated-subdiv-scene (mesh levels)
+  (let ((group (make-instance 'variant-manager-group
+                              :children (subdivide-mesh-into-array mesh levels))))
+    (compute-procedural-node group)     ;need to manually trigger compute node after creation
+    (add-shape *scene* group)
+    (add-motion *scene* 
+                (make-instance 'animator
+                               :setup-fn (lambda () (setf (visible-index group) 0))
+                               :update-fn (lambda () (setf (visible-index group)
+                                                           (current-frame *scene*)))))
+    (setf (end-frame *scene*) (1- (length (children group))))))
+
+;; fractal-subdiv-mesh
+(with-clear-scene
+  (let* ((base-mesh (freeze-transform (rotate-by (make-square-polyhedron 6.0 :mesh-type 'fractal-subdiv-mesh) (p! -90 0 0)))))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
+    (randomize-points base-mesh (p! 1 1 1))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh with edge sharpness
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
+    (select-edges base-mesh '(0 1 2 3 4 5 6 7))
+    (map 'vector
+         (lambda (e) (setf (sharpness e) 8.0))
+         (selected-edges base-mesh))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh with fractional edge sharpness -- cube
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)))
+    (select-edges base-mesh '(0 1 2 3)) ;4 5 6 7))
+    (map 'vector
+         (lambda (e) (setf (sharpness e) 1.2))
+         (selected-edges base-mesh))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; smooth-subdiv-mesh with fractional edge sharpness -- grid
+(with-clear-scene
+  (let ((uv-mesh (make-grid-uv-mesh 6.0 6.0 2 2)))
+    (setf (aref (points uv-mesh) 4) (p! 0 2 0))
+    (let ((base-mesh (make-instance 'smooth-subdiv-mesh :points (points uv-mesh) :faces (faces uv-mesh))))
+      (unselect-all-edges base-mesh)
+      (select-edges base-mesh '(1 4))
+      (map 'vector (lambda (e) (setf (sharpness e) 3.5)) (selected-edges base-mesh))
+      (unselect-all-edges base-mesh)
+      (select-edges base-mesh '(2 9))
+      (map 'vector (lambda (e) (setf (sharpness e) 0.5)) (selected-edges base-mesh))
+      (make-animated-subdiv-scene base-mesh 7))))
+
+;; smooth-subdiv-mesh with fractional edge sharpness -- octahedron
+(with-clear-scene
+  (let ((base-mesh (make-octahedron 6.0 :mesh-type 'smooth-subdiv-mesh)))
+    ;; vertical ring 1
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(1 4 6 7))
+    (map 'vector (lambda (e) (setf (sharpness e) 2.5)) (selected-edges base-mesh))
+    ;; vertical ring 2
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(0 5 8 11))
+    (map 'vector (lambda (e) (setf (sharpness e) 0.5)) (selected-edges base-mesh))
+    ;; equator ring
+    (unselect-all-edges base-mesh)
+    (select-edges base-mesh '(2 3 9 10))
+    (map 'vector (lambda (e) (setf (sharpness e) 8.0)) (selected-edges base-mesh))
+    ;; create scene
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; refine-subdiv-mesh
+(with-clear-scene
+  (let* ((base-mesh (make-cube 4.0 :mesh-type 'refine-subdiv-mesh)))
+    (randomize-points base-mesh (p! 1 1 1))
+    (make-animated-subdiv-scene base-mesh 7)))
+
+;; multi-shape scene
+(with-clear-scene
+  (let* ((base-mesh-1 (freeze-transform (translate-to (make-cube 4.0 :mesh-type 'smooth-subdiv-mesh)
+                                                      (p! -5 0 0))))
+         (base-mesh-2 (freeze-transform (translate-to (make-cube 4.0 :mesh-type 'refine-subdiv-mesh)
+                                                      (p!  0 0 0))))
+         (base-mesh-3 (freeze-transform (translate-to (make-cube 4.0 :mesh-type 'fractal-subdiv-mesh)
+                                                      (p!  5 0 0)))))
+    (setf (vertex-displacement base-mesh-3) 0.5)
+    (make-animated-subdiv-scene base-mesh-1 7)
+    (make-animated-subdiv-scene base-mesh-2 7)
+    (make-animated-subdiv-scene base-mesh-3 7)
+    ))
+
+;; multi-shape scene
+;; TODO -- slow to create, profile code (probably building half-edge structure)
+#|
+(with-clear-scene
+  (let* ((filename (asdf:system-relative-pathname "kons-9" "test/data/cow.obj"))
+         (polyh-1 (import-obj filename))
+         (polyh-2 (import-obj filename))
+         (polyh-3 (import-obj filename))
+         (base-mesh-1 (freeze-transform (translate-to (make-instance 'smooth-subdiv-mesh
+                                                                     :points (points polyh-1)
+                                                                     :faces (faces polyh-1))
+                                                      (p! 0 0 -5))))
+         (base-mesh-2 (freeze-transform (translate-to (make-instance 'refine-subdiv-mesh
+                                                                     :points (points polyh-2)
+                                                                     :faces (faces polyh-2))
+                                                      (p! 0 0  0))))
+         (base-mesh-3 (freeze-transform (translate-to (make-instance 'fractal-subdiv-mesh
+                                                                     :points (points polyh-3)
+                                                                     :faces (faces polyh-3))
+                                                      (p! 0 0  5)))))
+    (setf (vertex-displacement base-mesh-3) 0.05)
+    (make-animated-subdiv-scene base-mesh-1 3)
+    (make-animated-subdiv-scene base-mesh-2 3)
+    (make-animated-subdiv-scene base-mesh-3 3)
+    ))
+|#
+
+(defparameter *example-obj-filename* 
+  (first (list 
+               (asdf:system-relative-pathname "kons-9" "test/data/teapot.obj")))
+  "An example object filename used in demonstrations for the OBJ-IMPORT facility.
+You can find obj files at
+  https://people.sc.fsu.edu/~jburkardt/data/obj/obj.html
+in this and demos below, update the *EXAMPLE-OBJ-FILENAME* for your setup.")
+
+(with-clear-scene
+  (add-shape *scene*
+             (import-obj *example-obj-filename*)))
 
 ;;; l-system ------------------------------------------------------------------
 
@@ -301,6 +528,14 @@ in this and demos below, update the *EXAMPLE-MOL-FILENAME* for your setup.")
 (with-clear-scene
   (let* ((base-polyh (make-cube 4.0)))
     (make-animated-fractal-scene base-polyh 1.0 7)))
+
+;;; press space key in 3D view to show next fractal level
+;;; press [ to return to base shape (frame 0)
+
+
+(with-clear-scene
+  (let* ((base-polyh (make-dodecahedron 6.0)))
+    (make-animated-fractal-scene base-polyh 0.5 6)))
 
 ;;; press space key in 3D view to show next fractal level
 ;;; press [ to return to base shape (frame 0)

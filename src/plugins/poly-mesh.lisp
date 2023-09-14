@@ -3,6 +3,9 @@
 ;;;; poly-mesh =================================================================
 
 ;;; half edge data structures for topological operations on meshes
+;;; http://what-when-how.com/advanced-methods-in-computer-graphics/mesh-processing-advanced-methods-in-computer-graphics-part-2/
+;;;
+;;; https://onrendering.com/data/papers/catmark/HalfedgeCatmullClark.pdf
 
 (defclass pm-vertex ()
   ((point :accessor point :initarg :point :initform (p! 0 0 0))
@@ -20,7 +23,45 @@
    (prev-edge :accessor prev-edge :initarg :prev-edge :initform nil)
    (pair-edge :accessor pair-edge :initarg :pair-edge :initform nil)
    (selected? :accessor selected? :initarg :selected? :initform nil)))   
-  
+
+(defmethod pm-vertex-vertices ((vertex pm-vertex))
+  (let* ((edge-0 (pm-edge vertex))
+         (edge edge-0))
+    (loop :do (setf edge (prev-edge (pair-edge edge)))
+          :collect (vertex (pair-edge edge))
+          :while (not (eq edge edge-0)))))
+
+(defmethod pm-vertex-edges ((vertex pm-vertex))
+  (let* ((edge-0 (pm-edge vertex))
+         (edge edge-0))
+    (loop :do (setf edge (prev-edge (pair-edge edge)))
+          :collect edge
+          :while (not (eq edge edge-0)))))
+
+(defmethod pm-vertex-faces ((vertex pm-vertex))
+  (let* ((edge-0 (pm-edge vertex))
+         (edge edge-0))
+    (loop :do (setf edge (prev-edge (pair-edge edge)))
+          :collect (face edge)
+          :while (not (eq edge edge-0)))))
+
+(defmethod pm-edge-faces ((edge pm-edge))
+  (list (face edge) (face (pair-edge edge))))
+
+(defmethod pm-face-edges ((face pm-face))
+  (let* ((edge-0 (pm-edge face))
+         (edge edge-0))
+    (loop :do (setf edge (next-edge edge))
+          :collect edge
+          :while (not (eq edge edge-0)))))
+
+(defmethod pm-face-faces ((face pm-face))
+  (let* ((edge-0 (pm-edge face))
+         (edge edge-0))
+    (loop :do (setf edge (next-edge edge))
+          :collect (face (pair-edge edge))
+          :while (not (eq edge edge-0)))))
+
 (defclass poly-mesh (polyhedron)
   ((pm-vertices :accessor pm-vertices :initarg :pm-vertices :initform (make-array 0 :adjustable t :fill-pointer t))
    (pm-faces :accessor pm-faces :initarg :pm-faces :initform (make-array 0 :adjustable t :fill-pointer t))

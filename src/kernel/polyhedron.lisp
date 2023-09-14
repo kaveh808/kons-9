@@ -118,6 +118,9 @@
     (setf (aref (point-normals polyh) n)
           (p:normalize (aref (point-normals polyh) n)))))
 
+(defmethod faces-num-points-refs ((polyh polyhedron))
+  (reduce #'+ (faces polyh) :key #'length))
+
 (defmethod face-points-list ((polyh polyhedron) (i integer))
   (mapcar (lambda (pref) (aref (points polyh) pref))
           (aref (faces polyh) i)))
