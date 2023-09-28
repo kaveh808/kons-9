@@ -777,7 +777,7 @@ Hold down space key to play animation. Press '[' key to go back to frame 0.
 #|
 (Demo 20 kernel) shape display options =========================================
 
-Display shape bounds, face-normals, and axes.
+Display shape bounds, face-normals, names, and axes.
 |#
 (with-clear-scene
     (let ((circle (translate-to (make-circle-curve 3.0  7) (p! 0 0 -4.0)))
@@ -786,6 +786,9 @@ Display shape bounds, face-normals, and axes.
       (setf (show-axis circle) 1.0)
       (setf (show-normals icos) 1.0)
       (setf (show-bounds? sphere) t)
+      (setf (show-name? circle) t)
+      (setf (show-name? icos) t)
+      (setf (show-name? sphere) t)
       (add-shapes *scene* (list circle sphere icos))))
 
 #|

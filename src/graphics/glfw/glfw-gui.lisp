@@ -314,6 +314,32 @@
                                 (scale-by shape (p! 1 1 (+ 1 (* dx .01))))))
     table))
 
+;;;; 3d text support -----------------------------------------------------------
+;;; calls to DRAW-3D-TEXT compute the current WORLD-TO-TEXT-COORDINATES and store
+;;; the result along with the string in *3D-TEXT-LIST*, which is traversed (after
+;;; 3d drawing is done) by DRAW-3D-TEXT-LIST
+
+;;; y is 0 at top for text display, so flip y value
+(defun world-to-text-coordinates (point)
+  (let ((screen-point (world-to-screen-coordinates point)))
+    (p! (p:x screen-point)
+        (- (second *window-size*) (p:y screen-point))
+        0)))
+
+;;; format is a list: (#(string screen-point) ...)
+(defparameter *3d-text-list* '())
+
+(defun draw-3d-text (str &optional (point +origin+))
+  (push (vector str (world-to-text-coordinates point)) *3d-text-list*))
+
+(defun draw-3d-text-list ()
+  (dolist (text *3d-text-list*)
+    (let ((str (aref text 0))
+          (p (aref text 1)))
+      (render-text (- (p:x p) (* 0.5 (ui-text-width str)))
+                   (+ (p:y p) (* 0.25 *ui-font-height*))
+                   str))))
+;;;; ---------------------------------------------------------------------------
 
 (defmethod draw-scene-view ((view scene-view))
   (3d-setup-buffer)
@@ -323,10 +349,18 @@
   (when *display-ground-plane?*
     (draw-ground-plane))
   (3d-update-light-settings)
+
+  (setf *3d-text-list* '())
+  
   (when (scene view)
     (draw (scene view)))
+
   (3d-cleanup-render)
 
+  (text-engine-begin-frame)
+  (draw-3d-text-list)
+  (text-engine-end-frame))
+  
   ;; object picking
 
   (when-pick-requested (ray multi-select)
