@@ -357,10 +357,6 @@
 
   (3d-cleanup-render)
 
-  (text-engine-begin-frame)
-  (draw-3d-text-list)
-  (text-engine-end-frame))
-  
   ;; object picking
 
   (when-pick-requested (ray multi-select)
@@ -372,6 +368,7 @@
 
   ;; draw scene ui
   (text-engine-begin-frame)
+  (draw-3d-text-list)
   (draw-scene-view-ui view)
   (text-engine-end-frame)
 
