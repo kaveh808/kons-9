@@ -28,6 +28,8 @@
     (when (is-visible? shape)
       (when (show-axis shape)
         (draw-axis shape))
+      (when (show-name? shape)
+        (draw-name shape))
       (if (is-selected? shape)
           (draw-selected shape)
           (when (show-bounds? shape)
@@ -71,6 +73,9 @@
 
 (defmethod draw-axis ((shape shape))
   (3d-draw-axis (show-axis shape)))
+
+(defmethod draw-name ((shape shape))
+  (draw-3d-text (string (name shape))))
 
 (defmethod draw-bounds ((shape shape) &optional (color (c! 0 1 1)))
   (multiple-value-bind (lo hi)

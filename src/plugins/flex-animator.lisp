@@ -24,9 +24,11 @@
                                                                     (current-time *scene*)))
                                                    force-fields))
                              +origin+))
-	 (internal-force (reduce #'p+
-				 (map 'vector #'(lambda (s) (spring-force s vertex))
-                                      (springs vertex))))
+	 (internal-force (if (> (length (springs vertex)) 0)
+                             (reduce #'p+
+                                     (map 'vector (lambda (s) (spring-vertex-force s vertex))
+                                          (springs vertex)))
+                             +origin+))
 	 (force (p+ external-force internal-force))       ;compute force
          (acc (p/ force (mass vertex)))	                  ;compute acceleration
          (vel (p+ (velocity vertex) acc))                 ;compute velocity
@@ -51,20 +53,29 @@
    (vertex2 nil)
    (stiffness 1.0)
    (rest-length 1.0)
-   (current-length 1.0)))
+   (current-length 1.0)
+   (current-force (p! 0 0 0))))
 
 (defmethod init-spring ((spring flex-spring))
   (setf (rest-length spring) (p-dist (point (vertex1 spring)) (point (vertex2 spring)))))
+
+(defmethod update-spring ((spring flex-spring))
+  (compute-spring-length spring)
+  (compute-spring-force spring))
 
 (defmethod compute-spring-length ((spring flex-spring))
   (setf (current-length spring)
         (p-dist (point (vertex1 spring)) (point (vertex2 spring)))))
 
-(defmethod spring-force ((spring flex-spring) (vertex flex-vertex))
-  (let ((dir (p:normalize (if (eq vertex (vertex1 spring))
-                              (p- (point (vertex2 spring)) (point (vertex1 spring)))
-                              (p- (point (vertex1 spring)) (point (vertex2 spring)))))))
-    (p* dir (* (- (current-length spring) (rest-length spring)) (stiffness spring)))))
+(defmethod compute-spring-force ((spring flex-spring))
+  (setf (current-force spring)
+        (let ((dir (p:normalize (p- (point (vertex2 spring)) (point (vertex1 spring))))))
+          (p* dir (* (- (current-length spring) (rest-length spring)) (stiffness spring))))))
+
+(defmethod spring-vertex-force ((spring flex-spring) (vertex flex-vertex))
+  (if (eq vertex (vertex1 spring))
+      (current-force spring)
+      (p:negate (current-force spring))))
 
 ;;;; flex-animator =============================================================
 
@@ -159,7 +170,7 @@
         (setf (point v) (aref points i)))
       ;; compute dynamics
       (do-array (i s springs)
-        (compute-spring-length s))
+        (update-spring s))
       (do-array (i v vertices)
         (when (not (pinned? v))
           (compute-dynamics v force-fields)))

@@ -378,6 +378,10 @@
              (gl:vertex (p:x p) (p:y p) (p:z p)))))
     (gl:end)))
 
+(defun 3d-draw-smooth-lines (points &key (highlight? nil))
+  (with-gl-enable :line-smooth
+    (3d-draw-lines points :highlight? highlight?)))
+
 (defun 3d-draw-lines (points &key (highlight? nil))
   (with-gl-disable :lighting
     (gl-set-fg-color)
@@ -392,6 +396,22 @@
     (dolist (p points)
       (gl:vertex (p:x p) (p:y p) (p:z p)))
     (gl:end)))
+
+;;; requires smooth shading to be enabled for alpha interpolation
+(defun 3d-draw-tapered-lines (points alpha-1 alpha-2 thickness)
+  (with-gl-disable :lighting
+    (with-gl-enable :line-smooth        ;line antialiasing required for color interpolation
+      (gl:line-width thickness)
+      (let* ((c (fg-color *drawing-settings*))
+             (i 0))
+        (gl:begin :lines)
+        (dolist (p points)
+          (if (evenp i)
+              (gl:color (c-red c) (c-green c) (c-blue c) alpha-1)
+              (gl:color (c-red c) (c-green c) (c-blue c) alpha-2))
+          (gl:vertex (p:x p) (p:y p) (p:z p))
+          (incf i))
+        (gl:end)))))
 
 (defun 3d-setup-lighting ()
   (if *do-lighting?*
@@ -554,3 +574,12 @@
 (defun gl-get-picking-ray-coords (screen-x screen-y)
   (values (gl-get-camera-position)
           (gl-unproject-to-far-plane screen-x screen-y)))
+
+;;; world to screen projection  ================================================
+
+(defun world-to-screen-coordinates (point)
+  (multiple-value-bind (sx sy sz)
+      (glu:project (p:x point) (p:y point) (p:z point))
+    (p! sx sy sz)))
+                     
+
