@@ -111,6 +111,9 @@
    (:file "src/plugins/obj")
    (:file "src/plugins/stl")
    (:file "src/plugins/molecule")
+   (:file "src/plugins/json")
+   (:file "src/plugins/graph")
+   (:file "src/plugins/flex-graph")
    ))
 
 (asdf:defsystem #:kons-9/testsuite
