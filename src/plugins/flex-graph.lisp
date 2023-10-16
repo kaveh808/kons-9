@@ -4,6 +4,7 @@
 
 (defclass-kons-9 flex-graph (graph animator)
   ((num-edge-springs 0)
+   (num-group-springs 0)
    (node-spring-probability 1.0)
    (poly-strand nil)
    (flex-animator nil)))
@@ -34,13 +35,15 @@
     ;; set spring attrs
 ;;    (print (list (num-edge-springs graph) (length (springs anim))))
     (do-array (i spring (springs anim))
-      (if (< i (num-edge-springs graph))
-          (progn                            ;attraction spring
-            (setf (rest-length spring) link-spring-length)
-            (setf (stiffness spring) link-spring-stiffness))
-          (progn                        ;repulsion spring
-            (setf (rest-length spring) spacing-spring-length)
-            (setf (stiffness spring) spacing-spring-stiffness))))
+      (cond ((< i (num-edge-springs graph))                            ;attraction spring
+             (setf (rest-length spring) link-spring-length)
+             (setf (stiffness spring) link-spring-stiffness))
+            ((< i (num-group-springs graph))                           ;attraction spring
+             (setf (rest-length spring) link-spring-length)
+             (setf (stiffness spring) link-spring-stiffness))
+            (t                                                         ;repulsion spring
+             (setf (rest-length spring) spacing-spring-length)
+             (setf (stiffness spring) spacing-spring-stiffness))))
     (set-flex-vertex-attr anim 'damping 0.5)
     (set-flex-vertex-attr anim 'time-step 0.2)
     ))
@@ -67,17 +70,30 @@
   (let* ((poly (make-instance 'poly-strand)))
     ;; build poly-strand points
     (setf (points poly) (map 'vector #'node-location (graph-nodes graph)))
-    ;; build component dependency springs
+    ;; build node edge springs (links)
     (do-array (i n1 (graph-nodes graph))
       (do-array (j n2 (graph-edges n1))
         (append-strand poly (graph-index n1) (graph-index n2))))
-    ;; store number of dependencies (i.e. dependency link springs)
+    ;; store counter of edge springs
     (setf (num-edge-springs graph) (length (strands poly)))
+    ;; build node group springs
+    (do-array (i n1 (graph-nodes graph))
+      (do-array (j n2 (graph-nodes graph))
+        (when (and (> j i)
+                   (group-value n1)
+                   (group-value n2)
+                   (= (group-value n1) (group-value n2))) ;nodes in same group
+          ;; (< (random 1.0) (node-spring-probability graph))) ;only for some pairs
+          (append-strand poly (graph-index n1) (graph-index n2)))))
+    ;; store counter of group springs
+    (setf (num-group-springs graph) (length (strands poly)))
     ;; build inter-node springs for x% of cases
     (if (or (eq :layered (layout-style graph)) (eq :tree (layout-style graph)))
         (do-array (i n1 (graph-nodes graph))
           (do-array (j n2 (graph-nodes graph))
             (when (and (> j i)
+                       (layer-value n1)
+                       (layer-value n2)
                        (= (layer-value n1) (layer-value n2)) ;nodes in same layer only
                        (< (random 1.0) (node-spring-probability graph))) ;only for some pairs
               (append-strand poly (graph-index n1) (graph-index n2)))))

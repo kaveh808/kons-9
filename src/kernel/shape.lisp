@@ -1,5 +1,5 @@
 (in-package #:kons-9)
-(declaim (optimize debug))
+
 ;;;; shape =====================================================================
 
 (defclass shape (scene-item)

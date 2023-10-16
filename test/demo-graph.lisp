@@ -13,7 +13,6 @@
                                 :node-name-attr "name"
                                 :node-x-attr "x"
                                 :node-y-attr "y"
-                                :node-layer-attr "group"
                                 :edges-attr "edges"
                                 :edge-from-attr "_from"
                                 :edge-to-attr "_to")))
@@ -34,7 +33,6 @@
                                 :node-name-attr "name"
                                 :node-x-attr "x"
                                 :node-y-attr "y"
-                                :node-layer-attr "group"
                                 :edges-attr "edges"
                                 :edge-from-attr "_from"
                                 :edge-to-attr "_to")))
@@ -71,7 +69,6 @@
                              (let ((gnode (make-instance 'graph-node
                                                          :hash-data node
                                                          :graph-ref (gethash "_id" node)
-                                                         :layer-value (read-from-string (gethash "group" node))
                                                          :name (gethash "name" node)
                                                          :show-name? t)))
                                ;; put graph on XZ plane
@@ -101,7 +98,6 @@
                                 :node-name-attr "name"
                                 :node-x-attr "x"
                                 :node-y-attr "y"
-                                :node-layer-attr "group"
                                 :edges-attr "edges"
                                 :edge-from-attr "_from"
                                 :edge-to-attr "_to")))
@@ -143,7 +139,7 @@
     (add-shape *scene* graph)
     (setf (interactor *scene*) (interactor graph))))
 
-;;; Demo 05 -- graph with single link data =====================================
+;;; Demo 05 -- 2d flex-graph with single link data =============================
 
 (with-clear-scene
   (let ((graph (make-json-graph *demo-graph-filename*
@@ -152,9 +148,47 @@
                                 :nodes-attr "nodes"
                                 :node-ref-attr "_id"
                                 :node-name-attr "name"
-                                :node-x-attr "x"
-                                :node-y-attr "y"
-                                :node-layer-attr "group"
+                                :node-group-attr "group"
+                                :edges-attr "edges"
+                                :edge-from-attr "_from"
+                                :edge-to-attr "_to")))
+    (setup-graph-dynamics graph :layout-style :2d
+                                :link-spring-length 10.0
+                                :link-spring-stiffness 0.25
+                                :spacing-spring-length 40.0
+                                :spacing-spring-stiffness 0.01)
+    (apply-nodes graph (lambda (n) (scale-to n 5.0)))
+    ;; color nodes by layer value
+    (apply-nodes graph
+                 (lambda (n)
+                   (set-point-colors (geometry n)
+                                     (case (read-from-string (get-json-attr n "group"))
+                                       (1 (c! 1 0 0))
+                                       (2 (c! 0 .8 0))
+                                       (3 (c! .3 .3 1))
+                                       (4 (c! 1 1 0))
+                                       (5 (c! 0 1 1))
+                                       (6 (c! 1 0 1))
+                                       (7 (c! 1 .5 0))
+                                       (8 (c! .5 1 .5))
+                                       (9 (c! .5 .5 .5))
+                                       (10 (c! .5 .5 0))
+                                       (otherwise (c! 1 1 1))))))
+    (add-shape *scene* graph)
+    (add-motion *scene* graph)
+    (setf (end-frame *scene*) 10000)
+    (update-scene *scene* 1000)))
+
+;;; Demo 06 -- 3d flex-graph with single link data =============================
+
+(with-clear-scene
+  (let ((graph (make-json-graph *demo-graph-filename*
+                                :graph-class 'flex-graph
+                                :show-names? t
+                                :nodes-attr "nodes"
+                                :node-ref-attr "_id"
+                                :node-name-attr "name"
+                                :node-group-attr "group"
                                 :edges-attr "edges"
                                 :edge-from-attr "_from"
                                 :edge-to-attr "_to")))

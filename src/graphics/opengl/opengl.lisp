@@ -378,19 +378,20 @@
              (gl:vertex (p:x p) (p:y p) (p:z p)))))
     (gl:end)))
 
-(defun 3d-draw-smooth-lines (points &key (highlight? nil))
+(defun 3d-draw-smooth-lines (points &key (highlight? nil) (color nil))
   (with-gl-enable :line-smooth
-    (3d-draw-lines points :highlight? highlight?)))
+    (3d-draw-lines points :highlight? highlight? :color color)))
 
-(defun 3d-draw-lines (points &key (highlight? nil))
+(defun 3d-draw-lines (points &key (highlight? nil) (color nil))
   (with-gl-disable :lighting
-    (gl-set-fg-color)
     (if highlight?
         (progn
           (gl-set-sel-color)
           (gl:line-width (* 3 (line-thickness *drawing-settings*))))
         (progn
-          (gl-set-fg-color)
+          (if color
+              (gl:color (c-red color) (c-green color) (c-blue color))
+              (gl-set-fg-color))
           (gl:line-width (line-thickness *drawing-settings*))))
     (gl:begin :lines)
     (dolist (p points)

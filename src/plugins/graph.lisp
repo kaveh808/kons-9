@@ -9,7 +9,8 @@
    (geometry (rotate-to (make-circle-polyhedron 1.0 16) (p! -90 0 0)))
    (color (c! 1 1 1))
    (graph-edges (make-array 0 :adjustable t :fill-pointer t)) ;graph-nodes this node has links to
-   (layer-value 0)
+   (layer-value nil)
+   (group-value nil)
    ))
 
 (defmethod (setf color) :after (col (node graph-node))
@@ -44,8 +45,12 @@
    ;; graph nodes stored in group's children slot for rendering
    (graph-nodes (make-array 0 :adjustable t :fill-pointer t))
    (show-names? nil)
-   (show-links? t)
+   (show-edges? t)
    (layout-style :2d)
+   ;; for displaying additional edges
+   (show-secondary-edges? nil)
+   (secondary-edges-color (c! 1 0 0))
+   (secondary-edges (make-array 0 :adjustable t :fill-pointer t))
    ;; interactor (optional)
    (interactor nil)))
 
@@ -58,8 +63,8 @@
 (defmethod draw ((graph graph))
   ;; draw children/components
   (call-next-method)
-  ;; draw links
-  (when (show-links? graph)
+  ;; draw links/edges
+  (when (show-edges? graph)
     (let ((lines '()))
       (do-array (i n1 (graph-nodes graph))
         (when (is-visible? n1)
@@ -69,11 +74,18 @@
              (push (node-location n1) lines)))))
       (if (or (eq :layered (layout-style graph)) (eq :tree (layout-style graph)))
           (3d-draw-smooth-lines lines)
-          (3d-draw-tapered-lines lines 1.0 0.1 2)))))
+          (3d-draw-tapered-lines lines 1.0 0.1 2))))
+  ;; draw secondary edges
+  (when (show-secondary-edges? graph)
+    (let ((lines '()))
+      (do-array (i e (secondary-edges graph))
+        (push (node-location (aref e 0)) lines)
+        (push (node-location (aref e 1)) lines))
+      (3d-draw-smooth-lines lines :color (secondary-edges-color graph)))))
 
 (defun standard-json-graph-node-fn (node-class
                                     nodes-attr node-ref-attr node-name-attr
-                                    node-x-attr node-y-attr node-layer-attr)
+                                    node-x-attr node-y-attr node-layer-attr node-group-attr)
   (lambda (g)
     (do-array (i node (gethash nodes-attr (hash-data g)))
       ;; add nodes to graph
@@ -82,7 +94,10 @@
                                   :graph-ref (gethash node-ref-attr node)
                                   :layer-value (if node-layer-attr
                                                    (read-from-string (gethash node-layer-attr node))
-                                                   0)
+                                                   nil)
+                                  :group-value (if node-group-attr
+                                                   (read-from-string (gethash node-group-attr node))
+                                                   nil)
                                   :name (gethash node-name-attr node)
                                   :show-name? (show-names? g))))
         ;; put graph on XZ plane
@@ -109,78 +124,32 @@
                 (vector-push-extend n (graph-edges node1)))))))))
 
 (defun make-json-graph (filename &key (graph-class 'graph) (node-class 'graph-node)
-                                   (show-names? nil) (show-links? t)
+                                   (show-names? nil) (show-edges? t)
                                    nodes-attr node-ref-attr node-name-attr
-                                   node-x-attr node-y-attr node-layer-attr
+                                   node-x-attr node-y-attr node-layer-attr node-group-attr
                                    edges-attr edge-from-attr edge-to-attr
                                    (edge-to-is-array nil))
   (let ((graph (make-instance graph-class
                               :hash-data (load-json filename)
-                              :show-links? show-links?
+                              :show-edges? show-edges?
                               :show-names? show-names?)))
     (build-graph-from-json graph
      :node-fn (standard-json-graph-node-fn node-class
                                            nodes-attr node-ref-attr node-name-attr
-                                           node-x-attr node-y-attr node-layer-attr)
+                                           node-x-attr node-y-attr node-layer-attr node-group-attr)
      :edge-fn (standard-json-graph-edge-fn edges-attr edge-from-attr edge-to-attr edge-to-is-array))
     (set-graph-attributes graph)
     graph))
 
-(defun make-json-graph-SAV (filename &key (graph-class 'graph) (node-class 'graph-node)
-                                   (show-names? nil) (show-links? t)
-                                   nodes-attr node-ref-attr node-name-attr
-                                   node-x-attr node-y-attr node-layer-attr
-                                   edges-attr edge-from-attr edge-to-attr
-                                   (edge-to-is-array nil))
-  (let ((graph (make-instance graph-class
-                              :hash-data (load-json filename)
-                              :show-links? show-links?
-                              :show-names? show-names?)))
-    (build-graph-from-json graph
-     :node-fn (lambda (g)               ;build nodes
-                (do-array (i node (gethash nodes-attr (hash-data g)))
-                  ;; add nodes to graph
-                  (let ((gnode (make-instance node-class
-                                              :hash-data node
-                                              :graph-ref (gethash node-ref-attr node)
-                                              :layer-value (if node-layer-attr
-                                                               (read-from-string (gethash node-layer-attr node))
-                                                               0)
-                                              :name (gethash node-name-attr node)
-                                              :show-name? (show-names? g))))
-                    ;; put graph on XZ plane
-                    (when (and node-x-attr node-y-attr)
-                      (translate-to gnode (p! (gethash node-x-attr node) 0.0 (gethash node-y-attr node))))
-                    (vector-push-extend gnode (graph-nodes g)))))
-     :edge-fn (lambda (g)               ;set node edges/links
-                (if (not edge-to-is-array)
-                    ;; single link
-                    (do-array (i edge (gethash edges-attr (hash-data g)))
-                      (let ((node1 (find-node g (gethash edge-from-attr edge)))
-                            (node2 (find-node g (gethash edge-to-attr edge))))
-                        (when (and node1 node2)
-                          (vector-push-extend node2 (graph-edges node1)))))
-                    ;; array of links
-                    (do-array (i edge (gethash edges-attr (hash-data g)))
-                      (let ((node1 (find-node g (gethash edge-from-attr edge)))
-                            (nodes-to (remove-if #'null (map 'vector (lambda (ref) (find-node g ref))
-                                                             (gethash edge-to-attr edge)))))
-                        (when (and node1 (> (length nodes-to) 0))
-                          (do-array (j n nodes-to)
-                            (vector-push-extend n (graph-edges node1)))))))))
-    (set-graph-attributes graph)
-    graph))
-
-
 (defun make-json-graph-fns (filename &key (graph-class 'graph)
-                                       (show-names? nil) (show-links? t)
+                                       (show-names? nil) (show-edges? t)
                                        (node-fn nil) (edge-fn nil) (layer-fn nil))
   (when (not (and node-fn edge-fn))
     (error "Missing NODE-FN and/or EDGE-FN arguments"))
   (let ((graph (make-instance graph-class
                               :hash-data (load-json filename)
                               :show-names? show-names?
-                              :show-links? show-links?)))
+                              :show-edges? show-edges?)))
     (build-graph-from-json graph
                            :node-fn node-fn
                            :edge-fn edge-fn
