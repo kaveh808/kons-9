@@ -22,7 +22,8 @@
    (origin.geometry.ray:ray-from-points :from (from ray) :to (to ray))))
 
 (defun intersect-triangles (ray triangles)
-  (let ((min-distance nil))
+  (let ((min-distance nil)
+	(min-intersect-tri nil))
     (do-array (_ points triangles)
       (let ((distance (intersect-triangle ray
                                           (aref points 0)
@@ -30,8 +31,26 @@
                                           (aref points 2))))
         (when distance
           (when (or (null min-distance) (< distance min-distance))
-            (setf min-distance distance)))))
-    min-distance))
+            (setf min-distance distance)
+	    (setf min-intersect-tri points)))))
+    (if min-intersect-tri
+	(values min-distance
+		(find-closest-vertex-to-ray-intersection min-intersect-tri min-distance ray))
+	(values nil nil))))
+
+(defun ray-intersect-point (distance-t ray)
+  (let ((ray-dir
+	  (origin.geometry.ray:direction
+	   (origin.geometry.ray:ray-from-points :from (from ray) :to (to ray)))))
+    (p:+ (from ray) (p:scale ray-dir distance-t))))
+
+(defun find-closest-vertex-to-ray-intersection (triangle distance-t ray)
+  ;; use distance (t variable from triangle intersection algorithm) to project
+  ;; ray to point on triangle, then find the closest vertex to this point.
+  (let* ((ray-point (ray-intersect-point distance-t ray))
+	 (lengths (map 'list #'(lambda (p) (p:length (p:- p ray-point))) triangle))
+	 (minval (apply #'min lengths)))
+    (aref triangle (position minval lengths))))
 
 ;;;; display ray (useful for debugging) ========================================
 
@@ -67,4 +86,3 @@
         ;; aligned bounding box). If the aabb does not intersect there is no use
         ;; of intersecting with triangles.
         (intersect-triangles self (triangles-world-array polyh))))))
-

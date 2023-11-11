@@ -202,7 +202,7 @@
           (let ((scaled-point-array (copy-point-array point-array))
                 (s-mtx (make-scale-matrix (p:lerp (p! 1 1 1) (p! taper taper taper) factor)
                                           p1)))
-            (transform-point-array! scaled-point-array s-mtx)		      
+            (transform-point-array! scaled-point-array s-mtx)
             (do-array (u p2 scaled-point-array)
               (setf (aref (uv-point-array mesh) u v) (p:copy p2))))))))
   (compute-polyhedron-data mesh))
@@ -326,4 +326,3 @@
  "Create" :u "Create UV Mesh Menu"
  (lambda () (make-active-command-table (uv-mesh-command-table)))
  (lambda () t))
-
