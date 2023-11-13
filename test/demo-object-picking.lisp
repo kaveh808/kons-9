@@ -131,3 +131,51 @@ Make sure you have opened the graphics window by doing:
 ;;; 2. `picking-selector-click-multi` - This selector function comes into effect
 ;;; when a left click occurs while the shift key was pressed down. The behaviour
 ;;; is to `add` to the current selection, the closest unselected object.
+
+
+;;; Point picking. Now lets take an action when individual points are selected.
+;;; First enable point picking mode and then register a picking selector that
+;;; can ehandle selected points.
+(setf *point-picking-enabled* t)
+
+;; This picking selector will ignore selected objects effectively disabling
+;; shape selection. It is possible to retain the behaviour of both selecting
+;; objects and picking points.
+
+(let ((selector nil))
+  (setf *picking-selector*
+	(lambda (&key xs-hit xs-miss xs-current xs-point)
+	  (declare (ignore xs-hit xs-miss xs-current))
+	  (if xs-point
+	      ;; When a point is selected draw a small red sphere at that point
+	      (progn
+		(when selector (remove-shape *scene* selector))
+		(setf selector (translate-to (make-cube-sphere 0.2 2) (first xs-point)))
+		(set-point-colors-uniform selector (c! 1.0 0.0 0.0))
+		(add-shape *scene* selector))
+	      ;; Otherwise if we select nothing remove the red sphere selector
+	      (when selector (remove-shape *scene* selector))))))
+
+
+(with-clear-scene
+  (flet ((random-shape (size)
+           (funcall
+            (elt '(make-cube make-octahedron make-icosahedron) (random 3))
+            size)))
+    (let ((step 1) (shape-size 0.4) (bound 1))
+      (do ((x (- bound) (+ x step)))
+          ((> x bound))
+        (do ((y (- bound) (+ y step)))
+            ((> y bound))
+          (do ((z (- bound) (+ z step)))
+              ((> z bound))
+            (add-shape (scene *scene-view*)
+                       (translate-to (random-shape shape-size) (p! x y z)))))))))
+
+
+;; Use the same point picking selector function above and now try selecting points on this
+;; rectangle. Point picking works with curves.
+(progn
+  (defparameter *rectangle* (make-rectangle 4.0 2.0 2))
+  (with-clear-scene
+    (add-shape *scene* *rectangle*)))

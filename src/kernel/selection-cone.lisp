@@ -79,10 +79,11 @@
             ;; the line because a ray is infinite while a line is finite.
             (when (and distance (<= distance line-length))
               (let* ((intersect-pt (p:lerp line-start line-end
-                                           (/ distance line-length))))
+                                           (/ distance line-length)))
+		     (pick-point (if (< (/ distance line-length) 0.5) line-start line-end)))
                 (push intersect-pt *previous-selection-cone-intersect-list*)
                 (return-from intersect-line
-                  (dist-from-cone-apex-to-pt intersect-pt))))))))))
+                  (cons (dist-from-cone-apex-to-pt intersect-pt) pick-point))))))))))
 
 (defun get-lines (curve)
   ;;; the resulting lines reverse in order of the curve's points
@@ -157,11 +158,14 @@
 (defmethod intersect ((self selection-cone) (curve curve))
   (setf *previous-selection-cone* self)
   (flet ((intersect-with-line (line) ))
-    (let* ((distances (mapcar
-                       (lambda (line)
-                         (intersect-line self (car line) (cadr line)))
-                       (get-lines curve)))
-           (distances-non-null (remove-if #'null distances)))
+    (let* ((distances-and-picked-points
+	     (mapcar
+	      (lambda (line) (intersect-line self (car line) (cadr line)))
+              (get-lines curve)))
+           (distances-non-null (remove-if #'null distances-and-picked-points)))
       (when distances-non-null
-        (apply #'min distances-non-null)))))
-
+        (let ((min-dist-and-point (first distances-non-null)))
+	  (loop for dist-and-point in distances-non-null
+		do (when (< (car dist-and-point) (car min-dist-and-point) )
+		     (setf min-dist-and-point dist-and-point)))
+	  (values (car min-dist-and-point) (cdr min-dist-and-point)))))))

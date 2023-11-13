@@ -3,6 +3,7 @@
 (defparameter *picking-enabled* t)
 (defparameter *picking-request* nil)
 (defparameter *picking-selector* nil)
+(defparameter *point-picking-enabled* nil)
 
 (defparameter *object-picking-selection-cone-angle* (/ PI 180))
 
@@ -56,13 +57,19 @@
                           :to to
                           :angle *object-picking-selection-cone-angle*)))
     (let ((shapes (find-shapes scene #'identity)))
-      (multiple-value-bind (xs-hit xs-miss)
+      (multiple-value-bind (xs-hit xs-miss xs-point)
           (intersect-shapes (make-ray) (make-cone) shapes)
         (update-scene-selection (current-selection scene)
-          (funcall (choose-picking-selector multi-select)
-                   :xs-hit xs-hit
-                   :xs-miss xs-miss
-                   :xs-current current-selection))))))
+	  (if (not *point-picking-enabled*)
+              (funcall (choose-picking-selector multi-select)
+                       :xs-hit xs-hit
+                       :xs-miss xs-miss
+                       :xs-current current-selection)
+              (funcall (choose-picking-selector multi-select)
+                       :xs-hit xs-hit
+                       :xs-miss xs-miss
+                       :xs-current current-selection
+		       :xs-point xs-point)))))))
 
 (defun intersect-shape (ray cone shape)
   (if (typep shape 'curve)
@@ -77,14 +84,15 @@
   (let ((xs-hit-distances '())
         (xs-miss '()))
     (mapc (lambda (shape)
-            (let ((distance (intersect-shape ray cone shape)))
+            (multiple-value-bind (distance pick-point) (intersect-shape ray cone shape)
               (if distance
-                  (push (cons distance shape) xs-hit-distances)
+                  (push (cons distance (cons pick-point shape)) xs-hit-distances)
                   (push shape xs-miss))))
           shapes)
     (setf xs-hit-distances (stable-sort xs-hit-distances #'< :key #'car))
-    (let ((xs-hit (mapcar #'cdr xs-hit-distances)))
-      (values xs-hit xs-miss))))
+    (let ((xs-hit (mapcar #'cddr xs-hit-distances))
+	  (xs-point (mapcar #'cadr xs-hit-distances)))
+      (values xs-hit xs-miss xs-point))))
 
 (defun choose-picking-selector (multi-select)
   (when (functionp *picking-selector*)
@@ -98,8 +106,8 @@
 
 (let ((prev-xs-hit nil)
       (i -1))
-  (defun picking-selector-click-1 (&key xs-hit xs-miss xs-current)
-    (declare (ignore xs-miss xs-current))
+  (defun picking-selector-click-1 (&key xs-hit xs-miss xs-current xs-point)
+    (declare (ignore xs-miss xs-current xs-point))
     (flet ((next-i ()
              (setf i (mod (+ 1 i) (length xs-hit)))
              i))
@@ -110,8 +118,8 @@
       (when (not (null xs-hit))
         (list (elt xs-hit (next-i)))))))
 
-(defun picking-selector-click-multi (&key xs-hit xs-miss xs-current)
-  (declare (ignore xs-miss))
+(defun picking-selector-click-multi (&key xs-hit xs-miss xs-current xs-point)
+  (declare (ignore xs-miss xs-point))
   (let ((xs-hit-unselected (list-subtract xs-hit xs-current)))
     (if (null xs-hit-unselected)
         xs-current
